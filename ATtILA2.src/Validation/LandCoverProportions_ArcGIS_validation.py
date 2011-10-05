@@ -30,7 +30,7 @@ class ToolValidator:
         validation is performed.  This method is called whenever a parmater
         has been changed."""
         
-        lccFilePath = str(self.params[0].value)
+        lccFilePath = str(self.params[2].value)
         if not lccFilePath is None and self.currentFilePath != lccFilePath and self.os.path.isfile(lccFilePath):
             self.currentFilePath = lccFilePath
             lccDocument = self.parse(lccFilePath)
@@ -48,7 +48,7 @@ class ToolValidator:
                 className = metricDescription.format(id, name)
                 classNames.append(className) 
                 
-            self.params[1].filter.list = classNames
+            self.params[3].filter.list = classNames
 
         
         return
