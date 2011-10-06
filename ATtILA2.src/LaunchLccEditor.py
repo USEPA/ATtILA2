@@ -6,20 +6,24 @@
     Launches the external editor for .lcc files from a toolbox tool
     The editor is started in a separate process, remaining open when ArcGIS is closed.
     
+    The extra python script is used as a work-around for UserAccountControl dialog showing
+    behind geoprocessing window when launched directly.
+    
     No Arguments.
 """
 import sys
 import os
 
 def main(argv):
-    
-    exeRelativePath = r"\bin\LandCoverClassificationEditor.exe"
+      
+    dirRelativePath = r"\bin"
+    exeName = "LandCoverClassificationEditor.pyw" 
     thisFilePath = argv[0]
     thisDirPath = os.path.dirname(thisFilePath)
-    exeFullPath = thisDirPath + "\\" + exeRelativePath
-
-    os.startfile(exeFullPath)
-
+    exeDir = thisDirPath + dirRelativePath
+    os.chdir(exeDir) 
+    
+    os.startfile(exeName)
     
 if __name__ == "__main__":
     main(sys.argv)
