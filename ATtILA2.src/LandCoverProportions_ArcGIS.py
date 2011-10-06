@@ -14,7 +14,9 @@ import arcpy
 
 def main(argv):
     """ Start Here """
-    
+    # Input reporting unit and reporting unit ID field 
+    RUThm = arcpy.GetParameterAsText(0)
+    RUIDFld = arcpy.GetParameterAsText(1)
     
     
 if __name__ == "__main__":
