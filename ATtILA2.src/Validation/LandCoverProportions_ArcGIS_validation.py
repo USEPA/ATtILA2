@@ -1,61 +1,56 @@
 # LandCoverProportions_ArcGIS_validation
 # Michael A. Jackson, jackson.michael@epa.gov, majgis@gmail.com
-# 2011-10-05
-# 
+# 2011-10-11
+#
+# Cut and paste this class into the ArcToolbox Script Tool Dialog
+#
+# Please do not add code here.  Add code in the library
 
 class ToolValidator:
-    """Class for validating a tool's parameter values and controlling
-      the behavior of the tool's dialog.
-    """
+    """ Validates tool parameter values and controls dialog behavior."""
 
     def __init__(self):
-        """Setup arcpy and the list of tool parameters."""
+        """Unpredictable behavior, do not use"""
+        self.initialized = None
+        # Put initialization code in "initialize" method
         
-        import arcpy
-        import os
-        from xml.dom.minidom import parse
-        self.os = os
-        self.parse = parse
-        self.params = arcpy.GetParameterInfo()
-        self.currentFilePath = ""
-
     def initializeParameters(self):
-        """Refine the properties of a tool's parameters.  This method is
-        called when the tool is opened."""       
-
-        return
-
-    def updateParameters(self):
-        """Modify the values and properties of parameters before internal
-        validation is performed.  This method is called whenever a parmater
-        has been changed."""
+        """Unpredictable behavior, no not use"""        
+        # Put initialization code in "initialize" method
         
-        lccFilePath = str(self.params[3].value)
-        if not lccFilePath is None and self.currentFilePath != lccFilePath and self.os.path.isfile(lccFilePath):
-            self.currentFilePath = lccFilePath
-            lccDocument = self.parse(lccFilePath)
-            classNodes = lccDocument.getElementsByTagName("class")
+    def initialize(self):
+        """ Initialization """
+        
+        ###############################################
+        # Update If Parameter Order Changes
+        parameterStartIndex = 3
+        ###############################################
+        
+        import sys
+        self.sys = sys
+        
+        # Import a relative package
+        self.srcDir = __file__.split("#")[0].replace(".tbx",".src")
+        sys.path.append(self.srcDir)
+        from esdlepy.lcc.toolValidators import threeParameters
+        
+        # Load functionality for this validator from the library
+        threeParameters.loadToolValidator(self, parameterStartIndex)
             
-            idAttributeName = "id"
-            nameAttributeName = "name"
-            metricDescription = "{0}  ({1})"
-            classNames = []
-            for classNode in classNodes:
-                
-                id = classNode.getAttribute(idAttributeName)
-                name = classNode.getAttribute(nameAttributeName)     
-                
-                className = metricDescription.format(id, name)
-                classNames.append(className) 
-                
-            self.params[4].filter.list = classNames
-
+        self.initialized = True
+            
+    def updateParameters(self):
+        """ Modify the values and properties of parameters.
         
-        return
+            Called before internal validation is performed.  
+            Called whenever a parameter has been changed.
+        """
+
+        if self.initialized is None:
+            self.initialize()
 
     def updateMessages(self):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
         
-        return
-
+        return  
