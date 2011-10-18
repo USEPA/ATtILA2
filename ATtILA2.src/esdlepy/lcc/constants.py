@@ -5,6 +5,21 @@ Created on Oct 12, 2011
 
 '''
 
-ClassificationFileExtension = ".lcc"
-ClassificationFileDirName = "LandCoverClassifications"
-ClassificationSchemeUserOption = "User Defined"
+XmlFileExtension = ".lcc"
+PredefinedFileDirName = "LandCoverClassifications"
+UserDefinedOptionDescription = "User Defined"
+xmlElementClasses = "classes"
+XmlElementClass = "class"
+XmlElementValues = "values"
+XmlElementValue = "value"
+XmlElementMetadata = "metadata"
+
+
+XmlAttributeId = "id"
+XmlAttributeName = "name"
+XmlAttributeDescription = "description"
+XmlAttributeNodata = "nodata"
+XmlAttributeLcpField = "lcpfield"
+XmlAttributeNitrogen = "nitrogen"
+XmlAttributePhosphorus = "phosphorus"
+XmlAttributeImpervious = "impervious"
