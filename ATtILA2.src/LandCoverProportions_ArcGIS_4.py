@@ -13,6 +13,7 @@
 """
 
 import sys
+import traceback
 import os
 import arcpy
 from arcpy import env
@@ -36,7 +37,7 @@ def main(argv):
     
     # XML file loaded into memory
     # lccFilePath is hard coded until it can be obtained from the tool dialog
-    lccFilePath = r'L:\Priv\LEB\Projects\A-H\ATtILA2\src\ATtILA2.src\LandCoverClassifications\NLCD 2001.lcc'
+    lccFilePath = r'D:\ATTILA_Jackson\ATtILA2\src\ATtILA2.src\LandCoverClassifications\NLCD 2001.lcc'
     lccObj = lcc.LandCoverClassification(lccFilePath)
 
     # dummy dictionary
@@ -67,9 +68,6 @@ def main(argv):
     
     # set value to be assign to output fields when the calculation is undefined
     nullValue = -1
-    
-    # set up containers for warnings if data anomalies are found    
-    extraValues = [] # grid values not contained/defined in .lcc file
     
     # the variables row and rows are initially set to None, so that they can
     # be deleted in the finally block regardless of where (or if) script fails
@@ -148,11 +146,10 @@ def main(argv):
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
             # 4) Identify any grid codes not accounted for in the LCC files
-            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabArea_row,lccObj,extraValues)
+            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabArea_row,lccObj)
             tabAreaDict = valFieldsResults[0]
             includedAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
-            extraValues = valFieldsResults[3]
             
             # sum the area values for each selected metric   
             for mBasename in metricsBasenameList:
@@ -165,7 +162,7 @@ def main(argv):
                 if not metricGridCodesList:
                     # assign the null value to the output field for this metric    
                     out_row.setValue(mPrefix+mBasename+mSuffix, nullValue)
-                    # exit for loop and go to the next metric
+
                     continue
                 
                 # determine the area covered by the selected metric
@@ -187,44 +184,43 @@ def main(argv):
             out_rows.insertRow(out_row)
 
         # alert user if input grid had values not defined in LCC file
+        allLCCvalues = lccObj.values.keys()
         for aFld in TabAreaValueFields:
             value = aFld.name.replace("VALUE_","")
-            
-            for aClass in lccObj.classes:
-                if value in aClass.valueIDs:
-                    continue
-            else:
-                arcpy.AddMessage(value+" undefined")
+            if not value in allLCCvalues:
+                arcpy.AddWarning("The grid value "+value+" was not defined in the lcc file - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
 
         # Housekeeping
         # delete the scratch table
         arcpy.Delete_management(scratch_Table)
 
-        # Add warnings if necessary    
-        if extraValues:
-            warningString = "The following grid value(s) were not defined in the lcc file: "
-            for aItem in extraValues:
-                warningString = warningString+aItem+", "
-                
-            arcpy.AddWarning(warningString[:-2]+" - The area for these grid cells was still used in metric calculations.")
                 
     except arcpy.ExecuteError:
         arcpy.AddError(arcpy.GetMessages(2))
         
     except:
-        arcpy.AddError("Non-tool error occurred")
+        # get the traceback object
+        tb = sys.exc_info()[2]
+        tbinfo = traceback.format_tb(tb)[0]
+        
+        # Concatenate information together concerning the error into a message string
+        
+        pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+        msgs = "ArcPy ERRORS:\n" + arcpy.GetMessages(2) + "\n"
+    
+        # Return python error messages for use in script tool
+        
+        arcpy.AddError(pymsg)
+        arcpy.AddError(msgs)
+
         
     finally:
         # delete cursor and row objects to remove locks on the data
-        if out_row:
-            del out_row
-        if out_rows:
-            del out_rows
-        if TabArea_rows:
-            del TabArea_rows
-        if TabArea_row:
-            del TabArea_row
+        if out_row: del out_row
+        if out_rows: del out_rows
+        if TabArea_rows: del TabArea_rows
+        if TabArea_row: del TabArea_row
             
         # restore the environments
         env.snapRaster = tempEnvironment0
@@ -301,7 +297,7 @@ def DeleteField1(theTable):
     return
 
 
-def ProcessTabAreaValueFields(TabAreaValueFields,TabArea_row,lccObj,extraValues):
+def ProcessTabAreaValueFields(TabAreaValueFields,TabArea_row,lccObj):
     """ 1) Go through each value field in the TabulateArea table one row at a time and
            put the area value for each grid code into a dictionary with the grid code as the key.
         2) Determine if the grid code is to be included into the reporting unit effective area sum
@@ -322,7 +318,7 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabArea_row,lccObj,extraValues)
         tabAreaDict[valKey] = valArea
 
         #add the area of each grid value to the appropriate area sum i.e., included or excluded area
-        if lccObj.values[valKey]:  #value is defined in the lcc file. 
+        if valKey in lccObj.values:  #value is defined in the lcc file. 
             if lccObj.values[valKey].excluded:
                 excludedAreaSum += valArea
             else:
@@ -330,11 +326,8 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabArea_row,lccObj,extraValues)
         else:  # this grid value is not defined in the lcc file. 
             # add the value to the includedAreaSum
             includedAreaSum += valArea
-            # set up a warning regarding the undefined grid code
-            if not valKey in extraValues:
-                extraValues.append(valKey)
             
-    return (tabAreaDict,includedAreaSum,excludedAreaSum,extraValues)
+    return (tabAreaDict,includedAreaSum,excludedAreaSum)
     
 if __name__ == "__main__":
     main(sys.argv)
