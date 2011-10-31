@@ -91,7 +91,7 @@ class LandCoverValue:
     
     valueId=None
     name=None
-    nodata=None
+    excluded=None
     
     def __init__(self, valueNode=None):
         """ Initialize a LandCoverValue Object
@@ -113,18 +113,18 @@ class LandCoverValue:
     
         if nodata:
             try:
-                self.nodata = bool(nodata)
+                self.excluded = bool(nodata)
             except:
-                self.nodata = self.defaultNodataValue
+                self.excluded = self.defaultNodataValue
         else:
-            self.nodata = self.defaultNodataValue
+            self.excluded = self.defaultNodataValue
         
     def clear(self):
         """Set to empty"""
         
         self.valueId = None
         self.name = None
-        self.nodata = None
+        self.excluded = None
         
 
 class LandCoverClassification:
@@ -132,8 +132,6 @@ class LandCoverClassification:
     
     classes = defaultdict(lambda:None)
     values = defaultdict(lambda:None)
-    dataValues = defaultdict(lambda:None)
-    nodataValues = defaultdict(lambda:None)
     metadata = LandCoverMetadata()
     
     def __init__(self, lccFilePath=None):
@@ -168,13 +166,6 @@ class LandCoverClassification:
             nodata = valueNode.getAttribute(constants.XmlAttributeNodata)
             landCoverValue = LandCoverValue(valueNode)
             
-            # Store NoData values
-            if nodata:
-                self.nodataValues[valueId] = landCoverValue
-            # Store Data values
-            else:
-                self.dataValues[valueId] = landCoverValue
-            
             # Store all values
             self.values[valueId] = landCoverValue
     
@@ -187,8 +178,6 @@ class LandCoverClassification:
 
         self.classes = defaultdict(lambda:None)
         self.values = defaultdict(lambda:None)
-        self.dataValues = defaultdict(lambda:None)
-        self.nodataValues = defaultdict(lambda:None)
         self.metadata = None
         
 
@@ -209,7 +198,7 @@ if __name__ == "__main__":
     
     print "VALUES"
     for key,value in lccObj.values.items():
-        print "  {0:8}{1:8}{2:40}{3:10}".format(key, value.valueId, value.name, value.nodata)
+        print "  {0:8}{1:8}{2:40}{3:10}".format(key, value.valueId, value.name, value.excluded)
     lccObj.values.clear()
     
     print

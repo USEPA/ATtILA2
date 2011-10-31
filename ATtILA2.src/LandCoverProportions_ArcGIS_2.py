@@ -22,7 +22,7 @@ from esdlepy import lcc
 arcpy.CheckOutExtension("spatial")
 
 def main(argv):
-    """ Start Here """    
+    """ Start Here """
     # Script arguments
     Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
     Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
@@ -52,13 +52,14 @@ def main(argv):
     classValuesDict['hdr'] = (23,)
     classValuesDict['coin'] = (24,)
     classValuesDict['agug'] = (21,)
-    classValuesDict['water'] = (11, 12)
+    classValuesDict['water'] = (0, 11, 12)
     
     
     # Constants
     
     # Set parameters for metric output field
     mPrefix = "p" # e.g. pFor, rAgt, sNat
+    mSuffix = "" # e.g. rFor30
     mField_type = "FLOAT" 
     mField_precision = 6
     mField_scale = 1
@@ -84,7 +85,7 @@ def main(argv):
         
     try:
         # Process: inputs        
-        # create the specified output table - has to be a better way than this
+        # create the specified output table
         (out_path, out_name) = os.path.split(Output_table)
         # need to strip the dbf extension if the outpath is a geodatabase; 
         # should control this in the validate step or with an arcpy.ValidateTableName call
@@ -93,76 +94,54 @@ def main(argv):
                 out_name = out_name[0:-4]
         newTable = arcpy.CreateTable_management(out_path, out_name)
         
-        # add standard fields to the output table
         # process the user input to add id field to output table
-        orig_Fields = arcpy.ListFields(Input_reporting_unit_feature)
-        for aFld in orig_Fields:
-            if aFld.name == Reporting_unit_ID_field:
-                id_name = aFld.name
-                id_type = aFld.type
-                id_precision = aFld.precision
-                id_scale = aFld.scale
-                break
-            
-        arcpy.AddField_management(newTable, id_name, id_type, id_precision, id_scale)
+        IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
+        arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
+        
+        # add standard fields to the output table
         arcpy.AddField_management(newTable, "LC_Overlap", "FLOAT", 6, 1)
     
-        # add metric fields to the output table
-        # parse the Metrics_to_run string into a list of selected metric base names
-        metricsBaseList = []
-        templist = Metrics_to_run.replace("'","").split(';')
-        for alist in templist:
-            metricsBaseList.append(alist.split('  ')[0])
-        
-        for mBase in metricsBaseList:
-            arcpy.AddField_management(newTable, mPrefix+mBase, mField_type, mField_precision, mField_scale)
+        # add metric fields to the output table.
+        metricsBasenameList = ParseMetricsToRun(Metrics_to_run)
+         
+        for mBasename in metricsBasenameList:
+            arcpy.AddField_management(newTable, mPrefix+mBasename+mSuffix, mField_type, mField_precision, mField_scale)
             
-        # if a dbf table was specified as the output_table, a default field has already been
-        # created in the newTable object. It needs to be deleted after other fields have been added.
-        if out_name.endswith("dbf"):
-            arcpy.DeleteField_management(newTable, "Field1") 
+        # delete the 'Field1' field if it exists in the new output table.
+        DeleteField1(newTable)
     
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         arcpy.env.snapRaster = Snap_raster
-        
-        # determine zone field for tabulate area 
-        if id_type == "String":
-            zone_field = id_name
-        else:
-            zone_field = "value"
-        
-        # rasterize the reporting unit theme. speeds up tabulate area process.
-        scratch_Raster = arcpy.CreateScratchName("xxtmp", "", "RasterDataset")
-        arcpy.PolygonToRaster_conversion(Input_reporting_unit_feature, Reporting_unit_ID_field, scratch_Raster, "CELL_CENTER", "NONE", Processing_cell_size)
-        
-        # use resultDict function to find the grid computed area of each input reporting unit
-        resultDict = rasterVatToDict(scratch_Raster, zone_field)
-
-
+            
+        # use resultDict function to find the area of each input reporting unit
+        resultDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
+    
+ 
         # Process: Tabulate Area
         # create name for a temporary table for the tabulate area geoprocess step
-        # uses the current workspace - want to change to workspace specified in Output_table
+        # uses the current workspace - want to change to same workspace as specified in Output_table
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
-        arcpy.gp.TabulateArea_sa(scratch_Raster, zone_field, Input_land_cover_grid, "Value", scratch_Table, Processing_cell_size)
+        arcpy.gp.TabulateArea_sa(Input_reporting_unit_feature, Reporting_unit_ID_field, Input_land_cover_grid, "Value", scratch_Table, Processing_cell_size)  
       
-        
-        
+
         # Process: outputs
         # get the fields from Tabulate Area table
         tabarea_flds = arcpy.ListFields(scratch_Table)
         
-        # create the cursor to add data to the output table   
+        # create the cursor to add data to the output table
         out_rows = arcpy.InsertCursor(newTable)
         
         # create search cursor on TabAreaOut table
         TabArea_rows = arcpy.SearchCursor(scratch_Table)
         
         for TabArea_row in TabArea_rows:
-            zoneIDvalue = TabArea_row.getValue(zone_field)
+            # get reporting unit id
+            zoneIDvalue = TabArea_row.getValue(Reporting_unit_ID_field)
             
+            # add a row to the metric output table
             out_row = out_rows.newRow()
             
-            #Load row into dictionary or single variables
+            # create dictionary to hold the area value of each grid code within the reporting unit
             tabAreaDict=defaultdict(lambda:0)
             
             # put the area figures for each grid value in a dictionary
@@ -172,58 +151,54 @@ def main(argv):
             includedAreaSum = 0
             
             for aFld in tabarea_flds[2:]:
+                # store the grid code and it's area value into the searchable dictionary
                 valKey = aFld.name[6:]
                 valArea = TabArea_row.getValue(aFld.name)
                 tabAreaDict[valKey] = valArea
 
                 # check if this grid value was defined in the lcc file
                 if lccObj.values[valKey]:
-                    # place the area for this grid value in the appropriate sum
+                    # add the area for this grid value to the appropriate sum
                     if lccObj.values[valKey].excluded:
                         excludedAreaSum += valArea
                     else:
                         includedAreaSum += valArea
                 
-                else: # this grid value is not defined in the lcc file. set up a warning
+                else: 
+                    # this grid value is not defined in the lcc file. 
+                    # add the value to the includedAreaSum, and set up a warning
                     includedAreaSum += valArea
                     if not valKey in extraValues:
                         extraValues.append(valKey)
             
             # sum the area values for each selected metric   
-            for mBase in metricsBaseList:
+            for mBasename in metricsBasenameList:
                 # get the values for this specified metric
-                mBaseValueIDs = classValuesDict[mBase]
-                # mBaseClass = lccObj.classes[mBase]
-                # mBaseValueIDs = mBaseClass.valueIds
+                metricGridCodesList = classValuesDict[mBasename]
+                # mBasenameClass = lccObj.classes[mBasename]
+                # metricGridCodesList = mBasenameClass.valueIds
                                 
                 # if the metric value(s) definition tuple is empty
-                if not mBaseValueIDs:
+                if not metricGridCodesList:
                     # put the metric name in the emptyClasses list for a warning message
-                    if not mBase in emptyClasses:
-                        emptyClasses.append(mBase)
+                    if not mBasename in emptyClasses:
+                        emptyClasses.append(mBasename)
                     
                     # assign the output field for this metric the null value    
-                    out_row.setValue(mPrefix+mBase, nullValue)
-                    # go to the next metric
+                    out_row.setValue(mPrefix+mBasename+mSuffix, nullValue)
+                    # exit for loop and go to the next metric
                     continue
-                    
-                baseAreaSum = 0                         
-                for aValueID in mBaseValueIDs:
-                    aValueIDStr = str(aValueID)
-                    baseAreaSum += tabAreaDict[aValueIDStr]
                 
-                if includedAreaSum > 0:
-                    percentAreaBase = (baseAreaSum / includedAreaSum) * 100
-                else: # all values found in reporting unit are in the excluded set
-                    percentAreaBase = 0
+                # use the metric area sums, divide them by the effective reporting unit area, and multiply by 100    
+                metricPercentArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum)
                 
-                out_row.setValue(mPrefix+mBase, percentAreaBase)
+                out_row.setValue(mPrefix+mBasename+mSuffix, metricPercentArea)
 
             # set the reporting unit id value
-            out_row.setValue(id_name, zoneIDvalue)
+            out_row.setValue(Reporting_unit_ID_field, zoneIDvalue)
             
             # add lc_overlap calculation to row
-            zoneArea = resultDict[zoneIDvalue][1]
+            zoneArea = resultDict[zoneIDvalue]
             overlapCalc = ((includedAreaSum+excludedAreaSum)/zoneArea) * 100
             out_row.setValue('LC_Overlap', overlapCalc)
             
@@ -231,24 +206,23 @@ def main(argv):
             out_rows.insertRow(out_row)
 
         # Housekeeping
-        # delete the scratch themes
+        # delete the scratch table
         arcpy.Delete_management(scratch_Table)
-        arcpy.Delete_management(scratch_Raster)
 
         # Add warnings if necessary
         if emptyClasses:
             warningString = "The following metric(s) were selected, but were undefined in lcc file: "
             for aItem in emptyClasses:
-                warningString = warningString+aItem+" "
+                warningString = warningString+aItem+", "
                 
-            arcpy.AddWarning(warningString+"- Assigned null value in output.")
+            arcpy.AddWarning(warningString[:-2]+" - Assigned null value in output.")
             
         if extraValues:
             warningString = "The following grid value(s) were not defined in the lcc file: "
             for aItem in extraValues:
-                warningString = warningString+aItem+" "
+                warningString = warningString+aItem+", "
                 
-            arcpy.AddWarning(warningString+"- The area for these grid cells was still used in metric calculations.")
+            arcpy.AddWarning(warningString[:-2]+" - The area for these grid cells was still used in metric calculations.")
                 
     except arcpy.ExecuteError:
         arcpy.AddError(arcpy.GetMessages(2))
@@ -272,26 +246,75 @@ def main(argv):
         
         # return the spatial analyst license    
         arcpy.CheckInExtension("spatial")
+        
 
-
-def rasterVatToDict(raster, key_field):
-    """ Import raster VAT to dictionary """
+def PolyAreasToDict(fc, key_field):
+    """ Calculate polygon areas and import values to dictionary.
+        Use the reporting unit ID as the retrieval key """
 
     resultDict = {}
     
-    desc = arcpy.Describe(raster)
-    meanCellArea = desc.meanCellHeight * desc.meanCellWidth
-    cur = arcpy.SearchCursor(raster)
+    cur = arcpy.SearchCursor(fc)
     for row in cur:
         key = row.getValue(key_field)
-        count = row.count
-        area = count * meanCellArea
-        resultDict[key] = (count, area)
+        area = row.getValue("Shape").area
+        resultDict[key] = (area)
     
     del row
     del cur
 
     return resultDict
 
+    
+def FindIdField(fc, id_field_str):
+    """ Find the specified ID field in the feature class """
+    orig_Fields = arcpy.ListFields(fc)
+    for aFld in orig_Fields:
+        if aFld.name == id_field_str:
+            IDfield = aFld
+            break
+        
+    return IDfield
+
+
+def ParseMetricsToRun(metricsString):
+    """ Parse the Metrics_to_run string into a list of selected metric base names.
+        e.g., 'for  (forest)';'wetl  (wetland)' becomes ['for','wetl'] """
+    metricsBasenameList = []
+    templist = metricsString.replace("'","").split(';')
+    for alist in templist:
+        metricsBasenameList.append(alist.split('  ')[0])
+        
+    return metricsBasenameList
+
+
+def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
+    """ Retrieves stored area figures for each grid code associated with selected metric and sums them.
+        That number divided by the total included area within the reporting unit times 100 gives the
+        percentage of the effective reporting unit that is classified as the metric base """
+    metricAreaSum = 0                         
+    for aValueID in metricGridCodesList:
+        aValueIDStr = str(aValueID)
+        metricAreaSum += tabAreaDict[aValueIDStr]
+    
+    if includedAreaSum > 0:
+        metricPercentArea = (metricAreaSum / includedAreaSum) * 100
+    else: # all values found in reporting unit are in the excluded set
+        metricPercentArea = 0
+        
+    return metricPercentArea
+
+
+def DeleteField1(theTable):
+    """ delete the 'Field1' field if it exists in the table. """
+    newFieldsList = arcpy.ListFields(theTable)
+    for nFld in newFieldsList:
+        if nFld.name.lower() == 'field1': 
+            arcpy.DeleteField_management(theTable, nFld.name)
+            break
+        
+    return
+
+    
 if __name__ == "__main__":
     main(sys.argv)
