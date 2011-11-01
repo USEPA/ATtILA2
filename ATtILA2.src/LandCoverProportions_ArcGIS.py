@@ -17,7 +17,6 @@ import traceback
 import os
 import arcpy
 from arcpy import env
-from collections import defaultdict
 from esdlepy import lcc
 
 # Check out any necessary licenses
@@ -102,7 +101,7 @@ def main(argv):
             arcpy.AddField_management(newTable, mPrefix+mBasename+mSuffix, mField_type, mField_precision, mField_scale)
             
         # delete the 'Field1' field if it exists in the new output table.
-        DeleteField1(newTable)
+        DeleteField(newTable,"field1")
     
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         env.snapRaster = Snap_raster
@@ -126,13 +125,12 @@ def main(argv):
 
         # Process: outputs
         # get the VALUE fields from Tabulate Area table
-        TabAreaValueFields = arcpy.ListFields(scratch_Table)[2:]
-        
-        # Now get the grid code values from the field names
-        TabAreaValues =[]
-        for aFld in TabAreaValueFields:
-            value = aFld.name.replace("VALUE_","")
-            TabAreaValues.append(value)
+        # get the grid code values from the field names; put in a list
+        # also create dictionary to later hold the area value of each grid code in the reporting unit
+        parseTabResults = ParseTabAreaOutput(scratch_Table)
+        TabAreaValues = parseTabResults[0]
+        tabAreaDict = parseTabResults[1]
+        TabAreaValueFields = parseTabResults[2]
         
         # create the cursor to add data to the output table
         out_rows = arcpy.InsertCursor(newTable)
@@ -153,7 +151,7 @@ def main(argv):
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
             # 4) Identify any grid codes not accounted for in the LCC files
-            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,TabArea_row,lccValuesDict)
+            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,lccValuesDict)
             tabAreaDict = valFieldsResults[0]
             includedAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
@@ -162,14 +160,10 @@ def main(argv):
             for mBasename in metricsBasenameList:
                 # get the values for this specified metric
                 metricGridCodesList = classValuesDict[mBasename]
-                # mBasenameClass = lccObj.classes[mBasename]
-                # metricGridCodesList = mBasenameClass.valueIds
-                                
-                # if the metric value(s) definition tuple is empty
+                # if the metric value(s) definition tuple is empty,
+                # assign the null value to the output field for this metric
                 if not metricGridCodesList:
-                    # assign the null value to the output field for this metric    
                     out_row.setValue(mPrefix+mBasename+mSuffix, nullValue)
-
                     continue
                 
                 # determine the area covered by the selected metric
@@ -283,7 +277,7 @@ def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
     metricAreaSum = 0                         
     for aValueID in metricGridCodesList:
         aValueIDStr = str(aValueID)
-        metricAreaSum += tabAreaDict[aValueIDStr]
+        metricAreaSum += tabAreaDict.get(aValueIDStr, 0) #add 0 if the lcc defined value is not found in the grid
     
     if includedAreaSum > 0:
         metricPercentArea = (metricAreaSum / includedAreaSum) * 100
@@ -293,18 +287,18 @@ def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
     return metricPercentArea
 
 
-def DeleteField1(theTable):
-    """ delete the 'Field1' field if it exists in the table. """
+def DeleteField(theTable,fieldName):
+    """ delete the supplied field if it exists in the table. """
     newFieldsList = arcpy.ListFields(theTable)
     for nFld in newFieldsList:
-        if nFld.name.lower() == 'field1': 
+        if nFld.name.lower() == fieldName.lower(): 
             arcpy.DeleteField_management(theTable, nFld.name)
             break
         
     return
 
 
-def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,TabArea_row,lccValuesDict):
+def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,lccValuesDict):
     """ 1) Go through each value field in the TabulateArea table one row at a time and
            put the area value for each grid code into a dictionary with the grid code as the key.
         2) Determine if the grid code is to be included into the reporting unit effective area sum
@@ -312,8 +306,6 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,TabArea_row,lccVa
         4) Identify any grid codes not accounted for in the LCC files
     """
     
-    # create dictionary to hold the area value of each grid code within the reporting unit
-    tabAreaDict=defaultdict(lambda:0)#tabAreaDict.get(key, 0)
     excludedAreaSum = 0  #area of reporting unit not used in metric calculations e.g., water area
     includedAreaSum = 0  #effective area of the reporting unit e.g., land area
 
@@ -325,17 +317,33 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,TabArea_row,lccVa
 
         #add the area of each grid value to the appropriate area sum i.e., included or excluded area
         result = lccValuesDict.get(valKey)
-        if result:
-            if result.excluded:
+        if result: #grid value is defined in the lcc file
+            if result.excluded: #exclude the area of this grid value from metric calculations
                 excludedAreaSum += valArea
-            else:
+            else: #include the area of this grid value in the metric calculations
                 includedAreaSum += valArea               
             
         else:  # this grid value is not defined in the lcc file. 
-            # add the value to the includedAreaSum
+            # undefined values are added by default to the includedAreaSum
             includedAreaSum += valArea
                        
     return (tabAreaDict,includedAreaSum,excludedAreaSum)
+
+def ParseTabAreaOutput(TabAreaOutputTable):
+    """ From the output table generated by the TabulateArea process:
+        put the fields delineating grid code values into a list, i.e., ignore the zone field
+        put the actual grid code values into a list
+        finally create a dictionary to later hold the area value of each grid code in a polygon (reporting unit)
+    """
+    TabAreaValueFields = arcpy.ListFields(TabAreaOutputTable)[2:]
+    tabAreaDict = {}
+    TabAreaValues =[]
+    for aFld in TabAreaValueFields:
+        value = aFld.name.replace("VALUE_","")
+        TabAreaValues.append(value)
+        tabAreaDict[value] = None
+        
+    return (TabAreaValues, tabAreaDict, TabAreaValueFields)
     
 if __name__ == "__main__":
     main(sys.argv)
