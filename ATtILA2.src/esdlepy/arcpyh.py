@@ -9,6 +9,22 @@ System Requirements:
     ArcGIS 10.0 (Python 2.6)
     
 """
+def reportToolResultsToFile(arcpy, outFilePath):
+    """  Report tool results to a log file
+    
+        arcpy: instance of arcpy module
+        outFilePath:  Path to output log file, need not exist
+    
+    """
+    
+    
+    
+    
+    return
+
+def __carolineFunc():
+    """"""
+    
 
 def getSortedFieldMappings(arcpy, tablePath, putTheseFirst):
     """ Return sorted field mappings of the given table
@@ -52,3 +68,12 @@ def getSortedFieldMappings(arcpy, tablePath, putTheseFirst):
         fieldMappings.addFieldMap(fieldMap)
 
     return fieldMappings
+
+if __name__ == "__main__":
+    # this section only runs when this script is executed directly,
+    # it isn't run when imported
+    import arcpy
+    
+    arcpy.AddMessage("test message")
+    outPath = r"c:\temp\outFileTest.txt"
+    getSortedFieldMappings(arcpy, outPath)
