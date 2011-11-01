@@ -130,8 +130,8 @@ class LandCoverValue:
 class LandCoverClassification:
     """ An object holding all the details about a land cover classification"""
     
-    classes = defaultdict(lambda:None)
-    values = defaultdict(lambda:None)
+    classes = {}
+    values = {}
     metadata = LandCoverMetadata()
     
     def __init__(self, lccFilePath=None):
@@ -163,10 +163,7 @@ class LandCoverClassification:
         for valueNode in valueNodes:
             
             valueId = valueNode.getAttribute(constants.XmlAttributeId)
-            nodata = valueNode.getAttribute(constants.XmlAttributeNodata)
             landCoverValue = LandCoverValue(valueNode)
-            
-            # Store all values
             self.values[valueId] = landCoverValue
     
         # Load Metadata
@@ -176,8 +173,8 @@ class LandCoverClassification:
     def clear(self):
         """ Set current state to empty """
 
-        self.classes = defaultdict(lambda:None)
-        self.values = defaultdict(lambda:None)
+        self.classes.clear()
+        self.values.clear()
         self.metadata = None
         
 
