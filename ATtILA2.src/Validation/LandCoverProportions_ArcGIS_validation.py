@@ -107,6 +107,7 @@ class ToolValidator:
             self.lccClassesParameter.enabled = True
         else:
             self.lccClassesParameter.enabled = False  
+            self.lccClassesParameter.value = ""
         self.lccClassesParameter.filter.list = classNames
         
         
