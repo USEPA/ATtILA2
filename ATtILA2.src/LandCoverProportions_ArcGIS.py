@@ -34,18 +34,6 @@ def main(argv):
     Processing_cell_size = arcpy.GetParameterAsText(7)
     Snap_raster = arcpy.GetParameterAsText(8)
     
-    # XML Land Cover Coding file loaded into memory
-    lccObj = lcc.LandCoverClassification(lccFilePath)
-    # get frozenset of all values defined in the lcc file
-    lccDefinedValues = lccObj.classes.getUniqueValueIds()
-    arcpy.AddMessage(lccDefinedValues)
-    # each value has attribute stating if the value is to be included or excluded from effective reporting unit area calculations
-    lccValuesDict = lccObj.values
-    arcpy.AddMessage(lccValuesDict.keys())
-
-    # get dictionary of metric base values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
-    lccClassesDict = lccObj.classes
-   
     
     # Constants
     
@@ -56,9 +44,6 @@ def main(argv):
     mField_precision = 6
     mField_scale = 1
     
-    # set value to be assign to output fields when the calculation is undefined
-    nullValue = -1
-    
     # the variables row and rows are initially set to None, so that they can
     # be deleted in the finally block regardless of where (or if) script fails
     out_row, out_rows = None, None
@@ -68,14 +53,20 @@ def main(argv):
     tempEnvironment0 = env.snapRaster
         
     try:
-        # Process: inputs        
+        # Process: inputs
+        # XML Land Cover Coding file loaded into memory
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        # get dictionary of metric base values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
+        lccClassesDict = lccObj.classes    
+        # get frozenset of all values defined in the lcc file
+        lccDefinedValues = lccClassesDict.getUniqueValueIds()
+        # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation
+        lccValuesDict = lccObj.values
+                
         # create the specified output table
         (out_path, out_name) = os.path.split(Output_table)
         # need to strip the dbf extension if the outpath is a geodatabase; 
         # should control this in the validate step or with an arcpy.ValidateTableName call
-        if out_path.endswith("gdb"):
-            if out_name.endswith("dbf"):
-                out_name = out_name[0:-4]
         newTable = arcpy.CreateTable_management(out_path, out_name)
         
         # process the user input to add id field to output table
@@ -88,27 +79,31 @@ def main(argv):
         # add metric fields to the output table.
         metricsBasenameList = ParseMetricsToRun(Metrics_to_run) 
         for mBasename in metricsBasenameList:
-            arcpy.AddField_management(newTable, mPrefix+mBasename+mSuffix, mField_type, mField_precision, mField_scale)
+            # don't add the field if the metric is undefined in the lcc file
+            if not lccClassesDict[mBasename].uniqueValueIds:
+                # warn the user
+                warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
+                arcpy.AddWarning(warningString+" - "+mBasename.upper()+" was not calculated.")
+                
+                # remove metricBasename from list
+                metricsBasenameList.remove(mBasename)
+            
+            else:
+                arcpy.AddField_management(newTable, mPrefix+mBasename+mSuffix, mField_type, mField_precision, mField_scale)
+
             
         # delete the 'Field1' field if it exists in the new output table.
         DeleteField(newTable,"field1")
     
-        # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
-        env.snapRaster = Snap_raster
             
-        # store the area of each input reporting unit into dictionary keyed to the reporting unit ID
+        # store the area of each input reporting unit into dictionary (zoneID:area)
         zoneAreaDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
-    
-        # check to see if any selected metrics are not defined in the LCC file
-        for mBasename in metricsBasenameList:
-            if not lccClassesDict[mBasename]:
-                # warn the user
-                warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
-                arcpy.AddWarning(warningString+" - Assigned null value in output.")
 
   
         # Process: Tabulate Area
-        # create name for a temporary table for the tabulate area geoprocess step. defaults to current workspace 
+        # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
+        env.snapRaster = Snap_raster
+        # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         arcpy.gp.TabulateArea_sa(Input_reporting_unit_feature, Reporting_unit_ID_field, Input_land_cover_grid, "Value", scratch_Table, Processing_cell_size)  
       
@@ -124,7 +119,7 @@ def main(argv):
         
         # alert user if input grid had values not defined in LCC file
         for aVal in TabAreaValues:
-            if not aVal in lccDefinedValues:
+            if aVal not in lccDefinedValues:
                 arcpy.AddWarning("The grid value "+str(aVal)+" was not defined in the lcc file - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
         
@@ -156,11 +151,6 @@ def main(argv):
             for mBasename in metricsBasenameList:
                 # get the values for this specified metric
                 metricGridCodesList = lccClassesDict[mBasename].uniqueValueIds
-                # if the metric value(s) definition tuple is empty,
-                # assign the null value to the output field for this metric
-                if not metricGridCodesList:
-                    out_row.setValue(mPrefix+mBasename+mSuffix, nullValue)
-                    continue
                 
                 # determine the area covered by the selected metric
                 # divide it by the effective reporting unit area (i.e., includedAreaSum)
@@ -265,8 +255,7 @@ def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
         percentage of the effective reporting unit that is classified as the metric base """
     metricAreaSum = 0                         
     for aValueID in metricGridCodesList:
-        aValueIDStr = str(aValueID)
-        metricAreaSum += tabAreaDict.get(aValueIDStr, 0) #add 0 if the lcc defined value is not found in the grid
+        metricAreaSum += tabAreaDict.get(aValueID, 0) #add 0 if the lcc defined value is not found in the grid
     
     if includedAreaSum > 0:
         metricPercentArea = (metricAreaSum / includedAreaSum) * 100
