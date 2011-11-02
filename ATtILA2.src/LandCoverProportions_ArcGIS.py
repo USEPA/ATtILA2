@@ -229,6 +229,9 @@ def main(argv):
         # return the spatial analyst license    
         arcpy.CheckInExtension("spatial")
         
+        test = arcpy.Result("LandCoverProportions.py","")
+        arcpy.AddMessage("inputs = "+test.inputCount)
+        
 
 def PolyAreasToDict(fc, key_field):
     """ Calculate polygon areas and import values to dictionary.
