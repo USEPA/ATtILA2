@@ -38,12 +38,12 @@ def main(argv):
     # Constants
     
     # Set parameters for metric output field
-    mPrefix = "p" # e.g. pFor, rAgt, sNat
-    mSuffix = "" # e.g. rFor30
-    mField_type = "FLOAT" 
-    mField_precision = 6
-    mField_scale = 1
+    # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
+    fldParams = ["p", "", "FLOAT", 6, 1]
     
+    # Parameratize optional fields
+    optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+      
     # the variables row and rows are initially set to None, so that they can
     # be deleted in the finally block regardless of where (or if) script fails
     out_row, out_rows = None, None
@@ -64,38 +64,10 @@ def main(argv):
         lccValuesDict = lccObj.values
                 
         # create the specified output table
-        (out_path, out_name) = os.path.split(Output_table)
-        # need to strip the dbf extension if the outpath is a geodatabase; 
-        # should control this in the validate step or with an arcpy.ValidateTableName call
-        newTable = arcpy.CreateTable_management(out_path, out_name)
+        newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds)
+        newTable = newTableResult[0]
+        metricsBasenameList = newTableResult[1]
         
-        # process the user input to add id field to output table
-        IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
-        arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
-        
-        # add standard fields to the output table
-        arcpy.AddField_management(newTable, "LC_Overlap", "FLOAT", 6, 1)
-    
-        # add metric fields to the output table.
-        metricsBasenameList = ParseMetricsToRun(Metrics_to_run) 
-        for mBasename in metricsBasenameList:
-            # don't add the field if the metric is undefined in the lcc file
-            if not lccClassesDict[mBasename].uniqueValueIds:
-                # warn the user
-                warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
-                arcpy.AddWarning(warningString+" - "+mBasename.upper()+" was not calculated.")
-                
-                # remove metricBasename from list
-                metricsBasenameList.remove(mBasename)
-            
-            else:
-                arcpy.AddField_management(newTable, mPrefix+mBasename+mSuffix, mField_type, mField_precision, mField_scale)
-
-            
-        # delete the 'Field1' field if it exists in the new output table.
-        DeleteField(newTable,"field1")
-    
-            
         # store the area of each input reporting unit into dictionary (zoneID:area)
         zoneAreaDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
 
@@ -157,7 +129,7 @@ def main(argv):
                 # and multiply the answer by 100    
                 metricPercentArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum)
                 
-                out_row.setValue(mPrefix+mBasename+mSuffix, metricPercentArea)
+                out_row.setValue(fldParams[0]+mBasename+fldParams[1], metricPercentArea)
 
             # set the reporting unit id value
             out_row.setValue(Reporting_unit_ID_field, zoneIDvalue)
@@ -322,6 +294,43 @@ def ParseTabAreaOutput(TabAreaOutputTable):
         tabAreaDict[value] = None
         
     return (TabAreaValues, tabAreaDict, TabAreaValueFields)
+
+def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds):
+    # create the specified output table
+    (out_path, out_name) = os.path.split(Output_table)
+    # need to strip the dbf extension if the outpath is a geodatabase; 
+    # should control this in the validate step or with an arcpy.ValidateTableName call
+    newTable = arcpy.CreateTable_management(out_path, out_name)
+    
+    # process the user input to add id field to output table
+    IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
+    arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
+    
+    # add optional fields to the output table
+    if optionalFlds:
+        for oFld in optionalFlds:
+            arcpy.AddField_management(newTable, oFld[0], oFld[1], oFld[2], oFld[3])
+
+    # add metric fields to the output table.
+    metricsBasenameList = ParseMetricsToRun(Metrics_to_run)
+    
+    for mBasename in metricsBasenameList:
+        # don't add the field if the metric is undefined in the lcc file
+        if not lccClassesDict[mBasename].uniqueValueIds:
+            # warn the user
+            warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
+            arcpy.AddWarning(warningString+" - "+mBasename.upper()+" was not calculated.")
+            
+            # remove metricBasename from list
+            metricsBasenameList.remove(mBasename)
+        
+        else:
+            arcpy.AddField_management(newTable, fldParams[0]+mBasename+fldParams[1], fldParams[2], fldParams[3], fldParams[4])
+        
+    # delete the 'Field1' field if it exists in the new output table.
+    DeleteField(newTable,"field1")
+        
+    return (newTable, metricsBasenameList)
     
 if __name__ == "__main__":
     main(sys.argv)
