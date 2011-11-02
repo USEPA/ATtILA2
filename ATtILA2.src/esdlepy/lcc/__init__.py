@@ -62,6 +62,8 @@ class LandCoverClass(object):
         self.classId = classNode.getAttribute(constants.XmlAttributeId)
         self.name = classNode.getAttribute(constants.XmlAttributeName)   
         self.lcpField = classNode.getAttribute(constants.XmlAttributeLcpField)
+        
+        #TODO: Convert to float
         self.impervious = classNode.getAttribute(constants.XmlAttributeImpervious)
         self.nitrogen = classNode.getAttribute(constants.XmlAttributeNitrogen) 
         self.phosphorus = classNode.getAttribute(constants.XmlAttributePhosphorus) 
@@ -102,7 +104,7 @@ class LandCoverValue(object):
     def loadLccValueNode(self, valueNode):
         """ Load a Land Cover Value XML Node"""
 
-        self.valueId = valueNode.getAttribute(constants.XmlAttributeId)
+        self.valueId = int(valueNode.getAttribute(constants.XmlAttributeId))
         self.name = valueNode.getAttribute(constants.XmlAttributeName)
         
         nodata = valueNode.getAttribute(constants.XmlAttributeNodata)
@@ -175,7 +177,7 @@ class LandCoverClassification(object):
         valueNodes = valuesNode.getElementsByTagName(constants.XmlElementValue)
         tempValues = {}
         for valueNode in valueNodes:
-            valueId = valueNode.getAttribute(constants.XmlAttributeId)
+            valueId = int(valueNode.getAttribute(constants.XmlAttributeId))
             landCoverValue = LandCoverValue(valueNode)
             tempValues[valueId] = landCoverValue
         self.values = tempValues
@@ -200,7 +202,7 @@ if __name__ == "__main__":
     
     print "VALUES"
     for key, value in lccObj.values.items():
-        print "  {0:8}{1:8}{2:40}{3:10}".format(key, value.valueId, value.name, value.excluded)
+        print "  {0:8}{1:8}  {2:40}{3:10}".format(key, value.valueId, value.name, value.excluded)
     
     print
     
