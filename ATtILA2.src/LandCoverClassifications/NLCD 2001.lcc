@@ -14,9 +14,9 @@
 		<value id="11" name="Open Water" nodata="true"/>
 		<value id="12" name="Perennial Ice, Snow" nodata="true"/>
 		
-		<value id="21" name="Low Intensity Residential">21</value>
-		<value id="22" name="High Intensity Residential">22</value>
-		<value id="23" name="Commercial,Industrial,Transportation">23</value>
+		<value id="21" name="Low Intensity Residential"/>
+		<value id="22" name="High Intensity Residential"/>
+		<value id="23" name="Commercial,Industrial,Transportation"/>
 		<value id="31" name="Bare Rock,Sand,Clay"/>
 		<value id="32" name="Quarries, Strip Mines, Gravel Pits"/>
 		<value id="33" name="Transitional"/>		
