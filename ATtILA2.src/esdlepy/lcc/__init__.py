@@ -1,4 +1,7 @@
+""" Land Cover Classification(LCC) 
 
+
+"""
 from xml.dom.minidom import parse
 import os
 import sys
@@ -127,10 +130,29 @@ class LandCoverValue:
         self.excluded = None
         
 
+class LandCoverClasses(dict):
+    """ A container for LandCoverClass objects
+     
+        Inherits from dictionary and adds getUniqueValueIds method,
+        which returns all the unique value IDs defined in all classes.
+    """
+    def __init__(self):
+        self.__uniqueValues = None
+        
+    def getUniqueValueIds(self):
+        """Returns tuple containing all unique value IDs defined in all classes"""
+        
+        # Fetch unique vlaues
+        if self.__uniqueValues is None:
+            pass
+        
+        return self.__uniqueValues
+            
+
 class LandCoverClassification:
     """ An object holding all the details about a land cover classification"""
     
-    classes = {}
+    classes = LandCoverClasses()
     values = {}
     metadata = LandCoverMetadata()
     
