@@ -41,7 +41,7 @@ class ToolValidator:
         """ """    
         
         # Populate predefined LCC dropdown
-        self.srcDir = __file__.split("#")[0].replace(".tbx",".src")
+        self.srcDir = __file__.split("#")[0].replace("\\tests\\TestsToolbox.tbx", "").replace(".tbx",".src")
         self.lccFileDirSearch = self.os.path.join(self.srcDir, self.lccFileDirName, "*." + self.lccFileExtension)
         
         filterList = []
