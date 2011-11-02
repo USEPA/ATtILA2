@@ -7,21 +7,21 @@
 '''
 
 class tuct(object):
-    """ The tuct class. An immutable dictionary.
+    """ The tuct class. An immutable dictionary (TUple + diCT).
+    
+        dictionary:  Can only be created from an existing dictionary
     
         Reference:
             http://code.activestate.com/recipes/498072-implementing-an-immutable-dictionary/
     """
     
-    def __init__(self, dictionary=None, **kwds):
-        self.__data = {}
-        if dictionary is not None:
-            self.__data.update(dictionary)
-        if len(kwds):
-            self.__data.update(kwds)
-    
-    del __init__
-    
+    def __init__(self, dictionary):
+        
+        if isinstance(dictionary, dict):
+            self.__data = dictionary
+        else:
+            self.__data = {}
+               
     def __repr__(self):
         return repr(self.__data)
     
@@ -38,6 +38,7 @@ class tuct(object):
         return self.__data[key]
     
     def copy(self):
+        """ Return a shallow copy of the tuct."""
         if self.__class__ is tuct:
             return tuct(self.__data.copy())
         import copy
@@ -49,28 +50,40 @@ class tuct(object):
             self.__data = __data
         c.update(self)
         return c
+    
     def keys(self):
+        """Return a copy of the tuct's list of keys."""
         return self.__data.keys()
     
     def items(self):
+        """ Return a copy of the tuct's list of (key, value) pairs."""
         return self.__data.items()
         
     def iteritems(self):
+        """ Return an iterator over the tuct's (key, value) pairs."""
         return self.__data.iteritems()
         
     def iterkeys(self):
+        """ Return an iterator over the tuct's keys."""
         return self.__data.iterkeys()
     
     def itervalues(self):
+        """ Return an iterator over the tuct's values."""
         return self.__data.itervalues()
     
     def values(self):
+        """ Return a copy of the tuct's list of values."""
         return self.__data.values()
         
     def has_key(self, key):
+        """ Test for the presence of key in the tuct."""
         return self.__data.has_key(key)
     
     def get(self, key, failobj=None):
+        """ Return the value for key if key is in the tuct, else default.
+        
+            If default is not given, it defaults to None, so that this method never raises a KeyError.
+        """
         if not self.has_key(key):
             return failobj
         return self[key]
@@ -80,6 +93,11 @@ class tuct(object):
     
     @classmethod
     def fromkeys(cls, iterable, value=None):
+        """ Create a new dictionary with keys from iterable and values set to value.
+        
+            fromkeys() is a class method that returns a new tuct. 
+            value defaults to None.
+        """
         d = cls()
         for key in iterable:
             d[key] = value
