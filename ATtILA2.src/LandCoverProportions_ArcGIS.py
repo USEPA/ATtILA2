@@ -34,28 +34,18 @@ def main(argv):
     Processing_cell_size = arcpy.GetParameterAsText(7)
     Snap_raster = arcpy.GetParameterAsText(8)
     
-    # XML file loaded into memory
-    # lccFilePath is hard coded until it can be obtained from the tool dialog
-    lccFilePath = r'D:\ATTILA_Jackson\ATtILA2\src\ATtILA2.src\LandCoverClassifications\NLCD 2001.lcc'
+    # XML Land Cover Coding file loaded into memory
     lccObj = lcc.LandCoverClassification(lccFilePath)
+    # get frozenset of all values defined in the lcc file
+    lccDefinedValues = lccObj.classes.getUniqueValueIds()
+    arcpy.AddMessage(lccDefinedValues)
+    # each value has attribute stating if the value is to be included or excluded from effective reporting unit area calculations
     lccValuesDict = lccObj.values
+    arcpy.AddMessage(lccValuesDict.keys())
 
-    # dummy dictionary
-    classValuesDict = {}
-    classValuesDict['for'] = (41, 42, 43)
-    classValuesDict['wetl'] = (90, 91, 92, 93, 94, 95, 96, 97, 98, 99)
-    classValuesDict['shrb'] = (51, 52)
-    classValuesDict['ng'] = (71, 72, 73, 74)
-    classValuesDict['agp'] = (81,)
-    classValuesDict['agcr'] = (82,)
-    classValuesDict['agcn'] = ()
-    classValuesDict['nbar']=(31, 32)
-    classValuesDict['ldr'] = (22,)
-    classValuesDict['hdr'] = (23,)
-    classValuesDict['coin'] = (24,)
-    classValuesDict['agug'] = (21,)
-    classValuesDict['water'] = (0, 11, 12)
-    
+    # get dictionary of metric base values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
+    lccClassesDict = lccObj.classes
+   
     
     # Constants
     
@@ -107,30 +97,36 @@ def main(argv):
         env.snapRaster = Snap_raster
             
         # store the area of each input reporting unit into dictionary keyed to the reporting unit ID
-        resultDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
+        zoneAreaDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
     
         # check to see if any selected metrics are not defined in the LCC file
         for mBasename in metricsBasenameList:
-            if not classValuesDict[mBasename]:
+            if not lccClassesDict[mBasename]:
                 # warn the user
                 warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
                 arcpy.AddWarning(warningString+" - Assigned null value in output.")
 
   
         # Process: Tabulate Area
-        # create name for a temporary table for the tabulate area geoprocess step
-        scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset", out_path)
+        # create name for a temporary table for the tabulate area geoprocess step. defaults to current workspace 
+        scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         arcpy.gp.TabulateArea_sa(Input_reporting_unit_feature, Reporting_unit_ID_field, Input_land_cover_grid, "Value", scratch_Table, Processing_cell_size)  
       
 
         # Process: outputs
         # get the VALUE fields from Tabulate Area table
-        # get the grid code values from the field names; put in a list
+        # get the grid code values from the field names; put in a list of integers
         # also create dictionary to later hold the area value of each grid code in the reporting unit
         parseTabResults = ParseTabAreaOutput(scratch_Table)
         TabAreaValues = parseTabResults[0]
         tabAreaDict = parseTabResults[1]
         TabAreaValueFields = parseTabResults[2]
+        
+        # alert user if input grid had values not defined in LCC file
+        for aVal in TabAreaValues:
+            if not aVal in lccDefinedValues:
+                arcpy.AddWarning("The grid value "+str(aVal)+" was not defined in the lcc file - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
+
         
         # create the cursor to add data to the output table
         out_rows = arcpy.InsertCursor(newTable)
@@ -159,7 +155,7 @@ def main(argv):
             # sum the area values for each selected metric   
             for mBasename in metricsBasenameList:
                 # get the values for this specified metric
-                metricGridCodesList = classValuesDict[mBasename]
+                metricGridCodesList = lccClassesDict[mBasename].uniqueValueIds
                 # if the metric value(s) definition tuple is empty,
                 # assign the null value to the output field for this metric
                 if not metricGridCodesList:
@@ -177,19 +173,12 @@ def main(argv):
             out_row.setValue(Reporting_unit_ID_field, zoneIDvalue)
             
             # add lc_overlap calculation to row
-            zoneArea = resultDict[zoneIDvalue]
+            zoneArea = zoneAreaDict[zoneIDvalue]
             overlapCalc = ((includedAreaSum+excludedAreaSum)/zoneArea) * 100
             out_row.setValue('LC_Overlap', overlapCalc)
             
             # commit the row to the output table
             out_rows.insertRow(out_row)
-
-        # alert user if input grid had values not defined in LCC file
-        allLCCvalues = lccValuesDict.keys()
-        for aFld in TabAreaValueFields:
-            value = aFld.name.replace("VALUE_","")
-            if not value in allLCCvalues:
-                arcpy.AddWarning("The grid value "+value+" was not defined in the lcc file - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
 
         # Housekeeping
@@ -229,26 +218,23 @@ def main(argv):
         # return the spatial analyst license    
         arcpy.CheckInExtension("spatial")
         
-        test = arcpy.Result("LandCoverProportions.py","")
-        arcpy.AddMessage("inputs = "+test.inputCount)
-        
 
 def PolyAreasToDict(fc, key_field):
     """ Calculate polygon areas and import values to dictionary.
         Use the reporting unit ID as the retrieval key """
 
-    resultDict = {}
+    zoneAreaDict = {}
     
     cur = arcpy.SearchCursor(fc)
     for row in cur:
         key = row.getValue(key_field)
         area = row.getValue("Shape").area
-        resultDict[key] = (area)
+        zoneAreaDict[key] = (area)
     
     del row
     del cur
 
-    return resultDict
+    return zoneAreaDict
 
     
 def FindIdField(fc, id_field_str):
@@ -342,7 +328,7 @@ def ParseTabAreaOutput(TabAreaOutputTable):
     tabAreaDict = {}
     TabAreaValues =[]
     for aFld in TabAreaValueFields:
-        value = aFld.name.replace("VALUE_","")
+        value = int(aFld.name.replace("VALUE_",""))
         TabAreaValues.append(value)
         tabAreaDict[value] = None
         
