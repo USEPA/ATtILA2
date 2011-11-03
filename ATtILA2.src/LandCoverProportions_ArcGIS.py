@@ -62,6 +62,13 @@ def main(argv):
         lccDefinedValues = lccClassesDict.getUniqueValueIds()
         # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation
         lccValuesDict = lccObj.values
+        
+        # generate a frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
+        excludedValuesList = []
+        for aItem in lccValuesDict.iteritems():
+            if aItem[1].excluded:
+                excludedValuesList.append(aItem[0])
+        excludedValuesFSet = frozenset(excludedValuesList)
                 
         # create the specified output table
         newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds)
@@ -91,7 +98,7 @@ def main(argv):
         
         # alert user if input grid had values not defined in LCC file
         for aVal in TabAreaValues:
-            if aVal not in lccDefinedValues:
+            if aVal not in lccDefinedValues and aVal not in excludedValuesFSet:
                 arcpy.AddWarning("The grid value "+str(aVal)+" was not defined in the lcc file - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
         
@@ -114,7 +121,7 @@ def main(argv):
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
             # 4) Identify any grid codes not accounted for in the LCC files
-            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,lccValuesDict)
+            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValuesFSet)
             tabAreaDict = valFieldsResults[0]
             includedAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
@@ -142,7 +149,7 @@ def main(argv):
             # commit the row to the output table
             out_rows.insertRow(out_row)
 
-
+        
         # Housekeeping
         # delete the scratch table
         arcpy.Delete_management(scratch_Table)
@@ -248,7 +255,7 @@ def DeleteField(theTable,fieldName):
     return
 
 
-def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,lccValuesDict):
+def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValuesFSet):
     """ 1) Go through each value field in the TabulateArea table one row at a time and
            put the area value for each grid code into a dictionary with the grid code as the key.
         2) Determine if the grid code is to be included into the reporting unit effective area sum
@@ -266,16 +273,10 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabAr
         tabAreaDict[valKey] = valArea
 
         #add the area of each grid value to the appropriate area sum i.e., included or excluded area
-        result = lccValuesDict.get(valKey)
-        if result: #grid value is defined in the lcc file
-            if result.excluded: #exclude the area of this grid value from metric calculations
-                excludedAreaSum += valArea
-            else: #include the area of this grid value in the metric calculations
-                includedAreaSum += valArea               
-            
-        else:  # this grid value is not defined in the lcc file. 
-            # undefined values are added by default to the includedAreaSum
-            includedAreaSum += valArea
+        if valKey in excludedValuesFSet:
+            excludedAreaSum += valArea
+        else:
+            includedAreaSum += valArea               
                        
     return (tabAreaDict,includedAreaSum,excludedAreaSum)
 
@@ -296,6 +297,11 @@ def ParseTabAreaOutput(TabAreaOutputTable):
     return (TabAreaValues, tabAreaDict, TabAreaValueFields)
 
 def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds):
+    """ Creates an empty table with fields for the reporting unit id, all selected metrics with
+        appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
+        optional fields for quality assurance purposes or additional user
+        feedback (e.g., LC_Overlap)
+    """
     # create the specified output table
     (out_path, out_name) = os.path.split(Output_table)
     # need to strip the dbf extension if the outpath is a geodatabase; 
@@ -334,3 +340,4 @@ def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_I
     
 if __name__ == "__main__":
     main(sys.argv)
+    
