@@ -69,9 +69,12 @@ def main(argv):
             if aItem[1].excluded:
                 excludedValuesList.append(aItem[0])
         excludedValues = frozenset(excludedValuesList)
+        
+        # take the Metrics to run input and parse it into a list of metric basenames
+        metricsBasenameList = ParseMetricsToRun(Metrics_to_run)
                 
         # create the specified output table
-        newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds)
+        newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsBasenameList,lccClassesDict,fldParams,optionalFlds)
         newTable = newTableResult[0]
         metricsBasenameList = newTableResult[1]
         
@@ -299,7 +302,7 @@ def ParseTabAreaOutput(TabAreaOutputTable):
         
     return (TabAreaValues, tabAreaDict, TabAreaValueFields)
 
-def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds):
+def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsBasenameList,lccClassesDict,fldParams,optionalFlds):
     """ Creates an empty table with fields for the reporting unit id, all selected metrics with
         appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
         optional fields for quality assurance purposes or additional user
@@ -321,8 +324,6 @@ def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_I
             arcpy.AddField_management(newTable, oFld[0], oFld[1], oFld[2], oFld[3])
 
     # add metric fields to the output table.
-    metricsBasenameList = ParseMetricsToRun(Metrics_to_run)
-    
     for mBasename in metricsBasenameList:
         # don't add the field if the metric is undefined in the lcc file
         if not lccClassesDict[mBasename].uniqueValueIds:
