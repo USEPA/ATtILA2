@@ -59,7 +59,7 @@ def main(argv):
         # get dictionary of metric base values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         lccClassesDict = lccObj.classes    
         # get frozenset of all values defined in the lcc file
-        lccDefinedValues = lccClassesDict.getUniqueValueIds()
+        lccClassesValues = lccClassesDict.getUniqueValueIds()
         # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation
         lccValuesDict = lccObj.values
         
@@ -68,7 +68,7 @@ def main(argv):
         for aItem in lccValuesDict.iteritems():
             if aItem[1].excluded:
                 excludedValuesList.append(aItem[0])
-        excludedValuesFSet = frozenset(excludedValuesList)
+        excludedValues = frozenset(excludedValuesList)
                 
         # create the specified output table
         newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds)
@@ -97,9 +97,12 @@ def main(argv):
         TabAreaValueFields = parseTabResults[2]
         
         # alert user if input grid had values not defined in LCC file
+        undefinedValues = []
         for aVal in TabAreaValues:
-            if aVal not in lccDefinedValues and aVal not in excludedValuesFSet:
-                arcpy.AddWarning("The grid value "+str(aVal)+" was not defined in the lcc file - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
+            if aVal not in lccClassesValues and aVal not in lccValuesDict:
+                undefinedValues.append(aVal)
+        if undefinedValues:
+            arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues)+"  - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
         
         # create the cursor to add data to the output table
@@ -121,7 +124,7 @@ def main(argv):
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
             # 4) Identify any grid codes not accounted for in the LCC files
-            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValuesFSet)
+            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValues)
             tabAreaDict = valFieldsResults[0]
             includedAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
@@ -255,7 +258,7 @@ def DeleteField(theTable,fieldName):
     return
 
 
-def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValuesFSet):
+def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValues):
     """ 1) Go through each value field in the TabulateArea table one row at a time and
            put the area value for each grid code into a dictionary with the grid code as the key.
         2) Determine if the grid code is to be included into the reporting unit effective area sum
@@ -273,7 +276,7 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabAr
         tabAreaDict[valKey] = valArea
 
         #add the area of each grid value to the appropriate area sum i.e., included or excluded area
-        if valKey in excludedValuesFSet:
+        if valKey in excludedValues:
             excludedAreaSum += valArea
         else:
             includedAreaSum += valArea               
