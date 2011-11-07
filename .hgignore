@@ -3,3 +3,4 @@ syntax: glob
 
 *.pyc
 *tests/outputs/*
+*QADatasets*
