@@ -35,11 +35,12 @@ class ToolValidator:
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
+        self.initialized = False
 
 
     def initializeParameters(self):
         """ """    
-        
+                
         # Populate predefined LCC dropdown
         self.srcDir = __file__.split("#")[0].replace(".tbx",".src")
         self.lccFileDirSearch = self.os.path.join(self.srcDir, self.lccFileDirName, "*." + self.lccFileExtension)
@@ -55,33 +56,38 @@ class ToolValidator:
         
         self.lccFilePathParameter.enabled = False
         self.lccClassesParameter.enabled = False
+        self.initialized=True
   
 
     def updateParameters(self):
         """Modify the values and properties of parameters before internal
         validation is performed.  This method is called whenever a parameter
         has been changed."""
-        self.initializeParameters()
+    
+        if not self.initialized:
+            self.initializeParameters()
         
         # Converts None to "None", so must do a check
         lccSchemeName = ""
         if self.lccSchemeParameter.value:
             lccSchemeName = str(self.lccSchemeParameter.value)
 
-        
-        lccFilePath = ""
         # User defined LCC Scheme
+        lccFilePath = ""
         if  lccSchemeName == self.lccSchemeUserOption:
-            lccFilePath = str(self.lccFilePathParameter.value)
+            lccFilePath = str(self.lccFilePathParameter.value)      
             self.lccFilePathParameter.enabled = True
+
+            
             
         # Pre-defined  LCC Scheme  
         elif lccSchemeName:
             lccFilePath = self.lccLookup[lccSchemeName]
-        
+            
             # Delete user defined file path in dialog
-            self.lccFilePathParameter.value = ""
+            self.lccFilePathParameter.value = lccFilePath
             self.lccFilePathParameter.enabled = False
+
         
         # Get list of LCC names with description
         classNames = []
