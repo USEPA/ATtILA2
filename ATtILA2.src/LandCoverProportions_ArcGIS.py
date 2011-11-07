@@ -34,12 +34,23 @@ def main(argv):
     Processing_cell_size = arcpy.GetParameterAsText(7)
     Snap_raster = arcpy.GetParameterAsText(8)
     
+#    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/shpfiles/wtrshd.shp"
+#    Reporting_unit_ID_field = "HUC"
+#    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
+#    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001test.lcc"
+#    Metrics_to_run = "'nat  (All natural land use)';'for  (Forest)';'wetl  (Wetlands)';'shrb  (Shrublands)';'ng  (Natural Grasslands)';'nbar  (Natural Barren)';'unat  (All human land use)';'urb  (Urban)';'ldr  (Low Density Residential)';'hdr  (High Density Residential)';'coin  (Commercial, Industrial)';'agt  (Agriculture)';'agp  (Pasture)';'agc  (Crops)';'agcr  (Row)';'agcn  (Non-Row)';'agug  (Urban and Recreational Grasses)';'ago  (Agriculture Other)';'mbar  (Man-Made Barren)'"
+#    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/testfgd"
+#    Processing_cell_size = "30.6617959549476"
+#    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
+#    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
+#    env.overwriteOutput = True
     
     # Constants
     
-    # Set parameters for metric output field
+    # Set parameters for metric output field. use this file's name to determine the metric type
     # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
-    fldParams = ["p", "", "FLOAT", 6, 1]
+    fldParams = metricFieldParams(sys.argv[0])
+    #fldParams = ["p", "", "FLOAT", 6, 1]
     
     # Parameratize optional fields
     optionalFlds = [["LC_Overlap","FLOAT",6,1]]
@@ -64,46 +75,39 @@ def main(argv):
         lccValuesDict = lccObj.values
         
         # generate a frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-        excludedValuesList = []
-        for aItem in lccValuesDict.iteritems():
-            if aItem[1].excluded:
-                excludedValuesList.append(aItem[0])
+        excludedValuesList = [aItem for aItem in lccValuesDict.iteritems() if aItem[1].excluded]
         excludedValues = frozenset(excludedValuesList)
-        
-        # take the Metrics to run input and parse it into a list of metric basenames
-        metricsBasenameList = ParseMetricsToRun(Metrics_to_run)
                 
         # create the specified output table
-        newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsBasenameList,lccClassesDict,fldParams,optionalFlds)
+        newTableResult = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds)
         newTable = newTableResult[0]
         metricsBasenameList = newTableResult[1]
         
-        # store the area of each input reporting unit into dictionary (zoneID:area)
-        zoneAreaDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
-
   
         # Process: Tabulate Area
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         env.snapRaster = Snap_raster
+        # store the area of each input reporting unit into dictionary (zoneID:area)
+        zoneAreaDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         arcpy.gp.TabulateArea_sa(Input_reporting_unit_feature, Reporting_unit_ID_field, Input_land_cover_grid, "Value", scratch_Table, Processing_cell_size)  
-      
 
         # Process: outputs
         # get the VALUE fields from Tabulate Area table
         # get the grid code values from the field names; put in a list of integers
         # also create dictionary to later hold the area value of each grid code in the reporting unit
-        parseTabResults = ParseTabAreaOutput(scratch_Table)
-        TabAreaValues = parseTabResults[0]
-        tabAreaDict = parseTabResults[1]
-        TabAreaValueFields = parseTabResults[2]
+        TabAreaValueFields = arcpy.ListFields(scratch_Table)[2:] 
+        TabAreaValues = [int(aFld.name.replace("VALUE_","")) for aFld in TabAreaValueFields]
+        tabAreaDict = dict(zip(TabAreaValues,[])) 
         
         # alert user if input grid had values not defined in LCC file
-        undefinedValues = []
-        for aVal in TabAreaValues:
-            if aVal not in lccClassesValues and aVal not in lccValuesDict:
-                undefinedValues.append(aVal)
+#        undefinedValues = []
+#        for aVal in TabAreaValues:
+#            if aVal not in lccClassesValues and aVal not in lccValuesDict:
+#                undefinedValues.append(aVal)
+        undefinedValues = [aVal for aVal in TabAreaValues if aVal not in lccClassesValues and aVal not in lccValuesDict]        
+        
         if undefinedValues:
             arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues)+"  - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
@@ -193,6 +197,8 @@ def main(argv):
         # return the spatial analyst license    
         arcpy.CheckInExtension("spatial")
         
+        print "Finished."
+
 
 def PolyAreasToDict(fc, key_field):
     """ Calculate polygon areas and import values to dictionary.
@@ -221,17 +227,6 @@ def FindIdField(fc, id_field_str):
             break
         
     return IDfield
-
-
-def ParseMetricsToRun(metricsString):
-    """ Parse the Metrics_to_run string into a list of selected metric base names.
-        e.g., 'for  (forest)';'wetl  (wetland)' becomes ['for','wetl'] """
-    metricsBasenameList = []
-    templist = metricsString.replace("'","").split(';')
-    for alist in templist:
-        metricsBasenameList.append(alist.split('  ')[0])
-        
-    return metricsBasenameList
 
 
 def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
@@ -286,61 +281,56 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabAr
                        
     return (tabAreaDict,includedAreaSum,excludedAreaSum)
 
-def ParseTabAreaOutput(TabAreaOutputTable):
-    """ From the output table generated by the TabulateArea process:
-        put the fields delineating grid code values into a list, i.e., ignore the zone field
-        put the actual grid code values into a list
-        finally create a dictionary to later hold the area value of each grid code in a polygon (reporting unit)
-    """
-    TabAreaValueFields = arcpy.ListFields(TabAreaOutputTable)[2:]
-    tabAreaDict = {}
-    TabAreaValues =[]
-    for aFld in TabAreaValueFields:
-        value = int(aFld.name.replace("VALUE_",""))
-        TabAreaValues.append(value)
-        tabAreaDict[value] = None
-        
-    return (TabAreaValues, tabAreaDict, TabAreaValueFields)
 
-def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsBasenameList,lccClassesDict,fldParams,optionalFlds):
+def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,Metrics_to_run,lccClassesDict,fldParams,optionalFlds):
     """ Creates an empty table with fields for the reporting unit id, all selected metrics with
         appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
         optional fields for quality assurance purposes or additional user
         feedback (e.g., LC_Overlap)
     """
-    # create the specified output table
-    (out_path, out_name) = os.path.split(Output_table)
     # need to strip the dbf extension if the outpath is a geodatabase; 
     # should control this in the validate step or with an arcpy.ValidateTableName call
-    newTable = arcpy.CreateTable_management(out_path, out_name)
+    newTable = arcpy.CreateTable_management(os.path.split(Output_table)[0], os.path.split(Output_table)[1])
     
     # process the user input to add id field to output table
     IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
     arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
     
-    # add optional fields to the output table
-    if optionalFlds:
-        for oFld in optionalFlds:
-            arcpy.AddField_management(newTable, oFld[0], oFld[1], oFld[2], oFld[3])
-
+    # add any optional fields to the output table
+    [arcpy.AddField_management(newTable, oFld[0], oFld[1], oFld[2], oFld[3]) for oFld in optionalFlds]
+    
+    # take the Metrics to run input and parse it into a list of metric basenames
+    # i.e., take the input string of metric basename and description pairs, and break it into a list of metric basenames only
+    # e.g., the string, 'for  (forest)';'wetl  (wetland)', becomes the list, ['for','wetl']
+    metricsBasenameList = map((lambda splitBaseAndDesc: splitBaseAndDesc.split('  ')[0]), Metrics_to_run.replace("'","").split(';'))
+    
     # add metric fields to the output table.
-    for mBasename in metricsBasenameList:
-        # don't add the field if the metric is undefined in the lcc file
-        if not lccClassesDict[mBasename].uniqueValueIds:
-            # warn the user
-            warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
-            arcpy.AddWarning(warningString+" - "+mBasename.upper()+" was not calculated.")
-            
-            # remove metricBasename from list
-            metricsBasenameList.remove(mBasename)
-        
-        else:
-            arcpy.AddField_management(newTable, fldParams[0]+mBasename+fldParams[1], fldParams[2], fldParams[3], fldParams[4])
-        
+    [arcpy.AddField_management(newTable, fldParams[0]+mBasename+fldParams[1], fldParams[2], fldParams[3], fldParams[4])for mBasename in metricsBasenameList]
+#    # use this commented code if there are classes with no values assigned to them in the Metrics to run selections
+#    for mBasename in metricsBasenameList:
+#        # don't add the field if the metric is undefined in the lcc file
+#        # should put this catch in the dialogs's validation section
+#        if not lccClassesDict[mBasename].uniqueValueIds:
+#            # warn the user
+#            warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
+#            arcpy.AddWarning(warningString+" - "+mBasename.upper()+" was not calculated.")
+#            # remove metricBasename from list
+#            metricsBasenameList.remove(mBasename)
+#        
+#        else:
+#            arcpy.AddField_management(newTable, fldParams[0]+mBasename+fldParams[1], fldParams[2], fldParams[3], fldParams[4])
+         
     # delete the 'Field1' field if it exists in the new output table.
     DeleteField(newTable,"field1")
         
     return (newTable, metricsBasenameList)
+
+def metricFieldParams(pyScript):
+    file_name = os.path.split(pyScript)[1]
+    if file_name == 'LandCoverProportions_ArcGIS.py':
+        FieldParams = ["p", "", "FLOAT", 6, 1]
+        
+    return FieldParams
     
 if __name__ == "__main__":
     main(sys.argv)
