@@ -102,12 +102,7 @@ def main(argv):
         tabAreaDict = dict(zip(TabAreaValues,[])) 
         
         # alert user if input grid had values not defined in LCC file
-#        undefinedValues = []
-#        for aVal in TabAreaValues:
-#            if aVal not in lccClassesValues and aVal not in lccValuesDict:
-#                undefinedValues.append(aVal)
         undefinedValues = [aVal for aVal in TabAreaValues if aVal not in lccClassesValues and aVal not in lccValuesDict]        
-        
         if undefinedValues:
             arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues)+"  - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
 
