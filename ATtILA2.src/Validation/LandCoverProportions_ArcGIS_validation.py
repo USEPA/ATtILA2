@@ -22,7 +22,10 @@ class ToolValidator:
         ###############################################
         # Keep updated
         self.inTableIndex = 0 # start index of fields dropdown
+        self.inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
+        
         self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
+        
         self.lccSchemeUserOption = "User Defined"
         self.lccFileDirName = "LandCoverClassifications"
         self.lccFileExtension = "lcc"
@@ -33,7 +36,7 @@ class ToolValidator:
         self.lccClassesIndex = self.startIndex + 2
         self.inputFieldsIndex = self.inTableIndex + 1
         self.currentFilePath = ""
-        self.inputTableParameter = self.parameters[self.fieldsIndex]
+        self.inputTableParameter = self.parameters[self.inTableIndex]
         self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
@@ -121,18 +124,27 @@ class ToolValidator:
         
         
     def updateInputFieldsParameter(self):
-        """  Set """
-        fieldTypes = set(["SmallInteger", "Integer", "String"])
-        tablePath = self.inputTableParameter.value
-        
-        if tablePath:
-            fields = arcpy.ListFields(tablePath)
+        """  Set selected input field to first field of specified type
             
-            for field in fields:
-                if field.type in fieldTypes:
-                    self.inputFieldsParameter.value = field.name
-                    break
-                    
+             Specified types comes from self.inputIdFieldTypes set in __init__()
+             
+        """
+        
+        fieldTypes = set(self.inputIdFieldTypes)
+        tablePath = self.inputTableParameter.value
+        fieldName = self.inputFieldsParameter.value
+        
+        # Proceed only if table path exists, but field name hasn't been set
+        if tablePath and not fieldName:
+            try:
+                fields = arcpy.ListFields(tablePath)
+                
+                for field in fields:
+                    if field.type in fieldTypes:
+                        self.inputFieldsParameter.value = field.name
+                        break
+            except:
+                pass
                 
         
     def updateMessages(self):
