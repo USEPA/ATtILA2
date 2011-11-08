@@ -7,8 +7,8 @@ class ToolValidator:
     """ Class for validating set of three LCC parameters 
         
         Two consecutive parameters
-        1. Table:  Properties: default (self.inTableIndex)
-        2. Field:  Properties: linked to Table
+        1. Table(reporting units):  Properties: default (self.inTableIndex)
+        2. Field(dropdown):  Properties: linked to Table
         
         Three consecutive parameters 
         1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
@@ -29,6 +29,13 @@ class ToolValidator:
         self.lccSchemeUserOption = "User Defined"
         self.lccFileDirName = "LandCoverClassifications"
         self.lccFileExtension = "lcc"
+        self.idAttributeName = "id"
+        self.nameAttributeName = "name"
+        self.classElementName = "class"
+        self.overrideAttributeName = "lcpfield"
+        self.metricDescription = "{0} - {1}"
+        self.metricDescriptionWithOverride = "{0} [{2}] - {1}"
+        self.srcFolderSuffix = ".src"
         ###############################################
 
         self.parameters = arcpy.GetParameterInfo()
@@ -48,7 +55,7 @@ class ToolValidator:
         """ """    
                 
         # Populate predefined LCC dropdown
-        self.srcDir = __file__.split("#")[0].replace(".tbx",".src")
+        self.srcDir = __file__.split("#")[0].replace(".tbx", self.srcFolderSuffix)
         self.lccFileDirSearch = os.path.join(self.srcDir, self.lccFileDirName, "*." + self.lccFileExtension)
         
         filterList = []
@@ -73,7 +80,17 @@ class ToolValidator:
         if not self.initialized:
             self.initializeParameters()
             
+        self.updateInputLccParameters()
         self.updateInputFieldsParameter()
+        
+
+    
+    def updateInputLccParameters(self):
+        """ Update Land Cover Classification Parameters 
+        
+            These parameters include LCC file path and list of classes with checkboxes.
+        
+        """
         
         # Converts None to "None", so must do a check
         lccSchemeName = ""
@@ -100,18 +117,23 @@ class ToolValidator:
         if lccFilePath and self.currentFilePath != lccFilePath and os.path.isfile(lccFilePath):
             self.currentFilePath = lccFilePath
             lccDocument = parse(lccFilePath)
-            classNodes = lccDocument.getElementsByTagName("class")
+            classNodes = lccDocument.getElementsByTagName(self.classElementName)
             
-            idAttributeName = "id"
-            nameAttributeName = "name"
-            metricDescription = "{0}  ({1})"
+
             
             for classNode in classNodes:
+                # Check for field override, ie NINDEX, UINDEX
+                fieldOverride = classNode.getAttribute(self.overrideAttributeName)
+                if not fieldOverride:
+                    fieldOverride = ""
+                    message = self.metricDescription
+                else:
+                    message = self.metricDescriptionWithOverride
                 
-                classId = classNode.getAttribute(idAttributeName)
-                name = classNode.getAttribute(nameAttributeName)     
+                classId = classNode.getAttribute(self.idAttributeName)
+                name = classNode.getAttribute(self.nameAttributeName)     
                 
-                className = metricDescription.format(classId, name)
+                className = message.format(classId, name, fieldOverride)
                 classNames.append(className)    
                 
         # Populate checkboxes with LCC name and description   
@@ -120,7 +142,7 @@ class ToolValidator:
         else:
             self.lccClassesParameter.enabled = False  
             self.lccClassesParameter.value = ""
-        self.lccClassesParameter.filter.list = classNames
+        self.lccClassesParameter.filter.list = classNames    
         
         
     def updateInputFieldsParameter(self):
