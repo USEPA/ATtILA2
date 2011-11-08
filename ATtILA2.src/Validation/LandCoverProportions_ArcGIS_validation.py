@@ -29,6 +29,11 @@ class ToolValidator:
         self.lccSchemeUserOption = "User Defined"
         self.lccFileDirName = "LandCoverClassifications"
         self.lccFileExtension = "lcc"
+        self.idAttributeName = "id"
+        self.nameAttributeName = "name"
+        self.overrideAttributeName = "lcpfield"
+        self.metricDescription = "{0} - {1}"
+        self.metricDescriptionWithOverride = "{0} [{2}] - {1}"
         ###############################################
 
         self.parameters = arcpy.GetParameterInfo()
@@ -102,16 +107,21 @@ class ToolValidator:
             lccDocument = parse(lccFilePath)
             classNodes = lccDocument.getElementsByTagName("class")
             
-            idAttributeName = "id"
-            nameAttributeName = "name"
-            metricDescription = "{0}  ({1})"
+
             
             for classNode in classNodes:
+                # Check for field override, ie NINDEX, UINDEX
+                fieldOverride = classNode.getAttribute(self.overrideAttributeName)
+                if not fieldOverride:
+                    fieldOverride = ""
+                    message = self.metricDescription
+                else:
+                    message = self.metricDescriptionWithOverride
                 
-                classId = classNode.getAttribute(idAttributeName)
-                name = classNode.getAttribute(nameAttributeName)     
+                classId = classNode.getAttribute(self.idAttributeName)
+                name = classNode.getAttribute(self.nameAttributeName)     
                 
-                className = metricDescription.format(classId, name)
+                className = message.format(classId, name, fieldOverride)
                 classNames.append(className)    
                 
         # Populate checkboxes with LCC name and description   
