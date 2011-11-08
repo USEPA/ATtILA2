@@ -1,8 +1,17 @@
+import arcpy
+import os
+from xml.dom.minidom import parse
+from glob import glob 
+
 class ToolValidator:
     """ Class for validating set of three LCC parameters 
         
+        Two consecutive parameters
+        1. Table:  Properties: default (self.inTableIndex)
+        2. Field:  Properties: linked to Table
+        
         Three consecutive parameters 
-        1. String: Properties: default  POPULATED: file names and lccSchemeUserOption
+        1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
         2. File: Properties: filter=lccFileExtension
         3. String:  MultiValue=Yes; 
     """
@@ -12,26 +21,20 @@ class ToolValidator:
         
         ###############################################
         # Keep updated
-        self.startIndex = 3
+        self.inTableIndex = 0 # start index of fields dropdown
+        self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
         self.lccSchemeUserOption = "User Defined"
         self.lccFileDirName = "LandCoverClassifications"
         self.lccFileExtension = "lcc"
         ###############################################
-        
-        import arcpy
-        import os
-        from xml.dom.minidom import parse
-        from glob import glob 
-        import sys
-        
-        self.sys = sys
-        self.os = os
-        self.parse = parse
-        self.glob = glob
+
         self.parameters = arcpy.GetParameterInfo()
         self.lccFilePathIndex = self.startIndex + 1
         self.lccClassesIndex = self.startIndex + 2
+        self.inputFieldsIndex = self.inTableIndex + 1
         self.currentFilePath = ""
+        self.inputTableParameter = self.parameters[self.fieldsIndex]
+        self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
@@ -43,12 +46,12 @@ class ToolValidator:
                 
         # Populate predefined LCC dropdown
         self.srcDir = __file__.split("#")[0].replace(".tbx",".src")
-        self.lccFileDirSearch = self.os.path.join(self.srcDir, self.lccFileDirName, "*." + self.lccFileExtension)
+        self.lccFileDirSearch = os.path.join(self.srcDir, self.lccFileDirName, "*." + self.lccFileExtension)
         
         filterList = []
         self.lccLookup = {}
-        for lccPath in self.glob(self.lccFileDirSearch):
-            lccSchemeName = self.os.path.basename(lccPath).rstrip("." + self.lccFileExtension)
+        for lccPath in glob(self.lccFileDirSearch):
+            lccSchemeName = os.path.basename(lccPath).rstrip("." + self.lccFileExtension)
             filterList.append(lccSchemeName)
             self.lccLookup[lccSchemeName] = lccPath
             
@@ -66,6 +69,8 @@ class ToolValidator:
     
         if not self.initialized:
             self.initializeParameters()
+            
+        self.updateInputFieldsParameter()
         
         # Converts None to "None", so must do a check
         lccSchemeName = ""
@@ -77,8 +82,6 @@ class ToolValidator:
         if  lccSchemeName == self.lccSchemeUserOption:
             lccFilePath = str(self.lccFilePathParameter.value)      
             self.lccFilePathParameter.enabled = True
-
-            
             
         # Pre-defined  LCC Scheme  
         elif lccSchemeName:
@@ -91,9 +94,9 @@ class ToolValidator:
         
         # Get list of LCC names with description
         classNames = []
-        if lccFilePath and self.currentFilePath != lccFilePath and self.os.path.isfile(lccFilePath):
+        if lccFilePath and self.currentFilePath != lccFilePath and os.path.isfile(lccFilePath):
             self.currentFilePath = lccFilePath
-            lccDocument = self.parse(lccFilePath)
+            lccDocument = parse(lccFilePath)
             classNodes = lccDocument.getElementsByTagName("class")
             
             idAttributeName = "id"
@@ -117,7 +120,21 @@ class ToolValidator:
         self.lccClassesParameter.filter.list = classNames
         
         
-
+    def updateInputFieldsParameter(self):
+        """  Set """
+        fieldTypes = set(["SmallInteger", "Integer", "String"])
+        tablePath = self.inputTableParameter.value
+        
+        if tablePath:
+            fields = arcpy.ListFields(tablePath)
+            
+            for field in fields:
+                if field.type in fieldTypes:
+                    self.inputFieldsParameter.value = field.name
+                    break
+                    
+                
+        
     def updateMessages(self):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
