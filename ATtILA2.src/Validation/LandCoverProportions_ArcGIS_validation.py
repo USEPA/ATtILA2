@@ -33,8 +33,8 @@ class ToolValidator:
         self.nameAttributeName = "name"
         self.classElementName = "class"
         self.overrideAttributeName = "lcpfield"
-        self.metricDescription = "{0} - {1}"
-        self.metricDescriptionWithOverride = "{0} [{2}] - {1}"
+        self.fieldPrefix = "p"
+        self.metricDescription = "{0}  [{1}]  {2}"
         self.srcFolderSuffix = ".src"
         ###############################################
 
@@ -120,20 +120,18 @@ class ToolValidator:
             classNodes = lccDocument.getElementsByTagName(self.classElementName)
             
 
-            
+            message = self.metricDescription
             for classNode in classNodes:
-                # Check for field override, ie NINDEX, UINDEX
-                fieldOverride = classNode.getAttribute(self.overrideAttributeName)
-                if not fieldOverride:
-                    fieldOverride = ""
-                    message = self.metricDescription
-                else:
-                    message = self.metricDescriptionWithOverride
                 
                 classId = classNode.getAttribute(self.idAttributeName)
                 name = classNode.getAttribute(self.nameAttributeName)     
                 
-                className = message.format(classId, name, fieldOverride)
+                # Check for field override, ie NINDEX, UINDEX
+                fieldName = classNode.getAttribute(self.overrideAttributeName)
+                if not fieldName:
+                    fieldName = self.fieldPrefix + classId
+                
+                className = message.format(classId, fieldName, name)
                 classNames.append(className)    
                 
         # Populate checkboxes with LCC name and description   
