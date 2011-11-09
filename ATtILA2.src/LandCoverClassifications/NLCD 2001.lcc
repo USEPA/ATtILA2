@@ -11,6 +11,7 @@
 		* Actual NoData values are always treated as nodata=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
+		<value id="0" name="No Data" nodata="true"/>
 		<value id="11" name="Open Water" nodata="true"/>
 		<value id="12" name="Perennial Ice, Snow" nodata="true"/>
 		

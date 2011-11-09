@@ -25,25 +25,25 @@ arcpy.CheckOutExtension("spatial")
 def main(argv):
     """ Start Here """
     # Script arguments
-    Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
-    Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
-    Input_land_cover_grid = arcpy.GetParameterAsText(2)
-    lccFilePath = arcpy.GetParameterAsText(4)
-    Metrics_to_run = arcpy.GetParameterAsText(5)
-    Output_table = arcpy.GetParameterAsText(6)
-    Processing_cell_size = arcpy.GetParameterAsText(7)
-    Snap_raster = arcpy.GetParameterAsText(8)
+#    Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
+#    Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
+#    Input_land_cover_grid = arcpy.GetParameterAsText(2)
+#    lccFilePath = arcpy.GetParameterAsText(4)
+#    Metrics_to_run = arcpy.GetParameterAsText(5)
+#    Output_table = arcpy.GetParameterAsText(6)
+#    Processing_cell_size = arcpy.GetParameterAsText(7)
+#    Snap_raster = arcpy.GetParameterAsText(8)
     
-#    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/shpfiles/wtrshd.shp"
-#    Reporting_unit_ID_field = "HUC"
-#    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
-#    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001test.lcc"
-#    Metrics_to_run = "'nat  (All natural land use)';'for  (Forest)';'wetl  (Wetlands)';'shrb  (Shrublands)';'ng  (Natural Grasslands)';'nbar  (Natural Barren)';'unat  (All human land use)';'urb  (Urban)';'ldr  (Low Density Residential)';'hdr  (High Density Residential)';'coin  (Commercial, Industrial)';'agt  (Agriculture)';'agp  (Pasture)';'agc  (Crops)';'agcr  (Row)';'agcn  (Non-Row)';'agug  (Urban and Recreational Grasses)';'ago  (Agriculture Other)';'mbar  (Man-Made Barren)'"
-#    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/testfgd"
-#    Processing_cell_size = "30.6617959549476"
-#    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
-#    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
-#    env.overwriteOutput = True
+    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/QADatasets/wbd01_mar2011_metrics1.shp"
+    Reporting_unit_ID_field = "HUC_12"
+    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
+    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001test.lcc"
+    Metrics_to_run = "'for  (Forest)'"
+    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/hu01pforcheck"
+    Processing_cell_size = "30"
+    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
+    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
+    env.overwriteOutput = True
  
       
     # the variables row and rows are initially set to None, so that they can
@@ -83,9 +83,10 @@ def main(argv):
         # e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
         metricsBasenameList = map((lambda splitBaseAndDesc: splitBaseAndDesc.split('  ')[0]), Metrics_to_run.replace("'","").split(';'))
         
-        # use the BasenameList to create a dictionary of basename keys with fieldname values
+        # use the BasenameList to create a dictionary of basename keys with fieldname values using any user supplied field names
         metricsFieldnameDict = {}
         for mBasename in metricsBasenameList:
+            #lccClassesDict[mBasename].overrideFields["lcpField"]
             if lccClassesDict[mBasename].lcpField:
                 metricsFieldnameDict[mBasename] = lccClassesDict[mBasename].lcpField
             else:
@@ -169,7 +170,7 @@ def main(argv):
         
         # Housekeeping
         # delete the scratch table
-        arcpy.Delete_management(scratch_Table)
+        #arcpy.Delete_management(scratch_Table)
 
                 
     except arcpy.ExecuteError:
