@@ -11,3 +11,5 @@ print esdlepy.arcpyh
 print esdlepy.outFields.getFieldParametersFromFilePath()
 
 print esdlepy.outFields.getOptionalFieldParametersFromFilePath()
+
+print esdlepy.outFields.getFieldOverrideKeyFromFilePath()
