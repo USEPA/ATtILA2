@@ -11,6 +11,7 @@ import constants
 from win32com.client import Constants
 from glob import glob
 from collections import defaultdict
+from xml.dom.minidom import NamedNodeMap
 
 class LandCoverMetadata(object):
     """An object that holds all the metadata properties associated with a single LCC document"""
@@ -38,12 +39,11 @@ class LandCoverClass(object):
         Classes may be duplicated, only unique classIds will be reported.
     """
     
-    classId=None
-    name=None
-    lcpField=None
-    impervious=None
-    nitrogen=None
-    phosphorus=None
+    classId = None
+    name = None
+    
+    attributes = dict() # all xml attributes for class
+        
     uniqueValueIds=frozenset()
     uniqueClassIds=frozenset()
     
@@ -67,13 +67,9 @@ class LandCoverClass(object):
         # Load attributes
         self.classId = classNode.getAttribute(constants.XmlAttributeId)
         self.name = classNode.getAttribute(constants.XmlAttributeName)   
-        self.lcpField = classNode.getAttribute(constants.XmlAttributeLcpField)
-        
-        #TODO: Convert to float
-        self.impervious = classNode.getAttribute(constants.XmlAttributeImpervious)
-        self.nitrogen = classNode.getAttribute(constants.XmlAttributeNitrogen) 
-        self.phosphorus = classNode.getAttribute(constants.XmlAttributePhosphorus) 
-        
+        if not self.name:
+            self.name = ""
+            
         # Loop through all child classes to accumulate unique classIds
         tempClassIds = set()
         for landCoverClass in classNode.getElementsByTagName(constants.XmlElementClass):
@@ -92,16 +88,23 @@ class LandCoverClass(object):
             # Values defined as "excluded" are not included here
             if valueId in includedValueIds:
                 tempValueIds.add(valueId)
-                
+        
+        
         self.uniqueValueIds = frozenset(tempValueIds)
         
+            
+        #Load all attributes into dictionary
+        self.attributes = {}
+        for attributeName, attributeValue in classNode.attributes.items():
+            self.attributes[str(attributeName)] = str(attributeValue)
         
 class LandCoverValue(object): 
     """ An object that holds all the properties associated with a single land cover value.""" 
     
-    valueId=None
-    name=None
-    excluded=None
+    valueId = None
+    name = None
+    excluded = None
+    attributes = {}
     
     def __init__(self, valueNode=None):
         """ Initialize a LandCoverValue Object
@@ -129,7 +132,11 @@ class LandCoverValue(object):
                 self.excluded = self.defaultNodataValue
         else:
             self.excluded = self.defaultNodataValue
-
+            
+        #Load all attributes into dictionary
+        self.attributes = {}
+        for attributeName, attributeValue in valueNode.attributes.items():
+            self.attributes[str(attributeName)] = str(attributeValue)
 
 class LandCoverValues(dict):
     """ A container for LandCoverValue objects
@@ -297,13 +304,13 @@ if __name__ == "__main__":
     
     print "VALUES"
     for key, value in lccObj.values.items():
-        print "  {0:8}{1:8}  {2:40}{3:10}".format(key, value.valueId, value.name, value.excluded)
+        print "  {0:8}{1:8}  {2:40}{3:10}  {4}".format(key, value.valueId, value.name, value.excluded, value.attributes)
     
     print
     
     print "ALL CLASSES"
     for classId, landCoverClass in lccObj.classes.items():
-        print "  classId:{0:8}classId:{1:8}name:{2:40}lcpField:{3:10}impervious:{4:8}nitrogen:{5:8}phosphorus:{6:8}{7}{8}".format(classId, landCoverClass.classId, landCoverClass.name, landCoverClass.lcpField, landCoverClass.impervious, landCoverClass.nitrogen, landCoverClass.phosphorus, landCoverClass.uniqueValueIds, landCoverClass.uniqueClassIds)
+        print "  classId:{0:8}classId:{1:8}name:{2:40}{3}{4}{5}".format(classId, landCoverClass.classId, landCoverClass.name, landCoverClass.uniqueValueIds, landCoverClass.uniqueClassIds, landCoverClass.attributes)
 
     print
     
@@ -320,4 +327,5 @@ if __name__ == "__main__":
     
     print "UNIQUE VALUES IN OBJECT"
     print "Top level unique value IDs:", lccObj.getUniqueValueIds()
+    
     
