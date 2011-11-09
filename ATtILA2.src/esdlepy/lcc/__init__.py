@@ -47,11 +47,15 @@ class LandCoverClass(object):
     uniqueValueIds=frozenset()
     uniqueClassIds=frozenset()
     
-    def __init__(self, classNode=None):
+    __parentLccObj = None
+    
+    def __init__(self, classNode=None, parentLccObj=None):
         """ Initialize a LandCoverClass Object
         
             classNode(optional): XML class node object
         """        
+        
+        self.__parentLccObj = parentLccObj
         
         if not classNode is None:
             self.loadLccClassNode(classNode)
@@ -79,9 +83,16 @@ class LandCoverClass(object):
         
         # Loop through all value nodes, in root and in children, to accumulate unique valueIds
         tempValueIds = set()
+        parentLccObj = self.__parentLccObj
+        includedValueIds = parentLccObj.values.getIncludedValueIds()
+
         for landCoverValue in classNode.getElementsByTagName(constants.XmlElementValue):
             valueId = int(landCoverValue.getAttribute(constants.XmlAttributeId))
-            tempValueIds.add(valueId)
+            
+            # Values defined as "excluded" are not included here
+            if valueId in includedValueIds:
+                tempValueIds.add(valueId)
+                
         self.uniqueValueIds = frozenset(tempValueIds)
         
         
@@ -161,7 +172,7 @@ class LandCoverValues(dict):
         
         # Loop through all LCObjects in this container
         for valueId, landCoverValueObj in self.iteritems():
-            
+
             #Excluded values
             if landCoverValueObj.excluded:
                 excludedValueIds.append(valueId)
@@ -169,9 +180,9 @@ class LandCoverValues(dict):
             #Included values
             else:
                 includedValueIds.append(valueId)
-                
+
         self.__excludedValueIds = frozenset(excludedValueIds)
-        self.__includedValueIds = frozenset(includedValueIds)
+        self.__includedValueIds = frozenset(includedValueIds)        
         
         
 class LandCoverClasses(dict):
@@ -182,13 +193,7 @@ class LandCoverClasses(dict):
     """
 
     __uniqueValues = None
-    __parent = None
-    
-    def __init__(self, parent=None):
-        
-        self.__parent = parent
-        
-        
+
     def getUniqueValueIds(self):
         """ Returns frozenset containing all unique value IDs defined in all classes
             
@@ -198,14 +203,9 @@ class LandCoverClasses(dict):
         if self.__uniqueValues is None:
             
             # Assemble all values found in all classes, repeats are allowed
-            # ValueIds for values defined as excluded in values section are not included here
-            parentLccObj = self.__parent    
-            includedValueIds = parentLccObj.values.getIncludedValueIds()
             tempValues = []
             for _classId, landCoverClassObj in self.iteritems():
-                for valueId in landCoverClassObj.uniqueValueIds:
-                    if valueId in includedValueIds:
-                        tempValues.append(valueId)
+                tempValues.extend(landCoverClassObj.uniqueValueIds)
 
             # repeats purged on conversion to frozenset
             self.__uniqueValues = frozenset(tempValues)
@@ -237,14 +237,6 @@ class LandCoverClassification(object):
         self.lccFilePath = lccFilePath
         lccDocument = minidom.parse(lccFilePath)
         
-        # Load Classes
-        classNodes = lccDocument.getElementsByTagName(constants.XmlElementClass)
-        tempClasses = LandCoverClasses(self) # passing lccObj as parent
-        for classNode in classNodes:
-            classId = classNode.getAttribute(constants.XmlAttributeId)
-            tempClasses[classId] = LandCoverClass(classNode)
-        self.classes = tempClasses
-        
         # Load Values
         valuesNode = lccDocument.getElementsByTagName(constants.XmlElementValues)[0]
         valueNodes = valuesNode.getElementsByTagName(constants.XmlElementValue)
@@ -253,7 +245,17 @@ class LandCoverClassification(object):
             valueId = int(valueNode.getAttribute(constants.XmlAttributeId))
             landCoverValue = LandCoverValue(valueNode)
             tempValues[valueId] = landCoverValue
-        self.values = tempValues
+        self.values = tempValues        
+        
+        # Load Classes
+        classNodes = lccDocument.getElementsByTagName(constants.XmlElementClass)
+        tempClasses = LandCoverClasses() 
+        for classNode in classNodes:
+            classId = classNode.getAttribute(constants.XmlAttributeId)
+            tempClasses[classId] = LandCoverClass(classNode, self) # passing this lccObj as parent
+        self.classes = tempClasses
+        
+
         
         # Load Metadata
         metadataNode = lccDocument.getElementsByTagName(constants.XmlElementMetadata)[0]
