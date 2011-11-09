@@ -32,7 +32,7 @@ class ToolValidator:
         self.idAttributeName = "id"
         self.nameAttributeName = "name"
         self.classElementName = "class"
-        self.overrideAttributeName = "lcpfield"
+        self.overrideAttributeName = "lcpField"
         self.fieldPrefix = "p"
         self.metricDescription = "{0}  [{1}]  {2}"
         self.srcFolderSuffix = ".src"
