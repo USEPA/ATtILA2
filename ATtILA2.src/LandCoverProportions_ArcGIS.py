@@ -70,7 +70,7 @@ def main(argv):
         # Process: inputs
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
-        # get dictionary of metric base values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
+        # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         lccClassesDict = lccObj.classes    
         # get frozenset of all values defined in the lcc file
         lccClassesValues = lccClassesDict.getUniqueValueIds()
@@ -82,24 +82,24 @@ def main(argv):
 #        excludedValues = frozenset(excludedValuesList)
         excludedValues = lccValuesDict.getExcludedValueIds()
         
-        # take the Metrics to run input and parse it into a list of metric basenames
-        # i.e., take the input string of metric basename and description pairs, and break it into a list of metric basenames only
+        # take the Metrics to run input and parse it into a list of metric ClassNames
+        # i.e., take the input string of metric ClassName and description pairs, and break it into a list of metric ClassNames only
         # e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
-        metricsBasenameList = map((lambda splitBaseAndDesc: splitBaseAndDesc.split('  ')[0]), Metrics_to_run.replace("'","").split(';'))
+        metricsClassNameList = map((lambda splitClassAndDesc: splitClassAndDesc.split('  ')[0]), Metrics_to_run.replace("'","").split(';'))
         
-        # use the BasenameList to create a dictionary of basename keys with fieldname values using any user supplied field names
+        # use the ClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
         metricsFieldnameDict = {}
-        for mBasename in metricsBasenameList:
-            fieldOverrideName = lccClassesDict[mBasename].attributes.get(fieldOverrideKey,None)
-            #lccClassesDict[mBasename].overrideFields["lcpField"]
+        for mClassName in metricsClassNameList:
+            fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
+            #lccClassesDict[mClassName].overrideFields["lcpField"]
             if fieldOverrideName:
-                #metricsFieldnameDict[mBasename] = lccClassesDict[mBasename].fieldnameOverride
-                metricsFieldnameDict[mBasename] = fieldOverrideName
+                #metricsFieldnameDict[mClassName] = lccClassesDict[mClassName].fieldnameOverride
+                metricsFieldnameDict[mClassName] = fieldOverrideName
             else:
-                metricsFieldnameDict[mBasename] = fldParams[0]+mBasename+fldParams[1]
+                metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]
                 
         # create the specified output table
-        newTable = AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsBasenameList,metricsFieldnameDict,fldParams,optionalFlds)
+        newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,optionalFlds)
         
   
         # Process: Tabulate Area
@@ -151,16 +151,16 @@ def main(argv):
             excludedAreaSum = valFieldsResults[2]
             
             # sum the area values for each selected metric   
-            for mBasename in metricsBasenameList:
+            for mClassName in metricsClassNameList:
                 # get the values for this specified metric
-                metricGridCodesList = lccClassesDict[mBasename].uniqueValueIds
+                metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
                 
                 # determine the area covered by the selected metric
                 # divide it by the effective reporting unit area (i.e., includedAreaSum)
                 # and multiply the answer by 100    
                 metricPercentArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum)
                 
-                out_row.setValue(metricsFieldnameDict[mBasename], metricPercentArea)
+                out_row.setValue(metricsFieldnameDict[mClassName], metricPercentArea)
 
             # set the reporting unit id value
             out_row.setValue(Reporting_unit_ID_field, zoneIDvalue)
@@ -176,7 +176,7 @@ def main(argv):
         
         # Housekeeping
         # delete the scratch table
-        #arcpy.Delete_management(scratch_Table)
+        arcpy.Delete_management(scratch_Table)
 
                 
     except arcpy.ExecuteError:
@@ -247,7 +247,7 @@ def FindIdField(fc, id_field_str):
 def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
     """ Retrieves stored area figures for each grid code associated with selected metric and sums them.
         That number divided by the total included area within the reporting unit times 100 gives the
-        percentage of the effective reporting unit that is classified as the metric base """
+        percentage of the effective reporting unit that is classified as the metric class """
     metricAreaSum = 0                         
     for aValueID in metricGridCodesList:
         metricAreaSum += tabAreaDict.get(aValueID, 0) #add 0 if the lcc defined value is not found in the grid
@@ -296,7 +296,7 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabAr
     return (tabAreaDict,includedAreaSum,excludedAreaSum)
 
 
-def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsBasenameList,metricsFieldnameDict,fldParams,optionalFlds):
+def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,optionalFlds):
     """ Creates an empty table with fields for the reporting unit id, all selected metrics with
         appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
         optional fields for quality assurance purposes or additional user
@@ -314,7 +314,7 @@ def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_I
     [arcpy.AddField_management(newTable, oFld[0], oFld[1], oFld[2], oFld[3]) for oFld in optionalFlds]
                 
     # add metric fields to the output table.
-    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBasename], fldParams[2], fldParams[3], fldParams[4])for mBasename in metricsBasenameList]
+    [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName], fldParams[2], fldParams[3], fldParams[4])for mClassName in metricsClassNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
     DeleteField(newTable,"field1")
