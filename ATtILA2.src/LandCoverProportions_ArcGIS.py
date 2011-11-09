@@ -25,25 +25,25 @@ arcpy.CheckOutExtension("spatial")
 def main(argv):
     """ Start Here """
     # Script arguments
-#    Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
-#    Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
-#    Input_land_cover_grid = arcpy.GetParameterAsText(2)
-#    lccFilePath = arcpy.GetParameterAsText(4)
-#    Metrics_to_run = arcpy.GetParameterAsText(5)
-#    Output_table = arcpy.GetParameterAsText(6)
-#    Processing_cell_size = arcpy.GetParameterAsText(7)
-#    Snap_raster = arcpy.GetParameterAsText(8)
+    Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
+    Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
+    Input_land_cover_grid = arcpy.GetParameterAsText(2)
+    lccFilePath = arcpy.GetParameterAsText(4)
+    Metrics_to_run = arcpy.GetParameterAsText(5)
+    Output_table = arcpy.GetParameterAsText(6)
+    Processing_cell_size = arcpy.GetParameterAsText(7)
+    Snap_raster = arcpy.GetParameterAsText(8)
     
-    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/QADatasets/wbd01_mar2011_metrics1.shp"
-    Reporting_unit_ID_field = "HUC_12"
-    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
-    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001test.lcc"
-    Metrics_to_run = "'for  (Forest)'"
-    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/hu01pforcheck"
-    Processing_cell_size = "30"
-    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
-    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
-    env.overwriteOutput = True
+#    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/QADatasets/wbd01_mar2011_metrics1.shp"
+#    Reporting_unit_ID_field = "HUC_12"
+#    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
+#    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001test.lcc"
+#    Metrics_to_run = "'for  (Forest)'"
+#    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/hu01pforcheck"
+#    Processing_cell_size = "30"
+#    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
+#    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
+#    env.overwriteOutput = True
  
       
     # the variables row and rows are initially set to None, so that they can
@@ -64,6 +64,9 @@ def main(argv):
         # e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
         optionalFlds = outFields.getOptionalFieldParametersFromFilePath()
         
+        # get the field name override key using this script's name
+        fieldOverrideKey = outFields.getFieldOverrideKeyFromFilePath()
+        
         # Process: inputs
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -75,8 +78,9 @@ def main(argv):
         lccValuesDict = lccObj.values
         
         # generate a frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-        excludedValuesList = [aItem for aItem in lccValuesDict.iteritems() if aItem[1].excluded]
-        excludedValues = frozenset(excludedValuesList)
+#        excludedValuesList = [aItem for aItem in lccValuesDict.iteritems() if aItem[1].excluded]
+#        excludedValues = frozenset(excludedValuesList)
+        excludedValues = lccValuesDict.getExcludedValueIds()
         
         # take the Metrics to run input and parse it into a list of metric basenames
         # i.e., take the input string of metric basename and description pairs, and break it into a list of metric basenames only
@@ -86,9 +90,11 @@ def main(argv):
         # use the BasenameList to create a dictionary of basename keys with fieldname values using any user supplied field names
         metricsFieldnameDict = {}
         for mBasename in metricsBasenameList:
+            fieldOverrideName = lccClassesDict[mBasename].attributes.get(fieldOverrideKey,None)
             #lccClassesDict[mBasename].overrideFields["lcpField"]
-            if lccClassesDict[mBasename].lcpField:
-                metricsFieldnameDict[mBasename] = lccClassesDict[mBasename].lcpField
+            if fieldOverrideName:
+                #metricsFieldnameDict[mBasename] = lccClassesDict[mBasename].fieldnameOverride
+                metricsFieldnameDict[mBasename] = fieldOverrideName
             else:
                 metricsFieldnameDict[mBasename] = fldParams[0]+mBasename+fldParams[1]
                 
@@ -309,20 +315,6 @@ def AttilaOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_I
                 
     # add metric fields to the output table.
     [arcpy.AddField_management(newTable, metricsFieldnameDict[mBasename], fldParams[2], fldParams[3], fldParams[4])for mBasename in metricsBasenameList]
-#    
-#    use this commented code if there are classes with no values assigned to them in the Metrics to run selections
-#    for mBasename in metricsBasenameList:
-#        # don't add the field if the metric is undefined in the lcc file
-#        # should put this catch in the dialogs's validation section
-#        if not lccClassesDict[mBasename].uniqueValueIds:
-#            # warn the user
-#            warningString = "The metric "+mBasename.upper()+" is undefined in lcc file"         
-#            arcpy.AddWarning(warningString+" - "+mBasename.upper()+" was not calculated.")
-#            # remove metricBasename from list
-#            metricsBasenameList.remove(mBasename)
-#        
-#        else:
-#            arcpy.AddField_management(newTable, fldParams[0]+mBasename+fldParams[1], fldParams[2], fldParams[3], fldParams[4])
          
     # delete the 'Field1' field if it exists in the new output table.
     DeleteField(newTable,"field1")
