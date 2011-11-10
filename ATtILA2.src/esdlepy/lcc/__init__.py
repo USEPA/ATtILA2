@@ -1,4 +1,5 @@
 """ Land Cover Classification(LCC) 
+
     In memory objects reflecting Land Cover Classification information stored in XML(.lcc) file.
     
 """
