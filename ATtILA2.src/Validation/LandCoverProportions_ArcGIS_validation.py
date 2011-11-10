@@ -36,7 +36,7 @@ class ToolValidator:
         self.fieldPrefix = "p"
         self.metricDescription = "{0}  [{1}]  {2}"
         self.srcFolderSuffix = ".src"
-        self.noFeaturesMessage = "No features!"
+        self.noFeaturesMessage = "Dataset exists, but there are no features (zero rows)"
         ###############################################
 
         self.parameters = arcpy.GetParameterInfo()
