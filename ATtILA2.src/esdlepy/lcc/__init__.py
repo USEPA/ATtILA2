@@ -1,6 +1,6 @@
 """ Land Cover Classification(LCC) 
-
     In memory objects reflecting Land Cover Classification information stored in XML(.lcc) file.
+    
 """
 
 
@@ -12,6 +12,7 @@ from win32com.client import Constants
 from glob import glob
 from collections import defaultdict
 from xml.dom.minidom import NamedNodeMap
+
 
 class LandCoverMetadata(object):
     """An object that holds all the metadata properties associated with a single LCC document"""
@@ -64,7 +65,7 @@ class LandCoverClass(object):
     def loadLccClassNode(self, classNode):
         """ Load a Land Cover Class XML Node """       
  
-        # Load attributes
+        # Load specific attributes as object properties
         self.classId = classNode.getAttribute(constants.XmlAttributeId)
         self.name = classNode.getAttribute(constants.XmlAttributeName)   
         if not self.name:
@@ -89,9 +90,7 @@ class LandCoverClass(object):
             if valueId in includedValueIds:
                 tempValueIds.add(valueId)
         
-        
         self.uniqueValueIds = frozenset(tempValueIds)
-        
             
         #Load all attributes into dictionary
         self.attributes = {}
@@ -228,6 +227,7 @@ class LandCoverClassification(object):
     metadata = LandCoverMetadata()
     
     __uniqueValueIds = None
+    __uniqueValueIdsWithExcludes = None
     
     def __init__(self, lccFilePath=None):
         """ Initialize a LandCoverClassification Object
@@ -240,6 +240,10 @@ class LandCoverClassification(object):
 
     def loadFromFilePath(self, lccFilePath):
         """ Load a new Land Cover Classification (.lcc) File """
+        
+        # Flush cashed objects, dependent of previous file
+        self.__uniqueValueIds = None
+        self.__uniqueValueIdsWithExcludes = None
         
         self.lccFilePath = lccFilePath
         lccDocument = minidom.parse(lccFilePath)
@@ -262,8 +266,6 @@ class LandCoverClassification(object):
             tempClasses[classId] = LandCoverClass(classNode, self) # passing this lccObj as parent
         self.classes = tempClasses
         
-
-        
         # Load Metadata
         metadataNode = lccDocument.getElementsByTagName(constants.XmlElementMetadata)[0]
         self.metadata = LandCoverMetadata(metadataNode)        
@@ -284,48 +286,18 @@ class LandCoverClassification(object):
         return self.__uniqueValueIds
 
 
+    def getUniqueValueIdsWithExcludes(self):
+        """ A frozenset of all unique values in the lcc file, from both the values and classes, excluded values ARE included"""
 
+        if self.__uniqueValueIdsWithExcludes is None:
+            
+            includedValueIds = list(self.getUniqueValueIds())
+            excludedValueIds = list(self.values.getExcludedValueIds())
+            
+            self.__uniqueValueIdsWithExcludes = frozenset(includedValueIds + excludedValueIds)
+        
+        return self.__uniqueValueIdsWithExcludes
+    
 
-
-if __name__ == "__main__":
-    
-    
-    #unit testing    
-    thisFilePath = sys.argv[0]
-    testFilePath = glob(thisFilePath.split("esdlepy")[0] + constants.PredefinedFileDirName + "\\*.lcc")[0]
-    
-    lccObj = LandCoverClassification(testFilePath)
-    
-    print "METADATA"
-    print "  name:", lccObj.metadata.name
-    print "  description:", lccObj.metadata.description
-    
-    print
-    
-    print "VALUES"
-    for key, value in lccObj.values.items():
-        print "  {0:8}{1:8}  {2:40}{3:10}  {4}".format(key, value.valueId, value.name, value.excluded, value.attributes)
-    
-    print
-    
-    print "ALL CLASSES"
-    for classId, landCoverClass in lccObj.classes.items():
-        print "  classId:{0:8}classId:{1:8}name:{2:40}{3}{4}{5}".format(classId, landCoverClass.classId, landCoverClass.name, landCoverClass.uniqueValueIds, landCoverClass.uniqueClassIds, landCoverClass.attributes)
-
-    print
-    
-    print "UNIQUE VALUES IN CLASSES"
-    print lccObj.classes.getUniqueValueIds()
-    
-    print
-    
-    print "INCLUDED/EXCLUDED VALUES"
-    print "included:", lccObj.values.getIncludedValueIds()
-    print "excluded:", lccObj.values.getExcludedValueIds()
-    
-    print
-    
-    print "UNIQUE VALUES IN OBJECT"
-    print "Top level unique value IDs:", lccObj.getUniqueValueIds()
     
     
