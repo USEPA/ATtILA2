@@ -1,6 +1,7 @@
 # use glob syntax.
 syntax: glob
-
+.settings*
 *.pyc
 *tests/outputs/*
 *QADatasets*
+_*

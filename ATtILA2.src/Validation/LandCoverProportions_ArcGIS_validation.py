@@ -17,8 +17,8 @@ class ToolValidator:
     """
 
     def __init__(self):
-        """ """        
-        
+        """ """
+                
         ###############################################
         # Keep updated
         self.inTableIndex = 0 # start index of fields dropdown
@@ -36,6 +36,7 @@ class ToolValidator:
         self.fieldPrefix = "p"
         self.metricDescription = "{0}  [{1}]  {2}"
         self.srcFolderSuffix = ".src"
+        self.noFeaturesMessage = "Dataset exists, but there are no features (zero rows)"
         ###############################################
 
         self.parameters = arcpy.GetParameterInfo()
@@ -52,7 +53,7 @@ class ToolValidator:
 
 
     def initializeParameters(self):
-        """ """    
+        """ """
                 
         # Populate predefined LCC dropdown
         self.srcDir = __file__.split("#")[0].replace(".tbx", self.srcFolderSuffix)
@@ -178,5 +179,11 @@ class ToolValidator:
         # Clear required on disabled lcc class selection
         if not self.lccClassesParameter.enabled:
             self.lccClassesParameter.clearMessage()
+            
+        # Check for empty input features
+        if self.inputTableParameter.value and not self.inputTableParameter.hasError() :
+            result = arcpy.GetCount_management(self.inputTableParameter.value)
+            if result.getOutput(0) == '0':
+                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
         
         

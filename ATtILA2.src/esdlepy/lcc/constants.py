@@ -1,9 +1,11 @@
-'''
-Michael A. Jackson, jackson.michael@epa.gov
-Created on Oct 12, 2011
+#  Michael A. Jackson, jackson.michael@epa.gov
+#  Created on Oct 12, 2011
 
+'''  Land Cover Classification Constants
 
+     You will find constants specific to the .lcc XML file here.
 '''
+
 # Files
 XmlFileExtension = ".lcc"
 PredefinedFileDirName = "LandCoverClassifications"
