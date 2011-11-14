@@ -16,32 +16,34 @@
 		<value id="11" name="Open Water" nodata="true"/>
 		<value id="12" name="Perennial Ice, Snow" nodata="true"/>
 		
-		<value id="21" name="Low Intensity Residential"/>
-		<value id="22" name="High Intensity Residential"/>
-		<value id="23" name="Commercial,Industrial,Transportation"/>
-		<value id="31" name="Bare Rock,Sand,Clay"/>
-		<value id="32" name="Quarries, Strip Mines, Gravel Pits"/>
-		<value id="33" name="Transitional"/>		
+		<value id="21" name="Developed, Open Space"/>
+		<value id="22" name="Developed, Low Intensity"/>
+		<value id="23" name="Developed, Medium Intensity"/>
+		<value id="24" name="Developed, High Intensity"/>
+		<value id="31" name="Barren Land"/>
+		<value id="32" name="Unconsolidated Shore"/>
 		<value id="41" name="Deciduous Forest"/>
 		<value id="42" name="Evergreen Forest"/>
 		<value id="43" name="Mixed Forest"/>
 		<value id="51" name="Dwarf Scrub"/>
 		<value id="52" name="Shrub, Scrub"/>
 		<value id="61" name="Orchards,Vineyards,Other"/>
-		<value id="71" name="Grasslands,Herbaceous"/>		
+		<value id="71" name="Grasslands,Herbaceous"/>
+		<value id="72" name="Sedge Herbaceous"/>
+		<value id="73" name="Lichens"/>
+		<value id="74" name="Moss"/>		
 		<value id="81" name="Pature,Hay"/>
 		<value id="82" name="Row Crops"/>
-		<value id="83" name="Small Grains"/>
 		<value id="90" name="Woody Wetlands"/>
 		<value id="91" name="Palustrine Forested Wetland"/>
 		<value id="92" name="Palustrine Scrub, Shrub Wetland"/>
 		<value id="93" name="Estuarine Forested Wetland"/>
 		<value id="94" name="Estuarine Scrub, Shrub Wetland"/>
-		<value id="95" name="Emergent Herbaceous Wetlands"/>
+		<value id="95" name="Emergent Herbaceous Wetland"/>
 		<value id="96" name="Palustrine Emergent Wetland (Persistent)"/>
-		<value id="97" name="Estuarine Emergent Wetland"/>		
-		<value id="84" name="Fallow"/>
-		<value id="85" name="Urban Grasses,Recreational Grasses"/>
+		<value id="97" name="Palustrine Emergent Wetland"/>		
+		<value id="98" name="Palustrine Aquatic Bed"/>
+		<value id="99" name="Estuarine Aquatic Bed"/>
 	</values>
 	
 	<!-- 
@@ -70,7 +72,9 @@
 				<value id="94"/>
 				<value id="95"/>
 				<value id="96"/>
-				<value id="97"/>		
+				<value id="97"/>
+				<value id="98"/>
+				<value id="99"/>		
 			</class>
 			<class id="shrb" name="Shrublands">
 				<value id="51"/>
@@ -78,44 +82,40 @@
 			</class>
 			<class id="ng" name="Natural Grasslands">
 				<value id="71"/>
+				<value id="72"/>
+				<value id="73"/>
+				<value id="74"/>
 			</class>
 			<class id="nbar" name="Natural Barren">
-				<value id="31"/>		
+				<value id="31"/>
+				<value id="32"/>		
 			</class>		
 		</class>
 		
 		<class id="unat" name="All human land use" lcpfield="UINDEX">
 			<class id="urb" name="Urban">
-				<class id="ldr" name="Low Density Residential">
+				<class id="ldr" name="Developed, Open Space">
 					<value id="21"/>
 				</class>		
-				<class id="hdr" name="High Density Residential">
+				<class id="hdr" name="Developed, Low Intensity">
 					<value id="22"/>
 				</class>
-				<class id="coin" name="Commercial, Industrial">
+				<class id="coin" name="Developed, Medium Intensity">
 					<value id="23"/>
-				</class>						
+				</class>
+				<class id="coin?" name="Developed, High Intensity">
+					<value id="24"/>
+				</class>							
 			</class>
 			<class id="agt" name="Agriculture" onSlopeVisible="true">
 				<class id="agp" name="Pasture" onSlopeVisible="true">
 					<value id="81"/>
 				</class>
 				
-				<class id="agc" name="Crops" onSlopeVisible="true">
+				<class id="agc" name="Cultivated Crops" onSlopeVisible="true">
 					<class id="agcr" name="Row">
 						<value id="82"/>
 					</class>
-					<class id="agcn" name="Non-Row">
-						<value id="83"/>
-						<value id="61"/>
-					</class>
-				</class>
-				
-				<class id="agug" name="Urban and Recreational Grasses">
-					<value id="85"/>
-				</class>
-				<class id="ago" name="Agriculture Other">
-					<value id="84"/>
 				</class>
 				
 			</class>
