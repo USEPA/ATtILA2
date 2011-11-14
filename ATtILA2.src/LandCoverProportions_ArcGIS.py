@@ -48,22 +48,23 @@ def main(argv):
       
     # the variables row and rows are initially set to None, so that they can
     # be deleted in the finally block regardless of where (or if) script fails
-    out_row, out_rows = None, None
-    TabArea_row, TabArea_rows = None, None
+    outTable_row, outTable_rows = None, None
+    tabAreaTable_row, tabAreaTable_rows = None, None
     
     # get current snap environment to restore at end of script
     tempEnvironment0 = env.snapRaster
         
     try:
+        # Use this script's name to obtain information on output field naming, additional optional fields, and 
+        # field naming overrides.
+        
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
         # e.g., fldParams = ["p", "", "FLOAT", 6, 1]
         fldParams = outFields.getFieldParametersFromFilePath()
-        
         # Parameratize optional fields
         # e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
         optionalFlds = outFields.getOptionalFieldParametersFromFilePath()
-        
         # get the field name override key using this script's name
         fieldOverrideKey = outFields.getFieldOverrideKeyFromFilePath()
         
@@ -72,28 +73,21 @@ def main(argv):
         lccObj = lcc.LandCoverClassification(lccFilePath)
         # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         lccClassesDict = lccObj.classes    
-        # get frozenset of all values defined in the lcc file
-        lccClassesValues = lccClassesDict.getUniqueValueIds()
         # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation
         lccValuesDict = lccObj.values
-        
-        # generate a frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-#        excludedValuesList = [aItem for aItem in lccValuesDict.iteritems() if aItem[1].excluded]
-#        excludedValues = frozenset(excludedValuesList)
+        # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
         excludedValues = lccValuesDict.getExcludedValueIds()
         
-        # take the Metrics to run input and parse it into a list of metric ClassNames
+        # take the 'Metrics to run' input and parse it into a list of metric ClassNames
         # i.e., take the input string of metric ClassName and description pairs, and break it into a list of metric ClassNames only
         # e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
         metricsClassNameList = map((lambda splitClassAndDesc: splitClassAndDesc.split('  ')[0]), Metrics_to_run.replace("'","").split(';'))
         
-        # use the ClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
+        # use the metricsClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
         metricsFieldnameDict = {}
         for mClassName in metricsClassNameList:
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
-            #lccClassesDict[mClassName].overrideFields["lcpField"]
-            if fieldOverrideName:
-                #metricsFieldnameDict[mClassName] = lccClassesDict[mClassName].fieldnameOverride
+            if fieldOverrideName: # a field name override exists
                 metricsFieldnameDict[mClassName] = fieldOverrideName
             else:
                 metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]
@@ -106,18 +100,18 @@ def main(argv):
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         env.snapRaster = Snap_raster
         # store the area of each input reporting unit into dictionary (zoneID:area)
-        zoneAreaDict = PolyAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
-        
+        zoneAreaDict = PolygonAreasToDict(Input_reporting_unit_feature, Reporting_unit_ID_field)
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
+        # run the tabulatearea geoprocess
         arcpy.gp.TabulateArea_sa(Input_reporting_unit_feature, Reporting_unit_ID_field, Input_land_cover_grid, "Value", scratch_Table, Processing_cell_size)  
 
-        # Process: outputs
+        # Process output table from tabulatearea geoprocess
         # get the VALUE fields from Tabulate Area table
+        TabAreaValueFields = arcpy.ListFields(scratch_Table)[2:]
         # get the grid code values from the field names; put in a list of integers
-        # also create dictionary to later hold the area value of each grid code in the reporting unit
-        TabAreaValueFields = arcpy.ListFields(scratch_Table)[2:] 
         TabAreaValues = [int(aFld.name.replace("VALUE_","")) for aFld in TabAreaValueFields]
+        # create dictionary to later hold the area value of each grid code in the reporting unit
         tabAreaDict = dict(zip(TabAreaValues,[])) 
         
         # alert user if input grid had values not defined in LCC file
@@ -127,51 +121,46 @@ def main(argv):
 
         
         # create the cursor to add data to the output table
-        out_rows = arcpy.InsertCursor(newTable)
+        outTable_rows = arcpy.InsertCursor(newTable)
         
         # create cursor to search/query the TabAreaOut table
-        TabArea_rows = arcpy.SearchCursor(scratch_Table)
+        tabAreaTable_rows = arcpy.SearchCursor(scratch_Table)
         
-        for TabArea_row in TabArea_rows:
+        for tabAreaTable_row in tabAreaTable_rows:
+            # initiate a row to add to the metric output table
+            outTable_row = outTable_rows.newRow()
+
             # get reporting unit id
-            zoneIDvalue = TabArea_row.getValue(Reporting_unit_ID_field)
-            
-            # add a row to the metric output table
-            out_row = out_rows.newRow()
+            zoneIDvalue = tabAreaTable_row.getValue(Reporting_unit_ID_field)            
+            # set the reporting unit id value in the output row
+            outTable_row.setValue(Reporting_unit_ID_field, zoneIDvalue)
             
             # Process the value fields in the TabulateArea Process output table
             # 1) Go through each value field in the TabulateArea table row and put the area
             #    value for the grid code into a dictionary with the grid code as the key.
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
-            # 4) Identify any grid codes not accounted for in the LCC files
-            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValues)
+            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,tabAreaTable_row,excludedValues)
             tabAreaDict = valFieldsResults[0]
-            includedAreaSum = valFieldsResults[1]
+            effectiveAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
             
-            # sum the area values for each selected metric   
-            for mClassName in metricsClassNameList:
-                # get the values for this specified metric
+            # sum the areas for the selected metric's grid codes   
+            for mClassName in metricsClassNameList: 
+                # get the grid codes for this specified metric
                 metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
-                
-                # determine the area covered by the selected metric
-                # divide it by the effective reporting unit area (i.e., includedAreaSum)
-                # and multiply the answer by 100    
-                metricPercentArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum)
-                
-                out_row.setValue(metricsFieldnameDict[mClassName], metricPercentArea)
+                # divide the area classified as the selected metric by the effective reporting unit area and multiply the answer by 100    
+                metricPercentArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum)
+                # add the calculation to the output row
+                outTable_row.setValue(metricsFieldnameDict[mClassName], metricPercentArea)
 
-            # set the reporting unit id value
-            out_row.setValue(Reporting_unit_ID_field, zoneIDvalue)
-            
             # add lc_overlap calculation to row
             zoneArea = zoneAreaDict[zoneIDvalue]
-            overlapCalc = ((includedAreaSum+excludedAreaSum)/zoneArea) * 100
-            out_row.setValue('LC_Overlap', overlapCalc)
+            overlapCalc = ((effectiveAreaSum+excludedAreaSum)/zoneArea) * 100
+            outTable_row.setValue('LC_Overlap', overlapCalc)
             
             # commit the row to the output table
-            out_rows.insertRow(out_row)
+            outTable_rows.insertRow(outTable_row)
 
         
         # Housekeeping
@@ -201,10 +190,10 @@ def main(argv):
         
     finally:
         # delete cursor and row objects to remove locks on the data
-        if out_row: del out_row
-        if out_rows: del out_rows
-        if TabArea_rows: del TabArea_rows
-        if TabArea_row: del TabArea_row
+        if outTable_row: del outTable_row
+        if outTable_rows: del outTable_rows
+        if tabAreaTable_rows: del tabAreaTable_rows
+        if tabAreaTable_row: del tabAreaTable_row
             
         # restore the environments
         env.snapRaster = tempEnvironment0
@@ -215,7 +204,7 @@ def main(argv):
         print "Finished."
 
 
-def PolyAreasToDict(fc, key_field):
+def PolygonAreasToDict(fc, key_field):
     """ Calculate polygon areas and import values to dictionary.
         Use the reporting unit ID as the retrieval key """
 
@@ -244,16 +233,16 @@ def FindIdField(fc, id_field_str):
     return IDfield
 
 
-def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, includedAreaSum):
+def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
     """ Retrieves stored area figures for each grid code associated with selected metric and sums them.
-        That number divided by the total included area within the reporting unit times 100 gives the
+        That number divided by the total effective area within the reporting unit times 100 gives the
         percentage of the effective reporting unit that is classified as the metric class """
     metricAreaSum = 0                         
     for aValueID in metricGridCodesList:
         metricAreaSum += tabAreaDict.get(aValueID, 0) #add 0 if the lcc defined value is not found in the grid
     
-    if includedAreaSum > 0:
-        metricPercentArea = (metricAreaSum / includedAreaSum) * 100
+    if effectiveAreaSum > 0:
+        metricPercentArea = (metricAreaSum / effectiveAreaSum) * 100
     else: # all values found in reporting unit are in the excluded set
         metricPercentArea = 0
         
@@ -271,29 +260,31 @@ def DeleteField(theTable,fieldName):
     return
 
 
-def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,TabArea_row,excludedValues):
+def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,tabAreaTable_row,excludedValues):
     """ 1) Go through each value field in the TabulateArea table one row at a time and
            put the area value for each grid code into a dictionary with the grid code as the key.
-        2) Determine if the grid code is to be included into the reporting unit effective area sum
-        3) Calculate the total grid area present in the reporting unit to be used in the LC_overlap calculations
+        2) Determine if the area for the grid code is to be included into the reporting unit effective area sum
+        3) Keep a running total of effective and excluded area within the reporting unit. Added together, these 
+           area sums provide the total grid area present in the reporting unit. That value is used to calculate
+           the amount of overlap between the reporting unit polygon and the underlying land cover grid.
     """
     
     excludedAreaSum = 0  #area of reporting unit not used in metric calculations e.g., water area
-    includedAreaSum = 0  #effective area of the reporting unit e.g., land area
+    effectiveAreaSum = 0  #effective area of the reporting unit e.g., land area
 
     for i, aFld in enumerate(TabAreaValueFields):
         # store the grid code and it's area value into the dictionary
         valKey = TabAreaValues[i]
-        valArea = TabArea_row.getValue(aFld.name)
+        valArea = tabAreaTable_row.getValue(aFld.name)
         tabAreaDict[valKey] = valArea
 
-        #add the area of each grid value to the appropriate area sum i.e., included or excluded area
+        #add the area of each grid value to the appropriate area sum i.e., effective or excluded area
         if valKey in excludedValues:
             excludedAreaSum += valArea
         else:
-            includedAreaSum += valArea               
+            effectiveAreaSum += valArea               
                        
-    return (tabAreaDict,includedAreaSum,excludedAreaSum)
+    return (tabAreaDict,effectiveAreaSum,excludedAreaSum)
 
 
 def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,optionalFlds):
