@@ -8,12 +8,12 @@
 
 	<!-- 
 		* The "values" node defines the full set of values that can exist in a landcover raster
-		* The "nodata" attribute is used to exclude values from the total, nodata=false is the default
-		* Actual NoData values are always treated as nodata=true, cannot be used in classes, and should not be listed here. 
+		* The "excluded" attribute is used to exclude values from the total, excluded=false is the default
+		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="11" name="Open Water" nodata="true"/>
-		<value id="12" name="Perennial Ice and Snow" nodata="true"/>
+		<value id="11" name="Open Water" excluded="true"/>
+		<value id="12" name="Perennial Ice and Snow" excluded="true"/>
 		
 		<value id="21" name="Low Intensity Residential"/>
 		<value id="22" name="High Intensity Residential"/>
@@ -47,11 +47,11 @@
 		* Two classes with the same id are not allowed.
 		* Special class attributes:
 			- onSlopeVisible: Make available in "On Slope" metric category, default is false
-			- lcpfield:  if present, it overides default "Land Cover Proportions" field name with the supplied value
+			- lcpField:  if present, it overides default "Land Cover Proportions" field name with the supplied value
 			
 	-->
 	<classes>
-		<class id="nat" name="All natural land use" lcpfield="NINDEX">
+		<class id="nat" name="All natural land use" lcpField="NINDEX">
 			<class  id="for" name="Forest">
 				<value id="41"/>
 				<value id="42"/>
@@ -74,7 +74,7 @@
 			</class>		
 		</class>
 		
-		<class id="unat" name="All human land use" lcpfield="UINDEX">
+		<class id="unat" name="All human land use" lcpField="UINDEX">
 			<class id="urb" name="Urban">
 				<class id="ldr" name="Low Density Residential">
 					<value id="21"/>
