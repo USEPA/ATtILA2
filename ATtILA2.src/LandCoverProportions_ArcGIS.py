@@ -12,9 +12,7 @@
 
 """
 
-import sys
-import os
-import arcpy
+import arcpy, os, sys
 from arcpy import env
 from esdlepy import lcc
 from esdlepy import outFields

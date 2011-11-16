@@ -2,13 +2,15 @@
 Created on Nov 1, 2011
 
 @author: Donald Ebert
+
+Description: Computes the difference between values from two selected fields in two different tables
 '''
 
 import arcpy
-from arcpy import env
+#from arcpy import env
 
 try:
-    env.qualifiedFieldNames = False
+    #env.qualifiedFieldNames = False
     
     QATable = arcpy.GetParameterAsText(0)
     QAIDfield = arcpy.GetParameterAsText(1)
@@ -16,35 +18,33 @@ try:
     TableToCheck = arcpy.GetParameterAsText(3)
     CheckIDfield = arcpy.GetParameterAsText(4)
     FieldToCheck = arcpy.GetParameterAsText(5)
+    diffFieldname = arcpy.GetParameterAsText(6)
+    
+    # abort if join table is same as input table
+    if QATable == TableToCheck:
+        raise Exception("Table check error.") 
+        
 
-    # Get the new field name and validate it.
-    diffFieldname = arcpy.GetParameterAsText(6)   
-    #diffFieldName = arcpy.ValidateFieldName(diffFieldName, os.path.dirname(TableToCheck))
-    
-    joinToTV = "CheckTable"
-    
-#    arcpy.AddField_management(TableToCheck, diffFieldname, "FLOAT", 6, 3)
-    
-    arcpy.MakeTableView_management(TableToCheck, joinToTV)
+    arcpy.MakeTableView_management(TableToCheck, "CheckTableView")
     arcpy.MakeTableView_management(QATable, "QATableView")
     
+    arcpy.JoinField_management("CheckTableView", CheckIDfield, "QATableView", QAIDfield, [FieldToCheck])
     
-    arcpy.JoinField_management(joinToTV, CheckIDfield, "QATableView", QAIDfield,[FieldToCheck])
-
-#    theFields = arcpy.ListFields("CheckTableView")
-#    joinedFieldname = theFields[-1].name
-#         
-#    
-#    expression = "!"+FieldToCheck+"! - !"+joinedFieldname+"!"
-#    arcpy.CalculateField_management("CheckTableView", diffFieldname, expression, "PYTHON")
+    theFields = arcpy.ListFields("CheckTableView")
+    joinedFieldname = theFields[-1].name
     
-    arcpy.RemoveJoin_management(joinToTV, r"D:\ATTILA_Jackson\ATtILA2\src\ATtILA2.src\tests\Outputs\wbd01_metrics_Attila1")
-     
+    arcpy.AddField_management(TableToCheck, diffFieldname, "FLOAT", 6, 3)
+         
+    expression = "!"+FieldToCheck+"! - !"+joinedFieldname+"!"
+    arcpy.CalculateField_management("CheckTableView", diffFieldname, expression, "PYTHON")
+    
+#except SameTableError:
+#    arcpy.AddError("Input table and join table are identical. Cannot joint a table to itself. Terminating.")
      
 except arcpy.ExecuteError:
     arcpy.AddError(arcpy.GetMessages(2))
     
-except:
+except Exception, e:
     # get the traceback object
     import sys
     import traceback
