@@ -27,7 +27,8 @@ class ToolValidator:
         self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
         
         self.lccSchemeUserOption = "User Defined"
-        self.lccFileDirName = "LandCoverClassifications"
+        self.srcDirName = "ATtILA2.src"
+        self.lccFileDirName = r"LandCoverClassifications"
         self.lccFileExtension = "lcc"
         self.idAttributeName = "id"
         self.nameAttributeName = "name"
@@ -56,8 +57,9 @@ class ToolValidator:
         """ """
                 
         # Populate predefined LCC dropdown
-        self.srcDir = __file__.split("#")[0].replace(".tbx", self.srcFolderSuffix)
-        self.lccFileDirSearch = os.path.join(self.srcDir, self.lccFileDirName, "*." + self.lccFileExtension)
+        parentDir = os.path.dirname( __file__.split("#")[0])
+        self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
+        self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*." + self.lccFileExtension)
         
         filterList = []
         self.lccLookup = {}
