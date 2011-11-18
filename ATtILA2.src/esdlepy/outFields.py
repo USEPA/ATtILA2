@@ -20,6 +20,7 @@ rpOverlapName = "R_OVERLAP"
 
 # Field type defaults
 defaultDecimalFieldType = "FLOAT"
+defaultIntegerFieldType = "SHORT"
 
 
 # Required field parameter info
@@ -27,8 +28,8 @@ fieldParameters = {lcpMetricName:[lcpFieldPrefix,"", defaultDecimalFieldType, 6,
                    rpMetricName:[rpFieldPrefix,"", defaultDecimalFieldType, 6, 1]}
 
 # Optional field parameter info
-optionalFieldParameters = {lcpMetricName:[[lcpOverlapName, defaultDecimalFieldType, 6, 1]],
-                           rpMetricName:[[rpOverlapName, defaultDecimalFieldType, 6, 1]]}
+optionalFieldParameters = {lcpMetricName:[[lcpOverlapName, defaultIntegerFieldType, 6, 0]],
+                           rpMetricName:[[rpOverlapName, defaultIntegerFieldType, 6, 0]]}
 
 
 # field Override keys
