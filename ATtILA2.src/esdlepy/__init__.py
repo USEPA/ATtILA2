@@ -1,1 +1,1 @@
-import arcpyh, outFields, lcc, async
+import arcpyh, outFields, lcc
