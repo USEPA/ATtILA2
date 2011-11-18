@@ -62,7 +62,7 @@ def main(argv):
         fldParams = outFields.getFieldParametersFromFilePath()
         # Parameratize optional fields
         # e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
-        optionalFlds = outFields.getOptionalFieldParametersFromFilePath()
+        qaCheckFlds = outFields.getQACheckFieldParametersFromFilePath()
         # get the field name override key using this script's name
         fieldOverrideKey = outFields.getFieldOverrideKeyFromFilePath()
         
@@ -91,7 +91,7 @@ def main(argv):
                 metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]
                 
         # create the specified output table
-        newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,optionalFlds)
+        newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds)
         
   
         # Process: Tabulate Area
@@ -147,15 +147,18 @@ def main(argv):
             for mClassName in metricsClassNameList: 
                 # get the grid codes for this specified metric
                 metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
-                # divide the area classified as the selected metric by the effective reporting unit area and multiply the answer by 100    
-                metricPercentArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum)
+                # get the class percentage area and it's actual area from the tabulate area table
+                metricPercentageAndArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum)
                 # add the calculation to the output row
-                outTable_row.setValue(metricsFieldnameDict[mClassName], metricPercentArea)
+                outTable_row.setValue(metricsFieldnameDict[mClassName], metricPercentageAndArea[0])
 
-            # add lc_overlap calculation to row
+            # add QACheck calculations/values to row
             zoneArea = zoneAreaDict[zoneIDvalue]
             overlapCalc = ((effectiveAreaSum+excludedAreaSum)/zoneArea) * 100
-            outTable_row.setValue('LC_Overlap', overlapCalc)
+            outTable_row.setValue(qaCheckFlds[0][0], overlapCalc)
+            outTable_row.setValue(qaCheckFlds[1][0], effectiveAreaSum+excludedAreaSum)
+            outTable_row.setValue(qaCheckFlds[2][0], effectiveAreaSum)
+            outTable_row.setValue(qaCheckFlds[3][0], excludedAreaSum)
             
             # commit the row to the output table
             outTable_rows.insertRow(outTable_row)
@@ -244,7 +247,7 @@ def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
     else: # all values found in reporting unit are in the excluded set
         metricPercentArea = 0
         
-    return metricPercentArea
+    return metricPercentArea, metricAreaSum
 
 
 def DeleteField(theTable,fieldName):
@@ -285,7 +288,7 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,tabAr
     return (tabAreaDict,effectiveAreaSum,excludedAreaSum)
 
 
-def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,optionalFlds):
+def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds):
     """ Creates an empty table with fields for the reporting unit id, all selected metrics with
         appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
         optional fields for quality assurance purposes or additional user
@@ -300,7 +303,7 @@ def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_
     arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
     
     # add any optional fields to the output table
-    [arcpy.AddField_management(newTable, oFld[0], oFld[1], oFld[2], oFld[3]) for oFld in optionalFlds]
+    [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
                 
     # add metric fields to the output table.
     [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName], fldParams[2], fldParams[3], fldParams[4])for mClassName in metricsClassNameList]
