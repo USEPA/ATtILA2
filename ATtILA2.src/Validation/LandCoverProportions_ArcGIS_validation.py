@@ -2,7 +2,14 @@ import arcpy
 import os
 from xml.dom.minidom import parse
 from glob import glob 
+import sys
 
+srcDirName = "ATtILA2.src"
+tbxParentDirPath =  os.path.dirname(__file__.split("#")[0])
+srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
+sys.path.append(srcDirPath)
+import esdlepy
+    
 class ToolValidator:
     """ Class for validating set of three LCC parameters 
         
@@ -45,6 +52,7 @@ class ToolValidator:
         self.lccClassesIndex = self.startIndex + 2
         self.inputFieldsIndex = self.inTableIndex + 1
         self.currentFilePath = ""
+        self.ruFilePath = ""
         self.inputTableParameter = self.parameters[self.inTableIndex]
         self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
         self.lccSchemeParameter =  self.parameters[self.startIndex]
@@ -181,11 +189,8 @@ class ToolValidator:
         # Clear required on disabled lcc class selection
         if not self.lccClassesParameter.enabled:
             self.lccClassesParameter.clearMessage()
-            
-        # Check for empty input features
-        if self.inputTableParameter.value and not self.inputTableParameter.hasError() :
-            result = arcpy.GetCount_management(self.inputTableParameter.value)
-            if result.getOutput(0) == '0':
-                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
         
+
+
+
         
