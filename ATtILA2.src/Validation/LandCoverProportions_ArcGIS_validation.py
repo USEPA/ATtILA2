@@ -8,7 +8,7 @@ srcDirName = "ATtILA2.src"
 tbxParentDirPath =  os.path.dirname(__file__.split("#")[0])
 srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
 sys.path.append(srcDirPath)
-import esdlepy
+#import esdlepy
     
 class ToolValidator:
     """ Class for validating set of three LCC parameters 
@@ -28,12 +28,24 @@ class ToolValidator:
                 
         ###############################################
         # Keep updated
+        
+        # Input reporting units
         self.inTableIndex = 0 # start index of fields dropdown
         self.inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
         
-        self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
         
+        # Lcc Dropdown
+        self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
         self.lccSchemeUserOption = "User Defined"
+        
+        # Optional Fields
+        self.optionalFieldsIndex = 9 # index of optional fields parameter
+        self.optionalFieldsName = "Optional Fields"
+        self.qaCheckDescription = "QACHECK  -  Quality Assurance Checks"
+        self.metricAddDescription = "METRICADD  -  Area for all land cover classes"
+        
+        
+        # Global
         self.srcDirName = "ATtILA2.src"
         self.lccFileDirName = r"LandCoverClassifications"
         self.lccFileExtension = "lcc"
@@ -44,7 +56,7 @@ class ToolValidator:
         self.fieldPrefix = "p"
         self.metricDescription = "{0}  [{1}]  {2}"
         self.srcFolderSuffix = ".src"
-        self.noFeaturesMessage = "Dataset exists, but there are no features (zero rows)"
+
         ###############################################
 
         self.parameters = arcpy.GetParameterInfo()
@@ -58,6 +70,7 @@ class ToolValidator:
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
+        self.optionalFieldsParameter = self.parameters[self.optionalFieldsIndex]
         self.initialized = False
 
 
@@ -81,8 +94,14 @@ class ToolValidator:
         self.lccFilePathParameter.enabled = False
         self.lccClassesParameter.enabled = False
         self.initialized=True
-  
-
+        
+        # push optional fields to collapsed region
+        self.optionalFieldsParameter.category = self.optionalFieldsName
+        
+        # set optional fields filter
+        filterList = [self.qaCheckDescription, self.metricAddDescription]
+        self.optionalFieldsParameter.filter.list = filterList
+        
     def updateParameters(self):
         """Modify the values and properties of parameters before internal
         validation is performed.  This method is called whenever a parameter
@@ -190,6 +209,8 @@ class ToolValidator:
         if not self.lccClassesParameter.enabled:
             self.lccClassesParameter.clearMessage()
         
+        # Remove required on optional fields
+        self.optionalFieldsParameter.clearMessage()
 
 
 
