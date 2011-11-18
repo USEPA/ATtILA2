@@ -11,7 +11,10 @@ import lcc
 # Land Cover Proportions(lcp)
 lcpMetricName = "LandCoverProportions"
 lcpFieldPrefix = "p"
-lcpOverlapName = "LC_OVERLAP"
+lcpOverlapName = "LCP_OVRLP"
+lcpTotalAreaName = "LCP_TOT_A"
+lcpEffectiveAreaName = "LCP_EFF_A"
+lcpExcludedAreaName = "LCP_EXC_A"
 
 # Riparian Proportions(rp)
 rpMetricName = "RiparianProportions"
@@ -21,6 +24,7 @@ rpOverlapName = "R_OVERLAP"
 # Field type defaults
 defaultDecimalFieldType = "FLOAT"
 defaultIntegerFieldType = "SHORT"
+defaultAreaFieldType = "DOUBLE"
 
 
 # Required field parameter info
@@ -28,8 +32,11 @@ fieldParameters = {lcpMetricName:[lcpFieldPrefix,"", defaultDecimalFieldType, 6,
                    rpMetricName:[rpFieldPrefix,"", defaultDecimalFieldType, 6, 1]}
 
 # Optional field parameter info
-optionalFieldParameters = {lcpMetricName:[[lcpOverlapName, defaultIntegerFieldType, 6, 0]],
-                           rpMetricName:[[rpOverlapName, defaultIntegerFieldType, 6, 0]]}
+qaCheckFieldParameters = {lcpMetricName:[[lcpOverlapName, defaultIntegerFieldType, 6],
+                                        [lcpTotalAreaName, defaultAreaFieldType, 15],
+                                        [lcpEffectiveAreaName, defaultAreaFieldType, 15],
+                                        [lcpExcludedAreaName, defaultAreaFieldType, 15]],
+                           rpMetricName:[[rpOverlapName, defaultIntegerFieldType, 6]]}
 
 
 # field Override keys
@@ -55,7 +62,7 @@ def getFieldParametersFromFilePath(filePath=None, delimiter="_"):
     return fieldParameters[key]
         
         
-def getOptionalFieldParametersFromFilePath(filePath=None, delimiter="_"):
+def getQACheckFieldParametersFromFilePath(filePath=None, delimiter="_"):
     """ Parses full file path to look up optional field parameters
         
         No arguments are required.  If filePath is not given, it uses sys.argv[0] (full path to executed script)
@@ -70,7 +77,7 @@ def getOptionalFieldParametersFromFilePath(filePath=None, delimiter="_"):
     
     key = getKeyFromFilePath(filePath, delimiter)
     
-    return optionalFieldParameters[key]
+    return qaCheckFieldParameters[key]
 
 
 def getFieldOverrideKeyFromFilePath(filePath=None, delimiter="_"):
