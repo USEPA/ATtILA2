@@ -3,18 +3,15 @@
     
 import os
 import sys
-
-srcDirName = "ATtILA2.src"
-tbxParentDirPath =  os.path.dirname(__file__.split("#")[0])
+tbxPath = __file__.split("#")[0]
+srcDirName = os.path.basename(tbxPath).rstrip(".tbx").split("__")[0] + ".src"  # <toolbox_name>__anything.tbx -> <toolbox_name>.src
+tbxParentDirPath =  os.path.dirname(tbxPath)
 srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
 sys.path.append(srcDirPath)
 from esdlepy.metrics.validation.LandCoverProportions import ToolValidator
 
 
 """
-
-
-
 
 
 import arcpy
@@ -90,7 +87,7 @@ class ToolValidator:
 
     def initializeParameters(self):
         """ """
-                
+
         # Populate predefined LCC dropdown
         parentDir = os.path.dirname( __main__.__file__.split("#")[0])
         self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
