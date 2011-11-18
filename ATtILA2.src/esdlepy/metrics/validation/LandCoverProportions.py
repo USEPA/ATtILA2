@@ -1,14 +1,25 @@
+"""
+    ToolValidator is for tool dialog validation, cut and paste the following into the Validation tab of tool properties:
+    
+import os
+import sys
+tbxPath = __file__.split("#")[0]
+srcDirName = os.path.basename(tbxPath).rstrip(".tbx").split("__")[0] + ".src"  # <toolbox_name>__anything.tbx -> <toolbox_name>.src
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
+sys.path.append(srcDirPath)
+from esdlepy.metrics.validation.LandCoverProportions import ToolValidator
+
+
+"""
+
+
 import arcpy
 import os
 from xml.dom.minidom import parse
 from glob import glob 
-import sys
+import __main__
 
-srcDirName = "ATtILA2.src"
-tbxParentDirPath =  os.path.dirname(__file__.split("#")[0])
-srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
-sys.path.append(srcDirPath)
-#import esdlepy
     
 class ToolValidator:
     """ Class for validating set of three LCC parameters 
@@ -76,9 +87,9 @@ class ToolValidator:
 
     def initializeParameters(self):
         """ """
-                
+
         # Populate predefined LCC dropdown
-        parentDir = os.path.dirname( __file__.split("#")[0])
+        parentDir = os.path.dirname( __main__.__file__.split("#")[0])
         self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
         self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*." + self.lccFileExtension)
         
