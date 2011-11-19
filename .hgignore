@@ -4,4 +4,4 @@ syntax: glob
 *.pyc
 *tests/outputs/*
 *QADatasets*
-_*
+*_esdlepy-docs
