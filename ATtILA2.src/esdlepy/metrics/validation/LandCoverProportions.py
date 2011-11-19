@@ -40,23 +40,17 @@ class ToolValidator:
         ###############################################
         # Keep updated
         
-        # Input reporting units
         self.inTableIndex = 0 # start index of fields dropdown
-        self.inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
-        
-        
-        # Lcc Dropdown
         self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
-        self.lccSchemeUserOption = "User Defined"
-        
-        # Optional Fields
         self.optionalFieldsIndex = 9 # index of optional fields parameter
+
+        ###############################################
+        
+        self.inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
+        self.lccSchemeUserOption = "User Defined"
         self.optionalFieldsName = "Optional Fields"
         self.qaCheckDescription = "QACHECK  -  Quality Assurance Checks"
         self.metricAddDescription = "METRICADD  -  Area for all land cover classes"
-        
-        
-        # Global
         self.srcDirName = "ATtILA2.src"
         self.lccFileDirName = r"LandCoverClassifications"
         self.lccFileExtension = "lcc"
@@ -68,7 +62,6 @@ class ToolValidator:
         self.metricDescription = "{0}  [{1}]  {2}"
         self.srcFolderSuffix = ".src"
 
-        ###############################################
 
         self.parameters = arcpy.GetParameterInfo()
         self.lccFilePathIndex = self.startIndex + 1
