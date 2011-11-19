@@ -31,15 +31,16 @@ def main(argv):
     Output_table = arcpy.GetParameterAsText(6)
     Processing_cell_size = arcpy.GetParameterAsText(7)
     Snap_raster = arcpy.GetParameterAsText(8)
+    Optional_field_groups = arcpy.GetParameterAsText(9)
     
-#    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/QADatasets/wbd01_mar2011_metrics1.shp"
-#    Reporting_unit_ID_field = "HUC_12"
-#    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
-#    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001test.lcc"
+#    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/shpfiles/wtrshd.shp"
+#    Reporting_unit_ID_field = "HUC"
+#    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
+#    lccFilePath = "D:/ATTILA_Jackson/testzone/NLCD 2001.lcc"
 #    Metrics_to_run = "'for  (Forest)'"
-#    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/hu01pforcheck"
-#    Processing_cell_size = "30"
-#    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/nlcd2k6_hu01"
+#    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/qacheck"
+#    Processing_cell_size = "30.6618"
+#    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
 #    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
 #    env.overwriteOutput = True
  
@@ -60,11 +61,23 @@ def main(argv):
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
         # e.g., fldParams = ["p", "", "FLOAT", 6, 1]
         fldParams = outFields.getFieldParametersFromFilePath()
-        # Parameratize optional fields
-        # e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
-        qaCheckFlds = outFields.getQACheckFieldParametersFromFilePath()
+
         # get the field name override key using this script's name
         fieldOverrideKey = outFields.getFieldOverrideKeyFromFilePath()
+        
+        # if any optional fields are selected, get their parameters
+        optionalGroupsList = ParseCheckboxSelections(Optional_field_groups)
+        
+        if 'QACHECK' in optionalGroupsList:
+            # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+            qaCheckFlds = outFields.getQACheckFieldParametersFromFilePath()
+        else:
+            qaCheckFlds = None
+            
+        if 'METRICADD' in optionalGroupsList:
+            addAreaFldParams = ["_A","DOUBLE",15,0]
+        else:
+            addAreaFldParams = None
         
         # Process: inputs
         # XML Land Cover Coding file loaded into memory
@@ -77,23 +90,26 @@ def main(argv):
         excludedValues = lccValuesDict.getExcludedValueIds()
         
         # take the 'Metrics to run' input and parse it into a list of metric ClassNames
-        # i.e., take the input string of metric ClassName and description pairs, and break it into a list of metric ClassNames only
-        # e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
-        metricsClassNameList = map((lambda splitClassAndDesc: splitClassAndDesc.split('  ')[0]), Metrics_to_run.replace("'","").split(';'))
+        metricsClassNameList = ParseCheckboxSelections(Metrics_to_run)
         
+        # determine if the output is going to a geodatabase
+        outTablePath = os.path.split(Output_table)[0] 
+        inGDB = outTablePath[-3:].lower() == "gdb"
+                
         # use the metricsClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
         metricsFieldnameDict = {}
         for mClassName in metricsClassNameList:
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
             if fieldOverrideName: # a field name override exists
+                
                 metricsFieldnameDict[mClassName] = fieldOverrideName
             else:
                 metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]
                 
         # create the specified output table
-        newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds)
+        newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams)
+
         
-  
         # Process: Tabulate Area
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         env.snapRaster = Snap_raster
@@ -151,14 +167,18 @@ def main(argv):
                 metricPercentageAndArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum)
                 # add the calculation to the output row
                 outTable_row.setValue(metricsFieldnameDict[mClassName], metricPercentageAndArea[0])
+                
+                if addAreaFldParams:
+                    outTable_row.setValue(metricsFieldnameDict[mClassName]+"_A", metricPercentageAndArea[1])
 
             # add QACheck calculations/values to row
-            zoneArea = zoneAreaDict[zoneIDvalue]
-            overlapCalc = ((effectiveAreaSum+excludedAreaSum)/zoneArea) * 100
-            outTable_row.setValue(qaCheckFlds[0][0], overlapCalc)
-            outTable_row.setValue(qaCheckFlds[1][0], effectiveAreaSum+excludedAreaSum)
-            outTable_row.setValue(qaCheckFlds[2][0], effectiveAreaSum)
-            outTable_row.setValue(qaCheckFlds[3][0], excludedAreaSum)
+            if qaCheckFlds:
+                zoneArea = zoneAreaDict[zoneIDvalue]
+                overlapCalc = ((effectiveAreaSum+excludedAreaSum)/zoneArea) * 100
+                outTable_row.setValue(qaCheckFlds[0][0], overlapCalc)
+                outTable_row.setValue(qaCheckFlds[1][0], effectiveAreaSum+excludedAreaSum)
+                outTable_row.setValue(qaCheckFlds[2][0], effectiveAreaSum)
+                outTable_row.setValue(qaCheckFlds[3][0], excludedAreaSum)
             
             # commit the row to the output table
             outTable_rows.insertRow(outTable_row)
@@ -288,30 +308,48 @@ def ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,tabAr
     return (tabAreaDict,effectiveAreaSum,excludedAreaSum)
 
 
-def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds):
+def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams):
     """ Creates an empty table with fields for the reporting unit id, all selected metrics with
         appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
         optional fields for quality assurance purposes or additional user
         feedback (e.g., LC_Overlap)
     """
+    outTablePath, outTableName = os.path.split(Output_table)
+        
     # need to strip the dbf extension if the outpath is a geodatabase; 
     # should control this in the validate step or with an arcpy.ValidateTableName call
-    newTable = arcpy.CreateTable_management(os.path.split(Output_table)[0], os.path.split(Output_table)[1])
+    newTable = arcpy.CreateTable_management(outTablePath, outTableName)
+    
+    if outTablePath[-3:] != "gdb":
+        # need to truncate fieldnames to 10 characters if necessary
+        pass
     
     # process the user input to add id field to output table
     IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
     arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
-    
-    # add any optional fields to the output table
-    [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
                 
     # add metric fields to the output table.
     [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName], fldParams[2], fldParams[3], fldParams[4])for mClassName in metricsClassNameList]
+
+    # add any optional fields to the output table
+    if qaCheckFlds:
+        [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
+        
+    if addAreaFldParams:
+        [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3])for mClassName in metricsClassNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
     DeleteField(newTable,"field1")
         
     return (newTable)
+
+
+def ParseCheckboxSelections(selectionsString):
+    """ Returns a list of the items selected by the user.
+        The expected input is a string with the following format: 'item<two spaces>description';'item<two spaces>description';'item...'
+        e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
+    """
+    return map((lambda splitItemAndDesc: splitItemAndDesc.split('  ')[0]), selectionsString.replace("'","").split(';'))
 
 
 if __name__ == "__main__":
