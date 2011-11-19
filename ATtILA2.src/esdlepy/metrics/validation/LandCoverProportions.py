@@ -80,7 +80,7 @@ class ToolValidator:
 
     def initializeParameters(self):
         """ """
-
+        self.inputTableParameter.value = ""
         # Populate predefined LCC dropdown
         parentDir = os.path.dirname( __main__.__file__.split("#")[0])
         self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
