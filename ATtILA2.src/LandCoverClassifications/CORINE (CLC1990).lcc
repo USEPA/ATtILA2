@@ -12,30 +12,45 @@
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="11" name="Open Water" excluded="true"/>
-		<value id="12" name="Perennial Ice and Snow" excluded="true"/>
-		
-		<value id="21" name="Low Intensity Residential"/>
-		<value id="22" name="High Intensity Residential"/>
-		<value id="23" name="Commercial,Industrial,Transportation"/>
-		<value id="31" name="Bare Rock,Sand,Clay"/>				
-		<value id="32" name="Quarries, Strip Mines, Gravel Pits"/>
-		<value id="33" name="Transitional"/>		
-		<value id="41" name="Deciduous Forest"/>
-		<value id="42" name="Evergreen Forest"/>
-		<value id="43" name="Mixed Forest"/>
-		<value id="51" name="Deciduous Shrubland"/>
-		<value id="52" name="Evergreen Shrubland"/>
-		<value id="53" name="Mixed Shrubland"/>
-		<value id="61" name="Orchards,Vineyards,Other"/>	
-		<value id="71" name="Grasslands,Herbaceous"/>		
-		<value id="81" name="Pature,Hay"/>
-		<value id="82" name="Row Crops"/>
-		<value id="83" name="Small Grains"/>
-		<value id="84" name="Fallow"/>
-		<value id="85" name="Urban Grasses,Recreational Grasses"/>
-		<value id="91" name="Woody Wetlands"/>
-		<value id="92" name="Emergent Herbaceous Wetlands"/>	
+		<value id="111" name="Continuous urban fabric"/>
+		<value id="112" name="Discontinuous urban fabric"/>
+		<value id="121" name="Industrial or commercial units"/>
+		<value id="122" name="Road and rail networks and associated land"/>
+		<value id="123" name="Port areas"/>
+		<value id="124" name="Airports"/>				
+		<value id="131" name="Mineral extraction sites"/>
+		<value id="132" name="Dump sites"/>
+		<value id="133" name="Construction sites"/>				
+		<value id="141" name="Green urban areas"/>
+		<value id="142" name="Sport and leisure facilities"/>		
+		<value id="211" name="Non-irrigated arable land"/>
+		<value id="212" name="Permanently irrigated land"/>
+		<value id="213" name="Rice fields"/>
+		<value id="221" name="Vineyards"/>
+		<value id="222" name="Fruit trees and berry plantations"/>		
+		<value id="223" name="Olive groves"/>						
+		<value id="231" name="Pastures"/>
+		<value id="241" name="Annual crops associated with permanent crops"/>
+		<value id="242" name="Complex cultivation patterns"/>		
+		<value id="243" name="Land principally occupied by agriculture, with significant areas of natural vegetation"/>
+		<value id="244" name="Agro-forestry areas"/>
+		<value id="311" name="Broad leafed forest"/>
+		<value id="312" name="Coniferous forest"/>
+		<value id="313" name="Mixed forest"/>		
+		<value id="321" name="Natural grasslands"/>
+		<value id="322" name="Moors and heathland"/>		
+		<value id="323" name="Scierophyllous vegetation"/>
+		<value id="324" name="Transitional woodland-shrub"/>		
+		<value id="331" name="Beaches, dunes, sands"/>
+		<value id="332" name="Bare rocks"/>		
+		<value id="333" name="Sparsely vegetated areas"/>		
+		<value id="334" name="Burnt areas"/>		
+		<value id="335" name="Glaciers and perpetual snow"/>		
+		<value id="411" name="Inland marshes"/>
+		<value id="412" name="Peat bogs"/>		
+		<value id="421" name="Salt marshes"/>
+		<value id="422" name="Salines"/>
+		<value id="423" name="Intertidal flats"/>				
 	</values>
 		
 		
@@ -51,69 +66,83 @@
 			
 	-->
 	<classes>
-		<class id="nat" name="All natural land use" lcpField="NINDEX">
-			<class  id="for" name="Forest">
-				<value id="41"/>
-				<value id="42"/>
-				<value id="43"/>
+		<class id="ui" name="Artificial surfaces" lcpField="NINDEX">
+			<class  id="urb" name="Urban fabric">
+				<value id="111"/>
+				<value id="112"/>				
 			</class>
-			<class id="wetl" name="Wetlands">
-				<value id="91"/>
-				<value id="92"/>
+			<class id="ict" name="Industrial, commercial and transport units">
+				<value id="121"/>
+				<value id="122"/>				
+				<value id="123"/>				
+				<value id="124"/>				
 			</class>
-			<class id="shrb" name="Shrublands">
-				<value id="51"/>
-				<value id="52"/>
-				<value id="53"/>
+			<class id="mbar" name="Mine, dump and construction sites">
+				<value id="131"/>
+				<value id="132"/>
+				<value id="133"/>								
 			</class>
-			<class id="ng" name="Natural Grasslands">
-				<value id="71"/>
+			<class id="dos" name="Artificial, non-agriculture vegetated areas">
+				<value id="141"/>
+				<value id="142"/>				
 			</class>
-			<class id="nbar" name="Natural Barren">
-				<value id="31"/>		
-			</class>		
 		</class>
 		
-		<class id="unat" name="All human land use" lcpField="UINDEX">
-			<class id="urb" name="Urban">
-				<class id="ldr" name="Low Density Residential">
-					<value id="21"/>
-				</class>		
-				<class id="hdr" name="High Density Residential">
-					<value id="22"/>
-				</class>
-				<class id="coin" name="Commercial, Industrial">
-					<value id="23"/>
-				</class>						
+		<class id="agt" name="Agricultural areas" lcpField="UINDEX">
+			<class id="ago" name="Arable land">
+				<value id="211"/>
+				<value id="212"/>				
+				<value id="213"/>				
+			</class>								
+			<class id="agc" name="Permanent crops">
+				<value id="221"/>
+				<value id="222"/>				
+				<value id="223"/>				
+			</class>		
+			<class id="hdr" name="Pastures">
+				<value id="231"/>
 			</class>
-			<class id="agt" name="Agriculture" onSlopeVisible="true">
-				<class id="agp" name="Pasture" onSlopeVisible="true">
-					<value id="81"/>
-				</class>
-				
-				<class id="agc" name="Crops" onSlopeVisible="true">
-					<class id="agcr" name="Row" >
-						<value id="82"/>
-					</class>
-					<class id="agcn" name="Non-Row">
-						<value id="83"/>
-						<value id="61"/>
-					</class>
-				</class>
-				
-				<class id="agug" name="Urban and Recreational Grasses">
-					<value id="85"/>
-				</class>
-				<class id="ago" name="Agriculture Other">
-					<value id="84"/>
-				</class>
-				
+			<class id="coin" name="Heterogeneous agricultural areas">
+				<value id="241"/>
+				<value id="242"/>				
+				<value id="243"/>				
+				<value id="244"/>				
+			</class>						
+		</class>
+		
+		<class id="nat" name="Forests and semi-natural areas" onSlopeVisible="true">
+			<class id="for" name="Forests" onSlopeVisible="true">
+				<value id="311"/>
+				<value id="312"/>				
+				<value id="313"/>				
 			</class>
-			<class id="mbar" name="Man-Made Barren">
-				<value id="32"/>
-				<value id="33"/>
+			<class id="shrb" name="Shrub and/or herbaceous vegetation association" onSlopeVisible="true">
+				<value id="321"/>
+				<value id="322"/>				
+				<value id="323"/>				
+				<value id="324"/>				
+			</class>
+			<class id="nbar" name="Open spaces with little or no vegetation">
+				<value id="331"/>
+				<value id="332"/>				
+				<value id="333"/>				
+				<value id="334"/>				
+				<value id="335"/>				
 			</class>
 		</class>
+				
+		<class id="wetl" name="Wetlands">
+			<class id="iwetl" name="Inland wetlands">
+				<value id="411"/>
+				<value id="412"/>				
+			</class>
+			<class id="cwetl" name="Maritime wetlands">
+				<value id="421"/>
+				<value id="422"/>				
+				<value id="423"/>				
+			</class>
+		</class>
+		
 	</classes>
 
 </root>
