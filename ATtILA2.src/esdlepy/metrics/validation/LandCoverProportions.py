@@ -71,7 +71,10 @@ class ToolValidator:
     inTableIndex = 0 # start index of input reporting units (one parameter follows)
     startIndex = 3 # start index of predefined dropdown (two parameters follow)
     optionalFieldsIndex = 9 # index of optional fields parameter
-
+    inRasterIndex = 2 # index of input raster
+    processingCellSizeIndex = 7 # index of optional processing cell size parameter
+    snapRasterIndex = 8 # index of optional snap raster parameter
+    
     ###############################################
     
 
@@ -106,12 +109,19 @@ class ToolValidator:
         self.inputFieldsIndex = self.inTableIndex + 1
         self.currentFilePath = ""
         self.ruFilePath = ""
+        
+        # Required Parameters
         self.inputTableParameter = self.parameters[self.inTableIndex]
         self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
+        self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
+        
+        self.inRasterParameter = self.parameters[self.inRasterIndex]
+        self.snapRasterParameter = self.parameters[self.snapRasterIndex]
         self.optionalFieldsParameter = self.parameters[self.optionalFieldsIndex]
+        
         self.initialized = False
 
 
@@ -253,6 +263,17 @@ class ToolValidator:
         # Remove required on optional fields
         self.optionalFieldsParameter.clearMessage()
 
+        # Check if input raster is defined
+        if self.inRasterParameter.value:
+            
+            # Update Processing cell size if empty
+            if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
+                'cellSize = arcpy.Describe(self.processingCellSizeParameter.value).'
+                'self.processingCellSizeParameter.value = cellSize'
+            
+            # Update Snap Raster Parameter if it is empty
+            if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
+                self.snapRasterParameter.value = str(self.inRasterParameter.value)
 
 
         
