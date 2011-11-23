@@ -268,7 +268,7 @@ class ToolValidator:
             
             # Update Processing cell size if empty
             if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
-                cellSize = 30
+                cellSize = 30 #get from metadata
                 self.processingCellSizeParameter.value = cellSize
             
             # Update Snap Raster Parameter if it is empty
