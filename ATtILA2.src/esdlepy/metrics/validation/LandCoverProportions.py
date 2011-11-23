@@ -263,17 +263,7 @@ class ToolValidator:
         # Remove required on optional fields
         self.optionalFieldsParameter.clearMessage()
 
-        # Check if input raster is defined
-        if self.inRasterParameter.value:
-            
-            # Update Processing cell size if empty
-            if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
-                'cellSize = arcpy.Describe(self.processingCellSizeParameter.value).'
-                'self.processingCellSizeParameter.value = cellSize'
-            
-            # Update Snap Raster Parameter if it is empty
-            if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
-                self.snapRasterParameter.value = str(self.inRasterParameter.value)
+
 
 
         
