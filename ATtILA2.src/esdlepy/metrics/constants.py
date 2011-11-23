@@ -16,6 +16,10 @@ qaCheckName = "QACHECK"
 metricAddName = "METRICADD"
 qaCheckDescription = "{0}{1}-  Quality Assurance Checks".format(qaCheckName, descriptionDelim)
 metricAddDescription = "{0}{1}-  Area for all land cover classes".format(metricAddName, descriptionDelim)
+srcFolderSuffix = ".src"
+tbxFileSuffix = ".tbx"
+tbxFileDelim = "__"
+tbxSriptToolDelim = "#"
 
 # Land Cover Proportions
 lcpMetricDescription = "{0}" + descriptionDelim + "[{1}]  {2}"

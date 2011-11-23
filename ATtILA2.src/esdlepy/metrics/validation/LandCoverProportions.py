@@ -1,6 +1,7 @@
 """
     ToolValidator is for tool dialog validation, cut and paste the following into the Validation tab of tool properties:
     
+    
 import os
 import sys
 tbxPath = __file__.split("#")[0]
@@ -8,9 +9,33 @@ srcDirName = os.path.basename(tbxPath).rstrip(".tbx").split("__")[0] + ".src"  #
 tbxParentDirPath =  os.path.dirname(tbxPath)
 srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
 sys.path.append(srcDirPath)
-from esdlepy.metrics.validation.LandCoverProportions import ToolValidator
+import esdlepy
 
+class ToolValidator (esdlepy.metrics.validation.LandCoverProportions.ToolValidator):
+    "" Class for validating set of three LCC parameters 
+        
+        inTableIndex:  Two consecutive parameters
+        1. Table(reporting units):  Properties: default (self.inTableIndex)
+        2. Field(dropdown):  Properties: linked to Table
+        
+        startIndex:  Three consecutive parameters 
+        1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
+        2. File: Properties: filter=lccFileExtension
+        3. String:  MultiValue=Yes; 
+        
+        optionalFieldsIndex:  single parameter 
+        1. String: Properties: MultiValue=Yes
+        
+    ""
+    
+    ###############################################
+    # Keep updated
+    
+    inTableIndex = 0 # start index of input reporting units (one parameter follows)
+    startIndex = 3 # start index of predefined dropdown (two parameters follow)
+    optionalFieldsIndex = 9 # index of optional fields parameter
 
+    ###############################################
 """
 
 
@@ -19,56 +44,61 @@ import os
 from xml.dom.minidom import parse
 from glob import glob 
 import __main__
-
+from esdlepy.metrics import constants as metricConstants
+from esdlepy.lcc import constants as lccConstants
+from esdlepy import outFields
     
 class ToolValidator:
     """ Class for validating set of three LCC parameters 
         
-        Two consecutive parameters
+        inTableIndex:  Two consecutive parameters
         1. Table(reporting units):  Properties: default (self.inTableIndex)
         2. Field(dropdown):  Properties: linked to Table
         
-        Three consecutive parameters 
+        startIndex:  Three consecutive parameters 
         1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
         2. File: Properties: filter=lccFileExtension
         3. String:  MultiValue=Yes; 
+        
+        optionalFieldsIndex:  single parameter 
+        1. String: Properties: MultiValue=Yes
+        
     """
+    
+    ###############################################
+    # Keep updated
+    
+    inTableIndex = 0 # start index of input reporting units (one parameter follows)
+    startIndex = 3 # start index of predefined dropdown (two parameters follow)
+    optionalFieldsIndex = 9 # index of optional fields parameter
+
+    ###############################################
+    
 
     def __init__(self):
         """ """
                 
-        ###############################################
-        # Keep updated
-        
-        # Input reporting units
-        self.inTableIndex = 0 # start index of fields dropdown
-        self.inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
-        
-        
-        # Lcc Dropdown
-        self.startIndex = 3 # start index of predefined dropdown (two parameters should follow)
-        self.lccSchemeUserOption = "User Defined"
-        
-        # Optional Fields
-        self.optionalFieldsIndex = 9 # index of optional fields parameter
-        self.optionalFieldsName = "Optional Fields"
-        self.qaCheckDescription = "QACHECK  -  Quality Assurance Checks"
-        self.metricAddDescription = "METRICADD  -  Area for all land cover classes"
-        
-        
-        # Global
-        self.srcDirName = "ATtILA2.src"
-        self.lccFileDirName = r"LandCoverClassifications"
-        self.lccFileExtension = "lcc"
-        self.idAttributeName = "id"
-        self.nameAttributeName = "name"
-        self.classElementName = "class"
-        self.overrideAttributeName = "lcpField"
-        self.fieldPrefix = "p"
-        self.metricDescription = "{0}  [{1}]  {2}"
-        self.srcFolderSuffix = ".src"
 
-        ###############################################
+        
+        self.inputIdFieldTypes = metricConstants.inputIdFieldTypes
+        self.lccSchemeUserOption = metricConstants.userOption
+        self.optionalFieldsName = metricConstants.optionalFieldsName
+        self.qaCheckDescription = metricConstants.qaCheckDescription
+        self.metricAddDescription = metricConstants.metricAddDescription
+        
+        tbxPath =  __main__.__file__.split(metricConstants.tbxSriptToolDelim)[0]
+        self.parentDir = os.path.dirname(tbxPath)
+        self.srcDirName = os.path.basename(tbxPath).rstrip(metricConstants.tbxFileSuffix).split(metricConstants.tbxFileDelim)[0] + metricConstants.srcFolderSuffix
+        self.lccFileDirName = lccConstants.PredefinedFileDirName
+        
+        self.lccFileExtension = lccConstants.XmlFileExtension
+        self.idAttributeName = lccConstants.XmlAttributeId
+        self.nameAttributeName = lccConstants.XmlAttributeName
+        self.classElementName = lccConstants.XmlElementClass
+        self.overrideAttributeName = lccConstants.XmlAttributeLcpField
+        self.metricDescription = metricConstants.lcpMetricDescription
+
+        self.fieldPrefix = outFields.lcpFieldPrefix
 
         self.parameters = arcpy.GetParameterInfo()
         self.lccFilePathIndex = self.startIndex + 1
@@ -87,16 +117,16 @@ class ToolValidator:
 
     def initializeParameters(self):
         """ """
-        self.inputTableParameter.value=""
+        self.inputTableParameter.value = ""
         # Populate predefined LCC dropdown
         parentDir = os.path.dirname( __main__.__file__.split("#")[0])
         self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
-        self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*." + self.lccFileExtension)
+        self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*" + self.lccFileExtension)
         
         filterList = []
         self.lccLookup = {}
         for lccPath in glob(self.lccFileDirSearch):
-            lccSchemeName = os.path.basename(lccPath).rstrip("." + self.lccFileExtension)
+            lccSchemeName = os.path.basename(lccPath).rstrip(self.lccFileExtension)
             filterList.append(lccSchemeName)
             self.lccLookup[lccSchemeName] = lccPath
             
