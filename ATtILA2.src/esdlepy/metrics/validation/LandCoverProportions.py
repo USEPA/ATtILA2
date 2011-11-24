@@ -271,7 +271,11 @@ class ToolValidator:
                 envCellSize = None
             if envCellSize:
                 self.processingCellSizeParameter.value = envCellSize
-
+                
+        # Set optional snap raster if env is set
+        if not self.snapRasterParameter.value:
+            self.snapRasterParameter.value = arcpy.env.snapRaster
+            
         # Check if input raster is defined
         if self.inRasterParameter.value:
             
