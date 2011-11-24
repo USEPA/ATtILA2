@@ -159,11 +159,13 @@ class ToolValidator:
         """Modify the values and properties of parameters before internal
         validation is performed.  This method is called whenever a parameter
         has been changed."""
-        try:
-            self.updateInputLccParameters()
-            self.updateInputFieldsParameter()
-        except:
-            pass
+        
+        if not self.initialized:
+            self.initializeParameters()
+
+        self.updateInputLccParameters()
+        self.updateInputFieldsParameter()
+
 
     
     def updateInputLccParameters(self):
@@ -251,47 +253,46 @@ class ToolValidator:
     def updateMessages(self):
         """Modify the messages created by internal validation for each tool
         parameter.  This method is called after internal validation."""
-        try:
-            # Set lcc file parameter required only if user-defined is set
-            if self.lccSchemeParameter.value != self.lccSchemeUserOption:
-                self.lccFilePathParameter.clearMessage()
-                
-            # Clear required on disabled lcc class selection
-            if not self.lccClassesParameter.enabled:
-                self.lccClassesParameter.clearMessage()
+
+        # Set lcc file parameter required only if user-defined is set
+        if self.lccSchemeParameter.value != self.lccSchemeUserOption:
+            self.lccFilePathParameter.clearMessage()
             
-            # Remove required on optional fields
-            self.optionalFieldsParameter.clearMessage()
-            
-            # Set optional raster options if env is set
-            if not self.processingCellSizeParameter.value:
-                try:
-                    envCellSize = int(arcpy.env.cellSize)
-                except:
-                    envCellSize = None
-                if envCellSize:
-                    self.processingCellSizeParameter.value = envCellSize
-                    
-            # Set optional snap raster if env is set
-            if not self.snapRasterParameter.value:
-                self.snapRasterParameter.value = arcpy.env.snapRaster
-                
-            # Check if input raster is defined
-            if self.inRasterParameter.value:
-                
-                # Update Processing cell size if empty
-                if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
-                    cellSize = arcpy.Raster(str(self.inRasterParameter.value)).meanCellWidth #get from metadata
-                    self.processingCellSizeParameter.value = cellSize
-                
-                # Update Snap Raster Parameter if it is empty
-                if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
-                    self.snapRasterParameter.value = str(self.inRasterParameter.value)
-    
-            # Check for empty input features
-            if self.inputTableParameter.value and not self.inputTableParameter.hasError() and not arcpy.SearchCursor(self.inputTableParameter.value).next():
-                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
-        except:
-            pass
+        # Clear required on disabled lcc class selection
+        if not self.lccClassesParameter.enabled:
+            self.lccClassesParameter.clearMessage()
         
+        # Remove required on optional fields
+        self.optionalFieldsParameter.clearMessage()
+        
+        # Set optional raster options if env is set
+        if not self.processingCellSizeParameter.value:
+            try:
+                envCellSize = int(arcpy.env.cellSize)
+            except:
+                envCellSize = None
+            if envCellSize:
+                self.processingCellSizeParameter.value = envCellSize
+                
+        # Set optional snap raster if env is set
+        if not self.snapRasterParameter.value:
+            self.snapRasterParameter.value = arcpy.env.snapRaster
+            
+        # Check if input raster is defined
+        if self.inRasterParameter.value:
+            
+            # Update Processing cell size if empty
+            if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
+                cellSize = arcpy.Raster(str(self.inRasterParameter.value)).meanCellWidth #get from metadata
+                self.processingCellSizeParameter.value = cellSize
+            
+            # Update Snap Raster Parameter if it is empty
+            if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
+                self.snapRasterParameter.value = str(self.inRasterParameter.value)
+
+        # Check for empty input features
+        if self.inputTableParameter.value and not self.inputTableParameter.hasError() and not arcpy.SearchCursor(self.inputTableParameter.value).next():
+            self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+
+    
         
