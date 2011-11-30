@@ -12,7 +12,7 @@
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="111" name="Continuous urban fabric"/>
+		<value id="111" name="Continuous urban fabric"/> 
 		<value id="112" name="Discontinuous urban fabric"/>
 		<value id="121" name="Industrial or commercial units"/>
 		<value id="122" name="Road and rail networks and associated land"/>
@@ -51,6 +51,15 @@
 		<value id="421" name="Salt marshes"/>
 		<value id="422" name="Salines"/>
 		<value id="423" name="Intertidal flats"/>				
+		<value id="511" name="Water courses"/>
+		<value id="512" name="Water bodies"/>
+		<value id="521" name="Coastal lagoons"/>
+		<value id="522" name="Estuaries"/>
+		<value id="523" name="Sea and Ocean"/>
+		<value id="990" name="UNCLASSIFIED LAND SURFACE" excluded="true"/>
+		<value id="995" name="UNCLASSIFIED WATER BODIES" excluded="true"/>
+	<!--	<value id="990" name="UNCLASSIFIED" excluded="true"/>  -->
+		<value id="999" name="NODATA" excluded="true"/>						
 	</values>
 		
 		
@@ -66,83 +75,112 @@
 			
 	-->
 	<classes>
-		<class id="ui" name="Artificial surfaces" lcpField="NINDEX">
-			<class  id="urb" name="Urban fabric">
-				<value id="111"/>
-				<value id="112"/>				
+		<class id="ui" name="Unnatural surfaces" lcpField="UINDEX">
+			<class id="artf" name="Artificial surfaces">
+				<class  id="urb" name="Urban fabric">
+					<value id="111"/>
+					<value id="112"/>				
+				</class>
+				<class id="ict" name="Industrial, commercial and transport units">
+					<value id="121"/>
+					<value id="122"/>				
+					<value id="123"/>				
+					<value id="124"/>				
+				</class>
+				<class id="mbar" name="Mine, dump and construction sites">
+					<value id="131"/>
+					<value id="132"/>
+					<value id="133"/>								
+				</class>
+				<class id="dos" name="Artificial, non-agriculture vegetated areas">
+					<value id="141"/>
+					<value id="142"/>				
+				</class>
+			</class>		
+		
+			<class id="agt" name="Agricultural areas">
+				<class id="ago" name="Arable land">
+					<value id="211"/>
+					<value id="212"/>				
+					<value id="213"/>				
+				</class>								
+				<class id="agc" name="Permanent crops">
+					<value id="221"/>
+					<value id="222"/>				
+					<value id="223"/>				
+				</class>		
+				<class id="agp" name="Pastures">
+					<value id="231"/>
+				</class>
+				<class id="coin" name="Heterogeneous agricultural areas">
+					<value id="241"/>
+					<value id="242"/>				
+					<value id="243"/>				
+					<value id="244"/>				
+				</class>						
 			</class>
-			<class id="ict" name="Industrial, commercial and transport units">
-				<value id="121"/>
-				<value id="122"/>				
-				<value id="123"/>				
-				<value id="124"/>				
+		</class>			
+		
+		<class id="nat" name="Natural surfaces" onSlopeVisible="true" lcpField="NINDEX">
+			<class id="nat" name="Forests and semi-natural areas" onSlopeVisible="true">
+				<class id="for" name="Forests" onSlopeVisible="true">
+					<value id="311"/>
+					<value id="312"/>				
+					<value id="313"/>				
+				</class>
+				<class id="shrb" name="Shrub and/or herbaceous vegetation association" onSlopeVisible="true">
+					<value id="321"/>
+					<value id="322"/>				
+					<value id="323"/>				
+					<value id="324"/>				
+				</class>
+				<class id="nbar" name="Open spaces with little or no vegetation">
+					<value id="331"/>
+					<value id="332"/>				
+					<value id="333"/>				
+					<value id="334"/>				
+					<value id="335"/>				
+				</class>
 			</class>
-			<class id="mbar" name="Mine, dump and construction sites">
-				<value id="131"/>
-				<value id="132"/>
-				<value id="133"/>								
+				
+			<class id="wetl" name="Wetlands">
+					<class id="iwetl" name="Inland wetlands">
+					<value id="411"/>
+					<value id="412"/>				
+				</class>
+				<class id="cwetl" name="Maritime wetlands">
+					<value id="421"/>
+					<value id="422"/>				
+					<value id="423"/>				
+				</class>
 			</class>
-			<class id="dos" name="Artificial, non-agriculture vegetated areas">
-				<value id="141"/>
-				<value id="142"/>				
+			<class id="uncll" name="Unclassified Land Bodies">										
+				<value id="990"/>								
+			</class>
+		</class>			
+
+		<class id="watr" name="Water" onSlopeVisible="false" lcpField="WINDEX">
+			<class id="weti" name="Inland Waters">
+				<value id="511"/>
+				<value id="512"/>
+			</class>				
+			<class id="wetm" name="Marine Waters">										
+				<value id="521"/>
+				<value id="522"/>				
+				<value id="523"/>
+			</class>
+			<class id="wetu" name="Unclassified Water Bodies">										
+				<value id="995"/>								
 			</class>
 		</class>
 		
-		<class id="agt" name="Agricultural areas" lcpField="UINDEX">
-			<class id="ago" name="Arable land">
-				<value id="211"/>
-				<value id="212"/>				
-				<value id="213"/>				
-			</class>								
-			<class id="agc" name="Permanent crops">
-				<value id="221"/>
-				<value id="222"/>				
-				<value id="223"/>				
-			</class>		
-			<class id="hdr" name="Pastures">
-				<value id="231"/>
-			</class>
-			<class id="coin" name="Heterogeneous agricultural areas">
-				<value id="241"/>
-				<value id="242"/>				
-				<value id="243"/>				
-				<value id="244"/>				
+		<class id="uncl" name="UNCLASSIFIED" onSlopeVisible="false" lcpField="XINDEX" excluded="true">
+			<class id="unclo" name="UNCLASSIFIED">
+		<!--	<value id="990"/>  -->
+				<value id="999"/>				
 			</class>						
 		</class>
-		
-		<class id="nat" name="Forests and semi-natural areas" onSlopeVisible="true">
-			<class id="for" name="Forests" onSlopeVisible="true">
-				<value id="311"/>
-				<value id="312"/>				
-				<value id="313"/>				
-			</class>
-			<class id="shrb" name="Shrub and/or herbaceous vegetation association" onSlopeVisible="true">
-				<value id="321"/>
-				<value id="322"/>				
-				<value id="323"/>				
-				<value id="324"/>				
-			</class>
-			<class id="nbar" name="Open spaces with little or no vegetation">
-				<value id="331"/>
-				<value id="332"/>				
-				<value id="333"/>				
-				<value id="334"/>				
-				<value id="335"/>				
-			</class>
-		</class>
-				
-		<class id="wetl" name="Wetlands">
-			<class id="iwetl" name="Inland wetlands">
-				<value id="411"/>
-				<value id="412"/>				
-			</class>
-			<class id="cwetl" name="Maritime wetlands">
-				<value id="421"/>
-				<value id="422"/>				
-				<value id="423"/>				
-			</class>
-		</class>
-		
+						
 	</classes>
 
 </root>
