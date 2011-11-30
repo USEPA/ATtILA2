@@ -62,15 +62,15 @@
 				<value id="42"/>
 				<value id="43"/>
 			</class>
-			<class id="wetl" name="Wetlands">
-				<class id="wwetl" name="Woody Wetlands">			
+			<class id="wtlt" name="All Wetlands">
+				<class id="wtlw" name="Woody Wetland">			
 					<value id="90"/>
 					<value id="91"/>
 					<value id="92"/>
 					<value id="93"/>
 					<value id="94"/>
 				</class>
-				<class id="ewetl" name="Emergent Herbaceous Wetland">				
+				<class id="wtle" name="Emergent Herbaceous Wetland">				
 					<value id="95"/>
 					<value id="96"/>
 					<value id="97"/>
@@ -82,7 +82,7 @@
 				<value id="51"/>
 				<value id="52"/>
 			</class>
-			<class id="hrbt" name="Herbaceous">				
+			<class id="hrbt" name="All Herbaceous">				
 				<class id="hrbg" name="Grassland, Herbaceous">
 					<value id="71"/>
 				</class>
@@ -99,21 +99,21 @@
 		</class>
 		
 		<class id="unat" name="All human land use" lcpField="UINDEX">
-			<class id="urb" name="Urban">
-				<class id="dos" name="Developed, Open Space">
+			<class id="devt" name="All Developed">
+				<class id="devo" name="Developed, Open Space">
 					<value id="21"/>
 				</class>		
-				<class id="dli" name="Developed, Low Intensity">
+				<class id="devl" name="Developed, Low Intensity">
 					<value id="22"/>
 				</class>
-				<class id="dmi" name="Developed, Medium Intensity">
+				<class id="devm" name="Developed, Medium Intensity">
 					<value id="23"/>
 				</class>
-				<class id="dhi" name="Developed, High Intensity">
+				<class id="devh" name="Developed, High Intensity">
 					<value id="24"/>
 				</class>							
 			</class>
-			<class id="agt" name="Agriculture" onSlopeVisible="true">
+			<class id="agt" name="All Agriculture" onSlopeVisible="true">
 				<class id="agp" name="Pasture" onSlopeVisible="true">
 					<value id="81"/>
 				</class>
