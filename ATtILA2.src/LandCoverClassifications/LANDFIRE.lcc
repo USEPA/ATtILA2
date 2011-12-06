@@ -3,7 +3,7 @@
 
 	<metadata>
 		<name>LANDFIRE</name>
-		<description>LANDFIRE Landcover Classification</description>	
+		<description>LANDFIRE LF_1.1.0 (refresh 2008)</description>	
 	</metadata>
 
 	<!-- 
@@ -13,29 +13,80 @@
 	-->
 	<values>
 		<value id="11" name="Open Water" excluded="true"/>
-		<value id="12" name="Perennial Ice and Snow" excluded="true"/>
+		<value id="12" name="Snow/Ice" excluded="true"/>
 		
-		<value id="21" name="Low Intensity Residential"/>
-		<value id="22" name="High Intensity Residential"/>
-		<value id="23" name="Commercial,Industrial,Transportation"/>
-		<value id="31" name="Bare Rock,Sand,Clay"/>				
+		<value id="13" name="Developed-Upland Deciduous Forest"/>
+		<value id="14" name="Developed-Upland Evergreen Forest"/>		
+		<value id="15" name="Developed-Upland Mixed Forest"/>
+		<value id="16" name="Developed-Upland Herbaceous"/>
+		<value id="17" name="Developed-Upland Shrubland"/>
+		<value id="18" name="Developed-Herbaceous Wetland Vegetation"/>		
+		<value id="19" name="Developed-Woody Wetland Vegetation"/>
+		<value id="20" name="Developed - General"/>		
+		<value id="21" name="Developed - Open Space"/>		
+				
+		<value id="22" name="Developed - Low Intensity"/>
+		<value id="23" name="Developed - Medium Intensity"/>
+		<value id="24" name="Developed - High Intensity"/>
+		<value id="25" name="Developed-Roads"/>
+		
+		<value id="31" name="Barren"/>						
 		<value id="32" name="Quarries, Strip Mines, Gravel Pits"/>
-		<value id="33" name="Transitional"/>		
-		<value id="41" name="Deciduous Forest"/>
-		<value id="42" name="Evergreen Forest"/>
-		<value id="43" name="Mixed Forest"/>
-		<value id="51" name="Deciduous Shrubland"/>
-		<value id="52" name="Evergreen Shrubland"/>
-		<value id="53" name="Mixed Shrubland"/>
-		<value id="61" name="Orchards,Vineyards,Other"/>	
-		<value id="71" name="Grasslands,Herbaceous"/>		
-		<value id="81" name="Pature,Hay"/>
-		<value id="82" name="Row Crops"/>
+		<value id="60" name="NASS-Orchard"/>		
+		<value id="61" name="NASS-Vineyard"/>
+		<value id="62" name="NASS-Bush fruit and berries"/>
+		<value id="63" name="NASS-Row Crop-Close Grown Crop"/>
+		<value id="64" name="NASS-Row Crop"/>
+		<value id="65" name="NASS-Close Grown Crop"/>
+		<value id="66" name="NASS-Pasture and Hayland"/>
+		<value id="67" name="NASS-Pasture and Hayland"/>	
+		<value id="75" name="Herbaceous Semi-dry"/>
+		<value id="76" name="Herbaceous Semi-wet"/>				
+		<value id="78" name="Recently Disturbed Forest"/>
+		<value id="80" name="Agriculture - General"/>
+		<value id="81" name="Pasture/Hay"/>				
+		<value id="82" name="Cultivated Crops"/>
 		<value id="83" name="Small Grains"/>
 		<value id="84" name="Fallow"/>
-		<value id="85" name="Urban Grasses,Recreational Grasses"/>
-		<value id="91" name="Woody Wetlands"/>
-		<value id="92" name="Emergent Herbaceous Wetlands"/>	
+		<value id="85" name="Urban-Recreational Grasses"/>
+		<value id="95" name="Herbaceous Wetlands"/>
+		<value id="100" name="Sparse Vegetation Canopy"/>
+		<value id="101" name="Tree Cover >= 10 and < 20%"/>	
+		<value id="102" name="Tree Cover >= 20 and < 30%"/>
+		<value id="103" name="Tree Cover >= 30 and < 40%"/>
+		<value id="104" name="Tree Cover >= 40 and < 50%"/>
+		<value id="105" name="Tree Cover >= 50 and < 60%"/>		
+		<value id="106" name="Tree Cover >= 60 and < 70%"/>
+		<value id="107" name="Tree Cover >= 70 and < 80%"/>	
+		<value id="108" name="Tree Cover >= 80 and < 90%"/>
+		<value id="109" name="Tree Cover >= 90 and <= 100%"/>
+		<value id="111" name="Shrub Cover >= 10 and < 20%"/>
+		<value id="112" name="Shrub Cover >= 20 and < 30%"/>
+		<value id="113" name="Shrub Cover >= 30 and < 40%"/>
+		<value id="114" name="Shrub Cover >= 40 and < 50%"/>
+		<value id="115" name="Shrub Cover >= 50 and < 60%"/>
+		<value id="116" name="Shrub Cover >= 60 and < 70%"/>
+		<value id="117" name="Shrub Cover >= 70 and < 80%"/>
+		<value id="118" name="Shrub Cover >= 80 and < 90%"/>
+		<value id="119" name="Shrub Cover >= 90 and <= 100%"/>
+		<value id="121" name="Herb Cover >= 10 and < 20%"/>		
+		<value id="122" name="Herb Cover >= 20 and < 30%"/>
+		<value id="123" name="Herb Cover >= 30 and < 40%"/>		
+		<value id="124" name="Herb Cover >= 40 and < 50%"/>
+		<value id="125" name="Herb Cover >= 50 and < 60%"/>		
+		<value id="126" name="Herb Cover >= 60 and < 70%"/>
+		<value id="127" name="Herb Cover >= 70 and < 80%"/>		
+		<value id="128" name="Herb Cover >= 80 and < 90%"/>
+		<value id="129" name="Herb Cover >= 90 and <= 100%"/>
+		<value id="150" name="Sparse Vegetation Canopy"/>
+		<value id="151" name="Tree Canopy >= 10 and < 25%"/>
+		<value id="152" name="Tree Canopy >= 25 and < 60%"/>
+		<value id="153" name="Tree Canopy >= 60 and <= 100%"/>
+		<value id="161" name="Shrub Canopy >= 10 and < 25%"/>
+		<value id="162" name="Shrub Canopy >= 25 and < 60%"/>
+		<value id="163" name="Shrub Canopy >= 60 and <= 100%"/>
+		<value id="171" name="Herb Canopy >= 10 and < 60%"/>
+		<value id="172" name="Herb Canopy >= 60 and <= 100%"/>
 	</values>
 		
 		
