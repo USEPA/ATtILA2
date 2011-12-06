@@ -5,7 +5,7 @@
 		<description>National Land Cover Database 2001</description>
 	</metadata>
 	
-	<!-- 
+	<!--  
 		* The "values" node defines the full set of values that can exist in a landcover raster
 		* The "excluded" attribute is used to exclude values from the total, excluded=false is the default
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
@@ -92,7 +92,7 @@
 					<value id="74"/>
 				</class>
 			</class>			
-			<class id="bar" name="Barren">
+			<class id="bart" name="Barren">
 				<value id="31"/>
 				<value id="32"/>		
 			</class>		

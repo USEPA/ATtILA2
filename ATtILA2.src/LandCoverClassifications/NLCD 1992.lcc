@@ -57,16 +57,16 @@
 				<value id="42"/>
 				<value id="43"/>
 			</class>
-			<class id="wetl" name="Wetlands">
+			<class id="wtlt" name="Wetlands">
 				<value id="91"/>
 				<value id="92"/>
 			</class>
-			<class id="shrb" name="Shrublands">
+			<class id="hrbt" name="Shrublands">
 				<value id="51"/>
 				<value id="52"/>
 				<value id="53"/>
 			</class>
-			<class id="ng" name="Natural Grasslands">
+			<class id="hrbt" name="Herbaceous">
 				<value id="71"/>
 			</class>
 			<class id="nbar" name="Natural Barren">
@@ -75,14 +75,14 @@
 		</class>
 		
 		<class id="unat" name="All human land use" lcpField="UINDEX">
-			<class id="urb" name="Urban">
-				<class id="ldr" name="Low Density Residential">
+			<class id="devt" name="Urban">
+				<class id="devlr" name="Low Density Residential">
 					<value id="21"/>
 				</class>		
-				<class id="hdr" name="High Density Residential">
+				<class id="devhr" name="High Density Residential">
 					<value id="22"/>
 				</class>
-				<class id="coin" name="Commercial, Industrial">
+				<class id="devc" name="Commercial, Industrial">
 					<value id="23"/>
 				</class>						
 			</class>
@@ -101,7 +101,7 @@
 					</class>
 				</class>
 				
-				<class id="agug" name="Urban and Recreational Grasses">
+				<class id="devo" name="Urban and Recreational Grasses">
 					<value id="85"/>
 				</class>
 				<class id="ago" name="Agriculture Other">
