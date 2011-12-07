@@ -41,6 +41,7 @@ def main(argv):
 #    Output_table = "D:/ATTILA_Jackson/testzone/testoutputs/File Geodatabase.gdb/qacheck"
 #    Processing_cell_size = "30.6618"
 #    Snap_raster = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
+#    Optional_field_groups = "'QACHECK  -  Quality Assurance Checks';'METRICADD  -  Area for all land cover classes'"
 #    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
 #    env.overwriteOutput = True
  
@@ -67,6 +68,9 @@ def main(argv):
         
         # if any optional fields are selected, get their parameters
         optionalGroupsList = ParseCheckboxSelections(Optional_field_groups)
+        
+        arcpy.AddMessage("optionalGroupsList")
+        arcpy.AddMessage(optionalGroupsList)
         
         if 'QACHECK' in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
@@ -320,9 +324,9 @@ def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_
     # should control this in the validate step or with an arcpy.ValidateTableName call
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
     
-    if outTablePath[-3:] != "gdb":
-        # need to truncate fieldnames to 10 characters if necessary
-        pass
+#    if outTablePath[-3:] != "gdb":
+#        # need to truncate fieldnames to 10 characters if necessary
+#        pass
     
     # process the user input to add id field to output table
     IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
