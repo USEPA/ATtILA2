@@ -33,11 +33,11 @@
 		<value id="18" name="Estuarine Emergent Wetland"/>
 		<value id="19" name="Unconsolidated Shore"/>
 		<value id="20" name="Bare Land"/>
-		<value id="21" name="Water"/>		
+		<value id="21" name="Water" excluded="true"/>		
 		<value id="22" name="Palustrine Aquatic Bed"/>
 		<value id="23" name="Estuarine Aquatic Bed"/>
 		<value id="24" name="Tundra"/>	
-		<value id="25" name="Snow/Ice"/>				
+		<value id="25" name="Snow/Ice" excluded="true"/>				
 		
 	</values>
 		
@@ -56,68 +56,67 @@
 	<classes>
 		
 		<class id="unat" name="All human land use" lcpField="UINDEX">
-			<class id="urb" name="Urban">
-				<class id="ldr" name="Low Density Residential">
-					<value id="21"/>
+			<class id="devt" name="Urban">
+				<class id="devh" name="High Intensity Developed">
+					<value id="2"/>
 				</class>		
-				<class id="hdr" name="High Density Residential">
-					<value id="22"/>
+				<class id="devm" name="Medium Intensity Developed">
+					<value id="3"/>
 				</class>
-				<class id="coin" name="Commercial, Industrial">
-					<value id="23"/>
-				</class>						
+				<class id="devl" name="Low Intensity Developed">
+					<value id="4"/>
+				</class>
+				<class id="devo" name="Open Spaces Developed">
+					<value id="5"/>
+				</class>							
 			</class>
 			<class id="agt" name="Agriculture" onSlopeVisible="true">
-				<class id="agp" name="Pasture" onSlopeVisible="true">
-					<value id="81"/>
-				</class>
-				
-				<class id="agc" name="Crops" onSlopeVisible="true">
-					<class id="agcr" name="Row" >
-						<value id="82"/>
-					</class>
-					<class id="agcn" name="Non-Row">
-						<value id="83"/>
-						<value id="61"/>
-					</class>
-				</class>
-				
-				<class id="agug" name="Urban and Recreational Grasses">
-					<value id="85"/>
-				</class>
-				<class id="ago" name="Agriculture Other">
-					<value id="84"/>
-				</class>
-				
+				<class id="agc" name="Cultivated Land" onSlopeVisible="true">
+						<value id="6"/>
+				</class>				
+				<class id="agp" name="Pasture/Hay" onSlopeVisible="true">
+					<value id="7"/>
+				</class>				
 			</class>
-			<class id="mbar" name="Man-Made Barren">
-				<value id="32"/>
-				<value id="33"/>
-			</class>
+			
 		</class>
-		<class id="nat" name="All natural land use" lcpField="NINDEX">
-			<class  id="for" name="Forest">
-				<value id="41"/>
-				<value id="42"/>
-				<value id="43"/>
-			</class>
-			<class id="wetl" name="Wetlands">
-				<value id="91"/>
-				<value id="92"/>
-			</class>
-			<class id="shrb" name="Shrublands">
-				<value id="51"/>
-				<value id="52"/>
-				<value id="53"/>
-			</class>
-			<class id="ng" name="Natural Grasslands">
-				<value id="71"/>
-			</class>
-			<class id="nbar" name="Natural Barren">
-				<value id="31"/>		
-			</class>		
-		</class>		
 		
+		<class id="nat" name="All natural land use" lcpField="NINDEX">
+			<class id="hrbt" name="Natural Grasslands">
+				<value id="8"/>
+			</class>
+			<class  id="for" name="Forest">
+				<value id="9"/>
+				<value id="10"/>
+				<value id="11"/>
+			</class>
+			<class id="shrb" name="Shrubland">
+				<value id="12"/>
+			</class>
+			<class id="wtlt" name="Wetland">
+				<value id="13"/>
+				<value id="14"/>
+				<value id="15"/>
+				<value id="16"/>
+				<value id="17"/>
+				<value id="18"/>								
+			</class>
+			<class id="bart" name="Natural Barren">
+				<value id="19"/>
+				<value id="20"/>		
+			</class>
+			<class id="tndr" name="Tundra">
+				<value id="24"/>
+			</class>					
+		</class>		
+		<class id="watt" name="Water" lcpField="WINDEX">
+			<class id="aqbp" name="Water">
+				<value id="22"/>
+			</class>				
+			<class id="aqbe" name="Water">
+				<value id="23"/>
+			</class>												
+		</class>					
 	</classes>
 
 </root>
