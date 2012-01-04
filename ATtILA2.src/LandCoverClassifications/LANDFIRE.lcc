@@ -51,42 +51,42 @@
 		<value id="85" name="Urban-Recreational Grasses"/>
 		<value id="95" name="Herbaceous Wetlands"/>
 		<value id="100" name="Sparse Vegetation Canopy"/>
-		<value id="101" name="Tree Cover >= 10 and < 20%"/>	
-		<value id="102" name="Tree Cover >= 20 and < 30%"/>
-		<value id="103" name="Tree Cover >= 30 and < 40%"/>
-		<value id="104" name="Tree Cover >= 40 and < 50%"/>
-		<value id="105" name="Tree Cover >= 50 and < 60%"/>		
-		<value id="106" name="Tree Cover >= 60 and < 70%"/>
-		<value id="107" name="Tree Cover >= 70 and < 80%"/>	
-		<value id="108" name="Tree Cover >= 80 and < 90%"/>
-		<value id="109" name="Tree Cover >= 90 and <= 100%"/>
-		<value id="111" name="Shrub Cover >= 10 and < 20%"/>
-		<value id="112" name="Shrub Cover >= 20 and < 30%"/>
-		<value id="113" name="Shrub Cover >= 30 and < 40%"/>
-		<value id="114" name="Shrub Cover >= 40 and < 50%"/>
-		<value id="115" name="Shrub Cover >= 50 and < 60%"/>
-		<value id="116" name="Shrub Cover >= 60 and < 70%"/>
-		<value id="117" name="Shrub Cover >= 70 and < 80%"/>
-		<value id="118" name="Shrub Cover >= 80 and < 90%"/>
-		<value id="119" name="Shrub Cover >= 90 and <= 100%"/>
-		<value id="121" name="Herb Cover >= 10 and < 20%"/>		
-		<value id="122" name="Herb Cover >= 20 and < 30%"/>
-		<value id="123" name="Herb Cover >= 30 and < 40%"/>		
-		<value id="124" name="Herb Cover >= 40 and < 50%"/>
-		<value id="125" name="Herb Cover >= 50 and < 60%"/>		
-		<value id="126" name="Herb Cover >= 60 and < 70%"/>
-		<value id="127" name="Herb Cover >= 70 and < 80%"/>		
-		<value id="128" name="Herb Cover >= 80 and < 90%"/>
-		<value id="129" name="Herb Cover >= 90 and <= 100%"/>
+		<value id="101" name="Tree Cover GE 10 and less than 20%"/>	
+		<value id="102" name="Tree Cover GE 20 and less than 30%"/>
+		<value id="103" name="Tree Cover GE 30 and less than 40%"/>
+		<value id="104" name="Tree Cover GE 40 and less than 50%"/>
+		<value id="105" name="Tree Cover GE 50 and less than 60%"/>		
+		<value id="106" name="Tree Cover GE 60 and less than 70%"/>
+		<value id="107" name="Tree Cover GE 70 and less than 80%"/>	
+		<value id="108" name="Tree Cover GE 80 and less than 90%"/>
+		<value id="109" name="Tree Cover GE 90 and less than or equal 100%"/>
+		<value id="111" name="Shrub Cover GE 10 and less than 20%"/>
+		<value id="112" name="Shrub Cover GE 20 and less than 30%"/>
+		<value id="113" name="Shrub Cover GE 30 and less than 40%"/>
+		<value id="114" name="Shrub Cover GE 40 and less than 50%"/>
+		<value id="115" name="Shrub Cover GE 50 and less than 60%"/>
+		<value id="116" name="Shrub Cover GE 60 and less than 70%"/>
+		<value id="117" name="Shrub Cover GE 70 and less than 80%"/>
+		<value id="118" name="Shrub Cover GE 80 and less than 90%"/>
+		<value id="119" name="Shrub Cover GE 90 and less than or equal 100%"/>
+		<value id="121" name="Herb Cover GE 10 and less than 20%"/>		
+		<value id="122" name="Herb Cover GE 20 and less than 30%"/>
+		<value id="123" name="Herb Cover GE 30 and less than 40%"/>		
+		<value id="124" name="Herb Cover GE 40 and less than 50%"/>
+		<value id="125" name="Herb Cover GE 50 and less than 60%"/>		
+		<value id="126" name="Herb Cover GE 60 and less than 70%"/>
+		<value id="127" name="Herb Cover GE 70 and less than 80%"/>		
+		<value id="128" name="Herb Cover GE 80 and less than 90%"/>
+		<value id="129" name="Herb Cover GE 90 and less than or equal 100%"/>
 		<value id="150" name="Sparse Vegetation Canopy"/>
-		<value id="151" name="Tree Canopy >= 10 and < 25%"/>
-		<value id="152" name="Tree Canopy >= 25 and < 60%"/>
-		<value id="153" name="Tree Canopy >= 60 and <= 100%"/>
-		<value id="161" name="Shrub Canopy >= 10 and < 25%"/>
-		<value id="162" name="Shrub Canopy >= 25 and < 60%"/>
-		<value id="163" name="Shrub Canopy >= 60 and <= 100%"/>
-		<value id="171" name="Herb Canopy >= 10 and < 60%"/>
-		<value id="172" name="Herb Canopy >= 60 and <= 100%"/>
+		<value id="151" name="Tree Canopy GE 10 and less than 25%"/>
+		<value id="152" name="Tree Canopy GE 25 and less than 60%"/>
+		<value id="153" name="Tree Canopy GE 60 and less than or equal 100%"/>
+		<value id="161" name="Shrub Canopy GE 10 and less than 25%"/>
+		<value id="162" name="Shrub Canopy GE 25 and less than 60%"/>
+		<value id="163" name="Shrub Canopy GE 60 and less than or equal 100%"/>
+		<value id="171" name="Herb Canopy GE 10 and less than 60%"/>
+		<value id="172" name="Herb Canopy GE 60 and less than or equal 100%"/>
 	</values>
 		
 		
@@ -102,42 +102,68 @@
 			
 	-->
 	<classes>
-		<class id="nat" name="All natural land use" lcpField="NINDEX">
-			<class  id="for" name="Forest">
-				<value id="41"/>
-				<value id="42"/>
-				<value id="43"/>
-			</class>
-			<class id="wetl" name="Wetlands">
-				<value id="91"/>
-				<value id="92"/>
-			</class>
-			<class id="shrb" name="Shrublands">
-				<value id="51"/>
-				<value id="52"/>
-				<value id="53"/>
-			</class>
-			<class id="ng" name="Natural Grasslands">
-				<value id="71"/>
-			</class>
-			<class id="nbar" name="Natural Barren">
-				<value id="31"/>		
-			</class>		
-		</class>
+
+		<class id="watt" name="Water" lcpField="WINDEX">
+			<class id="watr" name="Water" excluded="true">
+				<value id="11"/>
+			</class>												
+			<class id="snow" name="Snow/ice" excluded="true">
+				<value id="12"/>
+			</class>				
+		</class>			
 		
 		<class id="unat" name="All human land use" lcpField="UINDEX">
 			<class id="urb" name="Urban">
-				<class id="ldr" name="Low Density Residential">
+
+				<class  id="dfor" name="Developed-Upland Forest">
+					<value id="13"/>
+					<value id="14"/>
+					<value id="15"/>
+				</class>
+				<class  id="dhrb" name="Developed-Upland Herbaceous">
+					<value id="16"/>
+					<value id="17"/>					
+				</class>
+				<class  id="for" name="Developed Wetland">
+					<value id="18"/>
+					<value id="19"/>					
+				</class>
+				<class id="dgen" name="Developed - General">
+					<value id="20"/>
+				</class>			
+				<class id="dosp   " name="Developed - Open Space">
 					<value id="21"/>
 				</class>		
-				<class id="hdr" name="High Density Residential">
+				<class id="ldr" name="Developed - Low Intensity">
 					<value id="22"/>
-				</class>
-				<class id="coin" name="Commercial, Industrial">
+				</class>	
+				<class id="ldr" name="Developed - Medium Intensity">
 					<value id="23"/>
+				</class>	
+				<class id="hdr" name="Developed - High Intensity">
+					<value id="24"/>
+				</class>
+				<class id="road" name="Developed-Roads">
+					<value id="25"/>
 				</class>						
+				<class id="mbar" name="Man Made Barren">
+					<value id="32"/>
+				</class>
 			</class>
 			<class id="agt" name="Agriculture" onSlopeVisible="true">
+				<class id="nass" name="National Agricultural Statistics Survey" onSlopeVisible="true">
+					<value id="60"/>
+					<value id="61"/>					
+					<value id="62"/>
+					<value id="63"/>
+					<value id="64"/>
+					<value id="65"/>					
+					<value id="66"/>
+					<value id="67"/>
+				</class>
+				<class id="agg" name="Agriculture - General" onSlopeVisible="true">
+					<value id="80"/>
+				</class>							
 				<class id="agp" name="Pasture" onSlopeVisible="true">
 					<value id="81"/>
 				</class>
@@ -148,22 +174,73 @@
 					</class>
 					<class id="agcn" name="Non-Row">
 						<value id="83"/>
-						<value id="61"/>
 					</class>
 				</class>
 				
 				<class id="agug" name="Urban and Recreational Grasses">
-					<value id="85"/>
+					<value id="85"/>					
 				</class>
 				<class id="ago" name="Agriculture Other">
 					<value id="84"/>
-				</class>
-				
+				</class>					
 			</class>
-			<class id="mbar" name="Man-Made Barren">
-				<value id="32"/>
-				<value id="33"/>
+
+		<class id="nat" name="All natural land use" lcpField="NINDEX">			
+			<class id="nbar" name="Natural Barren">
+				<value id="31"/>
+				<value id="150"/>						
 			</class>
+			
+			<class  id="for" name="Forest">
+				<value id="101"/>
+				<value id="102"/>
+				<value id="103"/>
+				<value id="104"/>
+				<value id="105"/>
+				<value id="106"/>
+				<value id="107"/>
+				<value id="108"/>
+				<value id="109"/>
+				<value id="151"/>
+				<value id="152"/>				
+				<value id="153"/>								
+			</class>
+			<class id="wetl" name="Wetlands">
+				<value id="95"/>
+			</class>
+			<class id="shrb" name="Shrublands">
+				<value id="111"/>
+				<value id="112"/>
+				<value id="113"/>
+				<value id="114"/>
+				<value id="115"/>
+				<value id="116"/>
+				<value id="117"/>
+				<value id="118"/>
+				<value id="119"/>
+				<value id="161"/>
+				<value id="162"/>
+				<value id="163"/>
+			</class>
+			<class id="ng" name="Natural Grasslands">
+				<value id="75"/>
+				<value id="76"/>
+				<value id="121"/>
+				<value id="122"/>							
+				<value id="123"/>
+				<value id="124"/>
+				<value id="125"/>
+				<value id="126"/>							
+				<value id="127"/>
+				<value id="128"/>
+				<value id="129"/>
+				<value id="171"/>
+				<value id="172"/>				
+			</class>
+		
+		</class>
+
+
 		</class>
 	</classes>
 
