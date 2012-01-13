@@ -69,9 +69,6 @@ def main(argv):
         # if any optional fields are selected, get their parameters
         optionalGroupsList = ParseCheckboxSelections(Optional_field_groups)
         
-        arcpy.AddMessage("optionalGroupsList")
-        arcpy.AddMessage(optionalGroupsList)
-        
         if 'QACHECK' in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
             qaCheckFlds = outFields.getQACheckFieldParametersFromFilePath()
