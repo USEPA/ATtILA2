@@ -93,16 +93,36 @@ def main(argv):
         # take the 'Metrics to run' input and parse it into a list of metric ClassNames
         metricsClassNameList = ParseCheckboxSelections(Metrics_to_run)
         
-        # determine if the output is going to a geodatabase
-        outTablePath = os.path.split(Output_table)[0] 
-        inGDB = outTablePath[-3:].lower() == "gdb"
+        # determine the maximum size of output field names based on the output table's destination/type
+        outTablePath,outTableName = os.path.split(Output_table)
+        if outTablePath[-3:].lower() == "gdb":
+            maxFNameSize = 64 # ESRI maximum for File Geodatabases
+        elif outTablePath[-3:].lower() == "mdb":
+            maxFNameSize = 64 # ESRI maximum for Personal Geodatabases
+        elif outTableName[-3:].lower() == "dbf":
+            maxFNameSize = 10 # maximum for dBASE tables
+        else:
+            maxFNameSize = 16 # maximum for INFO tables
+            
                 
         # use the metricsClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
         metricsFieldnameDict = {}
+        outputFieldNames = ()
+        
         for mClassName in metricsClassNameList:
+            n = 1
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
             if fieldOverrideName: # a field name override exists
-                
+                # see if the provided field name is too long
+                if len(fieldOverrideName) > maxFNameSize:
+                    fieldOverrideName = fieldOverrideName[:maxFNameSize]
+                    # see if truncated field name is already used
+                    if fieldOverrideName in outputFieldNames:
+                        # shorten the field name and increment it
+                        shortenby = len(n)
+                        
+                    outputFieldNames.add(fieldOverrideName)
+                    
                 metricsFieldnameDict[mClassName] = fieldOverrideName
             else:
                 metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]

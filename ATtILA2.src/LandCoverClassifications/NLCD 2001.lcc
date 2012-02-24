@@ -57,7 +57,7 @@
 	-->
 	<classes>
 		<class id="nat" name="All natural land use" lcpField="NINDEX">
-			<class  id="forestlong" name="Forest">
+			<class  id="for" name="Forest">
 				<value id="41"/>
 				<value id="42"/>
 				<value id="43"/>
