@@ -74,6 +74,7 @@ class ToolValidator:
     inRasterIndex = 2 # index of input raster
     processingCellSizeIndex = 7 # index of optional processing cell size parameter
     snapRasterIndex = 8 # index of optional snap raster parameter
+    srcDirName = "ToolboxSource"
     
     ###############################################
     
@@ -89,9 +90,6 @@ class ToolValidator:
         self.qaCheckDescription = metricConstants.qaCheckDescription
         self.metricAddDescription = metricConstants.metricAddDescription
         
-        tbxPath = __main__.__file__.split(metricConstants.tbxSriptToolDelim)[0]
-        self.parentDir = os.path.dirname(tbxPath)
-        self.srcDirName = os.path.basename(tbxPath).rstrip(metricConstants.tbxFileSuffix).split(metricConstants.tbxFileDelim)[0] + metricConstants.srcFolderSuffix
         self.lccFileDirName = lccConstants.PredefinedFileDirName
         
         self.lccFileExtension = lccConstants.XmlFileExtension
@@ -144,8 +142,7 @@ class ToolValidator:
         
         self.lccFilePathParameter.enabled = False
         self.lccClassesParameter.enabled = False
-        
-        
+                
         # push optional fields to collapsed region
         self.optionalFieldsParameter.category = self.optionalFieldsName
         
