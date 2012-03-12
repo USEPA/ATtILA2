@@ -119,7 +119,7 @@ def main(argv):
                     # see if truncated field name is already used
                     if fieldOverrideName in outputFieldNames:
                         # shorten the field name and increment it
-                        shortenby = len(n)
+                        #shortenby = len(n)
                         
                     outputFieldNames.add(fieldOverrideName)
                     
