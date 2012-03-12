@@ -16,13 +16,9 @@ import os
 
 def main(argv):
       
-    dirRelativePath = r"\bin"
+
     exeName = "LandCoverClassificationEditor.pyw" 
-    thisFilePath = argv[0]
-    thisDirPath = os.path.dirname(thisFilePath)
-    exeDir = thisDirPath + dirRelativePath
-    os.chdir(exeDir) 
-    
+
     os.startfile(exeName)
     
 if __name__ == "__main__":
