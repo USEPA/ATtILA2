@@ -117,7 +117,7 @@ def main(argv):
                 if len(fieldOverrideName) > maxFNameSize:
                     fieldOverrideName = fieldOverrideName[:maxFNameSize]
                     # see if truncated field name is already used
-                    if fieldOverrideName in outputFieldNames:
+                    #if fieldOverrideName in outputFieldNames:
                         # shorten the field name and increment it
                         #shortenby = len(n)
                         
