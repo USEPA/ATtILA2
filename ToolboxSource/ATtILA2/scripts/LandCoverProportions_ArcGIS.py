@@ -110,13 +110,16 @@ def main(argv):
         outputFieldNames = ()
         
         for mClassName in metricsClassNameList:
-            n = 1
+            
+            #n = 1
+            
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
             if fieldOverrideName: # a field name override exists
                 # see if the provided field name is too long
                 if len(fieldOverrideName) > maxFNameSize:
                     fieldOverrideName = fieldOverrideName[:maxFNameSize]
                     # see if truncated field name is already used
+                    
                     #if fieldOverrideName in outputFieldNames:
                         # shorten the field name and increment it
                         #shortenby = len(n)
