@@ -3,6 +3,7 @@
 	<name>ATtILA2</name>
 	<comment></comment>
 	<projects>
+		<project>pylet</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
