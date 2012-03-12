@@ -9,9 +9,9 @@ srcDirName = os.path.basename(tbxPath).rstrip(".tbx").split("__")[0] + ".src"  #
 tbxParentDirPath =  os.path.dirname(tbxPath)
 srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
 sys.path.append(srcDirPath)
-import esdlepy
+import ATtILA2
 
-class ToolValidator (esdlepy.metrics.validation.LandCoverProportions.ToolValidator):
+class ToolValidator (ATtILA2.validation.LandCoverProportions.ToolValidator):
     "" Class for validating set of three LCC parameters 
         
         inTableIndex:  Two consecutive parameters
@@ -34,7 +34,11 @@ class ToolValidator (esdlepy.metrics.validation.LandCoverProportions.ToolValidat
     inTableIndex = 0 # start index of input reporting units (one parameter follows)
     startIndex = 3 # start index of predefined dropdown (two parameters follow)
     optionalFieldsIndex = 9 # index of optional fields parameter
-
+    inRasterIndex = 2 # index of input raster
+    processingCellSizeIndex = 7 # index of optional processing cell size parameter
+    snapRasterIndex = 8 # index of optional snap raster parameter
+    srcDirName = "ToolboxSource" # Folder name containing source code for .tbx
+    
     ###############################################
 """
 
@@ -74,7 +78,7 @@ class ToolValidator:
     inRasterIndex = 2 # index of input raster
     processingCellSizeIndex = 7 # index of optional processing cell size parameter
     snapRasterIndex = 8 # index of optional snap raster parameter
-    srcDirName = "ToolboxSource"
+    srcDirName = "ToolboxSource" # Folder name containing source code for .tbx
     
     ###############################################
     
