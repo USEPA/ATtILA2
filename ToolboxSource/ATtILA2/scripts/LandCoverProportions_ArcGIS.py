@@ -14,8 +14,8 @@
 
 import arcpy, os, sys
 from arcpy import env
-from esdlepy import lcc
-from esdlepy import outFields
+from pylet import lcc
+from ATtILA2.metrics import fields as outFields
 
 # Check out any necessary licenses
 arcpy.CheckOutExtension("spatial")

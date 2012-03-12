@@ -44,9 +44,9 @@ import os
 from xml.dom.minidom import parse
 from glob import glob 
 import __main__
-from esdlepy.metrics import constants as metricConstants
-from esdlepy.lcc import constants as lccConstants
-from esdlepy import outFields
+from ATtILA2.metrics import constants as metricConstants
+import pylet.lcc.constants as lccConstants
+from ATtILA2.metrics import fields as outFields
     
 class ToolValidator:
     """ Class for validating set of three LCC parameters 
