@@ -2,6 +2,7 @@
 
     Constants and helper functions associated with creating output metric fields.
     
+    (Formerly called OutFields.py)
 '''
 
 import os
