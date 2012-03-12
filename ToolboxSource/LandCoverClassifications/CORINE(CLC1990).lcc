@@ -1,0 +1,186 @@
+
+<root>
+
+	<metadata>
+		<name>CORINE (CLC1990)</name>
+		<description>CORINE (CLC1990) Landcover Classification</description>	
+	</metadata>
+
+	<!-- 
+		* The "values" node defines the full set of values that can exist in a landcover raster
+		* The "excluded" attribute is used to exclude values from the total, excluded=false is the default
+		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
+	-->
+	<values>
+		<value id="111" name="Continuous urban fabric"/> 
+		<value id="112" name="Discontinuous urban fabric"/>
+		<value id="121" name="Industrial or commercial units"/>
+		<value id="122" name="Road and rail networks and associated land"/>
+		<value id="123" name="Port areas"/>
+		<value id="124" name="Airports"/>				
+		<value id="131" name="Mineral extraction sites"/>
+		<value id="132" name="Dump sites"/>
+		<value id="133" name="Construction sites"/>				
+		<value id="141" name="Green urban areas"/>
+		<value id="142" name="Sport and leisure facilities"/>		
+		<value id="211" name="Non-irrigated arable land"/>
+		<value id="212" name="Permanently irrigated land"/>
+		<value id="213" name="Rice fields"/>
+		<value id="221" name="Vineyards"/>
+		<value id="222" name="Fruit trees and berry plantations"/>		
+		<value id="223" name="Olive groves"/>						
+		<value id="231" name="Pastures"/>
+		<value id="241" name="Annual crops associated with permanent crops"/>
+		<value id="242" name="Complex cultivation patterns"/>		
+		<value id="243" name="Land principally occupied by agriculture, with significant areas of natural vegetation"/>
+		<value id="244" name="Agro-forestry areas"/>
+		<value id="311" name="Broad leafed forest"/>
+		<value id="312" name="Coniferous forest"/>
+		<value id="313" name="Mixed forest"/>		
+		<value id="321" name="Natural grasslands"/>
+		<value id="322" name="Moors and heathland"/>		
+		<value id="323" name="Scierophyllous vegetation"/>
+		<value id="324" name="Transitional woodland-shrub"/>		
+		<value id="331" name="Beaches, dunes, sands"/>
+		<value id="332" name="Bare rocks"/>		
+		<value id="333" name="Sparsely vegetated areas"/>		
+		<value id="334" name="Burnt areas"/>		
+		<value id="335" name="Glaciers and perpetual snow"/>		
+		<value id="411" name="Inland marshes"/>
+		<value id="412" name="Peat bogs"/>		
+		<value id="421" name="Salt marshes"/>
+		<value id="422" name="Salines"/>
+		<value id="423" name="Intertidal flats"/>				
+		<value id="511" name="Water courses"/>
+		<value id="512" name="Water bodies"/>
+		<value id="521" name="Coastal lagoons"/>
+		<value id="522" name="Estuaries"/>
+		<value id="523" name="Sea and Ocean"/>
+		<value id="990" name="UNCLASSIFIED LAND SURFACE" excluded="true"/>
+		<value id="995" name="UNCLASSIFIED WATER BODIES" excluded="true"/>
+	<!--	<value id="990" name="UNCLASSIFIED" excluded="true"/>  -->
+		<value id="999" name="NODATA" excluded="true"/>						
+	</values>
+		
+		
+	<!-- 
+		* The "classes" node contains values grouped into classes.
+		* A class can contain either values or classes but not both types
+		* Values contain only an id which refers to a value in values node.
+		* The id attribute is used for the root of the field name in the output(for example %forest would be P + for = Pfor)
+		* Two classes with the same id are not allowed.
+		* Special class attributes:
+			- onSlopeVisible: Make available in "On Slope" metric category, default is false
+			- lcpField:  if present, it overides default "Land Cover Proportions" field name with the supplied value
+			
+	-->
+	<classes>
+		<class id="ui" name="Unnatural surfaces" lcpField="UINDEX">
+			<class id="artf" name="Artificial surfaces">
+				<class  id="urb" name="Urban fabric">
+					<value id="111"/>
+					<value id="112"/>				
+				</class>
+				<class id="ict" name="Industrial, commercial and transport units">
+					<value id="121"/>
+					<value id="122"/>				
+					<value id="123"/>				
+					<value id="124"/>				
+				</class>
+				<class id="mbar" name="Mine, dump and construction sites">
+					<value id="131"/>
+					<value id="132"/>
+					<value id="133"/>								
+				</class>
+				<class id="dos" name="Artificial, non-agriculture vegetated areas">
+					<value id="141"/>
+					<value id="142"/>				
+				</class>
+			</class>		
+		
+			<class id="agt" name="Agricultural areas">
+				<class id="ago" name="Arable land">
+					<value id="211"/>
+					<value id="212"/>				
+					<value id="213"/>				
+				</class>								
+				<class id="agc" name="Permanent crops">
+					<value id="221"/>
+					<value id="222"/>				
+					<value id="223"/>				
+				</class>		
+				<class id="agp" name="Pastures">
+					<value id="231"/>
+				</class>
+				<class id="coin" name="Heterogeneous agricultural areas">
+					<value id="241"/>
+					<value id="242"/>				
+					<value id="243"/>				
+					<value id="244"/>				
+				</class>						
+			</class>
+		</class>			
+		
+		<class id="nat" name="Natural surfaces" onSlopeVisible="true" lcpField="NINDEX">
+			<class id="nat" name="Forests and semi-natural areas" onSlopeVisible="true">
+				<class id="for" name="Forests" onSlopeVisible="true">
+					<value id="311"/>
+					<value id="312"/>				
+					<value id="313"/>				
+				</class>
+				<class id="shrb" name="Shrub and/or herbaceous vegetation association" onSlopeVisible="true">
+					<value id="321"/>
+					<value id="322"/>				
+					<value id="323"/>				
+					<value id="324"/>				
+				</class>
+				<class id="nbar" name="Open spaces with little or no vegetation">
+					<value id="331"/>
+					<value id="332"/>				
+					<value id="333"/>				
+					<value id="334"/>				
+					<value id="335"/>				
+				</class>
+			</class>
+				
+			<class id="wetl" name="Wetlands">
+					<class id="iwetl" name="Inland wetlands">
+					<value id="411"/>
+					<value id="412"/>				
+				</class>
+				<class id="cwetl" name="Maritime wetlands">
+					<value id="421"/>
+					<value id="422"/>				
+					<value id="423"/>				
+				</class>
+			</class>
+			<class id="uncll" name="Unclassified Land Bodies">										
+				<value id="990"/>								
+			</class>
+		</class>			
+
+		<class id="watr" name="Water" onSlopeVisible="false" lcpField="WINDEX">
+			<class id="weti" name="Inland Waters">
+				<value id="511"/>
+				<value id="512"/>
+			</class>				
+			<class id="wetm" name="Marine Waters">										
+				<value id="521"/>
+				<value id="522"/>				
+				<value id="523"/>
+			</class>
+			<class id="wetu" name="Unclassified Water Bodies">										
+				<value id="995"/>								
+			</class>
+		</class>
+		
+		<class id="uncl" name="UNCLASSIFIED" onSlopeVisible="false" lcpField="XINDEX">
+			<class id="unclo" name="UNCLASSIFIED">
+		<!--	<value id="990"/>  -->
+				<value id="999"/>				
+			</class>						
+		</class>
+						
+	</classes>
+
+</root>
