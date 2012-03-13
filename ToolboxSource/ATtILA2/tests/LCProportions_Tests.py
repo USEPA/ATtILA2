@@ -18,7 +18,7 @@ import os
 import arcpy
 from arcpy import env
 from collections import defaultdict
-from esdlepy import lcc
+from pylet import lcc
 
 # Check out any necessary licenses
 arcpy.CheckOutExtension("spatial")
