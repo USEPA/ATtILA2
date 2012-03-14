@@ -105,28 +105,32 @@ def main(argv):
             maxFNameSize = 16 # maximum for INFO tables
             
                 
-        # use the metricsClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
+        # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
-        outputFieldNames = ()
+        outputFieldNames = set()
         
         for mClassName in metricsClassNameList:
-            
-            #n = 1
+            # create number to replace characters at end of field name to make unique
+            n = 1
             
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
             if fieldOverrideName: # a field name override exists
                 # see if the provided field name is too long
                 if len(fieldOverrideName) > maxFNameSize:
+                    providedFieldName = fieldOverrideName
                     fieldOverrideName = fieldOverrideName[:maxFNameSize]
                     # see if truncated field name is already used
                     
-                    #if fieldOverrideName in outputFieldNames:
+                    while fieldOverrideName in outputFieldNames:
                         # shorten the field name and increment it
-                        #shortenby = len(n)
+                        truncateTo = maxFNameSize - len(str(n))
+                        fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
+                        n = n + 1
                         
                     outputFieldNames.add(fieldOverrideName)
                     
                 metricsFieldnameDict[mClassName] = fieldOverrideName
+                arcpy.AddWarning("Provided metric name too long for output location. Truncated "+providedFieldName+" to "+fieldOverrideName)
             else:
                 metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]
                 
