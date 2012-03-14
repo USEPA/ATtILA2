@@ -1,6 +1,7 @@
 # LandCoverProportions_ArcGIS.py
 # Michael A. Jackson, jackson.michael@epa.gov, majgis@gmail.com
-# 2011-10-04
+# Donald W. Ebert, ebert.donald@epa.gov
+# 2012-03-14
 """ Land Cover Proportion Metrics
 
     DESCRIPTION
@@ -23,7 +24,7 @@ arcpy.CheckOutExtension("spatial")
 def main(argv):
     """ Start Here """
     # Script arguments
-    Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
+    Input_reporting_unit_feature_object = arcpy.GetParameter(0)
     Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
     Input_land_cover_grid = arcpy.GetParameterAsText(2)
     lccFilePath = arcpy.GetParameterAsText(4)
@@ -95,41 +96,70 @@ def main(argv):
         
         # determine the maximum size of output field names based on the output table's destination/type
         outTablePath,outTableName = os.path.split(Output_table)
-        if outTablePath[-3:].lower() == "gdb":
-            maxFNameSize = 64 # ESRI maximum for File Geodatabases
-        elif outTablePath[-3:].lower() == "mdb":
-            maxFNameSize = 64 # ESRI maximum for Personal Geodatabases
-        elif outTableName[-3:].lower() == "dbf":
-            maxFNameSize = 10 # maximum for dBASE tables
-        else:
-            maxFNameSize = 16 # maximum for INFO tables
-            
+        maxFNameSize = GetFNameSizeLimit(outTablePath, outTableName)
                 
-        # use the metricsClassNameList to create a dictionary of ClassName keys with fieldname values using any user supplied field names
+        # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
-        outputFieldNames = ()
+        outputFieldNames = set() # use this set to help make field names unique
         
         for mClassName in metricsClassNameList:
-            
-            #n = 1
+            # generate unique number to replace characters at end of truncated field names
+            n = 1
             
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
             if fieldOverrideName: # a field name override exists
-                # see if the provided field name is too long
+                # see if the provided field name is too long for the output table type
                 if len(fieldOverrideName) > maxFNameSize:
-                    fieldOverrideName = fieldOverrideName[:maxFNameSize]
-                    # see if truncated field name is already used
+                    defaultFieldName = fieldOverrideName # keep track of the originally provided field name
+                    fieldOverrideName = fieldOverrideName[:maxFNameSize] # truncate field name to maximum allowable size
                     
-                    #if fieldOverrideName in outputFieldNames:
+                    # see if truncated field name is already used.
+                    # if so, truncate further and add a unique number to the end of the name
+                    while fieldOverrideName in outputFieldNames:
                         # shorten the field name and increment it
-                        #shortenby = len(n)
+                        truncateTo = maxFNameSize - len(str(n))
+                        fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
+                        n = n + 1
                         
-                    outputFieldNames.add(fieldOverrideName)
+                    arcpy.AddWarning("Provided metric name too long for output location. Truncated "+defaultFieldName+" to "+fieldOverrideName)
                     
+                # keep track of output field names    
+                outputFieldNames.add(fieldOverrideName)
+                # add output field name to dictionary
                 metricsFieldnameDict[mClassName] = fieldOverrideName
             else:
-                metricsFieldnameDict[mClassName] = fldParams[0]+mClassName+fldParams[1]
+                # generate output field name
+                outputFName = fldParams[0]+mClassName+fldParams[1]
                 
+                # see if the provided field name is too long for the output table type
+                if len(outputFName) > maxFNameSize:
+                    defaultFieldName = outputFName # keep track of the originally generated field name
+                    
+                    prefixLen = len(fldParams[0])
+                    suffixLen = len(fldParams[1])
+                    maxBaseSize = maxFNameSize - prefixLen - suffixLen
+                        
+                    outputFName = fldParams[0]+mClassName[:maxBaseSize]+fldParams[1] # truncate field name to maximum allowable size
+                    
+                    # see if truncated field name is already used.
+                    # if so, truncate further and add a unique number to the end of the name
+                    while outputFName in outputFieldNames:
+                        # shorten the field name and increment it
+                        truncateTo = maxBaseSize - len(str(n))
+                        outputFName = fldParams[0]+mClassName[:truncateTo]+str(n)+fldParams[1]
+                        n = n + 1
+                        
+                    arcpy.AddWarning("Metric field name too long for output location. Truncated "+defaultFieldName+" to "+outputFName)
+                    
+                # keep track of output field names
+                outputFieldNames.add(outputFName)             
+                # add output field name to dictionary
+                metricsFieldnameDict[mClassName] = outputFName
+                    
+        # for whatever reason, when ran in ArcMAP, the tool can't find the polygon file when creating the new output table
+        # unless the following 2 lines of code are used to explicitly locate the input dataset
+        desc = arcpy.Describe(Input_reporting_unit_feature_object)
+        Input_reporting_unit_feature = desc.catalogPath
         # create the specified output table
         newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams)
 
@@ -266,6 +296,19 @@ def PolygonAreasToDict(fc, key_field):
 
     return zoneAreaDict
 
+def GetFNameSizeLimit(outTablePath, outTableName):
+    """ Return the maximum size of output field names based on the output table's destination/type.
+        64 for file and personal geodatabases, 10 for dBASE tables, and 16 for INFO tables """
+    if outTablePath[-3:].lower() == "gdb":
+        maxFNameSize = 64 # ESRI maximum for File Geodatabases
+    elif outTablePath[-3:].lower() == "mdb":
+        maxFNameSize = 64 # ESRI maximum for Personal Geodatabases
+    elif outTableName[-3:].lower() == "dbf":
+        maxFNameSize = 10 # maximum for dBASE tables
+    else:
+        maxFNameSize = 16 # maximum for INFO tables
+        
+    return maxFNameSize
     
 def FindIdField(fc, id_field_str):
     """ Find the specified ID field in the feature class """
@@ -343,10 +386,6 @@ def CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_
     # need to strip the dbf extension if the outpath is a geodatabase; 
     # should control this in the validate step or with an arcpy.ValidateTableName call
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
-    
-#    if outTablePath[-3:] != "gdb":
-#        # need to truncate fieldnames to 10 characters if necessary
-#        pass
     
     # process the user input to add id field to output table
     IDfield = FindIdField(Input_reporting_unit_feature, Reporting_unit_ID_field)
