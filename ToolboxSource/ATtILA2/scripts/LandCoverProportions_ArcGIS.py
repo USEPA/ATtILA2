@@ -24,7 +24,7 @@ arcpy.CheckOutExtension("spatial")
 def main(argv):
     """ Start Here """
     # Script arguments
-    Input_reporting_unit_feature = arcpy.GetParameterAsText(0)
+    Input_reporting_unit_feature_object = arcpy.GetParameter(0)
     Reporting_unit_ID_field = arcpy.GetParameterAsText(1)
     Input_land_cover_grid = arcpy.GetParameterAsText(2)
     lccFilePath = arcpy.GetParameterAsText(4)
@@ -155,7 +155,11 @@ def main(argv):
                 outputFieldNames.add(outputFName)             
                 # add output field name to dictionary
                 metricsFieldnameDict[mClassName] = outputFName
-               
+                    
+        # for whatever reason, when ran in ArcMAP, the tool can't find the polygon file when creating the new output table
+        # unless the following 2 lines of code are used to explicitly locate the input dataset
+        desc = arcpy.Describe(Input_reporting_unit_feature_object)
+        Input_reporting_unit_feature = desc.catalogPath
         # create the specified output table
         newTable = CreateMetricOutputTable(Output_table,Input_reporting_unit_feature,Reporting_unit_ID_field,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams)
 
