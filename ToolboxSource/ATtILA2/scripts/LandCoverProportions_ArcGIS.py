@@ -17,6 +17,7 @@ import arcpy, os, sys
 from arcpy import env
 from pylet import lcc
 from ATtILA2.metrics import fields as outFields
+from ATtILA2.metrics import constants as metricConstants
 
 # Check out any necessary licenses
 arcpy.CheckOutExtension("spatial")
@@ -70,14 +71,14 @@ def main(argv):
         # if any optional fields are selected, get their parameters
         optionalGroupsList = ParseCheckboxSelections(Optional_field_groups)
         
-        if 'QACHECK' in optionalGroupsList:
+        if metricConstants.qaCheckName in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
             qaCheckFlds = outFields.getQACheckFieldParametersFromFilePath()
         else:
             qaCheckFlds = None
             
-        if 'METRICADD' in optionalGroupsList:
-            addAreaFldParams = ["_A","DOUBLE",15,0]
+        if metricConstants.metricAddName in optionalGroupsList:
+            addAreaFldParams = metricConstants.areaFieldParameters
         else:
             addAreaFldParams = None
         
@@ -412,7 +413,7 @@ def ParseCheckboxSelections(selectionsString):
         The expected input is a string with the following format: 'item<two spaces>description';'item<two spaces>description';'item...'
         e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
     """
-    return map((lambda splitItemAndDesc: splitItemAndDesc.split('  ')[0]), selectionsString.replace("'","").split(';'))
+    return map((lambda splitItemAndDesc: splitItemAndDesc.split(metricConstants.descriptionDelim)[0]), selectionsString.replace("'","").split(';'))
 
 
 if __name__ == "__main__":
