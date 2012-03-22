@@ -64,9 +64,6 @@ def main(argv):
         AreaBelowThresholdValue = int(LCGrid.maximum + 1)
         where_clause = "VALUE >= "+Input_slope_threshold_value
         SLPxLCGrid = Con(SLPGrid, LCGrid, AreaBelowThresholdValue, where_clause)
-        
-        # see if user wants to save the secondary/intermediate grid products
-        SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
 
         # if certain land cover codes are tagged as 'excluded = TRUE', generate grid where land cover codes are 
         # preserved for areas coincident with steep slopes, areas below the slope threshold are coded with the 
@@ -77,9 +74,11 @@ def main(argv):
             # build a whereClause string (e.g. "VALUE = 11 or VALUE = 12") to identify where on the land cover grid excluded values occur
             whereExcludedClause = "VALUE = " + " or VALUE = ".join([str(item) for item in excludedValues])
 
-            excludedValuesGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause)
-            excludedValuesGrid.save(arcpy.CreateUniqueName("xval"))
-        
+            SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause)
+            
+        # save the file if intermediate products outputs are checked
+        SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
+
         
         
     except arcpy.ExecuteError:
