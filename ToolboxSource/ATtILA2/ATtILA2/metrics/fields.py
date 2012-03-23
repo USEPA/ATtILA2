@@ -22,6 +22,14 @@ rpMetricName = "RiparianProportions"
 rpFieldPrefix = "r"
 rpOverlapName = "R_OVERLAP"
 
+# Land Cover Slope Overlap (lcso)
+lcsoMetricName = "LandCoverSlopeOverlap"
+lcsoFieldSuffix = "SL"
+lcsoOverlapName = "SL_OVRLP"
+lcsoTotalAreaName = "SL+TOT_A"
+lcsoEffectiveAreaName = "SL_EFF_A"
+lcsoExcludedAreaName = "SL_EXC_A"
+
 # Field type defaults
 defaultDecimalFieldType = "FLOAT"
 defaultIntegerFieldType = "SHORT"
@@ -30,6 +38,7 @@ defaultAreaFieldType = "DOUBLE"
 
 # Required field parameter info
 fieldParameters = {lcpMetricName:[lcpFieldPrefix,"", defaultDecimalFieldType, 6, 1],
+                   lcsoMetricName:["",lcsoFieldSuffix,defaultDecimalFieldType,6,1],
                    rpMetricName:[rpFieldPrefix,"", defaultDecimalFieldType, 6, 1]}
 
 # Optional field parameter info
@@ -37,6 +46,10 @@ qaCheckFieldParameters = {lcpMetricName:[[lcpOverlapName, defaultIntegerFieldTyp
                                         [lcpTotalAreaName, defaultAreaFieldType, 15],
                                         [lcpEffectiveAreaName, defaultAreaFieldType, 15],
                                         [lcpExcludedAreaName, defaultAreaFieldType, 15]],
+                         lcsoMetricName:[[lcsoOverlapName, defaultIntegerFieldType, 6],
+                                         [lcsoTotalAreaName, defaultAreaFieldType, 15],
+                                         [lcsoEffectiveAreaName, defaultAreaFieldType, 15],
+                                         [lcsoExcludedAreaName, defaultAreaFieldType, 15]],
                            rpMetricName:[[rpOverlapName, defaultIntegerFieldType, 6]]}
 
 
