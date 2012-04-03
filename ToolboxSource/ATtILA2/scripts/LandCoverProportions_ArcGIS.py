@@ -35,6 +35,7 @@ def main(argv):
     Processing_cell_size = arcpy.GetParameterAsText(7)
     Snap_raster = arcpy.GetParameterAsText(8)
     Optional_field_groups = arcpy.GetParameterAsText(9)
+    thresholdValue = ""
     
 #    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/shpfiles/wtrshd.shp"
 #    Reporting_unit_ID_field = "HUC"
@@ -61,6 +62,10 @@ def main(argv):
         # Use this script's name to obtain information on output field naming, additional optional fields, and 
         # field naming overrides.
         
+        # determine the maximum size of output field names based on the output table's destination/type
+        outTablePath,outTableName = os.path.split(Output_table)
+        maxFNameSize = GetFNameSizeLimit(outTablePath, outTableName)        
+        
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
         # e.g., fldParams = ["p", "", "FLOAT", 6, 1]
@@ -80,6 +85,7 @@ def main(argv):
             
         if metricConstants.metricAddName in optionalGroupsList:
             addAreaFldParams = metricConstants.areaFieldParameters
+            maxFNameSize = maxFNameSize - len(addAreaFldParams[0])
         else:
             addAreaFldParams = None
         
@@ -96,10 +102,6 @@ def main(argv):
         # take the 'Metrics to run' input and parse it into a list of metric ClassNames
         metricsClassNameList = ParseCheckboxSelections(Metrics_to_run)
         
-        # determine the maximum size of output field names based on the output table's destination/type
-        outTablePath,outTableName = os.path.split(Output_table)
-        maxFNameSize = GetFNameSizeLimit(outTablePath, outTableName)
-                
         # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
         outputFieldNames = set() # use this set to help make field names unique
@@ -139,9 +141,9 @@ def main(argv):
                     
                     prefixLen = len(fldParams[0])
                     suffixLen = len(fldParams[1])
-                    maxBaseSize = maxFNameSize - prefixLen - suffixLen
+                    maxBaseSize = maxFNameSize - prefixLen - suffixLen - len(thresholdValue)
                         
-                    outputFName = fldParams[0]+mClassName[:maxBaseSize]+fldParams[1] # truncate field name to maximum allowable size
+                    outputFName = fldParams[0]+mClassName[:maxBaseSize]+fldParams[1]+thresholdValue # truncate field name to maximum allowable size
                     
                     # see if truncated field name is already used.
                     # if so, truncate further and add a unique number to the end of the name

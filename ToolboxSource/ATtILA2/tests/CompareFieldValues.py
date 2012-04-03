@@ -20,23 +20,26 @@ try:
     FieldToCheck = arcpy.GetParameterAsText(5)
     diffFieldname = arcpy.GetParameterAsText(6)
     
-    # abort if join table is same as input table
-    if QATable == TableToCheck:
-        raise Exception("Table check error.") 
+#    # abort if join table is same as input table
+#    if QATable == TableToCheck:
+#        raise Exception("Table check error.") 
         
 
-    arcpy.MakeTableView_management(TableToCheck, "CheckTableView")
-    arcpy.MakeTableView_management(QATable, "QATableView")
+#    arcpy.MakeTableView_management(TableToCheck, "CheckTableView")
+#    arcpy.MakeTableView_management(QATable, "QATableView")
     
-    arcpy.JoinField_management("CheckTableView", CheckIDfield, "QATableView", QAIDfield, [FieldToCheck])
+#    arcpy.JoinField_management("CheckTableView", CheckIDfield, "QATableView", QAIDfield, [FieldToCheck])
+    arcpy.JoinField_management(TableToCheck, FieldToCheck, QATable, QAValueField, [FieldToCheck])
     
-    theFields = arcpy.ListFields("CheckTableView")
+#    theFields = arcpy.ListFields("CheckTableView")
+    theFields = arcpy.ListFields(TableToCheck)
     joinedFieldname = theFields[-1].name
     
     arcpy.AddField_management(TableToCheck, diffFieldname, "FLOAT", 6, 3)
          
     expression = "!"+FieldToCheck+"! - !"+joinedFieldname+"!"
-    arcpy.CalculateField_management("CheckTableView", diffFieldname, expression, "PYTHON")
+#    arcpy.CalculateField_management("CheckTableView", diffFieldname, expression, "PYTHON")
+    arcpy.CalculateField_management(TableToCheck, FieldToCheck, expression, "PYTHON")
     
 #except SameTableError:
 #    arcpy.AddError("Input table and join table are identical. Cannot joint a table to itself. Terminating.")
