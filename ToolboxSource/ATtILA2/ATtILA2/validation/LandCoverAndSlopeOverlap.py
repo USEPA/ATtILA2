@@ -1,6 +1,10 @@
-"""
-    ToolValidator is for tool dialog validation, cut and paste the following into the Validation tab of tool properties:
-    (you need to replace double-quote with triple-quote after pasting)
+
+
+""" The ToolValidator class is for tool dialog validation.
+
+    Cut and paste the following into the Validation tab of tool properties in ArcCatalog:
+    
+
     
 import os
 import sys
@@ -12,33 +16,45 @@ sys.path.append(srcDirPath)
 import ATtILA2
 
 class ToolValidator (ATtILA2.validation.LandCoverAndSlopeOverlap.ToolValidator):
-    "" Class for validating set of three LCC parameters 
+    " Class for validating parameters "
+     
+    ## Description of parameters 
+    #    
+    # inTableIndex:  Two consecutive parameters
+    # 1. Table(reporting units)
+    # 2. Field(dropdown):  Obtained from="<Table>"
+    #    
+    # inRasterIndex:  One parameter
+    # 1. Raster Layer
+    #
+    # startIndex:  Three consecutive parameters 
+    # 1. String: default  
+    # 2. File: filter=lccFileExtension
+    # 3. String:  MultiValue=Yes; 
+    #    
+    # processingCellSizeIndex:  Index of optional processing cell size parameter
+    # 1. Analysis cell size
+    #
+    # snapRasterIndex:  Index of optional snap raster parameter
+    # 1. Raster Layer
+    #
+    # optionalFieldsIndex:  index of optional fields parameter
+    # 1. String: Properties: MultiValue=Yes
         
-        inTableIndex:  Two consecutive parameters
-        1. Table(reporting units):  Properties: default (self.inTableIndex)
-        2. Field(dropdown):  Properties: linked to Table
-        
-        startIndex:  Three consecutive parameters 
-        1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
-        2. File: Properties: filter=lccFileExtension
-        3. String:  MultiValue=Yes; 
-        
-        optionalFieldsIndex:  single parameter 
-        1. String: Properties: MultiValue=Yes
-        
-    ""
     
     ###############################################
     # Keep updated
     
-    inTableIndex = 0 # start index of input reporting units (one parameter follows)
-    inRasterIndex = 2 # index of input raster
-    startIndex = 3 # start index of predefined dropdown (two parameters follow)
-    processingCellSizeIndex = 9 # index of optional processing cell size parameter
-    snapRasterIndex = 10 # index of optional snap raster parameter
-    optionalFieldsIndex = 11 # index of optional fields parameter
+    inTableIndex = 0
+    inRasterIndex = 2
+    startIndex = 3
+    processingCellSizeIndex = 9 
+    snapRasterIndex = 10 
+    optionalFieldsIndex = 11 
    
     ###############################################
+    
+    
 """
 
 
@@ -52,82 +68,68 @@ import pylet.lcc.constants as lccConstants
 from ATtILA2.metrics import fields as outFields
     
 class ToolValidator:
-    """ Class for validating set of three LCC parameters 
-        
-        inTableIndex:  Two consecutive parameters
-        1. Table(reporting units):  Properties: default (self.inTableIndex)
-        2. Field(dropdown):  Properties: linked to Table
-        
-        startIndex:  Three consecutive parameters 
-        1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
-        2. File: Properties: filter=lccFileExtension
-        3. String:  MultiValue=Yes; 
-        
-        optionalFieldsIndex:  single parameter 
-        1. String: Properties: MultiValue=Yes
-        
-    """
+    """ Class for validating parameters """
     
-    ###############################################
-    # Keep updated
+    # Indexes of input parameters
+    inTableIndex = 0 
+    inRasterIndex = 2 
+    startIndex = 3 
+    processingCellSizeIndex = 9 
+    snapRasterIndex = 10
+    optionalFieldsIndex = 11
     
-    inTableIndex = 0 # start index of input reporting units (one parameter follows)
-    inRasterIndex = 2 # index of input raster
-    startIndex = 3 # start index of predefined dropdown (two parameters follow)
-    processingCellSizeIndex = 9 # index of optional processing cell size parameter
-    snapRasterIndex = 10 # index of optional snap raster parameter
-    optionalFieldsIndex = 11 # index of optional fields parameter
+    # Additional local variables
+    srcDirName = metricConstants.tbxSourceFolderName
     
-    ###############################################
-    
-    srcDirName = "ToolboxSource" # Folder name containing source code for .tbx
 
     def __init__(self):
-        """ """
-                
-
+        """ Initialize ToolValidator class"""
         
+        # Load metric constants        
         self.inputIdFieldTypes = metricConstants.inputIdFieldTypes
         self.lccSchemeUserOption = metricConstants.userOption
         self.optionalFieldsName = metricConstants.optionalFieldsName
         self.qaCheckDescription = metricConstants.qaCheckDescription
-        self.metricAddDescription = metricConstants.metricAddDescription
+        self.metricAddDescription = metricConstants.metricAddDescription      
+        self.metricDescription = metricConstants.lcpMetricDescription
+        self.noFeaturesMessage = metricConstants.noFeaturesMessage
         
-        self.lccFileDirName = lccConstants.PredefinedFileDirName
-        
+        # Load LCC constants
+        self.lccFileDirName = lccConstants.PredefinedFileDirName       
         self.lccFileExtension = lccConstants.XmlFileExtension
         self.idAttributeName = lccConstants.XmlAttributeId
         self.nameAttributeName = lccConstants.XmlAttributeName
         self.classElementName = lccConstants.XmlElementClass
         self.overrideAttributeName = lccConstants.XmlAttributeLcpField
-        self.metricDescription = metricConstants.lcpMetricDescription
-        self.noFeaturesMessage = metricConstants.noFeaturesMessage
-        self.fieldPrefix = outFields.lcpFieldPrefix
 
-        self.parameters = arcpy.GetParameterInfo()
+        # Load outFields constants
+        self.fieldPrefix = outFields.lcpFieldPrefix
+        
+        # Set relative indexes
         self.lccFilePathIndex = self.startIndex + 1
         self.lccClassesIndex = self.startIndex + 2
         self.inputFieldsIndex = self.inTableIndex + 1
-        self.currentFilePath = ""
-        self.ruFilePath = ""
         
-        # Required Parameters
+        # Assign local names to parameters
+        self.parameters = arcpy.GetParameterInfo()
         self.inputTableParameter = self.parameters[self.inTableIndex]
         self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
         self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
-        
         self.inRasterParameter = self.parameters[self.inRasterIndex]
         self.snapRasterParameter = self.parameters[self.snapRasterIndex]
         self.optionalFieldsParameter = self.parameters[self.optionalFieldsIndex]
-        
         self.initialized = False
+        
+        # Additional local variables
+        self.currentFilePath = ""
+        self.ruFilePath = ""
 
 
     def initializeParameters(self):
-        """ """
+        """ Initialize parameters"""
 
         # Populate predefined LCC dropdown
         parentDir = os.path.dirname( __main__.__file__.split("#")[0])
@@ -155,10 +157,13 @@ class ToolValidator:
         
         self.initialized=True
         
+        
     def updateParameters(self):
-        """Modify the values and properties of parameters before internal
-        validation is performed.  This method is called whenever a parameter
-        has been changed."""
+        """ Modify the values and properties of parameters before internal validation is performed.  
+        
+            This method is called whenever a parameter has been changed.
+        
+        """
         
         if not self.initialized:
             self.initializeParameters()
