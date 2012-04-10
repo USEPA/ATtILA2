@@ -101,7 +101,7 @@ class ToolValidator:
         self.nameAttributeName = lccConstants.XmlAttributeName
         self.classElementName = lccConstants.XmlElementClass
         self.overrideAttributeName = lccConstants.XmlAttributeLcpField
-        self.metricDescription = metricConstants.lcpMetricDescription
+        self.metricDescription = metricConstants.metricDescription
         self.noFeaturesMessage = metricConstants.noFeaturesMessage
         self.fieldPrefix = outFields.lcpFieldPrefix
 
