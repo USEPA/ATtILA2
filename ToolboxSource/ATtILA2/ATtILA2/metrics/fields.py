@@ -14,6 +14,7 @@ from pylet import lcc
 
 # Land Cover Proportions(lcp)
 lcpFieldPrefix = "p"
+lcpFieldSuffix = ""
 lcpOverlapName = "LCP_OVRLP"
 lcpTotalAreaName = "LCP_TOT_A"
 lcpEffectiveAreaName = "LCP_EFF_A"
@@ -21,10 +22,12 @@ lcpExcludedAreaName = "LCP_EXC_A"
 
 # Riparian Proportions(rp)
 rpFieldPrefix = "r"
+rpFieldSuffix = ""
 rpOverlapName = "R_OVERLAP"
 
 # Land Cover Slope Overlap (lcso)
 lcsoFieldSuffix = "SL"
+lcsoFieldPrefix = ""
 lcsoOverlapName = "SL_OVRLP"
 lcsoTotalAreaName = "SL+TOT_A"
 lcsoEffectiveAreaName = "SL_EFF_A"
