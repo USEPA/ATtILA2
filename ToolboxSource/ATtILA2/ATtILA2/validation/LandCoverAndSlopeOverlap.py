@@ -91,7 +91,7 @@ class ToolValidator:
         self.optionalFieldsName = metricConstants.optionalFieldsName
         self.qaCheckDescription = metricConstants.qaCheckDescription
         self.metricAddDescription = metricConstants.metricAddDescription      
-        self.metricDescription = metricConstants.lcpMetricDescription
+        self.metricDescription = metricConstants.metricDescription
         self.noFeaturesMessage = metricConstants.noFeaturesMessage
         
         # Load LCC constants
