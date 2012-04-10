@@ -9,9 +9,9 @@
 import os
 import sys
 tbxPath = __file__.split("#")[0]
-srcDirName = os.path.basename(tbxPath).rstrip(".tbx").split("__")[0] + ".src"  # <toolbox_name>__anything.tbx -> <toolbox_name>.src
+sourceName = "ToolboxSource" 
 tbxParentDirPath =  os.path.dirname(tbxPath)
-srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
 sys.path.append(srcDirPath)
 import ATtILA2
 
@@ -51,7 +51,9 @@ class ToolValidator (ATtILA2.validation.LandCoverAndSlopeOverlap.ToolValidator):
     processingCellSizeIndex = 9 
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 
-   
+    
+    srcDirName = sourceName
+    
     ###############################################
     
     

@@ -5,39 +5,50 @@
 import os
 import sys
 tbxPath = __file__.split("#")[0]
-srcDirName = os.path.basename(tbxPath).rstrip(".tbx").split("__")[0] + ".src"  # <toolbox_name>__anything.tbx -> <toolbox_name>.src
+sourceName = "ToolboxSource"
 tbxParentDirPath =  os.path.dirname(tbxPath)
-srcDirPath = os.path.join(tbxParentDirPath, srcDirName)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
 sys.path.append(srcDirPath)
 import ATtILA2
 
 class ToolValidator (ATtILA2.validation.LandCoverProportions.ToolValidator):
-    "" Class for validating set of three LCC parameters 
-        
-        inTableIndex:  Two consecutive parameters
-        1. Table(reporting units):  Properties: default (self.inTableIndex)
-        2. Field(dropdown):  Properties: linked to Table
-        
-        startIndex:  Three consecutive parameters 
-        1. String: Properties: default  POPULATED: file names and lccSchemeUserOption  (self.startIndex)
-        2. File: Properties: filter=lccFileExtension
-        3. String:  MultiValue=Yes; 
-        
-        optionalFieldsIndex:  single parameter 
-        1. String: Properties: MultiValue=Yes
-        
-    ""
+    " Class for validating parameters "
+     
+    ## Description of parameters 
+    #    
+    # inTableIndex:  Two consecutive parameters
+    # 1. Table(reporting units)
+    # 2. Field(dropdown):  Obtained from="<Table>"
+    #    
+    # inRasterIndex:  One parameter
+    # 1. Raster Layer
+    #
+    # startIndex:  Three consecutive parameters 
+    # 1. String: default  
+    # 2. File: filter=lccFileExtension
+    # 3. String:  MultiValue=Yes; 
+    #    
+    # processingCellSizeIndex:  Index of optional processing cell size parameter
+    # 1. Analysis cell size
+    #
+    # snapRasterIndex:  Index of optional snap raster parameter
+    # 1. Raster Layer
+    #
+    # optionalFieldsIndex:  index of optional fields parameter
+    # 1. String: Properties: MultiValue=Yes
+    
     
     ###############################################
     # Keep updated
     
-    inTableIndex = 0 # start index of input reporting units (one parameter follows)
-    startIndex = 3 # start index of predefined dropdown (two parameters follow)
-    optionalFieldsIndex = 9 # index of optional fields parameter
-    inRasterIndex = 2 # index of input raster
-    processingCellSizeIndex = 7 # index of optional processing cell size parameter
-    snapRasterIndex = 8 # index of optional snap raster parameter
-    srcDirName = "ToolboxSource" # Folder name containing source code for .tbx
+    inTableIndex = 0 
+    startIndex = 3
+    optionalFieldsIndex = 9 
+    inRasterIndex = 2 
+    processingCellSizeIndex = 7 
+    snapRasterIndex = 8 
+    
+    srcDirName = sourceName
     
     ###############################################
 """
