@@ -93,6 +93,7 @@ class ToolValidator:
         self.metricAddDescription = metricConstants.metricAddDescription      
         self.metricDescription = metricConstants.metricDescription
         self.noFeaturesMessage = metricConstants.noFeaturesMessage
+        self.filterList = metricConstants.lcsoOptionalFieldsFilter
         
         # Load LCC constants
         self.lccFileDirName = lccConstants.PredefinedFileDirName       
@@ -110,7 +111,7 @@ class ToolValidator:
         self.lccClassesIndex = self.startIndex + 2
         self.inputFieldsIndex = self.inTableIndex + 1
         
-        # Assign local names to parameters
+        # Assign parameters to local variables
         self.parameters = arcpy.GetParameterInfo()
         self.inputTableParameter = self.parameters[self.inTableIndex]
         self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
@@ -120,13 +121,12 @@ class ToolValidator:
         self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
         self.inRasterParameter = self.parameters[self.inRasterIndex]
         self.snapRasterParameter = self.parameters[self.snapRasterIndex]
-        self.optionalFieldsParameter = self.parameters[self.optionalFieldsIndex]
-        self.initialized = False
+        self.optionsParameter = self.parameters[self.optionalFieldsIndex]
         
         # Additional local variables
         self.currentFilePath = ""
         self.ruFilePath = ""
-
+        self.initialized = False
 
     def initializeParameters(self):
         """ Initialize parameters"""
@@ -135,27 +135,25 @@ class ToolValidator:
         parentDir = os.path.dirname( __main__.__file__.split("#")[0])
         self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
         self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*" + self.lccFileExtension)
-        
         filterList = []
         self.lccLookup = {}
+        
         for lccPath in glob(self.lccFileDirSearch):
             lccSchemeName = os.path.basename(lccPath).rstrip(self.lccFileExtension)
             filterList.append(lccSchemeName)
             self.lccLookup[lccSchemeName] = lccPath
             
         self.lccSchemeParameter.filter.list = filterList + [self.lccSchemeUserOption]
-        
         self.lccFilePathParameter.enabled = False
         self.lccClassesParameter.enabled = False
                 
-        # push optional fields to collapsed region
-        self.optionalFieldsParameter.category = self.optionalFieldsName
+        # Move parameters to optional section
+        self.optionsParameter.category = self.optionalFieldsName
         
-        # set optional fields filter
-        filterList = [self.qaCheckDescription, self.metricAddDescription]
-        self.optionalFieldsParameter.filter.list = filterList
+        # Set options filter
+        self.optionsParameter.filter.list = self.filterList
         
-        self.initialized=True
+        self.initialized = True
         
         
     def updateParameters(self):
@@ -268,7 +266,7 @@ class ToolValidator:
             self.lccClassesParameter.clearMessage()
         
         # Remove required on optional fields
-        self.optionalFieldsParameter.clearMessage()
+        self.optionsParameter.clearMessage()
         
         # Set optional raster options if env is set
         if not self.processingCellSizeParameter.value:
