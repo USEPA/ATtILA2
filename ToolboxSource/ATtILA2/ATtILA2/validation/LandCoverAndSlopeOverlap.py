@@ -104,7 +104,8 @@ class ToolValidator:
         self.overrideAttributeName = lccConstants.XmlAttributeLcpField
 
         # Load outFields constants
-        self.fieldPrefix = outFields.lcpFieldPrefix
+        self.fieldPrefix = outFields.lcsoFieldPrefix
+        self.fieldSuffix = outFields.lcsoFieldSuffix
         
         # Set relative indexes
         self.lccFilePathIndex = self.startIndex + 1
@@ -215,7 +216,7 @@ class ToolValidator:
                 # Check for field override, ie NINDEX, UINDEX
                 fieldName = classNode.getAttribute(self.overrideAttributeName)
                 if not fieldName:
-                    fieldName = self.fieldPrefix + classId
+                    fieldName = self.fieldPrefix + classId + self.fieldSuffix
                 
                 className = message.format(classId, fieldName, name)
                 classNames.append(className)    
@@ -254,8 +255,11 @@ class ToolValidator:
                 
         
     def updateMessages(self):
-        """Modify the messages created by internal validation for each tool
-        parameter.  This method is called after internal validation."""
+        """ Modify the messages created by internal validation for each tool parameter.  
+        
+            This method is called after internal validation.
+            
+        """
 
         # Set lcc file parameter required only if user-defined is set
         if self.lccSchemeParameter.value != self.lccSchemeUserOption:
