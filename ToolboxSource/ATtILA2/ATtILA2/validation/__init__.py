@@ -1,3 +1,3 @@
-import LandCoverProportions
-import LandCoverAndSlopeOverlap
+import ToolValidators
+import Validators
 

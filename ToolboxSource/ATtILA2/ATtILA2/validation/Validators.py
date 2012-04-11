@@ -1,64 +1,8 @@
+''' These classes are for inheritance by ToolValidator classes
 
-
-""" The ToolValidator class is for tool dialog validation.
-
-    Cut and paste the following into the Validation tab of tool properties in ArcCatalog:
-    
-
-    
-import os
-import sys
-tbxPath = __file__.split("#")[0]
-sourceName = "ToolboxSource" 
-tbxParentDirPath =  os.path.dirname(tbxPath)
-srcDirPath = os.path.join(tbxParentDirPath, sourceName)
-sys.path.append(srcDirPath)
-import ATtILA2
-
-class ToolValidator (ATtILA2.validation.LandCoverAndSlopeOverlap.ToolValidator):
-    " Class for validating parameters "
-     
-    ## Description of parameters 
-    #    
-    # inTableIndex:  Two consecutive parameters
-    # 1. Table(reporting units)
-    # 2. Field(dropdown):  Obtained from="<Table>"
-    #    
-    # inRasterIndex:  One parameter
-    # 1. Raster Layer
-    #
-    # startIndex:  Three consecutive parameters 
-    # 1. String: default  
-    # 2. File: filter=lccFileExtension
-    # 3. String:  MultiValue=Yes; 
-    #    
-    # processingCellSizeIndex:  Index of optional processing cell size parameter
-    # 1. Analysis cell size
-    #
-    # snapRasterIndex:  Index of optional snap raster parameter
-    # 1. Raster Layer
-    #
-    # optionalFieldsIndex:  index of optional fields parameter
-    # 1. String: Properties: MultiValue=Yes
-        
-    
-    ###############################################
-    # Keep updated
-    
-    inTableIndex = 0
-    inRasterIndex = 2
-    startIndex = 3
-    processingCellSizeIndex = 9 
-    snapRasterIndex = 10 
-    optionalFieldsIndex = 11 
-    
-    srcDirName = sourceName
-    
-    ###############################################
-    
-    
-"""
-
+    These classes shouldn't be used directly as ToolValidators.
+    Create a new ToolValidator class that inherits one of these classes.
+'''
 
 import arcpy
 import os
@@ -67,23 +11,56 @@ from glob import glob
 import __main__
 from ATtILA2.metrics import constants as metricConstants
 import pylet.lcc.constants as lccConstants
-from ATtILA2.metrics import fields as outFields
     
-class ToolValidator:
-    """ Class for validating parameters """
+class ProportionsValidator:
+    """ Class for inheritance by ToolValidator Only
+    
+
+        
+        Description of ArcToolbox parameters:
+        -------------------------------------
+        
+        inTableIndex:  Two consecutive parameters
+        1. Table(reporting units)
+        2. Field(dropdown):  Obtained from="<Table>"
+           
+        inRasterIndex:  One parameter
+        1. Raster Layer
+        
+        startIndex:  Three consecutive parameters 
+        1. String: default  
+        2. File: filter=lccFileExtension
+        3. String:  MultiValue=Yes; 
+           
+        processingCellSizeIndex:  Index of optional processing cell size parameter
+        1. Analysis cell size
+        
+        snapRasterIndex:  Index of optional snap raster parameter
+        1. Raster Layer
+        
+        optionalFieldsIndex:  index of optional fields parameter
+        1. String: Properties: MultiValue=Yes
+        
+    
+    """
     
     # Indexes of input parameters
-    inTableIndex = 0 
-    inRasterIndex = 2 
-    startIndex = 3 
-    processingCellSizeIndex = 9 
-    snapRasterIndex = 10
-    optionalFieldsIndex = 11
+    inTableIndex = -1 
+    inRasterIndex = -1  
+    startIndex = -1  
+    processingCellSizeIndex = -1 
+    snapRasterIndex = -1 
+    optionalFieldsIndex = -1 
     
     # Additional local variables
     srcDirName = metricConstants.tbxSourceFolderName
     
-
+    # Metric Specific
+    filterList = []
+    overrideAttributeName = ""
+    fieldPrefix = ""
+    fieldSuffix = ""
+    
     def __init__(self):
         """ Initialize ToolValidator class"""
         
@@ -95,7 +72,6 @@ class ToolValidator:
         self.metricAddDescription = metricConstants.metricAddDescription      
         self.metricDescription = metricConstants.metricDescription
         self.noFeaturesMessage = metricConstants.noFeaturesMessage
-        self.filterList = metricConstants.lcsoOptionalFieldsFilter
         
         # Load LCC constants
         self.lccFileDirName = lccConstants.PredefinedFileDirName       
@@ -103,11 +79,6 @@ class ToolValidator:
         self.idAttributeName = lccConstants.XmlAttributeId
         self.nameAttributeName = lccConstants.XmlAttributeName
         self.classElementName = lccConstants.XmlElementClass
-        self.overrideAttributeName = lccConstants.XmlAttributeLcsoField
-
-        # Load outFields constants
-        self.fieldPrefix = outFields.lcsoFieldPrefix
-        self.fieldSuffix = outFields.lcsoFieldSuffix
         
         # Set relative indexes
         self.lccFilePathIndex = self.startIndex + 1
@@ -131,6 +102,7 @@ class ToolValidator:
         self.ruFilePath = ""
         self.initialized = False
 
+
     def initializeParameters(self):
         """ Initialize parameters"""
 
@@ -140,7 +112,7 @@ class ToolValidator:
         self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*" + self.lccFileExtension)
         filterList = []
         self.lccLookup = {}
-        
+                
         for lccPath in glob(self.lccFileDirSearch):
             lccSchemeName = os.path.basename(lccPath).rstrip(self.lccFileExtension)
             filterList.append(lccSchemeName)
@@ -302,6 +274,3 @@ class ToolValidator:
         # Check for empty input features
         if self.inputTableParameter.value and not self.inputTableParameter.hasError() and not arcpy.SearchCursor(self.inputTableParameter.value).next():
             self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
-
-    
-        
