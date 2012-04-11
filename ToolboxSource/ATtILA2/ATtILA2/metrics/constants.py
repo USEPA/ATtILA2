@@ -30,9 +30,14 @@ intermediateDescription = "{0}{1}Retain Intermediate Layers Generated During Met
 lcpMetricName = "LandCoverProportions"
 rpMetricName = "RiparianProportions"
 lcsoMetricName = "LandCoverSlopeOverlap"
+nloadMetricName = "NitrogenLoadings"
+ploadMetricName = "PhosphorusLoadings"
+pctiaMetricName = "PercentCoverTotalImperviousArea"
 
-# Land Cover Proportions Specific Variables
-lcpOptionalFieldsFilter = [qaCheckDescription, metricAddDescription]
-
-# Land Cover and Slope Overlap
-lcsoOptionalFieldsFilter = [qaCheckDescription, metricAddDescription, intermediateDescription]
+# Optional Filters
+lcpOptionalFilter = [qaCheckDescription, metricAddDescription]
+lcsoOptionalFilter = [qaCheckDescription, metricAddDescription, intermediateDescription]
+rpOptionalFilter = [qaCheckDescription, metricAddDescription]
+nloadOptionalFilter = [qaCheckDescription, metricAddDescription]
+ploadOptionalFilter = [qaCheckDescription, metricAddDescription]
+pctiaOptionalFilter = [qaCheckDescription, metricAddDescription]
