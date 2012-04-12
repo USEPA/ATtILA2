@@ -57,7 +57,7 @@ def main(argv):
         # field naming overrides.
         
         # determine the maximum size of output field names based on the output table's destination/type
-        maxFieldNameSize = GetFNameSizeLimit(outTable)        
+        maxFieldNameSize = GetFieldNameSizeLimit(outTable)        
         
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
@@ -273,7 +273,23 @@ def main(argv):
 
 def PolygonAreasToDict(fc, keyField):
     """ Calculate polygon areas and import values to dictionary.
-        Use the reporting unit ID as the retrieval key """
+        
+        DESCRIPTION
+        -----------
+        Use the reporting unit ID as the retrieval key for areas stored in dictionary
+    
+    
+        ARGUMENTS
+        ---------
+        fc: Feature Class
+        keyField: Unique ID field
+        
+        
+        RETURNED
+        --------
+        Dictionary {ID:area}
+    
+    """
 
     zoneAreaDict = {}
     
