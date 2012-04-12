@@ -1,16 +1,7 @@
-# LandCoverProportions_ArcGIS.py
-# Michael A. Jackson, jackson.michael@epa.gov, majgis@gmail.com
-# Donald W. Ebert, ebert.donald@epa.gov
-# 2012-03-14
 """ Land Cover Proportion Metrics
 
-    DESCRIPTION
+    This script is associated with an ArcToolbox script tool
     
-    ARGUMENTS
-    
-    REQUIREMENTS
-    Spatial Analyst Extension
-
 """
 
 import arcpy, os, sys
@@ -36,7 +27,8 @@ def main(argv):
     Snap_raster = arcpy.GetParameterAsText(8)
     Optional_field_groups = arcpy.GetParameterAsText(9)
     thresholdValue = ""
-    
+
+    ## For debugging    
 #    Input_reporting_unit_feature = "D:/ATTILA_Jackson/testzone/shpfiles/wtrshd.shp"
 #    Reporting_unit_ID_field = "HUC"
 #    Input_land_cover_grid = "D:/ATTILA_Jackson/testzone/grids/lc_mrlc"
