@@ -44,8 +44,10 @@ def main(argv):
       
     # the variables row and rows are initially set to None, so that they can
     # be deleted in the finally block regardless of where (or if) script fails
-    outTable_row, outTable_rows = None, None
-    tabAreaTable_row, tabAreaTable_rows = None, None
+    outTable_row = None
+    outTable_rows = None
+    tabAreaTable_row = None
+    tabAreaTable_rows = None
     
     # get current snap environment to restore at end of script
     tempEnvironment0 = env.snapRaster
