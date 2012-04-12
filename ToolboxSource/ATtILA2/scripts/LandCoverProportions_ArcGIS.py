@@ -57,8 +57,7 @@ def main(argv):
         # field naming overrides.
         
         # determine the maximum size of output field names based on the output table's destination/type
-        outTablePath,outTableName = os.path.split(outTable)
-        maxFNameSize = GetFNameSizeLimit(outTablePath, outTableName)        
+        maxFieldNameSize = GetFNameSizeLimit(outTable)        
         
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
@@ -79,7 +78,7 @@ def main(argv):
             
         if metricConstants.metricAddName in optionalGroupsList:
             addAreaFldParams = metricConstants.areaFieldParameters
-            maxFNameSize = maxFNameSize - len(addAreaFldParams[0])
+            maxFieldNameSize = maxFieldNameSize - len(addAreaFldParams[0])
         else:
             addAreaFldParams = None
         
@@ -107,15 +106,15 @@ def main(argv):
             fieldOverrideName = lccClassesDict[mClassName].attributes.get(fieldOverrideKey,None)
             if fieldOverrideName: # a field name override exists
                 # see if the provided field name is too long for the output table type
-                if len(fieldOverrideName) > maxFNameSize:
+                if len(fieldOverrideName) > maxFieldNameSize:
                     defaultFieldName = fieldOverrideName # keep track of the originally provided field name
-                    fieldOverrideName = fieldOverrideName[:maxFNameSize] # truncate field name to maximum allowable size
+                    fieldOverrideName = fieldOverrideName[:maxFieldNameSize] # truncate field name to maximum allowable size
                     
                     # see if truncated field name is already used.
                     # if so, truncate further and add a unique number to the end of the name
                     while fieldOverrideName in outputFieldNames:
                         # shorten the field name and increment it
-                        truncateTo = maxFNameSize - len(str(n))
+                        truncateTo = maxFieldNameSize - len(str(n))
                         fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
                         n = n + 1
                         
@@ -130,12 +129,12 @@ def main(argv):
                 outputFName = fldParams[0]+mClassName+fldParams[1]
                 
                 # see if the provided field name is too long for the output table type
-                if len(outputFName) > maxFNameSize:
+                if len(outputFName) > maxFieldNameSize:
                     defaultFieldName = outputFName # keep track of the originally generated field name
                     
                     prefixLen = len(fldParams[0])
                     suffixLen = len(fldParams[1])
-                    maxBaseSize = maxFNameSize - prefixLen - suffixLen - len(thresholdValue)
+                    maxBaseSize = maxFieldNameSize - prefixLen - suffixLen - len(thresholdValue)
                         
                     outputFName = fldParams[0]+mClassName[:maxBaseSize]+fldParams[1]+thresholdValue # truncate field name to maximum allowable size
                     
@@ -289,9 +288,22 @@ def PolygonAreasToDict(fc, keyField):
 
     return zoneAreaDict
 
-def GetFNameSizeLimit(outTablePath, outTableName):
+
+def GetFieldNameSizeLimit(outTable):
     """ Return the maximum size of output field names based on the output table's destination/type.
-        64 for file and personal geodatabases, 10 for dBASE tables, and 16 for INFO tables """
+    
+        outTable: Full path to output table
+    
+        Returns:  Integer
+
+            64  -  file and personal geodatabases
+            10  -  dBASE tables
+            16  -  INFO tables 
+    
+    """
+        
+    outTablePath, outTableName = os.path.split(outTable)
+   
     if outTablePath[-3:].lower() == "gdb":
         maxFNameSize = 64 # ESRI maximum for File Geodatabases
     elif outTablePath[-3:].lower() == "mdb":
