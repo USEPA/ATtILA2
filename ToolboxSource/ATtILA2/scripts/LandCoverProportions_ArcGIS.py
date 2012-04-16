@@ -335,15 +335,6 @@ def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
     return metricPercentArea, metricAreaSum
 
 
-def DeleteField(theTable,fieldName):
-    """ delete the supplied field if it exists in the table. """
-    newFieldsList = arcpy.ListFields(theTable)
-    for nFld in newFieldsList:
-        if nFld.name.lower() == fieldName.lower(): 
-            arcpy.DeleteField_management(theTable, nFld.name)
-            break
-        
-    return
 
 
 def ProcessTabAreaValueFields(TabAreaValueFields, TabAreaValues, tabAreaDict, tabAreaTableRow, excludedValues):
@@ -400,7 +391,8 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
         [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3])for mClassName in metricsClassNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
-    DeleteField(newTable,"field1")
+    arcpyhelper.fields.deleteField(newTable, "field1")
+    
         
     return (newTable)
 
