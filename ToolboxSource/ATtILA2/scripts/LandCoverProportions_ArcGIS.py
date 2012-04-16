@@ -9,6 +9,7 @@ from arcpy import env
 from pylet import lcc
 from ATtILA2.metrics import fields as outFields
 from ATtILA2.metrics import constants as metricConstants
+from pylet import arcgis10 as arcpyhelper
 
 # Check out any necessary licenses
 arcpy.CheckOutExtension("spatial")
@@ -57,7 +58,7 @@ def main(argv):
         # field naming overrides.
         
         # determine the maximum size of output field names based on the output table's destination/type
-        maxFieldNameSize = GetFieldNameSizeLimit(outTable)        
+        maxFieldNameSize = arcpyhelper.fields.GetFieldNameSizeLimit(outTable)        
         
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
@@ -305,31 +306,7 @@ def PolygonAreasToDict(fc, keyField):
     return zoneAreaDict
 
 
-def GetFieldNameSizeLimit(outTable):
-    """ Return the maximum size of output field names based on the output table's destination/type.
-    
-        outTable: Full path to output table
-    
-        Returns:  Integer
 
-            64  -  file and personal geodatabases
-            10  -  dBASE tables
-            16  -  INFO tables 
-    
-    """
-        
-    outTablePath, outTableName = os.path.split(outTable)
-   
-    if outTablePath[-3:].lower() == "gdb":
-        maxFNameSize = 64 # ESRI maximum for File Geodatabases
-    elif outTablePath[-3:].lower() == "mdb":
-        maxFNameSize = 64 # ESRI maximum for Personal Geodatabases
-    elif outTableName[-3:].lower() == "dbf":
-        maxFNameSize = 10 # maximum for dBASE tables
-    else:
-        maxFNameSize = 16 # maximum for INFO tables
-        
-    return maxFNameSize
     
 def FindIdField(fc, idFieldName):
     """ Find the specified ID field in the feature class """
