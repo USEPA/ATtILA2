@@ -4,15 +4,14 @@
     
 """
 
-import arcpy, os, sys
+import arcpy
+import os
+import sys
 from arcpy import env
 from pylet import lcc
 from ATtILA2.metrics import fields as outFields
 from ATtILA2.metrics import constants as metricConstants
 from pylet import arcgis10 as arcpyhelper
-
-# Check out any necessary licenses
-arcpy.CheckOutExtension("spatial")
 
 def main(argv):
     """ Start Here """
@@ -42,6 +41,9 @@ def main(argv):
 #    env.workspace = "D:/ATTILA_Jackson/testzone/testoutputs/Scratch"
 #    env.overwriteOutput = True
  
+    # Check out any necessary licenses
+    arcpy.CheckOutExtension("spatial")
+    
       
     # the variables row and rows are initially set to None, so that they can
     # be deleted in the finally block regardless of where (or if) script fails
@@ -258,10 +260,14 @@ def main(argv):
         
     finally:
         # delete cursor and row objects to remove locks on the data
-        if outTableRow: del outTableRow
-        if outTableRows: del outTableRows
-        if tabAreaTableRows: del tabAreaTableRows
-        if tabAreaTableRow: del tabAreaTableRow
+        if outTableRow: 
+            del outTableRow
+        if outTableRows: 
+            del outTableRows
+        if tabAreaTableRows: 
+            del tabAreaTableRows
+        if tabAreaTableRow: 
+            del tabAreaTableRow
             
         # restore the environments
         env.snapRaster = tempEnvironment0
