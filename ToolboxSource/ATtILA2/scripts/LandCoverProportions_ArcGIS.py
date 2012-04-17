@@ -58,7 +58,7 @@ def main(argv):
         # field naming overrides.
         
         # determine the maximum size of output field names based on the output table's destination/type
-        maxFieldNameSize = arcpyhelper.fields.GetFieldNameSizeLimit(outTable)        
+        maxFieldNameSize = arcpyhelper.fields.getFieldNameSizeLimit(outTable)        
         
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
@@ -69,7 +69,7 @@ def main(argv):
         fieldOverrideKey = outFields.getFieldOverrideKeyFromFilePath()
         
         # if any optional fields are selected, get their parameters
-        optionalGroupsList = ParseCheckboxSelections(optionalFieldGroups)
+        optionalGroupsList = arcpyhelper.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, metricConstants.descriptionDelim)
         
         if metricConstants.qaCheckName in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
@@ -94,7 +94,7 @@ def main(argv):
         excludedValues = lccValuesDict.getExcludedValueIds()
         
         # take the 'Metrics to run' input and parse it into a list of metric ClassNames
-        metricsClassNameList = ParseCheckboxSelections(metricsToRun)
+        metricsClassNameList = arcpyhelper.parameters.splitItemsAndStripDescriptions(metricsToRun, metricConstants.descriptionDelim)
         
         # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
@@ -161,7 +161,7 @@ def main(argv):
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         env.snapRaster = snapRaster
         # store the area of each input reporting unit into dictionary (zoneID:area)
-        zoneAreaDict = PolygonAreasToDict(inReportingUnitFeature, reportingUnitIdField)
+        zoneAreaDict = arcpyhelper.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         # run the tabulatearea geoprocess
@@ -272,51 +272,7 @@ def main(argv):
         print "Finished."
 
 
-def PolygonAreasToDict(fc, keyField):
-    """ Calculate polygon areas and import values to dictionary.
-        
-        DESCRIPTION
-        -----------
-        Use the reporting unit ID as the retrieval key for areas stored in dictionary
-    
-    
-        ARGUMENTS
-        ---------
-        fc: Feature Class
-        keyField: Unique ID field
-        
-        
-        RETURNED
-        --------
-        Dictionary {ID:area}
-    
-    """
 
-    zoneAreaDict = {}
-    
-    cur = arcpy.SearchCursor(fc)
-    for row in cur:
-        key = row.getValue(keyField)
-        area = row.getValue("Shape").area
-        zoneAreaDict[key] = (area)
-    
-    del row
-    del cur
-
-    return zoneAreaDict
-
-
-
-    
-def FindIdField(fc, idFieldName):
-    """ Find the specified ID field in the feature class """
-    orig_Fields = arcpy.ListFields(fc)
-    for aFld in orig_Fields:
-        if aFld.name == idFieldName:
-            IDfield = aFld
-            break
-        
-    return IDfield
 
 
 def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
@@ -377,7 +333,7 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
     
     # process the user input to add id field to output table
-    IDfield = FindIdField(inReportingUnitFeature, reportingUnitIdField)
+    IDfield = arcpyhelper.fields.getFieldObjectByName(inReportingUnitFeature, reportingUnitIdField)
     arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
                 
     # add metric fields to the output table.
@@ -397,12 +353,7 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
     return (newTable)
 
 
-def ParseCheckboxSelections(selectionsString):
-    """ Returns a list of the items selected by the user.
-        The expected input is a string with the following format: 'item<two spaces>description';'item<two spaces>description';'item...'
-        e.g., the string, 'for  [pfor] Forest';'wetl  [pwetl]  wetland', becomes the list, ['for','wetl']
-    """
-    return map((lambda splitItemAndDesc: splitItemAndDesc.split(metricConstants.descriptionDelim)[0]), selectionsString.replace("'","").split(';'))
+
 
 
 if __name__ == "__main__":
