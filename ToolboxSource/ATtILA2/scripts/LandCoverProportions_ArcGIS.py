@@ -282,9 +282,25 @@ def main(argv):
 
 
 def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
-    """ Retrieves stored area figures for each grid code associated with selected metric and sums them.
+    """ <ONE_LINE_SUMMARY>
+    
+        DESCRIPTION
+        -----------
+        Retrieves stored area figures for each grid code associated with selected metric and sums them.
         That number divided by the total effective area within the reporting unit times 100 gives the
-        percentage of the effective reporting unit that is classified as the metric class """
+        percentage of the effective reporting unit that is classified as the metric class 
+        
+        PARAMETERS
+        ----------
+        metricGridCodesList:
+        tabAreaDict:
+        effectiveAreaSum:
+        
+        RETURNS
+        -------
+        
+        
+    """
     metricAreaSum = 0                         
     for aValueID in metricGridCodesList:
         metricAreaSum += tabAreaDict.get(aValueID, 0) #add 0 if the lcc defined value is not found in the grid
@@ -300,12 +316,29 @@ def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
 
 
 def ProcessTabAreaValueFields(TabAreaValueFields, TabAreaValues, tabAreaDict, tabAreaTableRow, excludedValues):
-    """ 1) Go through each value field in the TabulateArea table one row at a time and
+    """ <ONE_LINE_SUMMARY>
+    
+        DESCRIPTION
+        -----------
+        1) Go through each value field in the TabulateArea table one row at a time and
            put the area value for each grid code into a dictionary with the grid code as the key.
         2) Determine if the area for the grid code is to be included into the reporting unit effective area sum
         3) Keep a running total of effective and excluded area within the reporting unit. Added together, these 
            area sums provide the total grid area present in the reporting unit. That value is used to calculate
            the amount of overlap between the reporting unit polygon and the underlying land cover grid.
+           
+        PARAMETERS
+        ----------
+        TabAreaValueFields:
+        TabAreaValues:
+        tabAreaDict:
+        tabAreaTableRow:
+        excludedValues:
+        
+        RETURNS
+        -------
+        
+        
     """
     
     excludedAreaSum = 0  #area of reporting unit not used in metric calculations e.g., water area
@@ -323,14 +356,34 @@ def ProcessTabAreaValueFields(TabAreaValueFields, TabAreaValues, tabAreaDict, ta
         else:
             effectiveAreaSum += valArea               
                        
-    return (tabAreaDict,effectiveAreaSum,excludedAreaSum)
+    return (tabAreaDict, effectiveAreaSum, excludedAreaSum)
 
 
 def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdField, metricsClassNameList, metricsFieldnameDict, fldParams, qaCheckFlds, addAreaFldParams):
-    """ Creates an empty table with fields for the reporting unit id, all selected metrics with
+    """ <ONE_LINE_SUMMARY>
+    
+        DESCRIPTION
+        -----------
+        Creates an empty table with fields for the reporting unit id, all selected metrics with
         appropriate fieldname prefixes and suffixes (e.g. pUrb, rFor30), and any selected 
         optional fields for quality assurance purposes or additional user
         feedback (e.g., LC_Overlap)
+        
+        PARAMETERS
+        ----------
+        outTable:
+        inReportingUnitFeature:
+        reportingUnitIdField:
+        metricsClassNameList:
+        metricsFieldnameDict:
+        fldParams:
+        qaCheckFlds:
+        addAreaFldParams:
+        
+        RETURNS
+        -------
+        
+        
     """
     outTablePath, outTableName = os.path.split(outTable)
         
@@ -356,7 +409,7 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
     arcpyhelper.fields.deleteField(newTable, "field1")
     
         
-    return (newTable)
+    return newTable
 
 
 
