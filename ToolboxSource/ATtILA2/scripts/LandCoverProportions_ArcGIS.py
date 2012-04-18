@@ -11,7 +11,7 @@ from arcpy import env
 from pylet import lcc
 from ATtILA2.metrics import fields as outFields
 from ATtILA2.metrics import constants as metricConstants
-from pylet import arcgis10 as arcpyhelper
+from pylet import arcpyutil as arcpyhelper
 
 def main(argv):
     """ Start Here """
