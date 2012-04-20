@@ -11,7 +11,7 @@ from arcpy import env
 from pylet import lcc
 from ATtILA2.metrics import fields as outFields
 from ATtILA2.metrics import constants as metricConstants
-from pylet import arcpyutil as arcpyhelper
+from pylet import arcpyutil
 
 def main(argv):
     """ Start Here """
@@ -60,7 +60,7 @@ def main(argv):
         # field naming overrides.
         
         # determine the maximum size of output field names based on the output table's destination/type
-        maxFieldNameSize = arcpyhelper.fields.getFieldNameSizeLimit(outTable)        
+        maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)        
         
         # Set parameters for metric output field. use this file's name to determine the metric type
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
@@ -71,7 +71,7 @@ def main(argv):
         fieldOverrideKey = outFields.getFieldOverrideKeyFromFilePath()
         
         # if any optional fields are selected, get their parameters
-        optionalGroupsList = arcpyhelper.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, metricConstants.descriptionDelim)
+        optionalGroupsList = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, metricConstants.descriptionDelim)
         
         if metricConstants.qaCheckName in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
@@ -96,7 +96,7 @@ def main(argv):
         excludedValues = lccValuesDict.getExcludedValueIds()
         
         # take the 'Metrics to run' input and parse it into a list of metric ClassNames
-        metricsClassNameList = arcpyhelper.parameters.splitItemsAndStripDescriptions(metricsToRun, metricConstants.descriptionDelim)
+        metricsClassNameList = arcpyutil.parameters.splitItemsAndStripDescriptions(metricsToRun, metricConstants.descriptionDelim)
         
         # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
@@ -163,7 +163,7 @@ def main(argv):
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
         env.snapRaster = snapRaster
         # store the area of each input reporting unit into dictionary (zoneID:area)
-        zoneAreaDict = arcpyhelper.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
+        zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         # run the tabulatearea geoprocess
@@ -395,7 +395,7 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
     
     # process the user input to add id field to output table
-    IDfield = arcpyhelper.fields.getFieldObjectByName(inReportingUnitFeature, reportingUnitIdField)
+    IDfield = arcpyutil.fields.getFieldByName(inReportingUnitFeature, reportingUnitIdField)
     arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
                 
     # add metric fields to the output table.
@@ -409,7 +409,7 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
         [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3])for mClassName in metricsClassNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
-    arcpyhelper.fields.deleteField(newTable, "field1")
+    arcpyutil.fields.deleteFields(newTable, ["field1"])
     
         
     return newTable
