@@ -1,11 +1,14 @@
 """ Land Cover Proportion Metrics
 
-    This script is associated with an ArcToolbox script tool
+    This script is associated with an ArcToolbox script tool.
     
 """
+
+
+import sys
 from pylet.arcpyutil import parameters
 from ATtILA2 import metrics
-import sys
+
 
 def main(argv):
     
