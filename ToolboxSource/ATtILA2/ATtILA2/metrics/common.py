@@ -8,15 +8,14 @@ import sys
 
 import arcpy
 from arcpy import env
-from arcpy.sa import *
+from arcpy.sa import Raster, Con
 
 from pylet import arcpyutil
 from pylet import lcc
 
+import fields as outFields
+import constants as metricConstants
 
-from ATtILA2.metrics import fields as outFields
-from ATtILA2.metrics import constants as metricConstants
-from ATtILA2.metrics import common
 
 ###########################################################################################################
 #Land Cover on Slope Proportions (Land Cover Slope Overlap)
@@ -197,7 +196,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 metricsFieldnameDict[mClassName] = outputFName
                     
         # create the specified output table
-        newTable = common.CreateMetricOutputTable(outTable,inReportingUnitFeature,reportingUnitIdField,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams)
+        newTable = CreateMetricOutputTable(outTable,inReportingUnitFeature,reportingUnitIdField,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams)
         
         # Process: Tabulate Area
         # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
@@ -243,7 +242,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
             #    value for the grid code into a dictionary with the grid code as the key.
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
-            valFieldsResults = common.ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,tabAreaTableRow,excludedValues)
+            valFieldsResults = ProcessTabAreaValueFields(TabAreaValueFields,TabAreaValues,tabAreaDict,tabAreaTableRow,excludedValues)
             tabAreaDict = valFieldsResults[0]
             effectiveAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
@@ -253,7 +252,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 # get the grid codes for this specified metric
                 metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
                 # get the class percentage area and it's actual area from the tabulate area table
-                metricPercentageAndArea = common.CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum)
+                metricPercentageAndArea = CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum)
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mClassName], metricPercentageAndArea[0])
                 
