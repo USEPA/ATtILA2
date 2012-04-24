@@ -6,7 +6,8 @@
 
 
 import os
-import sys
-
-os.startfile(os.path.basename(sys.argv[0]).replace(".pyw", ".exe"))
+currentFolder = os.path.dirname(__file__)
+exeName = 'LandCoverClassificationEditor.exe'
+exePath = os.path.join(currentFolder, exeName)
+os.startfile(exePath)
 

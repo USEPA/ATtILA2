@@ -13,13 +13,24 @@
 """
 import sys
 import os
-
+import arcpy
 def main(argv):
       
-
-    exeName = "LandCoverClassificationEditor.pyw" 
-
-    os.startfile(exeName)
+    currentFolderPath = os.path.dirname(__file__)
+    binFolderName = "bin"
+    exeName = r"LandCoverClassificationEditor.pyw" 
+    startMsg = "\nThe full path to the executable that will be launched:"
+    indentMsg = "    "
+    endMsg = "\n"
+    
+    pywPath = os.path.join(currentFolderPath, binFolderName, exeName)
+    exePath = pywPath.replace('.pyw', '.exe')
+    
+    arcpy.AddMessage(startMsg)
+    arcpy.AddMessage(indentMsg + exePath)
+    arcpy.AddMessage(endMsg)
+    
+    os.startfile(pywPath)
     
 if __name__ == "__main__":
     main(sys.argv)
