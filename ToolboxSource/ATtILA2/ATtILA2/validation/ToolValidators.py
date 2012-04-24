@@ -3,14 +3,13 @@
 """ The ToolValidator classes is for ArcToolbox script tool dialog validation.
     
 """
-
-from ATtILA2.validation.Validators import ProportionsValidator
+import CommonValidators
 from ATtILA2.metrics import constants as metricConstants
 import pylet.lcc.constants as lccConstants
 import ATtILA2.metrics.fields as outFields
 
 
-class lcsoToolValidator(ProportionsValidator):
+class lcsoToolValidator(CommonValidators.ProportionsValidator):
     """Tool Validator for LandCoverSlopeOverlap"""
     
     filterList = metricConstants.lcsoOptionalFilter
@@ -19,7 +18,7 @@ class lcsoToolValidator(ProportionsValidator):
     fieldSuffix = outFields.lcsoFieldSuffix
     
     
-class lcpToolValidator(ProportionsValidator):
+class lcpToolValidator(CommonValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
     
     filterList = metricConstants.lcpOptionalFilter
@@ -27,3 +26,5 @@ class lcpToolValidator(ProportionsValidator):
     fieldPrefix = outFields.lcpFieldPrefix
     fieldSuffix = outFields.lcpFieldSuffix     
 
+class lcccToolValidator(CommonValidators.CoefficientValidator):
+    """ ToolValidator for Coefficient Calculations """
