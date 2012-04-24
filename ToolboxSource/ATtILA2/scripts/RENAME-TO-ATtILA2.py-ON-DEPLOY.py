@@ -1,7 +1,10 @@
-#  Created:  Mar 12, 2012
-#  Author:  mjacks07, Michael A. Jackson, jackson.michael@epa.gov, majgis@gmail.com
+''' Redirect import of ATtILA2 to a relative location.
 
-''' Redirect import of pylet to pylet/pylet
+    This script is required for deployment, when the user does not have packages on their PythonPath.
+    
+    The ToolboxSource directory is effectively added to the PythonPath by its position relative to this script.
+    
+    If you are also importing pylet, you must make sure to import this module first so that pylet can be found.
 
 '''
 
