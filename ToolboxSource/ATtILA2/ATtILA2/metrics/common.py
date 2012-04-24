@@ -21,7 +21,7 @@ import constants as metricConstants
 #Land Cover on Slope Proportions (Land Cover Slope Overlap)
 ###########################################################################################################
 
-def landCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+def landCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid,lccName, lccFilePath, 
                                 metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
                                 snapRaster, optionalFieldGroups):
     """ Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
@@ -76,7 +76,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
 #Land Cover Proportions
 ###########################################################################################################
 
-def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups) :
+def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid,lccName, lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups) :
     """ Land Cover Proportion Metrics """   
      
     # Check out any necessary licenses
