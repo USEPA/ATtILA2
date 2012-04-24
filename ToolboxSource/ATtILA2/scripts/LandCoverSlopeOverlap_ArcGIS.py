@@ -6,8 +6,8 @@
 
 
 import sys
-from pylet.arcpyutil import parameters
 from ATtILA2 import metrics
+from pylet.arcpyutil import parameters
 
 
 def main(argv):
