@@ -9,7 +9,7 @@ import os
 from xml.dom.minidom import parse
 from glob import glob 
 import __main__
-from ATtILA2.metrics import constants as metricConstants
+from ATtILA2.constants import  metricConstants
 import pylet.lcc.constants as lccConstants
     
 class ProportionsValidator:

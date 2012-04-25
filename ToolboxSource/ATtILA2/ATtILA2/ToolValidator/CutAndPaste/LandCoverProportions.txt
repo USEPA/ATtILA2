@@ -8,7 +8,7 @@ srcDirPath = os.path.join(tbxParentDirPath, sourceName)
 sys.path.append(srcDirPath)
 import ATtILA2
 
-class ToolValidator (ATtILA2.validation.ToolValidators.lcpToolValidator):
+class ToolValidator (ATtILA2.ToolValidator.lcpToolValidator):
     " Class for validating parameters "
 
     inTableIndex = 0 
