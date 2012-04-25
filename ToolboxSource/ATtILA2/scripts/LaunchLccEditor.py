@@ -13,7 +13,7 @@ import sys
 import os
 import arcpy
 
-def main(argv):
+def main(_argv):
       
     currentFolderPath = os.path.dirname(__file__)
     binFolderName = "bin"

@@ -10,12 +10,12 @@ from ATtILA2 import metric
 from pylet.arcpyutil import parameters
 
 
-def main(argv):
+def main(_argv):
     
     # Script arguments
     inputArguments = parameters.getParametersAsText([0])
     
-    metric.landCoverProportions(*inputArguments)
+    metric.runLandCoverProportions(*inputArguments)
     
     
 if __name__ == "__main__":
