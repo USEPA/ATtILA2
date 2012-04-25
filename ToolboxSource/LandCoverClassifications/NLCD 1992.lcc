@@ -12,30 +12,30 @@
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="11" name="Open Water" excluded="true"/>
-		<value id="12" name="Perennial Ice and Snow" excluded="true"/>
+		<value id="11" name="Open Water" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="12" name="Perennial Ice and Snow" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
 		
-		<value id="21" name="Low Intensity Residential"/>
-		<value id="22" name="High Intensity Residential"/>
-		<value id="23" name="Commercial,Industrial,Transportation"/>
-		<value id="31" name="Bare Rock,Sand,Clay"/>				
-		<value id="32" name="Quarries, Strip Mines, Gravel Pits"/>
-		<value id="33" name="Transitional"/>		
-		<value id="41" name="Deciduous Forest"/>
-		<value id="42" name="Evergreen Forest"/>
-		<value id="43" name="Mixed Forest"/>
-		<value id="51" name="Deciduous Shrubland"/>
-		<value id="52" name="Evergreen Shrubland"/>
-		<value id="53" name="Mixed Shrubland"/>
-		<value id="61" name="Orchards,Vineyards,Other"/>	
-		<value id="71" name="Grasslands,Herbaceous"/>		
-		<value id="81" name="Pature,Hay"/>
-		<value id="82" name="Row Crops"/>
-		<value id="83" name="Small Grains"/>
-		<value id="84" name="Fallow"/>
-		<value id="85" name="Urban Grasses,Recreational Grasses"/>
-		<value id="91" name="Woody Wetlands"/>
-		<value id="92" name="Emergent Herbaceous Wetlands"/>	
+		<value id="21" name="Low Intensity Residential" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="22" name="High Intensity Residential" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="23" name="Commercial,Industrial,Transportation" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="31" name="Bare Rock,Sand,Clay" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
+		<value id="32" name="Quarries, Strip Mines, Gravel Pits" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="33" name="Transitional" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
+		<value id="41" name="Deciduous Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="42" name="Evergreen Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="43" name="Mixed Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="51" name="Deciduous Shrubland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="52" name="Evergreen Shrubland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="53" name="Mixed Shrubland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="61" name="Orchards,Vineyards,Other" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
+		<value id="71" name="Grasslands,Herbaceous" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
+		<value id="81" name="Pature,Hay" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="82" name="Row Crops" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="83" name="Small Grains" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="84" name="Fallow" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="85" name="Urban Grasses,Recreational Grasses" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="91" name="Woody Wetlands" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="92" name="Emergent Herbaceous Wetlands" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
 	</values>
 		
 		

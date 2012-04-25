@@ -11,33 +11,33 @@
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="0" name="Background" excluded="true"/>
-		<value id="1" name="Unclassified" excluded="true"/>
+		<value id="0" name="Background" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="1" name="Unclassified" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
 
-		<value id="2" name="High Intensity Developed"/>
-		<value id="3" name="Medium Intensity Developed"/>				
-		<value id="4" name="Low Intensity Developed"/>
-		<value id="5" name="Open Spaces Developed"/>
-		<value id="6" name="Cultivated Land"/>
-		<value id="7" name="Pasture/Hay"/>				
-		<value id="8" name="Grassland"/>
-		<value id="9" name="Deciduous Forest"/>
-		<value id="10" name="Evergreen Forest"/>
-		<value id="11" name="Mixed Forest"/>
-		<value id="12" name="Scrub/Shrub"/>
-		<value id="13" name="Palustrine Forested Wetland"/>
-		<value id="14" name="Palustrine Scrub/Shrub Wetland"/>
-		<value id="15" name="Palustrine Emergent Wetland"/>	
-		<value id="16" name="Estuarine Forested Wetland"/>		
-		<value id="17" name="Estuarine Scrub/Shrub Wetland"/>
-		<value id="18" name="Estuarine Emergent Wetland"/>
-		<value id="19" name="Unconsolidated Shore"/>
-		<value id="20" name="Bare Land"/>
-		<value id="21" name="Water" excluded="true"/>		
-		<value id="22" name="Palustrine Aquatic Bed"/>
-		<value id="23" name="Estuarine Aquatic Bed"/>
-		<value id="24" name="Tundra"/>	
-		<value id="25" name="Snow/Ice" excluded="true"/>				
+		<value id="2" name="High Intensity Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="3" name="Medium Intensity Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
+		<value id="4" name="Low Intensity Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="5" name="Open Spaces Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="6" name="Cultivated Land" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="7" name="Pasture/Hay" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
+		<value id="8" name="Grassland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="9" name="Deciduous Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="10" name="Evergreen Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="11" name="Mixed Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="12" name="Scrub/Shrub" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="13" name="Palustrine Forested Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="14" name="Palustrine Scrub/Shrub Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="15" name="Palustrine Emergent Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
+		<value id="16" name="Estuarine Forested Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
+		<value id="17" name="Estuarine Scrub/Shrub Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="18" name="Estuarine Emergent Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="19" name="Unconsolidated Shore" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="20" name="Bare Land" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="21" name="Water" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
+		<value id="22" name="Palustrine Aquatic Bed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="23" name="Estuarine Aquatic Bed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="24" name="Tundra" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
+		<value id="25" name="Snow/Ice" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
 		
 	</values>
 		
