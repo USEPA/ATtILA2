@@ -6,7 +6,7 @@
 
 
 import sys
-from ATtILA2 import metrics
+from ATtILA2 import metric
 from pylet.arcpyutil import parameters
 
 
@@ -15,7 +15,7 @@ def main(argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0])
     
-    metrics.common.landCoverOnSlopeProportions(*inputArguments)
+    metric.landCoverOnSlopeProportions(*inputArguments)
 
     
 if __name__ == "__main__":
