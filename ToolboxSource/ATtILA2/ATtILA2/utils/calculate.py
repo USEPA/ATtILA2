@@ -3,7 +3,7 @@
 """
 
 
-def CalcMetricPercentArea(metricGridCodesList, tabAreaDict, effectiveAreaSum):
+def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum):
     """ Calculates the percentage of the reporting unit effective area occupied by the metric class codes and their total area
     
         DESCRIPTION
