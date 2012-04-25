@@ -12,36 +12,36 @@
 	-->
 	<values>
 	
-		<value id="11" name="Open Water" excluded="true"/>
-		<value id="12" name="Perennial Ice/ Snow" excluded="true"/>
+		<value id="11" name="Open Water" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="12" name="Perennial Ice/ Snow" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
 		
-		<value id="21" name="Developed, Open Space"/>
-		<value id="22" name="Developed, Low Intensity"/>
-		<value id="23" name="Developed, Medium Intensity"/>
-		<value id="24" name="Developed, High Intensity"/>
-		<value id="31" name="Barren Land (Rock/Sand/Clay)"/>
-		<value id="32" name="Unconsolidated Shore"/>
-		<value id="41" name="Deciduous Forest"/>
-		<value id="42" name="Evergreen Forest"/>
-		<value id="43" name="Mixed Forest"/>
-		<value id="51" name="Dwarf Scrub"/>
-		<value id="52" name="Shrub/Scrub"/>
-		<value id="71" name="Grassland/Herbaceous"/>
-		<value id="72" name="Sedge/Herbaceous"/>
-		<value id="73" name="Lichens"/>
-		<value id="74" name="Moss"/>		
-		<value id="81" name="Pasture/Hay"/>
-		<value id="82" name="Cultivated Crops"/>
-		<value id="90" name="Woody Wetlands"/>
-		<value id="91" name="Palustrine Forested Wetland"/>
-		<value id="92" name="Palustrine Scrub, Shrub Wetland"/>
-		<value id="93" name="Estuarine Forested Wetlands"/>
-		<value id="94" name="Estuarine Scrub, Shrub Wetland"/>
-		<value id="95" name="Emergent Herbaceous Wetlands"/>
-		<value id="96" name="Palustrine Emergent Wetland (Persistent)"/>
-		<value id="97" name="Palustrine Emergent Wetland"/>		
-		<value id="98" name="Palustrine Aquatic Bed"/>
-		<value id="99" name="Estuarine Aquatic Bed"/>
+		<value id="21" name="Developed, Open Space" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="22" name="Developed, Low Intensity" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="23" name="Developed, Medium Intensity" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="24" name="Developed, High Intensity" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="31" name="Barren Land (Rock/Sand/Clay)" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="32" name="Unconsolidated Shore" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="41" name="Deciduous Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="42" name="Evergreen Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="43" name="Mixed Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="51" name="Dwarf Scrub" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="52" name="Shrub/Scrub" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="71" name="Grassland/Herbaceous" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="72" name="Sedge/Herbaceous" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="73" name="Lichens" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="74" name="Moss" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
+		<value id="81" name="Pasture/Hay" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="82" name="Cultivated Crops" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="90" name="Woody Wetlands" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="91" name="Palustrine Forested Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="92" name="Palustrine Scrub, Shrub Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="93" name="Estuarine Forested Wetlands" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="94" name="Estuarine Scrub, Shrub Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="95" name="Emergent Herbaceous Wetlands" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="96" name="Palustrine Emergent Wetland (Persistent)" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="97" name="Palustrine Emergent Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
+		<value id="98" name="Palustrine Aquatic Bed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="99" name="Estuarine Aquatic Bed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
 	</values>
 	
 	<!-- 
