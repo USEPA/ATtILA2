@@ -9,7 +9,7 @@ import os
 from xml.dom.minidom import parse
 from glob import glob 
 import __main__
-from ATtILA2.metrics import constants as metricConstants
+from ATtILA2.constants import  globalConstants
 import pylet.lcc.constants as lccConstants
     
 class ProportionsValidator:
@@ -53,7 +53,7 @@ class ProportionsValidator:
     optionalFieldsIndex = -1 
     
     # Additional local variables
-    srcDirName = metricConstants.tbxSourceFolderName
+    srcDirName = globalConstants.tbxSourceFolderName
     
     # Metric Specific
     filterList = []
@@ -65,13 +65,13 @@ class ProportionsValidator:
         """ Initialize ToolValidator class"""
         
         # Load metric constants        
-        self.inputIdFieldTypes = metricConstants.inputIdFieldTypes
-        self.lccSchemeUserOption = metricConstants.userOption
-        self.optionalFieldsName = metricConstants.optionalFieldsName
-        self.qaCheckDescription = metricConstants.qaCheckDescription
-        self.metricAddDescription = metricConstants.metricAddDescription      
-        self.metricDescription = metricConstants.metricDescription
-        self.noFeaturesMessage = metricConstants.noFeaturesMessage
+        self.inputIdFieldTypes = globalConstants.inputIdFieldTypes
+        self.lccSchemeUserOption = globalConstants.userOption
+        self.optionalFieldsName = globalConstants.optionalFieldsName
+        self.qaCheckDescription = globalConstants.qaCheckDescription
+        self.metricAddDescription = globalConstants.metricAddDescription      
+        self.metricDescription = globalConstants.metricDescription
+        self.noFeaturesMessage = globalConstants.noFeaturesMessage
         
         # Load LCC constants
         self.lccFileDirName = lccConstants.PredefinedFileDirName       
@@ -317,7 +317,7 @@ class CoefficientValidator:
     optionalFieldsIndex = -1 
     
     # Additional local variables
-    srcDirName = metricConstants.tbxSourceFolderName
+    srcDirName = globalConstants.tbxSourceFolderName
     
     # Metric Specific
     filterList = []
@@ -329,13 +329,13 @@ class CoefficientValidator:
         """ Initialize ToolValidator class"""
         
         # Load metric constants        
-        self.inputIdFieldTypes = metricConstants.inputIdFieldTypes
-        self.lccSchemeUserOption = metricConstants.userOption
-        self.optionalFieldsName = metricConstants.optionalFieldsName
-        self.qaCheckDescription = metricConstants.qaCheckDescription
-        self.metricAddDescription = metricConstants.metricAddDescription      
-        self.metricDescription = metricConstants.metricDescription
-        self.noFeaturesMessage = metricConstants.noFeaturesMessage
+        self.inputIdFieldTypes = globalConstants.inputIdFieldTypes
+        self.lccSchemeUserOption = globalConstants.userOption
+        self.optionalFieldsName = globalConstants.optionalFieldsName
+        self.qaCheckDescription = globalConstants.qaCheckDescription
+        self.metricAddDescription = globalConstants.metricAddDescription      
+        self.metricDescription = globalConstants.metricDescription
+        self.noFeaturesMessage = globalConstants.noFeaturesMessage
         
         # Load LCC constants
         self.lccFileDirName = lccConstants.PredefinedFileDirName       
@@ -539,4 +539,3 @@ class CoefficientValidator:
         if self.inputTableParameter.value and not self.inputTableParameter.hasError() and not arcpy.SearchCursor(self.inputTableParameter.value).next():
             self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
- 
