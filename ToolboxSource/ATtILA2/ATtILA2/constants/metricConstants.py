@@ -1,9 +1,5 @@
-'''
-Created on Nov 18, 2011
+''' Constants specific to metric tools  
 
-@author: mjacks07
-
-Constants specific to metric tools  
 '''
 
 # Common Variables

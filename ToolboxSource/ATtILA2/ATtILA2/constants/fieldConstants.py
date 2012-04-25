@@ -1,14 +1,12 @@
-''' Output Fields
+''' Constants specific to fields
 
-    Constants and helper functions associated with creating output metric fields.
-    
-    (Formerly called OutFields.py)
+
 '''
 
 import sys
-
-from ATtILA2.metrics import constants as metricConstants
 import ATtILA2
+import metricConstants
+
 from pylet import lcc
 
 
@@ -65,6 +63,7 @@ qaCheckFieldParameters = {
     }
 
 
+
 # field Override keys
 fieldOverrideKeys = {metricConstants.lcpMetricName: lcc.constants.XmlAttributeLcpField,
                      metricConstants.rpMetricName: lcc.constants.XmlAttributeRpField}
@@ -83,7 +82,7 @@ def getFieldParametersFromFilePath(filePath=None, delimiter="_"):
     if not filePath:
         filePath = sys.argv[0]
     
-    key = ATtILA2.metrics.getKeyFromFilePath(filePath, delimiter)
+    key = ATtILA2.utils.files.getKeyFromFilePath(filePath, delimiter)
     
     return fieldParameters[key]
         
@@ -101,7 +100,7 @@ def getQACheckFieldParametersFromFilePath(filePath=None, delimiter="_"):
     if not filePath:
         filePath = sys.argv[0]
     
-    key = ATtILA2.metrics.getKeyFromFilePath(filePath, delimiter)
+    key = ATtILA2.utils.files.getKeyFromFilePath(filePath, delimiter)
     
     return qaCheckFieldParameters[key]
 
@@ -119,7 +118,7 @@ def getFieldOverrideKeyFromFilePath(filePath=None, delimiter="_"):
     if not filePath:
         filePath = sys.argv[0]
     
-    key = ATtILA2.metrics.getKeyFromFilePath(filePath, delimiter)
+    key = ATtILA2.utils.files.getKeyFromFilePath(filePath, delimiter)
     
     return fieldOverrideKeys[key]
 
