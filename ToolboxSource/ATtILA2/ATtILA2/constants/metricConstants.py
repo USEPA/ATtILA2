@@ -1,8 +1,22 @@
-import sys
-import applicationConstants as ac
-import ATtILA2
+import globalConstants as gc
 
-class lcpConstants():
+
+class baseMetricConstants():
+    """  """
+    name = ''
+    shortName = ''
+    fieldPrefix = ''
+    fieldSuffix = ''
+    overlapName = ''
+    totalAreaName = ''
+    effectiveAreaName = ''
+    excludedAreaName = ''
+    optionalFilter = []
+    fieldParameters = []
+    qaCheckFieldParameters = []    
+    fieldOverrideKey = ''
+
+class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"
     shortName = "lcp"
     fieldPrefix = "p"
@@ -11,17 +25,17 @@ class lcpConstants():
     totalAreaName = "LCP_TOT_A"
     effectiveAreaName = "LCP_EFF_A"
     excludedAreaName = "LCP_EXC_A"
-    optionalFilter = [ac.qaCheckDescription, ac.metricAddDescription]
-    fieldParameters = [fieldPrefix,"", ac.defaultDecimalFieldType, 6, 1]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription]
+    fieldParameters = [fieldPrefix,"", gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
-        [overlapName, ac.defaultIntegerFieldType, 6],
-        [totalAreaName, ac.defaultAreaFieldType, 15],
-        [effectiveAreaName, ac.defaultAreaFieldType, 15],
-        [excludedAreaName, ac.defaultAreaFieldType, 15]
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]
         ],    
-    fieldOverrideKey = shortName + ac.fieldOverrideName
+    fieldOverrideKey = shortName + gc.fieldOverrideName
     
-class lcospConstants():
+class lcospConstants(baseMetricConstants):
     name = "LandCoverOnSlopeProportions"
     shortName = "lcosp"
     fieldSuffix = "SL"
@@ -30,29 +44,29 @@ class lcospConstants():
     totalAreaName = "SL+TOT_A"
     effectiveAreaName = "SL_EFF_A"
     excludedAreaName = "SL_EXC_A"
-    optionalFilter = [ac.qaCheckDescription, ac.metricAddDescription, ac.intermediateDescription]
-    fieldParameters = [fieldSuffix, ac.defaultDecimalFieldType,6,1]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
     qaCheckFieldParameters = [
-        [overlapName, ac.defaultIntegerFieldType, 6],
-        [totalAreaName, ac.defaultAreaFieldType, 15],
-        [effectiveAreaName, ac.defaultAreaFieldType, 15],
-        [excludedAreaName, ac.defaultAreaFieldType, 15]
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
-    fieldOverrideKey = shortName + ac.fieldOverrideName
+    fieldOverrideKey = shortName + gc.fieldOverrideName
 
     
-class rpConstants():
-    name = "RiparianProportions"
-    shortName = "rp"
+class rlcpConstants(baseMetricConstants):
+    name = "RiparianLandCoverProportions"
+    shortName = "rlcp"
     fieldPrefix = "r"
     fieldSuffix = ""
     overlapName = "R_OVERLAP"
-    optionalFilter = [ac.qaCheckDescription, ac.metricAddDescription]
-    fieldParameters = [fieldPrefix,"", ac.defaultDecimalFieldType, 6, 1]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription]
+    fieldParameters = [fieldPrefix,"", gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
-        [overlapName, ac.defaultIntegerFieldType, 6]                                        
+        [overlapName, gc.defaultIntegerFieldType, 6]                                        
         ]
-    fieldOverrideKey = shortName + ac.fieldOverrideName
+    fieldOverrideKey = shortName + gc.fieldOverrideName
 
 
 

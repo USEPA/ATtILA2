@@ -1,5 +1,7 @@
+""" Global, application level variables
 
-# Common Variables
+"""
+
 tbxSourceFolderName = "ToolboxSource"
 noFeaturesMessage = "Dataset exists, but there are no features (zero rows)"
 inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
