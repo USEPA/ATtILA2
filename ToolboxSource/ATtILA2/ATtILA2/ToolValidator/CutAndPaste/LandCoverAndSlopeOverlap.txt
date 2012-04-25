@@ -14,6 +14,7 @@ class ToolValidator (ATtILA2.ToolValidator.lcospToolValidator):
     inTableIndex = 0
     inRasterIndex = 2
     startIndex = 3
+    outTableIndex = 8
     processingCellSizeIndex = 9 
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 

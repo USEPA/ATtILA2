@@ -31,7 +31,10 @@ class ProportionsValidator:
         1. String: default  
         2. File: filter=lccFileExtension
         3. String:  MultiValue=Yes; 
-           
+        
+        outTableIndex: Index of output table parameter
+        1. table: required, output
+        
         processingCellSizeIndex:  Index of optional processing cell size parameter
         1. Analysis cell size
         
@@ -45,12 +48,13 @@ class ProportionsValidator:
     """
     
     # Indexes of input parameters
-    inTableIndex = -1 
-    inRasterIndex = -1  
-    startIndex = -1  
-    processingCellSizeIndex = -1 
-    snapRasterIndex = -1 
-    optionalFieldsIndex = -1 
+    inTableIndex = 0 
+    inRasterIndex = 0  
+    startIndex = 0  
+    processingCellSizeIndex = 0
+    outTableIndex = 0 
+    snapRasterIndex = 0 
+    optionalFieldsIndex = 0 
     
     # Additional local variables
     srcDirName = globalConstants.tbxSourceFolderName
@@ -94,6 +98,7 @@ class ProportionsValidator:
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
         self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
         self.inRasterParameter = self.parameters[self.inRasterIndex]
+        self.outTableParameter = self.parameters[self.outTableIndex]
         self.snapRasterParameter = self.parameters[self.snapRasterIndex]
         self.optionsParameter = self.parameters[self.optionalFieldsIndex]
         
@@ -143,7 +148,21 @@ class ProportionsValidator:
 
         self.updateInputLccParameters()
         self.updateInputFieldsParameter()
+        self.updateOutputTableParameter()
 
+
+    def updateOutputTableParameter(self):
+        """ Update an output table parameter
+        
+        **Description:**
+            
+            Removes .shp that is automatically generated for output table parameters
+        
+        """
+       
+        if self.outTableParameter.value:
+            outTablePath = str(self.outTableParameter.value)
+            self.outTableParameter.value  = outTablePath.replace('.shp', '.dbf')
 
     
     def updateInputLccParameters(self):
