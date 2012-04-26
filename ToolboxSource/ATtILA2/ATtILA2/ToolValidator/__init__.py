@@ -14,6 +14,7 @@ class lcospToolValidator(BaseValidators.ProportionsValidator):
     overrideAttributeName = lccConstants.XmlAttributeLcsoField
     fieldPrefix = lcospConstants.fieldPrefix
     fieldSuffix = lcospConstants.fieldSuffix
+    metricShortName = lcospConstants.shortName
     
     
 class lcpToolValidator(BaseValidators.ProportionsValidator):
@@ -22,7 +23,8 @@ class lcpToolValidator(BaseValidators.ProportionsValidator):
     filterList = lcpConstants.optionalFilter
     overrideAttributeName = lccConstants.XmlAttributeLcpField
     fieldPrefix = lcpConstants.fieldPrefix
-    fieldSuffix = lcpConstants.fieldSuffix     
+    fieldSuffix = lcpConstants.fieldSuffix    
+    metricShortName = lcpConstants.shortName 
 
 class lcccToolValidator(BaseValidators.CoefficientValidator):
     """ ToolValidator for Coefficient Calculations """
