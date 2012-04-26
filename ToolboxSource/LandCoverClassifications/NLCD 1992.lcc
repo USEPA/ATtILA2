@@ -51,47 +51,47 @@
 			
 	-->
 	<classes>
-		<class id="nat" name="All natural land use" lcpField="NINDEX" filter="lcosp;lcp">
-			<class  id="for" name="Forest">
+		<class id="nat" name="All natural land use" lcpField="NINDEX" filter="lcosp">
+			<class  id="for" name="Forest" filter="lcosp">
 				<value id="41"/>
 				<value id="42"/>
 				<value id="43"/>
 			</class>
-			<class id="wtlt" name="Wetlands">
+			<class id="wtlt" name="Wetlands" filter="lcosp">
 				<value id="91"/>
 				<value id="92"/>
 			</class>
-			<class id="hrbt" name="Shrublands">
+			<class id="hrbt" name="Shrublands" filter="lcosp">
 				<value id="51"/>
 				<value id="52"/>
 				<value id="53"/>
 			</class>
-			<class id="hrbt" name="Herbaceous">
+			<class id="hrbt" name="Herbaceous" filter="lcosp">
 				<value id="71"/>
 			</class>
-			<class id="nbar" name="Natural Barren">
+			<class id="nbar" name="Natural Barren" filter="lcosp">
 				<value id="31"/>		
 			</class>		
 		</class>
 		
-		<class id="unat" name="All human land use" lcpField="UINDEX" filter="lcosp;lcp">
-			<class id="devt" name="Urban">
-				<class id="devlr" name="Low Density Residential">
+		<class id="unat" name="All human land use" lcpField="UINDEX" filter="lcosp" >
+			<class id="devt" name="Urban" filter="lcosp">
+				<class id="devlr" name="Low Density Residential" filter="lcosp">
 					<value id="21"/>
 				</class>		
-				<class id="devhr" name="High Density Residential">
+				<class id="devhr" name="High Density Residential" filter="lcosp">
 					<value id="22"/>
 				</class>
-				<class id="devc" name="Commercial, Industrial">
+				<class id="devc" name="Commercial, Industrial" filter="lcosp">
 					<value id="23"/>
 				</class>						
 			</class>
-			<class id="agt" name="Agriculture" onSlopeVisible="true">
-				<class id="agp" name="Pasture" onSlopeVisible="true">
+			<class id="agt" name="Agriculture" >
+				<class id="agp" name="Pasture">
 					<value id="81"/>
 				</class>
 				
-				<class id="agc" name="Crops" onSlopeVisible="true">
+				<class id="agc" name="Crops" >
 					<class id="agcr" name="Row" >
 						<value id="82"/>
 					</class>
@@ -109,7 +109,7 @@
 				</class>
 				
 			</class>
-			<class id="mbar" name="Man-Made Barren">
+			<class id="mbar" name="Man-Made Barren"  filter="lcosp">
 				<value id="32"/>
 				<value id="33"/>
 			</class>
