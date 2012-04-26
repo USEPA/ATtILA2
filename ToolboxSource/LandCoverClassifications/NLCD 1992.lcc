@@ -51,7 +51,7 @@
 			
 	-->
 	<classes>
-		<class id="nat" name="All natural land use" lcpField="NINDEX">
+		<class id="nat" name="All natural land use" lcpField="NINDEX" filter="lcosp;lcp">
 			<class  id="for" name="Forest">
 				<value id="41"/>
 				<value id="42"/>
@@ -74,7 +74,7 @@
 			</class>		
 		</class>
 		
-		<class id="unat" name="All human land use" lcpField="UINDEX">
+		<class id="unat" name="All human land use" lcpField="UINDEX" filter="lcosp;lcp">
 			<class id="devt" name="Urban">
 				<class id="devlr" name="Low Density Residential">
 					<value id="21"/>
