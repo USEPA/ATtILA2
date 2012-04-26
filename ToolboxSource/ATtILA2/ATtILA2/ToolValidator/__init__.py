@@ -20,7 +20,7 @@ class lcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
     
     filterList = lcpConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeLcsoField
+    overrideAttributeName = lccConstants.XmlAttributeLcpField
     fieldPrefix = lcpConstants.fieldPrefix
     fieldSuffix = lcpConstants.fieldSuffix     
 

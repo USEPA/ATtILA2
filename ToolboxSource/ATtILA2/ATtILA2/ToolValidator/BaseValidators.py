@@ -156,7 +156,7 @@ class ProportionsValidator:
         
         **Description:**
             
-            Removes .shp that is automatically generated for output table parameters
+            Removes .shp that is automatically generated for output table parameters and replaces it with .dbf
         
         """
        
