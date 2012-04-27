@@ -5,6 +5,21 @@
 		<name>LANDFIRE</name>
 		<description>LANDFIRE LF_1.1.0 (refresh 2008)</description>	
 	</metadata>
+	
+	
+	<!-- 
+		* The "Coefficients" node contains coefficients to be assigned to values.
+		* 
+		* id - text, unique identifier
+		* name - text, name describing coefficient
+		* fieldName - text, name of field to be created for output
+	-->
+	<coefficients>
+		<coefficient id="N" name="Nitrogen" fieldName="N_Load"/>
+		<coefficient id="P" name="Phoshorus" fieldName="P_Load"/>
+		<coefficient id="PCTIA" name="Percent Cover Total Impervious Area" fieldName="PCTIA"/>
+	</coefficients>
+	
 
 	<!-- 
 		* The "values" node defines the full set of values that can exist in a landcover raster
@@ -12,81 +27,367 @@
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="11" name="Open Water" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="12" name="Snow/Ice" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="11" name="Open Water" excluded="true" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="12" name="Snow/Ice" excluded="true" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
 		
-		<value id="13" name="Developed-Upland Deciduous Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="14" name="Developed-Upland Evergreen Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="15" name="Developed-Upland Mixed Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="16" name="Developed-Upland Herbaceous" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="17" name="Developed-Upland Shrubland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="18" name="Developed-Herbaceous Wetland Vegetation" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="19" name="Developed-Woody Wetland Vegetation" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="20" name="Developed - General" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="21" name="Developed - Open Space" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-				
-		<value id="22" name="Developed - Low Intensity" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="23" name="Developed - Medium Intensity" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="24" name="Developed - High Intensity" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="25" name="Developed-Roads" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		
-		<value id="31" name="Barren" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>						
-		<value id="32" name="Quarries, Strip Mines, Gravel Pits" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="60" name="NASS-Orchard" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="61" name="NASS-Vineyard" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="62" name="NASS-Bush fruit and berries" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="63" name="NASS-Row Crop-Close Grown Crop" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="64" name="NASS-Row Crop" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="65" name="NASS-Close Grown Crop" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="66" name="NASS-Pasture and Hayland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="67" name="NASS-Pasture and Hayland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
-		<value id="75" name="Herbaceous Semi-dry" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="76" name="Herbaceous Semi-wet" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
-		<value id="78" name="Recently Disturbed Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="80" name="Agriculture - General" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="81" name="Pasture/Hay" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
-		<value id="82" name="Cultivated Crops" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="83" name="Small Grains" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="84" name="Fallow" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="85" name="Urban-Recreational Grasses" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="95" name="Herbaceous Wetlands" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="100" name="Sparse Vegetation Canopy" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="101" name="Tree Cover GE 10 and less than 20%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
-		<value id="102" name="Tree Cover GE 20 and less than 30%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="103" name="Tree Cover GE 30 and less than 40%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="104" name="Tree Cover GE 40 and less than 50%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="105" name="Tree Cover GE 50 and less than 60%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="106" name="Tree Cover GE 60 and less than 70%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="107" name="Tree Cover GE 70 and less than 80%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
-		<value id="108" name="Tree Cover GE 80 and less than 90%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="109" name="Tree Cover GE 90 and less than or equal 100%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="111" name="Shrub Cover GE 10 and less than 20%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="112" name="Shrub Cover GE 20 and less than 30%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="113" name="Shrub Cover GE 30 and less than 40%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="114" name="Shrub Cover GE 40 and less than 50%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="115" name="Shrub Cover GE 50 and less than 60%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="116" name="Shrub Cover GE 60 and less than 70%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="117" name="Shrub Cover GE 70 and less than 80%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="118" name="Shrub Cover GE 80 and less than 90%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="119" name="Shrub Cover GE 90 and less than or equal 100%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="121" name="Herb Cover GE 10 and less than 20%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="122" name="Herb Cover GE 20 and less than 30%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="123" name="Herb Cover GE 30 and less than 40%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="124" name="Herb Cover GE 40 and less than 50%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="125" name="Herb Cover GE 50 and less than 60%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="126" name="Herb Cover GE 60 and less than 70%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="127" name="Herb Cover GE 70 and less than 80%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="128" name="Herb Cover GE 80 and less than 90%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="129" name="Herb Cover GE 90 and less than or equal 100%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="150" name="Sparse Vegetation Canopy" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="151" name="Tree Canopy GE 10 and less than 25%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="152" name="Tree Canopy GE 25 and less than 60%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="153" name="Tree Canopy GE 60 and less than or equal 100%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="161" name="Shrub Canopy GE 10 and less than 25%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="162" name="Shrub Canopy GE 25 and less than 60%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="163" name="Shrub Canopy GE 60 and less than or equal 100%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="171" name="Herb Canopy GE 10 and less than 60%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="172" name="Herb Canopy GE 60 and less than or equal 100%" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="13" name="Developed-Upland Deciduous Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="14" name="Developed-Upland Evergreen Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="15" name="Developed-Upland Mixed Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="16" name="Developed-Upland Herbaceous" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="17" name="Developed-Upland Shrubland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="18" name="Developed-Herbaceous Wetland Vegetation" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="19" name="Developed-Woody Wetland Vegetation" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="20" name="Developed - General" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="21" name="Developed - Open Space" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="22" name="Developed - Low Intensity" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="23" name="Developed - Medium Intensity" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="24" name="Developed - High Intensity" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="25" name="Developed-Roads" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="31" name="Barren" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>						
+		<value id="32" name="Quarries, Strip Mines, Gravel Pits" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="60" name="NASS-Orchard" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="61" name="NASS-Vineyard" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="62" name="NASS-Bush fruit and berries" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="63" name="NASS-Row Crop-Close Grown Crop" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="64" name="NASS-Row Crop" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="65" name="NASS-Close Grown Crop" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="66" name="NASS-Pasture and Hayland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="67" name="NASS-Pasture and Hayland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>	
+		<value id="75" name="Herbaceous Semi-dry" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="76" name="Herbaceous Semi-wet" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>				
+		<value id="78" name="Recently Disturbed Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="80" name="Agriculture - General" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="81" name="Pasture/Hay" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>				
+		<value id="82" name="Cultivated Crops" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="83" name="Small Grains" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="84" name="Fallow" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="85" name="Urban-Recreational Grasses" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="95" name="Herbaceous Wetlands" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="100" name="Sparse Vegetation Canopy" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="101" name="Tree Cover GE 10 and less than 20%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>	
+		<value id="102" name="Tree Cover GE 20 and less than 30%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="103" name="Tree Cover GE 30 and less than 40%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="104" name="Tree Cover GE 40 and less than 50%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="105" name="Tree Cover GE 50 and less than 60%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="106" name="Tree Cover GE 60 and less than 70%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="107" name="Tree Cover GE 70 and less than 80%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>	
+		<value id="108" name="Tree Cover GE 80 and less than 90%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="109" name="Tree Cover GE 90 and less than or equal 100%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="111" name="Shrub Cover GE 10 and less than 20%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="112" name="Shrub Cover GE 20 and less than 30%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="113" name="Shrub Cover GE 30 and less than 40%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="114" name="Shrub Cover GE 40 and less than 50%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="115" name="Shrub Cover GE 50 and less than 60%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="116" name="Shrub Cover GE 60 and less than 70%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="117" name="Shrub Cover GE 70 and less than 80%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="118" name="Shrub Cover GE 80 and less than 90%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="119" name="Shrub Cover GE 90 and less than or equal 100%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="121" name="Herb Cover GE 10 and less than 20%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="122" name="Herb Cover GE 20 and less than 30%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="123" name="Herb Cover GE 30 and less than 40%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="124" name="Herb Cover GE 40 and less than 50%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="125" name="Herb Cover GE 50 and less than 60%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="126" name="Herb Cover GE 60 and less than 70%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="127" name="Herb Cover GE 70 and less than 80%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="128" name="Herb Cover GE 80 and less than 90%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="129" name="Herb Cover GE 90 and less than or equal 100%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="150" name="Sparse Vegetation Canopy" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="151" name="Tree Canopy GE 10 and less than 25%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="152" name="Tree Canopy GE 25 and less than 60%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="153" name="Tree Canopy GE 60 and less than or equal 100%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="161" name="Shrub Canopy GE 10 and less than 25%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="162" name="Shrub Canopy GE 25 and less than 60%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="163" name="Shrub Canopy GE 60 and less than or equal 100%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="171" name="Herb Canopy GE 10 and less than 60%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="172" name="Herb Canopy GE 60 and less than or equal 100%" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
 	</values>
 		
 		
