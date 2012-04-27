@@ -56,13 +56,13 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # Used for intellisense.  Will also raise error if metricConst is not the right type of object        
         assert isinstance(metricConst, metricConstants.baseMetricConstants) 
         
-        # Set parameters for metric output field. use this file's name to determine the metric type
+        # get the field name override key
+        fieldOverrideKey = metricConst.fieldOverrideKey
+
+        # Set parameters for metric output field. 
         # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
         # e.g., fldParams = ["p", "", "FLOAT", 6, 1]
         fldParams = metricConst.fieldParameters
-        
-        # get the field name override key using this script's name
-        fieldOverrideKey = metricConst.fieldOverrideKey
         
         # if any optional fields are selected, get their parameters
         optionalGroupsList = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, 
@@ -128,16 +128,16 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 # generate output field name
                 outputFName = fldParams[0] + mClassName + fldParams[1]
                 
-                thresholdValue = ""
                 # see if the provided field name is too long for the output table type
                 if len(outputFName) > maxFieldNameSize:
                     defaultFieldName = outputFName # keep track of the originally generated field name
                     
                     prefixLen = len(fldParams[0])
                     suffixLen = len(fldParams[1])
-                    maxBaseSize = maxFieldNameSize - prefixLen - suffixLen - len(thresholdValue)
-                        
-                    outputFName = fldParams[0] + mClassName[:maxBaseSize] + fldParams[1] + thresholdValue # truncate field name to maximum allowable size
+                    maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
+                    
+                    # truncate field name to maximum allowable size    
+                    outputFName = fldParams[0] + mClassName[:maxBaseSize] + fldParams[1]
                     
                     # see if truncated field name is already used.
                     # if so, truncate further and add a unique number to the end of the name
@@ -150,7 +150,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                     arcpy.AddWarning("Metric field name too long for output location. Truncated "+defaultFieldName+" to "+outputFName)
                     
                 # keep track of output field names
-                outputFieldNames.add(outputFName)             
+                outputFieldNames.add(outputFName)
                 # add output field name to dictionary
                 metricsFieldnameDict[mClassName] = outputFName
                     

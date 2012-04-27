@@ -52,19 +52,24 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                                 snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
     
-    standardSetup(snapRaster, os.path.dirname(outTable))    
+    standardSetup(snapRaster, os.path.dirname(outTable))
     
     # XML Land Cover Coding file loaded into memory
     lccObj = lcc.LandCoverClassification(lccFilePath)
     lcospConst = metricConstants.lcospConstants()
     
-    SLPxLCGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
+    # append the slope threshold value to the field suffix
+    generalSuffix = lcospConst.fieldSuffix
+    specificSuffix = generalSuffix+inSlopeThresholdValue
+    lcospConst.fieldParameters[1] = specificSuffix
     
+    SLPxLCGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
+
     # parse the additional options list 
     optionalGroupsList = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, 
-                                                                             globalConstants.descriptionDelim)
+                                                                             globalConstants.descriptionDelim)    
     # save the file if intermediate products option is checked by user
-    if globalConstants.intermediateName in optionalGroupsList:
+    if globalConstants.intermediateName in optionalGroupsList: 
         SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
     
     utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccFilePath, 
