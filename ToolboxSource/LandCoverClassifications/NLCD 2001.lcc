@@ -14,7 +14,7 @@
 	-->
 	<coefficients>
 		<coefficient id="N" name="Nitrogen" fieldName="N_Load"/>
-		<coefficient id="P" name="Phoshorus" fieldName="P_Load"/>
+		<coefficient id="P" name="Phosphorus" fieldName="P_Load"/>
 		<coefficient id="PCTIA" name="Percent Cover Total Impervious Area" fieldName="PCTIA"/>
 	</coefficients>
 	
