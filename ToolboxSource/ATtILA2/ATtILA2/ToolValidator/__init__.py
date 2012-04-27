@@ -5,7 +5,7 @@
 import BaseValidators
 from ATtILA2.constants import metricConstants
 import pylet.lcc.constants as lccConstants
-from ATtILA2.constants.metricConstants import lcospConstants, lcpConstants
+from ATtILA2.constants.metricConstants import *
 
 class lcospToolValidator(BaseValidators.ProportionsValidator):
     """Tool Validator for LandCoverSlopeOverlap"""
@@ -28,3 +28,9 @@ class lcpToolValidator(BaseValidators.ProportionsValidator):
 
 class lcccToolValidator(BaseValidators.CoefficientValidator):
     """ ToolValidator for Coefficient Calculations """
+    
+    filterList = lcccConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeLcpField
+    fieldPrefix = lcccConstants.fieldPrefix
+    fieldSuffix = lcccConstants.fieldSuffix    
+    metricShortName = lcccConstants.shortName 
