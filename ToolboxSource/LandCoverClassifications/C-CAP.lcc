@@ -4,6 +4,20 @@
 		<name>C-CAP</name>
 		<description>C-CAP Landcover Classification</description>	
 	</metadata>
+	
+	<!-- 
+		* The "Coefficients" node contains coefficients to be assigned to values.
+		* 
+		* id - text, unique identifier
+		* name - text, name describing coefficient
+		* fieldName - text, name of field to be created for output
+	-->
+	<coefficients>
+		<coefficient id="N" name="Nitrogen" fieldName="N_Load"/>
+		<coefficient id="P" name="Phosphorus" fieldName="P_Load"/>
+		<coefficient id="PCTIA" name="Percent Cover Total Impervious Area" fieldName="PCTIA"/>
+	</coefficients>
+	
 
 	<!-- 
 		* The "values" node defines the full set of values that can exist in a landcover raster
@@ -11,34 +25,137 @@
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
 	<values>
-		<value id="0" name="Background" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="1" name="Unclassified" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
+		<value id="0" name="Background" excluded="true" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="1" name="Unclassified" excluded="true" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
 
-		<value id="2" name="High Intensity Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="3" name="Medium Intensity Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
-		<value id="4" name="Low Intensity Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="5" name="Open Spaces Developed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="6" name="Cultivated Land" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="7" name="Pasture/Hay" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
-		<value id="8" name="Grassland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="9" name="Deciduous Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="10" name="Evergreen Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="11" name="Mixed Forest" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="12" name="Scrub/Shrub" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="13" name="Palustrine Forested Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="14" name="Palustrine Scrub/Shrub Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="15" name="Palustrine Emergent Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
-		<value id="16" name="Estuarine Forested Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="17" name="Estuarine Scrub/Shrub Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="18" name="Estuarine Emergent Wetland" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="19" name="Unconsolidated Shore" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="20" name="Bare Land" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="21" name="Water" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>		
-		<value id="22" name="Palustrine Aquatic Bed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="23" name="Estuarine Aquatic Bed" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>
-		<value id="24" name="Tundra" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>	
-		<value id="25" name="Snow/Ice" excluded="true" P_LoadCoef="" N_LoadCoef="" PCTIA_LCCoef=""/>				
-		
+		<value id="2" name="High Intensity Developed" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="3" name="Medium Intensity Developed" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>				
+		<value id="4" name="Low Intensity Developed" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="5" name="Open Spaces Developed" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="6" name="Cultivated Land" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="7" name="Pasture/Hay" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>				
+		<value id="8" name="Grassland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="9" name="Deciduous Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="10" name="Evergreen Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="11" name="Mixed Forest" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="12" name="Scrub/Shrub" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="13" name="Palustrine Forested Wetland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="14" name="Palustrine Scrub/Shrub Wetland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="15" name="Palustrine Emergent Wetland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>	
+		<value id="16" name="Estuarine Forested Wetland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="17" name="Estuarine Scrub/Shrub Wetland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="18" name="Estuarine Emergent Wetland" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="19" name="Unconsolidated Shore" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="20" name="Bare Land" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="21" name="Water" excluded="true" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>		
+		<value id="22" name="Palustrine Aquatic Bed" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="23" name="Estuarine Aquatic Bed" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>
+		<value id="24" name="Tundra" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>	
+		<value id="25" name="Snow/Ice" excluded="true" >
+			<coefficient id="N" value="" />
+			<coefficient id="P" value="" />
+			<coefficient id="PCTIA" value="" />
+		</value>				
 	</values>
 		
 		
