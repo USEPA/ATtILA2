@@ -47,7 +47,7 @@ def standardRestore():
     
     
     
-def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid,lccName, lccFilePath, 
+def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                 metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
                                 snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
@@ -57,12 +57,17 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     # XML Land Cover Coding file loaded into memory
     lccObj = lcc.LandCoverClassification(lccFilePath)
     lcospConst = metricConstants.lcospConstants()
+    
     SLPxLCGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
     
-    # save the file if intermediate products outputs are checked
-    #SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
+    # parse the additional options list 
+    optionalGroupsList = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, 
+                                                                             globalConstants.descriptionDelim)
+    # save the file if intermediate products option is checked by user
+    if globalConstants.intermediateName in optionalGroupsList:
+        SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
     
-    utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+    utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccFilePath, 
                          metricsToRun, outTable, processingCellSize, optionalFieldGroups, lcospConst)
     
 

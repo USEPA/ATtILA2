@@ -20,9 +20,13 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
         
         PARAMETERS
         ----------
-        metricGridCodesList: list of all grid values assigned to a metric class in the lcc file (e.g., [41, 42, 43] for the forest class)
+        metricGridCodesList: list of all grid values assigned to a metric class in the lcc file (e.g., [41, 42, 43] for 
+                             the forest class)
+                             
         tabAreaDict: dictionary with the area value of each grid code in a reporting unit keyed to the grid code
-        effectiveAreaSum: sum of the area of all grid cells in the reporting unit with codes not tagged as excluded in the lcc file
+        
+        effectiveAreaSum: sum of the area of all grid cells in the reporting unit with codes not tagged as excluded in 
+                          the lcc file
         
         RETURNS
         -------
@@ -88,7 +92,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         excludedValues = lccValuesDict.getExcludedValueIds()
         
         # take the 'Metrics to run' input and parse it into a list of metric ClassNames
-        metricsClassNameList = arcpyutil.parameters.splitItemsAndStripDescriptions(metricsToRun, globalConstants.descriptionDelim)
+        metricsClassNameList = arcpyutil.parameters.splitItemsAndStripDescriptions(metricsToRun, 
+                                                                                   globalConstants.descriptionDelim)
         
         # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
@@ -150,7 +155,9 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 metricsFieldnameDict[mClassName] = outputFName
                     
         # create the specified output table
-        newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,inReportingUnitFeature,reportingUnitIdField,metricsClassNameList,metricsFieldnameDict,fldParams,qaCheckFlds,addAreaFldParams)
+        newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,inReportingUnitFeature,reportingUnitIdField,
+                                                               metricsClassNameList,metricsFieldnameDict,fldParams,
+                                                               qaCheckFlds,addAreaFldParams)
         
         
         
@@ -161,7 +168,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         # run the tabulatearea geoprocess
-        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table, processingCellSize)  
+        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table, 
+                                 processingCellSize)  
 
         # Process output table from tabulatearea geoprocess
         # get the VALUE fields from Tabulate Area table
@@ -197,7 +205,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
             #    value for the grid code into a dictionary with the grid code as the key.
             # 2) Determine if the grid code is to be included into the reporting unit effective area sum
             # 3) Calculate the total grid area present in the reporting unit
-            valFieldsResults = ATtILA2.utils.field.ProcessTabAreaValueFields(TabAreaValueFields, TabAreaValues, tabAreaDict, tabAreaTableRow, excludedValues)
+            valFieldsResults = ATtILA2.utils.field.ProcessTabAreaValueFields(TabAreaValueFields, TabAreaValues, 
+                                                                             tabAreaDict, tabAreaTableRow, excludedValues)
             tabAreaDict = valFieldsResults[0]
             effectiveAreaSum = valFieldsResults[1]
             excludedAreaSum = valFieldsResults[2]
@@ -208,7 +217,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
                 
                 # get the class percentage area and it's actual area from the tabulate area table
-                metricPercentageAndArea = ATtILA2.utils.calculate.getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum)
+                metricPercentageAndArea = ATtILA2.utils.calculate.getMetricPercentAreaAndSum(metricGridCodesList, 
+                                                                                             tabAreaDict, effectiveAreaSum)
                 
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mClassName], metricPercentageAndArea[0])
