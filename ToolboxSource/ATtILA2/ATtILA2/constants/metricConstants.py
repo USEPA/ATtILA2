@@ -41,7 +41,7 @@ class lcospConstants(baseMetricConstants):
     fieldSuffix = "SL"
     fieldPrefix = ""
     overlapName = "SL_OVRLP"
-    totalAreaName = "SL+TOT_A"
+    totalAreaName = "SL_TOT_A"
     effectiveAreaName = "SL_EFF_A"
     excludedAreaName = "SL_EXC_A"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
