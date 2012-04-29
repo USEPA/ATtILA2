@@ -209,6 +209,10 @@ class ProportionsValidator(object):
             message = self.metricDescription
             for classNode in classNodes:
                 
+                # ignore class without value as descendant(child, child of child, etc.)
+                if not classNode.getElementsByTagName(lccConstants.XmlElementValue):
+                    continue
+                
                 # Check filter, skip class if short metric name found (semi-colon delimiter)
                 filterValue = classNode.getAttribute(self.filterAttributeName)
                 shortNames = filterValue.split(";")
