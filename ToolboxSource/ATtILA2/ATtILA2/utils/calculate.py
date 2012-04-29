@@ -9,30 +9,30 @@ import traceback
 import sys
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum):
-    """ Calculates the percentage of the reporting unit effective area occupied by the metric class codes and their total area
+    """ Calculates the percentage of the reporting unit effective area occupied by the metric class codes and their 
+    total area
     
-        DESCRIPTION
-        -----------
+    **Description:**
+
         Retrieves stored area figures for each grid code associated with selected metric and sums them.
         That number, divided by the total effective area within the reporting unit and multiplied by 100, gives the
         percentage of the effective reporting unit that is occupied by the metric class. Both the percentage and the 
         final area sum are returned.
         
-        PARAMETERS
-        ----------
-        metricGridCodesList: list of all grid values assigned to a metric class in the lcc file (e.g., [41, 42, 43] for 
-                             the forest class)
+    **Arguments:**
+
+        * *metricGridCodesList* - list of all grid values assigned to a metric class in the lcc file (e.g., [41, 42, 43] 
+                                for the forest class)
                              
-        tabAreaDict: dictionary with the area value of each grid code in a reporting unit keyed to the grid code
+        * *tabAreaDict* - dictionary with the area value of each grid code in a reporting unit keyed to the grid code
         
-        effectiveAreaSum: sum of the area of all grid cells in the reporting unit with codes not tagged as excluded in 
-                          the lcc file
+        * *effectiveAreaSum* - sum of the area of all grid cells in the reporting unit with codes not tagged as excluded 
+                                in the lcc file
         
-        RETURNS
-        -------
-        Tuple:
-            float 1 - the percentage of the reporting unit effective area that is occupied by the metric class codes
-            float 2 - the sum of the area of metric class codes
+    **Returns:**
+
+        * float - the percentage of the reporting unit effective area that is occupied by the metric class codes
+        * float - the sum of the area of metric class codes
         
     """
     
@@ -50,8 +50,30 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                          metricsToRun, outTable, processingCellSize, optionalFieldGroups, metricConst):
-    """ Land Cover Proportions output to table"""
-       
+    """ Creates *outTable* populated with land cover proportions metrics
+    
+    **Description:**
+
+        Creates *outTable* populated with land cover proportions metrics...
+        
+    **Arguments:**
+
+        * *inReportingUnitFeature* - Input reporting units
+        * *reportingUnitIdField* - name of unique id field in reporting units
+        * *inLandCoverGrid* - land cover raster
+        * *lccFilePath* - land cover classification(lcc) file path
+        * *metricsToRun* - list of class ids to include in processing
+        * *outTable* - full path to an output table to be created/populated
+        * *processingCellSize* - processing cell size
+        * *optionalFieldGroups* - optional fields to create
+        * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+        
+    **Returns:**
+
+        * None
+        
+    """
+    
     try:
         # Used for intellisense.  Will also raise error if metricConst is not the right type of object        
         assert isinstance(metricConst, metricConstants.baseMetricConstants) 
