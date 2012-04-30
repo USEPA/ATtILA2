@@ -49,7 +49,7 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                         metricsToRun, outTable, processingCellSize, optionalFieldGroups, metricConst):
+                         metricsClassNameList, outTable, processingCellSize, optionalGroupsList, metricConst):
     """ Creates *outTable* populated with land cover proportions metrics
     
     **Description:**
@@ -86,10 +86,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # e.g., fldParams = ["p", "", "FLOAT", 6, 1]
         fldParams = metricConst.fieldParameters
         
-        # if any optional fields are selected, get their parameters
-        optionalGroupsList = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, 
-                                                                                 globalConstants.descriptionDelim)
-        
         if globalConstants.qaCheckName in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
             qaCheckFlds = metricConst.qaCheckFieldParameters
@@ -112,10 +108,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         lccValuesDict = lccObj.values
         # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
         excludedValues = lccValuesDict.getExcludedValueIds()
-        
-        # take the 'Metrics to run' input and parse it into a list of metric ClassNames
-        metricsClassNameList = arcpyutil.parameters.splitItemsAndStripDescriptions(metricsToRun, 
-                                                                                   globalConstants.descriptionDelim)
         
         # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
@@ -179,7 +171,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # create the specified output table
         newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,inReportingUnitFeature,reportingUnitIdField,
                                                                metricsClassNameList,metricsFieldnameDict,fldParams,
-                                                               qaCheckFlds,addAreaFldParams)
+                                                               qaCheckFlds, addAreaFldParams)
         
         
         

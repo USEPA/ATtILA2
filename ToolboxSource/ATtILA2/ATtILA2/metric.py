@@ -2,8 +2,6 @@
 
 '''
 import os
-import sys
-import traceback
 
 import arcpy
 from arcpy import env
@@ -19,8 +17,12 @@ from ATtILA2 import utils
 _tempEnvironment0 = ""
 _tempEnvironment1 = ""
 
-def standardSetup(snapRaster, fallBackDirectory):
+def standardSetup(snapRaster, fallBackDirectory, itemDescriptionPairList=[] ):
     """ Standard setup for executing metrics. """
+    
+    itemTuples = []
+    for itemDescriptionPair in itemDescriptionPairList:
+        itemTuples.append(arcpyutil.parameters.splitItemsAndStripDescriptions(itemDescriptionPair, globalConstants.descriptionDelim))
     
     # Check out any necessary licenses
     arcpy.CheckOutExtension("spatial")
@@ -32,7 +34,10 @@ def standardSetup(snapRaster, fallBackDirectory):
     # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
     env.snapRaster = snapRaster
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
+  
     
+    return itemTuples
+
     
     
 def standardRestore():
@@ -52,12 +57,13 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                                 snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
     
-    standardSetup(snapRaster, os.path.dirname(outTable))
+    metricsClassNameList, optionalGroupsList = standardSetup(snapRaster, os.path.dirname(outTable), [metricsToRun,optionalFieldGroups] )
+    
     
     # XML Land Cover Coding file loaded into memory
     lccObj = lcc.LandCoverClassification(lccFilePath)
     lcospConst = metricConstants.lcospConstants()
-    
+        
     # append the slope threshold value to the field suffix
     generalSuffix = lcospConst.fieldSuffix
     specificSuffix = generalSuffix+inSlopeThresholdValue
@@ -65,17 +71,13 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     
     SLPxLCGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
 
-    # parse the additional options list 
-    optionalGroupsList = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, 
-                                                                             globalConstants.descriptionDelim)    
     # save the file if intermediate products option is checked by user
     if globalConstants.intermediateName in optionalGroupsList: 
         SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
     
     utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccFilePath, 
-                         metricsToRun, outTable, processingCellSize, optionalFieldGroups, lcospConst)
+                         metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcospConst)
     
-
     standardRestore()
     
     
@@ -83,11 +85,13 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                          metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics """   
     
-    standardSetup(snapRaster, os.path.dirname(outTable))
+    metricsClassNameList, optionalGroupsList = standardSetup(snapRaster, os.path.dirname(outTable), [metricsToRun,optionalFieldGroups] )
     
     lcpConst = metricConstants.lcpConstants()
+    
+    
     utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                         metricsToRun, outTable, processingCellSize, optionalFieldGroups, lcpConst)
+                         metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcpConst)
     
     standardRestore()
     
