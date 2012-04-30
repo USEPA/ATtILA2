@@ -32,7 +32,7 @@ class lcpConstants(baseMetricConstants):
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
-        ],    
+        ]   
     fieldOverrideKey = shortName + gc.fieldOverrideName
     
 class lcospConstants(baseMetricConstants):
@@ -70,7 +70,7 @@ class lcccConstants(baseMetricConstants):
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
-        ],    
+        ]    
     fieldOverrideKey = shortName + gc.fieldOverrideName
     
 
