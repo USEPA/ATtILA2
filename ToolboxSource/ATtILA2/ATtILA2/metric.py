@@ -17,12 +17,10 @@ from ATtILA2 import utils
 _tempEnvironment0 = ""
 _tempEnvironment1 = ""
 
-def standardSetup(snapRaster, fallBackDirectory, itemDescriptionPairList=[] ):
+def standardSetup(snapRaster, fallBackDirectory, itemDescriptionPairList=[]):
     """ Standard setup for executing metrics. """
     
-    itemTuples = []
-    for itemDescriptionPair in itemDescriptionPairList:
-        itemTuples.append(arcpyutil.parameters.splitItemsAndStripDescriptions(itemDescriptionPair, globalConstants.descriptionDelim))
+
     
     # Check out any necessary licenses
     arcpy.CheckOutExtension("spatial")
@@ -34,7 +32,15 @@ def standardSetup(snapRaster, fallBackDirectory, itemDescriptionPairList=[] ):
     # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
     env.snapRaster = snapRaster
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
-  
+    
+    itemTuples = []
+    for itemDescriptionPair in itemDescriptionPairList:
+        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(itemDescriptionPair, globalConstants.descriptionDelim)
+        itemTuples.append(processed)
+        
+        if globalConstants.intermediateName in processed:
+            msg = "\nIntermediates are stored in this directory: {0}\n"
+            arcpy.AddMessage(msg.format(env.workspace))    
     
     return itemTuples
 
@@ -74,6 +80,8 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     # save the file if intermediate products option is checked by user
     if globalConstants.intermediateName in optionalGroupsList: 
         SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
+        
+        
     
     utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccFilePath, 
                          metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcospConst)
