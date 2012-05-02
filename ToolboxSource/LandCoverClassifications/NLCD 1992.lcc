@@ -40,18 +40,18 @@
 		</value>
 		
 		<value id="21" name="Low Intensity Residential" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="9.25" />
+			<coefficient id="P" value="1.385" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="22" name="High Intensity Residential" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="9.25" />
+			<coefficient id="P" value="1.385" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="23" name="Commercial,Industrial,Transportation" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="9.25" />
+			<coefficient id="P" value="1.385" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="31" name="Bare Rock,Sand,Clay" >
@@ -60,8 +60,8 @@
 			<coefficient id="PCTIA" value="" />
 		</value>				
 		<value id="32" name="Quarries, Strip Mines, Gravel Pits" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="9.25" />
+			<coefficient id="P" value="1.385" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="33" name="Transitional" >
@@ -70,58 +70,58 @@
 			<coefficient id="PCTIA" value="" />
 		</value>		
 		<value id="41" name="Deciduous Forest" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="2.447" />
+			<coefficient id="P" value="0.089" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="42" name="Evergreen Forest" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="2.447" />
+			<coefficient id="P" value="0.089" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="43" name="Mixed Forest" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="2.447" />
+			<coefficient id="P" value="0.089" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="51" name="Deciduous Shrubland" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="0.564" />
+			<coefficient id="P" value="0.059" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="52" name="Evergreen Shrubland" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="0.564" />
+			<coefficient id="P" value="0.059" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="53" name="Mixed Shrubland" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="0.564" />
+			<coefficient id="P" value="0.059" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="61" name="Orchards,Vineyards,Other" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="11.926" />
+			<coefficient id="P" value="0.68" />
 			<coefficient id="PCTIA" value="" />
 		</value>	
 		<value id="71" name="Grasslands,Herbaceous" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="0.564" />
+			<coefficient id="P" value="0.059" />
 			<coefficient id="PCTIA" value="" />
 		</value>		
 		<value id="81" name="Pature,Hay" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="11.926" />
+			<coefficient id="P" value="0.68" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="82" name="Row Crops" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="11.926" />
+			<coefficient id="P" value="0.68" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="83" name="Small Grains" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="11.926" />
+			<coefficient id="P" value="0,68" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="84" name="Fallow" >
@@ -130,18 +130,18 @@
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="85" name="Urban Grasses,Recreational Grasses" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="9.25" />
+			<coefficient id="P" value="1.385" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="91" name="Woody Wetlands" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="2.447" />
+			<coefficient id="P" value="0.089" />
 			<coefficient id="PCTIA" value="" />
 		</value>
 		<value id="92" name="Emergent Herbaceous Wetlands" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
+			<coefficient id="N" value="0.564" />
+			<coefficient id="P" value="0.059" />
 			<coefficient id="PCTIA" value="" />
 		</value>	
 	</values>
