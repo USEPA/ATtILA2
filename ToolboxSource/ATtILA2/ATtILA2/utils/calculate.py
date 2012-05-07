@@ -258,24 +258,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         arcpy.Delete_management(scratch_Table)
 
                 
-    except arcpy.ExecuteError:
-        arcpy.AddError(arcpy.GetMessages(2))
-        
-    except:
-        
-        # get the traceback object
-        tb = sys.exc_info()[2]
-        tbinfo = traceback.format_tb(tb)[0]
-        
-        # Concatenate information together concerning the error into a message string
-        pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
-        msgs = "ArcPy ERRORS:\n" + arcpy.GetMessages(2) + "\n"
-    
-        # Return python error messages for use in script tool
-        arcpy.AddError(pymsg)
-        arcpy.AddError(msgs)
-
-        
     finally:
         # delete cursor and row objects to remove locks on the data
         try:
