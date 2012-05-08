@@ -36,7 +36,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     
         # save the file if intermediate products option is checked by user
         if globalConstants.intermediateName in optionalGroupsList: 
-            SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))            
+            SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccFilePath, 
                              metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcospConst)
@@ -76,9 +76,13 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
             
     try:
         
-        arcpy.AddMessage("\nStart Here:\n  ATtILA2.metric.runLandCoverCoefficientCalculator\n")
+        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
+                                                                                 [metricsToRun,optionalFieldGroups] )
         
+        lcccConst = metricConstants.lcccConstants()
         
+        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                            metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcccConst)
         
     except Exception, e:
         errors.standardErrorHandling(e)
