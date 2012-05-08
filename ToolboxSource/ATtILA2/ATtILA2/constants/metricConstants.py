@@ -60,16 +60,13 @@ class lcccConstants(baseMetricConstants):
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = "LCCC_OVRLP"
-    totalAreaName = "LCCC_TOT_A"
-    effectiveAreaName = "LCCC_EFF_A"
-    excludedAreaName = "LCCC_EXC_A"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
-        [overlapName, gc.defaultIntegerFieldType, 6],
-        [totalAreaName, gc.defaultAreaFieldType, 15],
-        [effectiveAreaName, gc.defaultAreaFieldType, 15],
-        [excludedAreaName, gc.defaultAreaFieldType, 15]
+        [overlapName, gc.defaultIntegerFieldType, 6]
         ]    
     fieldOverrideKey = shortName + gc.fieldOverrideName
     

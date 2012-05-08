@@ -13,8 +13,8 @@ from ATtILA2 import utils
 
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
-                                metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
-                                snapRaster, optionalFieldGroups):
+                                   metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
+                                   snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
     
     try:
@@ -36,9 +36,9 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     
         # save the file if intermediate products option is checked by user
         if globalConstants.intermediateName in optionalGroupsList: 
-            SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))            
+            SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
         
-        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccFilePath, 
+        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccObj, 
                              metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcospConst)
         
     except Exception, e:
@@ -49,18 +49,21 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 
     
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
-                         metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
+                            metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics """   
     
     try:
         metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
         
+        lccObj = lcc.LandCoverClassification(lccFilePath)
         lcpConst = metricConstants.lcpConstants()
         
         
-        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                             metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcpConst)
+        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
+                                             metricsClassNameList, outTable, processingCellSize, optionalGroupsList, 
+                                             lcpConst)
+        
     except Exception, e:
         errors.standardErrorHandling(e)
         
@@ -76,9 +79,15 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
             
     try:
         
-        arcpy.AddMessage("\nStart Here:\n  ATtILA2.metric.runLandCoverCoefficientCalculator\n")
+        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
+                                                                                 [metricsToRun,optionalFieldGroups] )
         
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        lcccConst = metricConstants.lcccConstants()
         
+        utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
+                                                       lccObj, metricsClassNameList, outTable, processingCellSize, 
+                                                       optionalGroupsList, lcccConst)
         
     except Exception, e:
         errors.standardErrorHandling(e)

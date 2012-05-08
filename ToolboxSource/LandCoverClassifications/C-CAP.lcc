@@ -13,9 +13,9 @@
 		* fieldName - text, name of field to be created for output
 	-->
 	<coefficients>
-		<coefficient id="N" name="Estimated Nitrogen Loading Based on Land Cover" fieldName="N_Load"/>
-		<coefficient id="P" name="Estimated Phosphorus Loading Based on Land Cover" fieldName="P_Load"/>
-		<coefficient id="PCTIA" name="Percent Cover Total Impervious Area" fieldName="PCTIA"/>
+		<coefficient id="NITROGEN" name="Estimated Nitrogen Loading Based on Land Cover" fieldName="N_Load"/>
+		<coefficient id="PHOSPHORUS" name="Estimated Phosphorus Loading Based on Land Cover" fieldName="P_Load"/>
+		<coefficient id="IMPERVIOUS" name="Percent Cover Total Impervious Area" fieldName="PCTIA"/>
 	</coefficients>
 	
 
@@ -26,135 +26,135 @@
 	-->
 	<values>
 		<value id="0" name="Background" excluded="true" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="1" name="Unclassified" excluded="true" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 
 		<value id="2" name="High Intensity Developed" >
-			<coefficient id="N" value="9.25" />
-			<coefficient id="P" value="1.385" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="9.25" />
+			<coefficient id="PHOSPHORUS" value="1.385" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="3" name="Medium Intensity Developed" >
-			<coefficient id="N" value="9.25" />
-			<coefficient id="P" value="1.385" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="9.25" />
+			<coefficient id="PHOSPHORUS" value="1.385" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>				
 		<value id="4" name="Low Intensity Developed" >
-			<coefficient id="N" value="9.25" />
-			<coefficient id="P" value="1.385" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="9.25" />
+			<coefficient id="PHOSPHORUS" value="1.385" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="5" name="Open Spaces Developed" >
-			<coefficient id="N" value="9.25" />
-			<coefficient id="P" value="1.385" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="9.25" />
+			<coefficient id="PHOSPHORUS" value="1.385" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="6" name="Cultivated Land" >
-			<coefficient id="N" value="11.926" />
-			<coefficient id="P" value="0.68" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="11.926" />
+			<coefficient id="PHOSPHORUS" value="0.68" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="7" name="Pasture/Hay" >
-			<coefficient id="N" value="11.926" />
-			<coefficient id="P" value="0.68" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="11.926" />
+			<coefficient id="PHOSPHORUS" value="0.68" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>				
 		<value id="8" name="Grassland" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="9" name="Deciduous Forest" >
-			<coefficient id="N" value="2.447" />
-			<coefficient id="P" value="0.089" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="2.447" />
+			<coefficient id="PHOSPHORUS" value="0.089" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="10" name="Evergreen Forest" >
-			<coefficient id="N" value="2.447" />
-			<coefficient id="P" value="0.089" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="2.447" />
+			<coefficient id="PHOSPHORUS" value="0.089" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="11" name="Mixed Forest" >
-			<coefficient id="N" value="2.447" />
-			<coefficient id="P" value="0.089" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="2.447" />
+			<coefficient id="PHOSPHORUS" value="0.089" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="12" name="Scrub/Shrub" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="13" name="Palustrine Forested Wetland" >
-			<coefficient id="N" value="2.447" />
-			<coefficient id="P" value="0.089" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="2.447" />
+			<coefficient id="PHOSPHORUS" value="0.089" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="14" name="Palustrine Scrub/Shrub Wetland" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="15" name="Palustrine Emergent Wetland" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>	
 		<value id="16" name="Estuarine Forested Wetland" >
-			<coefficient id="N" value="2.447" />
-			<coefficient id="P" value="0.089" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="2.447" />
+			<coefficient id="PHOSPHORUS" value="0.089" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>		
 		<value id="17" name="Estuarine Scrub/Shrub Wetland" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="18" name="Estuarine Emergent Wetland" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="19" name="Unconsolidated Shore" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="20" name="Bare Land" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="21" name="Water" excluded="true" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>		
 		<value id="22" name="Palustrine Aquatic Bed" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="23" name="Estuarine Aquatic Bed" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>
 		<value id="24" name="Tundra" >
-			<coefficient id="N" value="0.564" />
-			<coefficient id="P" value="0.059" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="0.564" />
+			<coefficient id="PHOSPHORUS" value="0.059" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>	
 		<value id="25" name="Snow/Ice" excluded="true" >
-			<coefficient id="N" value="" />
-			<coefficient id="P" value="" />
-			<coefficient id="PCTIA" value="" />
+			<coefficient id="NITROGEN" value="" />
+			<coefficient id="PHOSPHORUS" value="" />
+			<coefficient id="IMPERVIOUS" value="" />
 		</value>				
 	</values>
 		

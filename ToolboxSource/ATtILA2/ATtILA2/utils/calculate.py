@@ -48,7 +48,7 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
     return metricPercentArea, metricAreaSum
 
 
-def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
                          metricsClassNameList, outTable, processingCellSize, optionalGroupsList, metricConst):
     """ Creates *outTable* populated with land cover proportions metrics
     
@@ -61,7 +61,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         * *inReportingUnitFeature* - Input reporting units
         * *reportingUnitIdField* - name of unique id field in reporting units
         * *inLandCoverGrid* - land cover raster
-        * *lccFilePath* - land cover classification(lcc) file path
+        * *lccObj* - land cover classification(lcc) object
         * *metricsToRun* - list of class ids to include in processing
         * *outTable* - full path to an output table to be created/populated
         * *processingCellSize* - processing cell size
@@ -100,8 +100,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
             addAreaFldParams = None
         
         # Process: inputs
-        # XML Land Cover Coding file loaded into memory
-        lccObj = lcc.LandCoverClassification(lccFilePath)
         # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         lccClassesDict = lccObj.classes    
         # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation
@@ -279,3 +277,95 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
             del tabAreaTableRow
         except:
             pass  
+        
+
+def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
+                         metricsClassNameList, outTable, processingCellSize, optionalGroupsList, metricConst):
+    """ Creates *outTable* populated with land cover coefficient metrics
+    
+    **Description:**
+
+        Creates *outTable* populated with land cover coefficient metrics...
+        
+    **Arguments:**
+
+        * *inReportingUnitFeature* - Input reporting units
+        * *reportingUnitIdField* - name of unique id field in reporting units
+        * *inLandCoverGrid* - land cover raster
+        * *lccObj* - land cover classification(lcc) object
+        * *metricsToRun* - list of class ids to include in processing
+        * *outTable* - full path to an output table to be created/populated
+        * *processingCellSize* - processing cell size
+        * *optionalFieldGroups* - optional fields to create
+        * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+        
+    **Returns:**
+
+        * None
+        
+    """
+    
+    try:
+        # Used for intellisense.  Will also raise error if metricConst is not the right type of object        
+        assert isinstance(metricConst, metricConstants.baseMetricConstants) 
+
+        # Set parameters for metric output field. 
+        # Parameters = [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
+        # e.g., fldParams = ["p", "", "FLOAT", 6, 1]
+        metricFieldParams = metricConst.fieldParameters
+        
+        if globalConstants.qaCheckName in optionalGroupsList:
+            # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+            qaCheckFieldsParams = metricConst.qaCheckFieldParameters
+        else:
+            qaCheckFieldsParams = None
+        
+        maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
+        if globalConstants.metricAddName in optionalGroupsList:
+            addAreaFldParams = globalConstants.areaFieldParameters
+            maxFieldNameSize = maxFieldNameSize - len(addAreaFldParams[0])
+        else:
+            addAreaFldParams = None
+        
+        # Process: inputs
+    
+        # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
+        metricsFieldnameDict = {}
+        outputFieldNames = set() # use this set to help make field names unique
+        
+        for mClassName in metricsClassNameList:
+            # generate unique number to replace characters at end of truncated field names
+            n = 1
+            
+            fieldOverrideName = lccObj.coefficients[mClassName].fieldName
+
+            # see if the provided field name is too long for the output table type
+            if len(fieldOverrideName) > maxFieldNameSize:
+                defaultFieldName = fieldOverrideName # keep track of the originally provided field name
+                fieldOverrideName = fieldOverrideName[:maxFieldNameSize] # truncate field name to maximum allowable size
+                
+                # see if truncated field name is already used.
+                # if so, truncate further and add a unique number to the end of the name
+                while fieldOverrideName in outputFieldNames:
+                    # shorten the field name and increment it
+                    truncateTo = maxFieldNameSize - len(str(n))
+                    fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
+                    n = n + 1
+                    
+                arcpy.AddWarning("Provided metric name too long for output location. Truncated "+defaultFieldName+" to "+fieldOverrideName)
+                
+            # keep track of output field names    
+            outputFieldNames.add(fieldOverrideName)
+            # add output field name to dictionary
+            metricsFieldnameDict[mClassName] = fieldOverrideName
+
+                    
+        # create the specified output table
+        newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdField, 
+                                                               metricsClassNameList, metricsFieldnameDict,
+                                                               metricFieldParams, qaCheckFieldsParams, addAreaFldParams)
+
+    finally:
+        pass
+    
+    
