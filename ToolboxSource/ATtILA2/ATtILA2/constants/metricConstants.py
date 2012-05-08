@@ -25,7 +25,7 @@ class lcpConstants(baseMetricConstants):
     totalAreaName = "LCP_TOT_A"
     effectiveAreaName = "LCP_EFF_A"
     excludedAreaName = "LCP_EXC_A"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -63,7 +63,7 @@ class lcccConstants(baseMetricConstants):
     totalAreaName = "LCCC_TOT_A"
     effectiveAreaName = "LCCC_EFF_A"
     excludedAreaName = "LCCC_EXC_A"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
