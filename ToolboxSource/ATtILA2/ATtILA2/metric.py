@@ -29,7 +29,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             
         # append the slope threshold value to the field suffix
         generalSuffix = lcospConst.fieldSuffix
-        specificSuffix = generalSuffix+inSlopeThresholdValue
+        specificSuffix = generalSuffix + inSlopeThresholdValue
         lcospConst.fieldParameters[1] = specificSuffix
         
         SLPxLCGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
@@ -51,6 +51,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                          metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics """   
+    
     try:
         metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
@@ -68,9 +69,22 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
     
         
     
-
-        
+def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, 
+                                      lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, 
+                                      optionalFieldGroups):
+    """Inerface for script executing Land Cover Coefficient Calculator"""
             
+    try:
+        
+        arcpy.AddMessage("\nStart Here:\n  ATtILA2.metric.runLandCoverCoefficientCalculator\n")
+        
+        
+        
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
 
 
 

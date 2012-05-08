@@ -11,6 +11,7 @@ from glob import glob
 import __main__
 from ATtILA2.constants import  globalConstants
 import pylet.lcc.constants as lccConstants
+from pylet.lcc import LandCoverClassification, LandCoverCoefficient
     
 class ProportionsValidator(object):
     """ Class for inheritance by ToolValidator Only
@@ -202,33 +203,8 @@ class ProportionsValidator(object):
         classNames = []
         if lccFilePath and self.currentFilePath != lccFilePath and os.path.isfile(lccFilePath):
             self.currentFilePath = lccFilePath
-            lccDocument = parse(lccFilePath)
-            classNodes = lccDocument.getElementsByTagName(self.classElementName)
-            
-
-            message = self.metricDescription
-            for classNode in classNodes:
-                
-                # ignore class without value as descendant(child, child of child, etc.)
-                if not classNode.getElementsByTagName(lccConstants.XmlElementValue):
-                    continue
-                
-                # Check filter, skip class if short metric name found (semi-colon delimiter)
-                filterValue = classNode.getAttribute(self.filterAttributeName)
-                shortNames = filterValue.split(";")
-                if self.metricShortName in shortNames:
-                    continue
-                
-                classId = classNode.getAttribute(self.idAttributeName)
-                name = classNode.getAttribute(self.nameAttributeName)     
-                
-                # Check for field override, ie NINDEX, UINDEX
-                fieldName = classNode.getAttribute(self.overrideAttributeName)
-                if not fieldName:
-                    fieldName = self.fieldPrefix + classId + self.fieldSuffix
-                
-                className = message.format(classId, fieldName, name)
-                classNames.append(className)    
+            classNames = self.getLccList(lccFilePath)
+ 
                 
         # Populate checkboxes with LCC name and description   
         if classNames:
@@ -237,6 +213,38 @@ class ProportionsValidator(object):
             self.lccClassesParameter.enabled = False  
             self.lccClassesParameter.value = ""
         self.lccClassesParameter.filter.list = classNames    
+        
+    def getLccList(self, lccFilePath):
+        classNames = []
+        lccDocument = parse(lccFilePath)
+        classNodes = lccDocument.getElementsByTagName(self.classElementName)
+        
+
+        message = self.metricDescription
+        for classNode in classNodes:
+            
+            # ignore class without value as descendant(child, child of child, etc.)
+            if not classNode.getElementsByTagName(lccConstants.XmlElementValue):
+                continue
+            
+            # Check filter, skip class if short metric name found (semi-colon delimiter)
+            filterValue = classNode.getAttribute(self.filterAttributeName)
+            shortNames = filterValue.split(";")
+            if self.metricShortName in shortNames:
+                continue
+            
+            classId = classNode.getAttribute(self.idAttributeName)
+            name = classNode.getAttribute(self.nameAttributeName)     
+            
+            # Check for field override, ie NINDEX, UINDEX
+            fieldName = classNode.getAttribute(self.overrideAttributeName)
+            if not fieldName:
+                fieldName = self.fieldPrefix + classId + self.fieldSuffix
+            
+            className = message.format(classId, fieldName, name)
+            classNames.append(className)   
+            
+        return classNames
         
         
     def updateInputFieldsParameter(self):
@@ -314,23 +322,13 @@ class ProportionsValidator(object):
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
 
-#    def __init__(self):
-#        """Setup arcpy and the list of tool parameters."""
-#        
-#        self.params = arcpy.GetParameterInfo()
-#    
-#    def initializeParameters(self):
-#        """Refine the properties of a tool's parameters.  This method is
-#        called when the tool is opened."""
-#        return
-#    
-#    def updateParameters(self):
-#        """Modify the values and properties of parameters before internal
-#        validation is performed.  This method is called whenever a parmater
-#        has been changed."""
-#        return
-#    
-#    def updateMessages(self):
-#        """Modify the messages created by internal validation for each tool
-#        parameter.  This method is called after internal validation."""
-#        return
+    def getLccList(self, lccFilePath):
+        lccList = []
+        lccDoc = LandCoverClassification(lccFilePath)
+        message = self.metricDescription
+        for coefficient in lccDoc.coefficients.values():
+            assert isinstance(coefficient, LandCoverCoefficient)
+            line = message.format(coefficient.coefId, coefficient.fieldName, coefficient.name)
+            lccList.append(line)
+            
+        return lccList
