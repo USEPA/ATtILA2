@@ -19,9 +19,9 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     
     try:
         
-        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
+        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+                                                                                 os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
-        
         
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -39,7 +39,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccObj, 
-                             metricsClassNameList, outTable, processingCellSize, optionalGroupsList, lcospConst)
+                             metricsClassNameList, outTable, optionalGroupsList, lcospConst)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -53,7 +53,8 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
     """ Interface for script executing Land Cover Proportion Metrics """   
     
     try:
-        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
+        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+                                                                                 os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
         
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -61,7 +62,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                                             metricsClassNameList, outTable, processingCellSize, optionalGroupsList, 
+                                             metricsClassNameList, outTable, optionalGroupsList, 
                                              lcpConst)
         
     except Exception, e:
@@ -79,15 +80,16 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
             
     try:
         
-        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, os.path.dirname(outTable), 
+        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+                                                                                 os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
         
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcccConst = metricConstants.lcccConstants()
         
         utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
-                                                       lccObj, metricsClassNameList, outTable, processingCellSize, 
-                                                       optionalGroupsList, lcccConst)
+                                                       lccObj, metricsClassNameList, outTable, optionalGroupsList, 
+                                                       lcccConst)
         
     except Exception, e:
         errors.standardErrorHandling(e)
