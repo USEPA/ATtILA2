@@ -7,8 +7,9 @@ from ATtILA2.constants import globalConstants
 
 _tempEnvironment0 = ""
 _tempEnvironment1 = ""
+_tempEnvironment2 = ""
 
-def standardSetup(snapRaster, fallBackDirectory, itemDescriptionPairList=[]):
+def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
     """ Standard setup for executing metrics. """
     
 
@@ -19,10 +20,12 @@ def standardSetup(snapRaster, fallBackDirectory, itemDescriptionPairList=[]):
     # get current snap environment to restore at end of script
     _tempEnvironment0 = env.snapRaster
     _tempEnvironment1 = env.workspace
+    _tempEnvironment2 = env.cellSize
     
     # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
     env.snapRaster = snapRaster
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
+    env.cellSize = processingCellSize
     
     itemTuples = []
     for itemDescriptionPair in itemDescriptionPairList:
@@ -43,6 +46,7 @@ def standardRestore():
     # restore the environments
     env.snapRaster = _tempEnvironment0
     env.workspace = _tempEnvironment1
+    env.cellSize = _tempEnvironment2
     
     # return the spatial analyst license    
     try:

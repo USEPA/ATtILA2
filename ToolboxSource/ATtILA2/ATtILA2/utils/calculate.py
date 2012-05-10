@@ -3,10 +3,9 @@
 """
 from ATtILA2.constants import metricConstants, globalConstants
 import ATtILA2
-from pylet import arcpyutil, lcc
+from pylet import arcpyutil
 import arcpy
-import traceback
-import sys
+
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum):
     """ Calculates the percentage of the reporting unit effective area occupied by the metric class codes and their 
@@ -49,7 +48,7 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                         metricsClassNameList, outTable, processingCellSize, optionalGroupsList, metricConst):
+                         metricsClassNameList, outTable, optionalGroupsList, metricConst):
     """ Creates *outTable* populated with land cover proportions metrics
     
     **Description:**
@@ -64,7 +63,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         * *lccObj* - land cover classification(lcc) object
         * *metricsToRun* - list of class ids to include in processing
         * *outTable* - full path to an output table to be created/populated
-        * *processingCellSize* - processing cell size
         * *optionalFieldGroups* - optional fields to create
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         
@@ -180,8 +178,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         # run the tabulatearea geoprocess
-        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table, 
-                                 processingCellSize)  
+        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table)  
 
         # Process output table from tabulatearea geoprocess
         # get the VALUE fields from Tabulate Area table
@@ -280,7 +277,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         
 
 def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                         metricsClassNameList, outTable, processingCellSize, optionalGroupsList, metricConst):
+                         metricsClassNameList, outTable, optionalGroupsList, metricConst):
     """ Creates *outTable* populated with land cover coefficient metrics
     
     **Description:**
@@ -295,7 +292,6 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         * *lccObj* - land cover classification(lcc) object
         * *metricsToRun* - list of class ids to include in processing
         * *outTable* - full path to an output table to be created/populated
-        * *processingCellSize* - processing cell size
         * *optionalFieldGroups* - optional fields to create
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         
