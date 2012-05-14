@@ -34,3 +34,13 @@ class lcccToolValidator(BaseValidators.CoefficientValidator):
     fieldPrefix = lcccConstants.fieldPrefix
     fieldSuffix = lcccConstants.fieldSuffix    
     metricShortName = lcccConstants.shortName 
+    
+class rlcpToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for RiparianLandCoverProportions"""
+    
+    filterList = rlcpConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeRlcpField
+    fieldPrefix = rlcpConstants.fieldPrefix
+    fieldSuffix = rlcpConstants.fieldSuffix
+    metricShortName = rlcpConstants.shortName
+    

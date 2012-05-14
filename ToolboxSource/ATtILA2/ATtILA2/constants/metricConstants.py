@@ -77,10 +77,16 @@ class rlcpConstants(baseMetricConstants):
     fieldPrefix = "r"
     fieldSuffix = ""
     overlapName = "R_OVERLAP"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription]
+    totalAreaName = "RLCP_TOT_A"
+    effectiveAreaName = "RLCP_EFF_A"
+    excludedAreaName = "RLCP_EXC_A"
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
-        [overlapName, gc.defaultIntegerFieldType, 6]                                        
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
 
