@@ -178,7 +178,25 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         # run the tabulatearea geoprocess
-        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table)  
+        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table)
+
+
+
+###########let's see if we can find out the spatial reference of this tool
+        
+        outCS = arcpy.env.outputCoordinateSystem
+        
+        arcpy.AddMessage("outCS = "+outCS.linearUnitName)
+        
+        
+        descfc = arcpy.Describe(inReportingUnitFeature)
+        sr = descfc.spatialReference
+#        assert isinstance(sr, arcpy.SpatialReference)
+        arcpy.AddMessage("sr name = "+sr.linearUnitName)
+
+ #########################################################################
+        
+        
 
         # Process output table from tabulatearea geoprocess
         # get the VALUE fields from Tabulate Area table
