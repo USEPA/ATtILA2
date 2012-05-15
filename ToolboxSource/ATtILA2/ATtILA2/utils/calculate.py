@@ -178,7 +178,24 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
         scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
         # run the tabulatearea geoprocess
-        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table)  
+        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table)
+
+
+
+###########let's see if we can find out the spatial reference of this tool
+        
+#        outCS = arcpy.env.outputCoordinateSystem       
+#        arcpy.AddMessage("outCS = "+outCS.linearUnitName)
+        
+        
+#        descfc = arcpy.Describe(inReportingUnitFeature)
+#        sr = descfc.spatialReference
+#        assert isinstance(sr, arcpy.SpatialReference)
+#        arcpy.AddMessage("sr name = "+sr.linearUnitName)
+
+#########################################################################
+        
+        
 
         # Process output table from tabulatearea geoprocess
         # get the VALUE fields from Tabulate Area table
@@ -187,12 +204,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         TabAreaValues = [int(aFld.name.replace("VALUE_","")) for aFld in TabAreaValueFields]
         # create dictionary to later hold the area value of each grid code in the reporting unit
         tabAreaDict = dict(zip(TabAreaValues,[])) 
-        
-        # alert user if input grid had values not defined in LCC file
-        undefinedValues = [aVal for aVal in TabAreaValues if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
-        if undefinedValues:
-            arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues)+"  - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
-
         
         # create the cursor to add data to the output table
         outTableRows = arcpy.InsertCursor(newTable)
