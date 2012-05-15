@@ -184,8 +184,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
 
 ###########let's see if we can find out the spatial reference of this tool
         
-        outCS = arcpy.env.outputCoordinateSystem       
-        arcpy.AddMessage("outCS = "+outCS.linearUnitName)
+#        outCS = arcpy.env.outputCoordinateSystem       
+#        arcpy.AddMessage("outCS = "+outCS.linearUnitName)
         
         
 #        descfc = arcpy.Describe(inReportingUnitFeature)
