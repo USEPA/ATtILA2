@@ -26,6 +26,8 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcospConst = metricConstants.lcospConstants()
+        
+        setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
             
         # append the slope threshold value to the field suffix
         generalSuffix = lcospConst.fieldSuffix
@@ -60,6 +62,8 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcpConst = metricConstants.lcpConstants()
         
+        setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
+        
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
                                              metricsClassNameList, outTable, optionalGroupsList, 
@@ -86,6 +90,8 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcccConst = metricConstants.lcccConstants()
+        
+        setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
         
         utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
                                                        lccObj, metricsClassNameList, outTable, optionalGroupsList, 

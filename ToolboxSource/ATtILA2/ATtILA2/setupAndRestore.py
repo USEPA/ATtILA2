@@ -54,3 +54,17 @@ def standardRestore():
     except:
         pass
     
+
+def standardGridChecks(inLandCoverGrid, lccObj):
+    """ Standard checks for input grids. """
+    
+    # warn user if input land cover grid has values not defined in LCC file
+    rows = arcpy.SearchCursor(inLandCoverGrid) 
+
+    gridValues = []    
+    for row in rows:
+        gridValues.append(row.getValue("VALUE"))
+    
+    undefinedValues = [aVal for aVal in gridValues if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
+    if undefinedValues:
+        arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues)+"  - By default, the area for undefined grid codes is included when determining the effective reporting unit area.")
