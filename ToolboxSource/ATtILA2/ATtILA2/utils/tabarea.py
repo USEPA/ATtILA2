@@ -94,6 +94,7 @@ class TabulateAreaRow(object):
     _row = None
     _tabAreaValueFields = None
     _tabAreaValues = None
+    _excludedValues = []
     
     tabAreaDict = None
     zoneIdValue = -1
@@ -126,12 +127,12 @@ class TabulateAreaRow(object):
     
         for i, aFld in enumerate(self._tabAreaValueFields):
             # store the grid code and it's area value into the dictionary
-            valKey = self._TabAreaValues[i]
+            valKey = self._tabAreaValues[i]
             valArea = self._row.getValue(aFld.name)
             self.tabAreaDict[valKey] = valArea
     
             #add the area of each grid value to the appropriate area sum i.e., effective or excluded area
-            if valKey in self.excludedValues:
+            if valKey in self._excludedValues:
                 self.excludedArea += valArea
             else:
                 self.effectiveArea += valArea               
