@@ -3,6 +3,7 @@
 """
 from ATtILA2.constants import metricConstants, globalConstants
 import ATtILA2
+from ATtILA2.utils.tabarea import TabulateAreaTable
 from pylet import arcpyutil
 import arcpy
 
@@ -72,10 +73,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         
     """
     
-    try:
-        # Used for intellisense.  Will also raise error if metricConst is not the right type of object        
-        assert isinstance(metricConst, metricConstants.baseMetricConstants) 
-        
+    try:      
         # get the field name override key
         fieldOverrideKey = metricConst.fieldOverrideKey
 
@@ -100,10 +98,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # Process: inputs
         # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         lccClassesDict = lccObj.classes    
-        # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation
-        lccValuesDict = lccObj.values
-        # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-        excludedValues = lccValuesDict.getExcludedValueIds()
         
         # use the metricsClassNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
         metricsFieldnameDict = {}
@@ -127,8 +121,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                         truncateTo = maxFieldNameSize - len(str(n))
                         fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
                         n = n + 1
-                        
-                    arcpy.AddWarning("Provided metric name too long for output location. Truncated "+defaultFieldName+" to "+fieldOverrideName)
+                    
+                    arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, fieldOverrideName))
                     
                 # keep track of output field names    
                 outputFieldNames.add(fieldOverrideName)
@@ -157,7 +151,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                         outputFName = fldParams[0]+mClassName[:truncateTo]+str(n)+fldParams[1]
                         n = n + 1
                         
-                    arcpy.AddWarning("Metric field name too long for output location. Truncated "+defaultFieldName+" to "+outputFName)
+                    arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
                     
                 # keep track of output field names
                 outputFieldNames.add(outputFName)
@@ -169,67 +163,24 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                                                                metricsClassNameList,metricsFieldnameDict,fldParams,
                                                                qaCheckFlds, addAreaFldParams)
         
-        
-        
-        
-        # Process: Tabulate Area
         # store the area of each input reporting unit into dictionary (zoneID:area)
-        zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
-        # create name for a temporary table for the tabulate area geoprocess step - defaults to current workspace 
-        scratch_Table = arcpy.CreateScratchName("xtmp", "", "Dataset")
-        # run the tabulatearea geoprocess
-        arcpy.gp.TabulateArea_sa(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, "Value", scratch_Table)
-
-
-
-###########let's see if we can find out the spatial reference of this tool
+        zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)     
         
-#        outCS = arcpy.env.outputCoordinateSystem       
-#        arcpy.AddMessage("outCS = "+outCS.linearUnitName)
-        
-        
-#        descfc = arcpy.Describe(inReportingUnitFeature)
-#        sr = descfc.spatialReference
-#        assert isinstance(sr, arcpy.SpatialReference)
-#        arcpy.AddMessage("sr name = "+sr.linearUnitName)
-
-#########################################################################
-        
-        
-
-        # Process output table from tabulatearea geoprocess
-        # get the VALUE fields from Tabulate Area table
-        TabAreaValueFields = arcpy.ListFields(scratch_Table)[2:]
-        # get the grid code values from the field names; put in a list of integers
-        TabAreaValues = [int(aFld.name.replace("VALUE_","")) for aFld in TabAreaValueFields]
-        # create dictionary to later hold the area value of each grid code in the reporting unit
-        tabAreaDict = dict(zip(TabAreaValues,[])) 
+        # Tabulate Area Object
+        tableName = None
+        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
+                                         lccObj)
         
         # create the cursor to add data to the output table
-        outTableRows = arcpy.InsertCursor(newTable)
+        outTableRows = arcpy.InsertCursor(newTable)        
         
-        # create cursor to search/query the TabAreaOut table
-        tabAreaTableRows = arcpy.SearchCursor(scratch_Table)
-        
-        for tabAreaTableRow in tabAreaTableRows:
+        for tabAreaTableRow in tabAreaTable:
+            
             # initiate a row to add to the metric output table
             outTableRow = outTableRows.newRow()
-
-            # get reporting unit id
-            zoneIDvalue = tabAreaTableRow.getValue(reportingUnitIdField)            
-            # set the reporting unit id value in the output row
-            outTableRow.setValue(reportingUnitIdField, zoneIDvalue)
             
-            # Process the value fields in the TabulateArea Process output table
-            # 1) Go through each value field in the TabulateArea table row and put the area
-            #    value for the grid code into a dictionary with the grid code as the key.
-            # 2) Determine if the grid code is to be included into the reporting unit effective area sum
-            # 3) Calculate the total grid area present in the reporting unit
-            valFieldsResults = ATtILA2.utils.field.ProcessTabAreaValueFields(TabAreaValueFields, TabAreaValues, 
-                                                                             tabAreaDict, tabAreaTableRow, excludedValues)
-            tabAreaDict = valFieldsResults[0]
-            effectiveAreaSum = valFieldsResults[1]
-            excludedAreaSum = valFieldsResults[2]
+            # set the reporting unit id value in the output row
+            outTableRow.setValue(reportingUnitIdField, tabAreaTableRow.zoneIdValue)  
             
             # sum the areas for the selected metric's grid codes   
             for mClassName in metricsClassNameList: 
@@ -237,9 +188,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
                 
                 # get the class percentage area and it's actual area from the tabulate area table
-                metricPercentageAndArea = ATtILA2.utils.calculate.getMetricPercentAreaAndSum(metricGridCodesList, 
-                                                                                             tabAreaDict, effectiveAreaSum)
-                
+                metricPercentageAndArea = getMetricPercentAreaAndSum(metricGridCodesList, tabAreaTableRow.tabAreaDict, 
+                                                                     tabAreaTableRow.effectiveArea)
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mClassName], metricPercentageAndArea[0])
                 
@@ -248,43 +198,27 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
 
             # add QACheck calculations/values to row
             if qaCheckFlds:
-                zoneArea = zoneAreaDict[zoneIDvalue]
-                overlapCalc = ((effectiveAreaSum+excludedAreaSum)/zoneArea) * 100
+                zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+                overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
                 outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
-                outTableRow.setValue(qaCheckFlds[1][0], effectiveAreaSum+excludedAreaSum)
-                outTableRow.setValue(qaCheckFlds[2][0], effectiveAreaSum)
-                outTableRow.setValue(qaCheckFlds[3][0], excludedAreaSum)
+                outTableRow.setValue(qaCheckFlds[1][0], tabAreaTableRow.totalArea)
+                outTableRow.setValue(qaCheckFlds[2][0], tabAreaTableRow.effectiveArea)
+                outTableRow.setValue(qaCheckFlds[3][0], tabAreaTableRow.excludedArea)
             
             # commit the row to the output table
             outTableRows.insertRow(outTableRow)
-
-        
-        # Housekeeping
-        # delete the scratch table
-        arcpy.Delete_management(scratch_Table)
-
                 
     finally:
+        
         # delete cursor and row objects to remove locks on the data
         try:
-            del outTableRow
-        except:
-            pass
-        
-        try:
             del outTableRows
-        except:
-            pass
-
-        try:
-            del tabAreaTableRows
-        except:
-            pass  
-        
-        try:
+            del outTableRow
+            del tabAreaTable
             del tabAreaTableRow
         except:
-            pass  
+            pass
+        
         
 
 def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
