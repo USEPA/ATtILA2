@@ -1,7 +1,4 @@
-import ATtILA2
-from ATtILA2.constants import globalConstants
 import arcpy
-from pylet import lcc
 
 
 class TabulateAreaTable(object):
@@ -54,10 +51,10 @@ class TabulateAreaTable(object):
         arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
                                  self._value, self._tableName)
         
-        self._tabAreaTableRows = arcpy.SearchCursor(self._tableName)
-        
-        self._tabAreaValueFields = arcpy.ListFields(self._tableName, self._valueFieldPrefix )        
-        self._tabAreaValues = [int(aFld.name.replace(self._valueFieldPrefix,"")) for aFld in self._tabAreaValueFields] 
+        self._tabAreaTableRows = arcpy.SearchCursor(self._tableName)        
+        self._tabAreaValueFields = arcpy.ListFields(self._tableName, self._valueFieldPrefix + "*" )
+        self._tabAreaValues = [int(aFld.name.replace(self._valueFieldPrefix,"")) for aFld in self._tabAreaValueFields]
+         
         self._tabAreaDict = dict(zip(self._tabAreaValues,[])) 
         
         
@@ -138,7 +135,6 @@ class TabulateAreaRow(object):
                 self.effectiveArea += valArea               
         
         self.totalArea = self.effectiveArea + self.excludedArea
-
 
     def __del__(self):
         """ Destructor - Called when deleted (Housekeeping)"""

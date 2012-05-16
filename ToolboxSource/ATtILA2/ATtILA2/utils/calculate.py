@@ -167,7 +167,10 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)     
         
         # Tabulate Area Object
-        tableName = None
+        if globalConstants.intermediateName in optionalGroupsList:
+            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        else:
+            tableName = None
         tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
                                          lccObj)
         
@@ -186,7 +189,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
             for mClassName in metricsClassNameList: 
                 # get the grid codes for this specified metric
                 metricGridCodesList = lccClassesDict[mClassName].uniqueValueIds
-                
                 # get the class percentage area and it's actual area from the tabulate area table
                 metricPercentageAndArea = getMetricPercentAreaAndSum(metricGridCodesList, tabAreaTableRow.tabAreaDict, 
                                                                      tabAreaTableRow.effectiveArea)
