@@ -2,18 +2,11 @@
 
 """
 
-tbxSourceFolderName = "ToolboxSource"
-noFeaturesMessage = "Dataset exists, but there are no features (zero rows)"
-inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
-userOption = "User Defined"
-optionalFieldsName = "Additional Options"
 descriptionDelim = "  -  "
 areaFieldParameters = ["_A","DOUBLE",15,0]
-srcFolderSuffix = ".src"
 tbxFileSuffix = ".tbx"
 tbxFileDelim = "__"
 tbxSriptToolDelim = "#"
-metricDescription = "{0}" + descriptionDelim + "[{1}]  {2}"
 qaCheckName = "QAFIELDS"
 metricAddName = "AREAFIELDS"
 intermediateName = "INTERMEDIATES"

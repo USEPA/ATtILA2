@@ -9,7 +9,8 @@ import os
 from xml.dom.minidom import parse
 from glob import glob 
 import __main__
-from ATtILA2.constants import  globalConstants
+from ATtILA2.constants import globalConstants
+from ATtILA2.constants import validatorConstants
 import pylet.lcc.constants as lccConstants
 from pylet.lcc import LandCoverClassification, LandCoverCoefficient
     
@@ -62,7 +63,7 @@ class ProportionsValidator(object):
     optionalFieldsIndex = 0 
     
     # Additional local variables
-    srcDirName = globalConstants.tbxSourceFolderName
+    srcDirName = validatorConstants.tbxSourceFolderName
     
     # Metric Specific
     filterList = []
@@ -72,16 +73,20 @@ class ProportionsValidator(object):
     metricShortName = ""
     
     def __init__(self):
-        """ Initialize ToolValidator class"""
+        """ ESRI - Initialize ToolValidator class"""
         
         # Load metric constants        
-        self.inputIdFieldTypes = globalConstants.inputIdFieldTypes
-        self.lccSchemeUserOption = globalConstants.userOption
-        self.optionalFieldsName = globalConstants.optionalFieldsName
-        self.qaCheckDescription = globalConstants.qaCheckDescription
+        self.inputIdFieldTypes = validatorConstants.inputIdFieldTypes
+        self.lccSchemeUserOption = validatorConstants.userOption
         self.metricAddDescription = globalConstants.metricAddDescription      
-        self.metricDescription = globalConstants.metricDescription
-        self.noFeaturesMessage = globalConstants.noFeaturesMessage
+        self.metricDescription = validatorConstants.metricDescription
+        self.noFeaturesMessage = validatorConstants.noFeaturesMessage
+        self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        
+        # Load global contants
+        self.optionalFieldsName = validatorConstants.optionalFieldsName
+        self.qaCheckDescription = globalConstants.qaCheckDescription
+
         
         # Load LCC constants
         self.lccFileDirName = lccConstants.PredefinedFileDirName       
@@ -116,7 +121,7 @@ class ProportionsValidator(object):
 
 
     def initializeParameters(self):
-        """ Initialize parameters"""
+        """ ESRI - Initialize parameters"""
 
         # Populate predefined LCC dropdown
         parentDir = os.path.dirname( __main__.__file__.split("#")[0])
@@ -144,7 +149,7 @@ class ProportionsValidator(object):
         
         
     def updateParameters(self):
-        """ Modify the values and properties of parameters before internal validation is performed.  
+        """ ESRI - Modify the values and properties of parameters before internal validation is performed.  
         
             This method is called whenever a parameter has been changed.
         
@@ -272,7 +277,7 @@ class ProportionsValidator(object):
                 
         
     def updateMessages(self):
-        """ Modify the messages created by internal validation for each tool parameter.  
+        """ ESRI - Modify the messages created by internal validation for each tool parameter.  
         
             This method is called after internal validation.
             
@@ -305,6 +310,10 @@ class ProportionsValidator(object):
         # Check if input raster is defined
         if self.inRasterParameter.value:
             
+            # Check for is input feature layer has spatial reference
+            if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
+                self.inRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            
             # Update Processing cell size if empty
             if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
                 cellSize = arcpy.Raster(str(self.inRasterParameter.value)).meanCellWidth #get from metadata
@@ -314,9 +323,17 @@ class ProportionsValidator(object):
             if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
                 self.snapRasterParameter.value = str(self.inRasterParameter.value)
 
-        # Check for empty input features
-        if self.inputTableParameter.value and not self.inputTableParameter.hasError() and not arcpy.SearchCursor(self.inputTableParameter.value).next():
-            self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+        # Check input features
+        if self.inputTableParameter.value and not self.inputTableParameter.hasError():
+        
+            # Check for empty input features
+            if not arcpy.SearchCursor(self.inputTableParameter.value).next():
+                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+            
+            # Check for is input feature layer has spatial reference
+            if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
+                self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            
             
             
 class CoefficientValidator(ProportionsValidator):
