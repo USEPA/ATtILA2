@@ -82,8 +82,9 @@ class ProportionsValidator(object):
         self.metricDescription = validatorConstants.metricDescription
         self.noFeaturesMessage = validatorConstants.noFeaturesMessage
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         
-        # Load global contants
+        # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
         self.qaCheckDescription = globalConstants.qaCheckDescription
 
@@ -272,6 +273,13 @@ class ProportionsValidator(object):
                     if field.type in fieldTypes:
                         self.inputFieldsParameter.value = field.name
                         break
+                    
+                if not self.inputFieldsParameter.value:
+                    for field in fields:
+                        if field.type == "OID":
+                            self.inputFieldsParameter.value = field.name
+                            break
+                        
             except:
                 pass
                 
@@ -310,9 +318,14 @@ class ProportionsValidator(object):
         # Check if input raster is defined
         if self.inRasterParameter.value:
             
-            # Check for is input feature layer has spatial reference
+            # Check for is input raster layer has spatial reference
             if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
                 self.inRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            
+            # Check if input raster is an integer grid
+            inRaster = arcpy.Raster(str(self.inRasterParameter.value))
+            if not inRaster.isInteger:
+                self.inRasterParameter.setErrorMessage(self.nonIntegerGridMessage)
             
             # Update Processing cell size if empty
             if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
@@ -333,7 +346,6 @@ class ProportionsValidator(object):
             # Check for is input feature layer has spatial reference
             if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                 self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
-            
             
             
 class CoefficientValidator(ProportionsValidator):

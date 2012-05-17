@@ -1,0 +1,15 @@
+""" Variable constants for tool dialog validation routines
+
+"""
+
+import globalConstants as gc
+
+tbxSourceFolderName = "ToolboxSource"
+
+inputIdFieldTypes = ["SmallInteger", "Integer", "String"]
+userOption = "User Defined"
+optionalFieldsName = "Additional Options"
+metricDescription = "{0}" + gc.descriptionDelim + "[{1}]  {2}"
+noFeaturesMessage = "Dataset exists, but there are no features (zero rows)"
+noSpatialReferenceMessage = "Dataset is missing spatial reference information. Please define projection before proceeding."
+nonIntegerGridMessage = "Input requires an integer grid. Selected dataset not an integer grid."
