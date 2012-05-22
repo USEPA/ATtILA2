@@ -210,15 +210,20 @@ class ProportionsValidator(object):
         if lccFilePath and self.currentFilePath != lccFilePath and os.path.isfile(lccFilePath):
             self.currentFilePath = lccFilePath
             classNames = self.getLccList(lccFilePath)
- 
-                
-        # Populate checkboxes with LCC name and description   
+  
+        # Populate checkboxes with LCC name and description
         if classNames:
             self.lccClassesParameter.enabled = True
         else:
             self.lccClassesParameter.enabled = False  
             self.lccClassesParameter.value = ""
-        self.lccClassesParameter.filter.list = classNames    
+        
+        # Prevent the changing of the classification scheme from causing dialog errors when metrics are already checked    
+        if self.lccClassesParameter.hasBeenValidated and self.lccClassesParameter.altered:
+            self.lccClassesParameter.value = ""
+            
+        self.lccClassesParameter.filter.list = classNames
+        
         
     def getLccList(self, lccFilePath):
         classNames = []
