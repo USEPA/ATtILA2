@@ -8,8 +8,8 @@ import os
 import arcpy
 from pylet import arcpyutil
 
-def CreateMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFieldnameDict, fldParams, qaCheckFlds, 
-                            addAreaFldParams):
+def CreateMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFieldnameDict, metricFieldParams, 
+                            qaCheckFlds=None, addAreaFldParams=None):
     """ Returns new empty table for ATtILA metric generation output with appropriate fields for selected metric
     
     **Description:**
@@ -26,7 +26,7 @@ def CreateMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
                                     (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
         * *metricsFieldnameDict* - a dictionary of BaseName keys with field name values 
                                     (e.g., "unat":"UINDEX", "for":"pFor", "NITROGEN":"N_Pload")
-        * *fldParams* - list of parameters to generate the selected metric output field 
+        * *metricFieldParams* - list of parameters to generate the selected metric output field 
                         (i.e., [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale])
         * *qaCheckFlds* - a list of filename parameter lists for one or more selected optional fields fieldname 
                         generation (e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]])
@@ -53,14 +53,16 @@ def CreateMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     arcpy.AddField_management(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale)
                 
     # add metric fields to the output table.
-    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName], fldParams[2], fldParams[3], fldParams[4])for mBaseName in metricsBaseNameList]
+    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName], metricFieldParams[2], metricFieldParams[3], 
+                               metricFieldParams[4])for mBaseName in metricsBaseNameList]
 
     # add any optional fields to the output table
     if qaCheckFlds:
         [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
         
     if addAreaFldParams:
-        [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3])for mBaseName in metricsBaseNameList]
+        [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName]+addAreaFldParams[0], addAreaFldParams[1], 
+                                   addAreaFldParams[2], addAreaFldParams[3])for mBaseName in metricsBaseNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
     arcpyutil.fields.deleteFields(newTable, ["field1"])

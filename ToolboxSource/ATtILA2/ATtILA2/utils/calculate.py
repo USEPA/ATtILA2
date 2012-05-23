@@ -79,7 +79,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         fieldOverrideKey = metricConst.fieldOverrideKey
 
         # Set parameters for metric output field. 
-        fldParams = metricConst.fieldParameters
+        metricFieldParams = metricConst.fieldParameters
         
         # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
         if globalConstants.qaCheckName in optionalGroupsList:
@@ -129,25 +129,25 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 metricsFieldnameDict[mBaseName] = fieldOverrideName
             else:
                 # generate output field name
-                outputFName = fldParams[0] + mBaseName + fldParams[1]
+                outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
                 
                 # see if the provided field name is too long for the output table type
                 if len(outputFName) > maxFieldNameSize:
                     defaultFieldName = outputFName # keep track of the originally generated field name
                     
-                    prefixLen = len(fldParams[0])
-                    suffixLen = len(fldParams[1])
+                    prefixLen = len(metricFieldParams[0])
+                    suffixLen = len(metricFieldParams[1])
                     maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
                     
                     # truncate field name to maximum allowable size    
-                    outputFName = fldParams[0] + mBaseName[:maxBaseSize] + fldParams[1]
+                    outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1]
                     
                     # see if truncated field name is already used.
                     # if so, truncate further and add a unique number to the end of the name
                     while outputFName in outputFieldNames:
                         # shorten the field name and increment it
                         truncateTo = maxBaseSize - len(str(n))
-                        outputFName = fldParams[0]+mBaseName[:truncateTo]+str(n)+fldParams[1]
+                        outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
                         n = n + 1
                         
                     arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
@@ -159,7 +159,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                     
         # create the specified output table
         newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                               fldParams, qaCheckFlds, addAreaFldParams)
+                                                               metricFieldParams, qaCheckFlds, addAreaFldParams)
         
         # store the area of each input reporting unit into dictionary (zoneID:area)
         zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)     
@@ -288,13 +288,13 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         # set up field parameters for any optional output fields
         if globalConstants.qaCheckName in optionalGroupsList:
             # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
-            qaCheckFieldsParams = metricConst.qaCheckFieldParameters
+            qaCheckFields = metricConst.qaCheckFieldParameters
         else:
-            qaCheckFieldsParams = None
+            qaCheckFields = None
                   
         # create the specified output table
         newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                               fldParams, qaCheckFlds, addAreaFldParams)
+                                                               metricFieldParams, qaCheckFields)
 
     finally:
         pass
