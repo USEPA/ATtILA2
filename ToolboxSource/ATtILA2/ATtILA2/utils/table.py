@@ -44,7 +44,13 @@ def CreateMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     # should control this in the validate step or with an arcpy.ValidateTableName call
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
     
-    arcpy.AddField_management(newTable, outIdField.name, outIdField.type, outIdField.precision, outIdField.scale)
+    # Field objects in ArcGIS 10 service pack 0 have a type property that is incompatible with some of the AddField 
+    # tool's Field Type keywords. This addresses that issue
+    outIdFieldType = outIdField.type
+    if outIdField.type.lower() == "string":
+        outIdFieldType = "TEXT"
+    
+    arcpy.AddField_management(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale)
                 
     # add metric fields to the output table.
     [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName], fldParams[2], fldParams[3], fldParams[4])for mBaseName in metricsBaseNameList]
