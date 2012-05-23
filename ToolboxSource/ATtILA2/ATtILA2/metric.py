@@ -19,9 +19,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     
     try:
         
-        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
+        
+        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -41,7 +43,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccObj, 
-                             metricsClassNameList, outTable, optionalGroupsList, lcospConst)
+                             metricsBaseNameList, outTable, optionalGroupsList, lcospConst, outIdField)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -55,9 +57,11 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
     """ Interface for script executing Land Cover Proportion Metrics """   
     
     try:
-        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
+        
+        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcpConst = metricConstants.lcpConstants()
@@ -66,8 +70,8 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                                             metricsClassNameList, outTable, optionalGroupsList, 
-                                             lcpConst)
+                                             metricsBaseNameList, outTable, optionalGroupsList, 
+                                             lcpConst, outIdField)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -84,9 +88,11 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
             
     try:
         
-        metricsClassNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
+        
+        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcccConst = metricConstants.lcccConstants()
@@ -94,8 +100,8 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
         
         utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
-                                                       lccObj, metricsClassNameList, outTable, optionalGroupsList, 
-                                                       lcccConst)
+                                                       lccObj, metricsBaseNameList, outTable, optionalGroupsList, 
+                                                       lcccConst, outIdField)
         
     except Exception, e:
         errors.standardErrorHandling(e)

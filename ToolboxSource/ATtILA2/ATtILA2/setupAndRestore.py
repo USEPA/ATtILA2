@@ -69,3 +69,18 @@ def standardGridChecks(inLandCoverGrid, lccObj):
     if undefinedValues:
         arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues) + 
                          " - Please refer to the ATtILA documentation regarding undefined values.")
+        
+def getIdOutField(inFeature, inField):
+    """ Processes the InputField. If field is an OID type, alters the output field type and name """
+    inField = arcpyutil.fields.getFieldByName(inFeature, inField)
+    
+    if inField.type == "OID":
+        newField = arcpy.Field()
+        newField.type = "Integer" 
+        newField.name = inField.name+"_ID"
+        newField.precision = inField.precision
+        newField.scale = inField.scale
+    else:
+        newField = inField
+        
+    return (newField)

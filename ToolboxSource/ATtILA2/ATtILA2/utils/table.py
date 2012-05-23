@@ -8,8 +8,8 @@ import os
 import arcpy
 from pylet import arcpyutil
 
-def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdField, metricsClassNameList, 
-                            metricsFieldnameDict, fldParams, qaCheckFlds, addAreaFldParams):
+def CreateMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFieldnameDict, fldParams, qaCheckFlds, 
+                            addAreaFldParams):
     """ Returns new empty table for ATtILA metric generation output with appropriate fields for selected metric
     
     **Description:**
@@ -22,10 +22,10 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
         * *outTable* - file name including path for the ATtILA output table
         * *inReportingUnitFeature* - CatalogPath to the input reporting unit layer
         * *reportingUnitIdField* - fieldname for the input reporting unit id field
-        * *metricsClassNameList* - a list of metric ClassNames parsed from the 'Metrics to run' input 
-                                    (e.g., [for, agt, shrb, devt])
-        * *metricsFieldnameDict* - a dictionary of ClassName keys with field name values 
-                                    (e.g., "unat":"UINDEX", "for":"pFor")
+        * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
+                                    (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+        * *metricsFieldnameDict* - a dictionary of BaseName keys with field name values 
+                                    (e.g., "unat":"UINDEX", "for":"pFor", "NITROGEN":"N_Pload")
         * *fldParams* - list of parameters to generate the selected metric output field 
                         (i.e., [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale])
         * *qaCheckFlds* - a list of filename parameter lists for one or more selected optional fields fieldname 
@@ -44,19 +44,17 @@ def CreateMetricOutputTable(outTable, inReportingUnitFeature, reportingUnitIdFie
     # should control this in the validate step or with an arcpy.ValidateTableName call
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
     
-    # process the user input to add id field to output table
-    IDfield = arcpyutil.fields.getFieldByName(inReportingUnitFeature, reportingUnitIdField)
-    arcpy.AddField_management(newTable, IDfield.name, IDfield.type, IDfield.precision, IDfield.scale)
+    arcpy.AddField_management(newTable, outIdField.name, outIdField.type, outIdField.precision, outIdField.scale)
                 
     # add metric fields to the output table.
-    [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName], fldParams[2], fldParams[3], fldParams[4])for mClassName in metricsClassNameList]
+    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName], fldParams[2], fldParams[3], fldParams[4])for mBaseName in metricsBaseNameList]
 
     # add any optional fields to the output table
     if qaCheckFlds:
         [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
         
     if addAreaFldParams:
-        [arcpy.AddField_management(newTable, metricsFieldnameDict[mClassName]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3])for mClassName in metricsClassNameList]
+        [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3])for mBaseName in metricsBaseNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
     arcpyutil.fields.deleteFields(newTable, ["field1"])

@@ -219,8 +219,8 @@ class ProportionsValidator(object):
             self.lccClassesParameter.value = ""
         
         # Prevent the changing of the classification scheme from causing dialog errors when metrics are already checked    
-        if self.lccClassesParameter.hasBeenValidated and self.lccClassesParameter.altered:
-            self.lccClassesParameter.value = ""
+#        if self.lccClassesParameter.hasBeenValidated and self.lccClassesParameter.altered:
+#            self.lccClassesParameter.value = ""
             
         self.lccClassesParameter.filter.list = classNames
         
