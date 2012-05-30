@@ -224,7 +224,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         
         
 
-def getMetricPerUnitArea(tabAreaDict, lccValuesDict, coeffId):
+def getCoefficientCalculation(tabAreaDict, lccValuesDict, coeffId, metricConst):
     """  Returns the estimated amount of substance per HECTARE based on supplied coefficient values
     
     **Description:**
@@ -240,10 +240,11 @@ def getMetricPerUnitArea(tabAreaDict, lccValuesDict, coeffId):
         * *tabAreaDict* - dictionary with the area value of each grid code in a reporting unit keyed to the grid code
         * *lccValuesDict* - dictionary with all the individual VALUES and their attributes supplied in the LCC file
         * *coeffId* - string containing the coefficient Id in LCC file (e.g., "NITROGEN", "PHOSPHORUS")
+        * *metricConst* - class of metric constants. Contains tuple of per-unit-area coefficient metrics
         
     **Returns:**
 
-        * float - the estimated amount of substance per HECTARE based on supplied coefficient values
+        * float - the calculated metric based on coefficient values and metric type (per unit area or proportion)
         
     """
 
@@ -252,6 +253,7 @@ def getMetricPerUnitArea(tabAreaDict, lccValuesDict, coeffId):
                         
     for aVal in tabAreaDict:
         valueBaseArea = tabAreaDict[aVal]
+        
         # change following line to a conversion function after determining the output linear units from the spatial reference
         valueConvertedArea = valueBaseArea/10000.0
         totalAreaInPolygon += valueConvertedArea
@@ -261,9 +263,12 @@ def getMetricPerUnitArea(tabAreaDict, lccValuesDict, coeffId):
             weightedValue = valueConvertedArea * valCoefficient
             coefficientTotalInPolygon += weightedValue
             
-        metricPerUnitArea = coefficientTotalInPolygon / totalAreaInPolygon  
+        if coeffId in metricConst.perUnitAreaMetrics:
+            coefficientCalculation = coefficientTotalInPolygon / totalAreaInPolygon
+        else:
+            coefficientCalculation = (coefficientTotalInPolygon / totalAreaInPolygon) * 100  
     
-    return metricPerUnitArea
+    return coefficientCalculation
 
 
 
@@ -371,11 +376,11 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
             outTableRow.setValue(outIdField.name, tabAreaTableRow.zoneIdValue)
             
             # compute the amount of metric item (e.g., NITROGEN) per unit area using the supplied coefficients   
-            for mBaseName in metricsBaseNameList: 
+            for mBaseName in metricsBaseNameList:
                 # get coefficient per unit area from the tabulate area table
-                metricPerUnitArea = getMetricPerUnitArea(tabAreaTableRow.tabAreaDict, lccValuesDict, mBaseName)
+                coefficientCalculation = getCoefficientCalculation(tabAreaTableRow.tabAreaDict, lccValuesDict, mBaseName, metricConst)
                 # add the calculation to the output row
-                outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPerUnitArea)
+                outTableRow.setValue(metricsFieldnameDict[mBaseName], coefficientCalculation)
                 
             # add QACheck calculations/values to row
             if qaCheckFields:

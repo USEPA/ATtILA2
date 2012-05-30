@@ -69,6 +69,7 @@ class lcccConstants(baseMetricConstants):
         [overlapName, gc.defaultIntegerFieldType, 6]
         ]    
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    perUnitAreaMetrics = ("NITROGEN", "PHOSPHORUS")
     
 
 class rlcpConstants(baseMetricConstants):
