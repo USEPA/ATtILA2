@@ -224,23 +224,26 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         
         
 
-def getMetricPerUnitArea(tabAreaDict, lccValuesDict, valuesInLCC, coeffId):
-    """ Multiplies the area of each grid value by it's lookup coefficient and sums across all grid values 
+def getMetricPerUnitArea(tabAreaDict, lccValuesDict, coeffId):
+    """  Returns the estimated amount of substance per HECTARE based on supplied coefficient values
     
     **Description:**
 
-        Retrieves stored area figures for each grid code associated with selected metric and sums them.
-        That number, divided by the total effective area within the reporting unit and multiplied by 100, gives the
-        percentage of the effective reporting unit that is occupied by the metric class. Both the percentage and the 
-        final area sum are returned.
+        For each grid value in a reporting unit, the area for that value is retrieved and converted to hectares. That
+        value is then multiplied by the coefficient stored in the LCC file to estimate the amount of the selected 
+        substance found in the reporting unit based on that land cover type. The estimated amount is then summed
+        across all land cover types and divided by the total area of the reporting unit, again in hectares. The 
+        estimated amount of substance per hectare is then returned.
         
     **Arguments:**
                              
         * *tabAreaDict* - dictionary with the area value of each grid code in a reporting unit keyed to the grid code
+        * *lccValuesDict* - dictionary with all the individual VALUES and their attributes supplied in the LCC file
+        * *coeffId* - string containing the coefficient Id in LCC file (e.g., "NITROGEN", "PHOSPHORUS")
         
     **Returns:**
 
-        * float - the sum of the area of metric class codes
+        * float - the estimated amount of substance per HECTARE based on supplied coefficient values
         
     """
 
@@ -253,7 +256,7 @@ def getMetricPerUnitArea(tabAreaDict, lccValuesDict, valuesInLCC, coeffId):
         valueConvertedArea = valueBaseArea/10000.0
         totalAreaInPolygon += valueConvertedArea
         
-        if aVal in valuesInLCC:
+        if aVal in lccValuesDict:
             valCoefficient = lccValuesDict[aVal].getCoefficientValueById(coeffId)
             weightedValue = valueConvertedArea * valCoefficient
             coefficientTotalInPolygon += weightedValue
@@ -282,6 +285,7 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         * *outTable* - full path to an output table to be created/populated
         * *optionalFieldGroups* - optional fields to create
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+        * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
         
     **Returns:**
 
@@ -355,8 +359,6 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         
         # from the lcc file object, get the dictionary with the VALUES attributes
         lccValuesDict = lccObj.values
-        # get set of all values described/attributed in the LCC file (can contain all, some or no values in input grid) 
-        valuesInLCC = lccObj.getUniqueValueIdsWithExcludes()
       
         # create the cursor to add data to the output table
         outTableRows = arcpy.InsertCursor(newTable)        
@@ -371,8 +373,7 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
             # compute the amount of metric item (e.g., NITROGEN) per unit area using the supplied coefficients   
             for mBaseName in metricsBaseNameList: 
                 # get coefficient per unit area from the tabulate area table
-                metricPerUnitArea = getMetricPerUnitArea(tabAreaTableRow.tabAreaDict, lccValuesDict, valuesInLCC,
-                                                               mBaseName)
+                metricPerUnitArea = getMetricPerUnitArea(tabAreaTableRow.tabAreaDict, lccValuesDict, mBaseName)
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPerUnitArea)
                 
