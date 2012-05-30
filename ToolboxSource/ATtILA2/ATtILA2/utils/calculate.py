@@ -48,6 +48,7 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
     return metricPercentArea, metricAreaSum
 
 
+
 def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
                          metricsBaseNameList, outTable, optionalGroupsList, metricConst, outIdField):
     """ Creates *outTable* populated with land cover proportions metrics
@@ -161,7 +162,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
                                                                metricFieldParams, qaCheckFlds, addAreaFldParams)
         
-        # store the area of each input reporting unit into dictionary (zoneID:area)
+        # store the area of each input reporting unit into dictionary (zoneID:area). used in grid overlap calculations.
         zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)     
         
         ### Tabulate Area Object ###
@@ -222,6 +223,46 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
             pass
         
         
+
+def getMetricPerUnitArea(tabAreaDict, lccValuesDict, valuesInLCC, coeffId):
+    """ Multiplies the area of each grid value by it's lookup coefficient and sums across all grid values 
+    
+    **Description:**
+
+        Retrieves stored area figures for each grid code associated with selected metric and sums them.
+        That number, divided by the total effective area within the reporting unit and multiplied by 100, gives the
+        percentage of the effective reporting unit that is occupied by the metric class. Both the percentage and the 
+        final area sum are returned.
+        
+    **Arguments:**
+                             
+        * *tabAreaDict* - dictionary with the area value of each grid code in a reporting unit keyed to the grid code
+        
+    **Returns:**
+
+        * float - the sum of the area of metric class codes
+        
+    """
+
+    coefficientTotalInPolygon = 0
+    totalAreaInPolygon = 0 
+                        
+    for aVal in tabAreaDict:
+        valueBaseArea = tabAreaDict[aVal]
+        # change following line to a conversion function after determining the output linear units from the spatial reference
+        valueConvertedArea = valueBaseArea/10000.0
+        totalAreaInPolygon += valueConvertedArea
+        
+        if aVal in valuesInLCC:
+            valCoefficient = lccValuesDict[aVal].getCoefficientValueById(coeffId)
+            weightedValue = valueConvertedArea * valCoefficient
+            coefficientTotalInPolygon += weightedValue
+            
+        metricPerUnitArea = coefficientTotalInPolygon / totalAreaInPolygon  
+    
+    return metricPerUnitArea
+
+
 
 def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
                          metricsBaseNameList, outTable, optionalGroupsList, metricConst, outIdField):
@@ -296,7 +337,63 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
                                                                metricFieldParams, qaCheckFields)
 
+    
+        
+        ### Tabulate Area Object ###
+        
+        # store the area of each input reporting unit into dictionary (zoneID:area). used in grid overlap calculations.
+        zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
+        
+        # name the table if the user has checked the Intermediates option. If table is not named, it will not be saved.
+        if globalConstants.intermediateName in optionalGroupsList:
+            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        else:
+            tableName = None
+            
+        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
+                                         lccObj)
+        
+        # from the lcc file object, get the dictionary with the VALUES attributes
+        lccValuesDict = lccObj.values
+        # get set of all values described/attributed in the LCC file (can contain all, some or no values in input grid) 
+        valuesInLCC = lccObj.getUniqueValueIdsWithExcludes()
+      
+        # create the cursor to add data to the output table
+        outTableRows = arcpy.InsertCursor(newTable)        
+        
+        for tabAreaTableRow in tabAreaTable:
+            
+            # initiate a row to add to the metric output table
+            outTableRow = outTableRows.newRow()
+            # set the reporting unit id value in the output row
+            outTableRow.setValue(outIdField.name, tabAreaTableRow.zoneIdValue)
+            
+            # compute the amount of metric item (e.g., NITROGEN) per unit area using the supplied coefficients   
+            for mBaseName in metricsBaseNameList: 
+                # get coefficient per unit area from the tabulate area table
+                metricPerUnitArea = getMetricPerUnitArea(tabAreaTableRow.tabAreaDict, lccValuesDict, valuesInLCC,
+                                                               mBaseName)
+                # add the calculation to the output row
+                outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPerUnitArea)
+                
+            # add QACheck calculations/values to row
+            if qaCheckFields:
+                zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+                overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
+                outTableRow.setValue(qaCheckFields[0][0], overlapCalc)
+            
+            # commit the row to the output table
+            outTableRows.insertRow(outTableRow)
+                
     finally:
-        pass
+        
+        # delete cursor and row objects to remove locks on the data
+        try:
+            del outTableRows
+            del outTableRow
+            del tabAreaTable
+            del tabAreaTableRow
+        except:
+            pass
     
     
