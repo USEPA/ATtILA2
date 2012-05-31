@@ -1,7 +1,7 @@
 """ Global, application level variables
 
 """
-
+titleATtILA = "ATtILA2"
 descriptionDelim = "  -  "
 areaFieldParameters = ["_A","DOUBLE",15,0]
 tbxFileSuffix = ".tbx"

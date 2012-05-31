@@ -224,7 +224,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         
         
 
-def getCoefficientCalculation(tabAreaDict, lccValuesDict, coeffId, metricConst):
+def getCoefficientCalculation(tabAreaDict, lccValuesDict, coeffId, metricConst, conversionFactor):
     """  Returns the estimated amount of substance per HECTARE based on supplied coefficient values
     
     **Description:**
@@ -241,6 +241,7 @@ def getCoefficientCalculation(tabAreaDict, lccValuesDict, coeffId, metricConst):
         * *lccValuesDict* - dictionary with all the individual VALUES and their attributes supplied in the LCC file
         * *coeffId* - string containing the coefficient Id in LCC file (e.g., "NITROGEN", "PHOSPHORUS")
         * *metricConst* - class of metric constants. Contains tuple of per-unit-area coefficient metrics
+        * *convertAreaFactor* - float value for the conversion of area values to number of hectares
         
     **Returns:**
 
@@ -255,25 +256,29 @@ def getCoefficientCalculation(tabAreaDict, lccValuesDict, coeffId, metricConst):
         valueBaseArea = tabAreaDict[aVal]
         
         # change following line to a conversion function after determining the output linear units from the spatial reference
-        valueConvertedArea = valueBaseArea/10000.0
-        totalAreaInPolygon += valueConvertedArea
-        
+        valueSqMeters = valueBaseArea * conversionFactor
+        valueHectares = valueSqMeters/10000.0
+        totalAreaInPolygon += valueHectares
+        # check to see if the grid value is defined in the LCC file. Undefined values are not added to the dividend
         if aVal in lccValuesDict:
             valCoefficient = lccValuesDict[aVal].getCoefficientValueById(coeffId)
-            weightedValue = valueConvertedArea * valCoefficient
+            weightedValue = valueHectares * valCoefficient
             coefficientTotalInPolygon += weightedValue
             
         if coeffId in metricConst.perUnitAreaMetrics:
             coefficientCalculation = coefficientTotalInPolygon / totalAreaInPolygon
+        elif coeffId in metricConst.percentageMetrics:
+            coefficientCalculation = (coefficientTotalInPolygon / totalAreaInPolygon) * 100
         else:
-            coefficientCalculation = (coefficientTotalInPolygon / totalAreaInPolygon) * 100  
+            arcpy.AddWarning("Procedure for %s undefined. Please contact the %s Development Team." % 
+                             (coeffId, globalConstants.titleATtILA))  
     
     return coefficientCalculation
 
 
 
 def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                         metricsBaseNameList, outTable, optionalGroupsList, metricConst, outIdField):
+                         metricsBaseNameList, outTable, optionalGroupsList, metricConst, outIdField, conversionFactor):
     """ Creates *outTable* populated with land cover coefficient metrics
     
     **Description:**
@@ -291,6 +296,7 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         * *optionalFieldGroups* - optional fields to create
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
+        * *conversionFactor* - a float value to be used to convert area measures to number of hectares
         
     **Returns:**
 
@@ -328,7 +334,8 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
                     fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
                     n = n + 1
                     
-                arcpy.AddWarning("Provided metric name too long for output location. Truncated "+defaultFieldName+" to "+fieldOverrideName)
+                arcpy.AddWarning("Provided metric name too long for output location. Truncated %s to %s" % 
+                                 (defaultFieldName, fieldOverrideName))
                 
             # keep track of output field names    
             outputFieldNames.add(fieldOverrideName)
@@ -378,7 +385,8 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
             # compute the amount of metric item (e.g., NITROGEN) per unit area using the supplied coefficients   
             for mBaseName in metricsBaseNameList:
                 # get coefficient per unit area from the tabulate area table
-                coefficientCalculation = getCoefficientCalculation(tabAreaTableRow.tabAreaDict, lccValuesDict, mBaseName, metricConst)
+                coefficientCalculation = getCoefficientCalculation(tabAreaTableRow.tabAreaDict, lccValuesDict, mBaseName, 
+                                                                   metricConst, conversionFactor)
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mBaseName], coefficientCalculation)
                 

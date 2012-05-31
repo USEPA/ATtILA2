@@ -3,11 +3,13 @@
 import arcpy
 from arcpy import env
 from pylet import arcpyutil
+
 from ATtILA2.constants import globalConstants
 
 _tempEnvironment0 = ""
 _tempEnvironment1 = ""
 _tempEnvironment2 = ""
+
 
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
     """ Standard setup for executing metrics. """
@@ -39,7 +41,6 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     return itemTuples
 
     
-    
 def standardRestore():
     """ Standard restore for executing metrics. """
     
@@ -67,8 +68,8 @@ def standardGridChecks(inLandCoverGrid, lccObj):
     
     undefinedValues = [aVal for aVal in gridValues if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
     if undefinedValues:
-        arcpy.AddWarning("Following Grid Values undefined in LCC file: "+str(undefinedValues) + 
-                         " - Please refer to the ATtILA documentation regarding undefined values.")
+        arcpy.AddWarning("Following Grid Values undefined in LCC file: %s - Please refer to the %s documentation regarding undefined values." % 
+                         (undefinedValues, globalConstants.titleATtILA))
         
 def getIdOutField(inFeature, inField):
     """ Processes the InputField. If field is an OID type, alters the output field type and name """
@@ -84,3 +85,26 @@ def getIdOutField(inFeature, inField):
         newField = inField
         
     return (newField)
+
+def getGeometryConversionFactor(inReportingUnitFeature, dimension):
+    """ Determines the output coordinate system linear unit name. Returns conversion to square meters factor. """
+    
+    # check for output coordinate system setting in the arc environment
+    if arcpy.env.outputCoordinateSystem:
+        # output coordinate system is set. get it's linear units to use for area conversions
+        linearUnits = arcpy.env.outputCoordinateSystem.linearUnitName
+    else:
+        # no output coordinate system set. get the output linear units for the input reporting unit theme.
+        # warning: only use this theme if it is the first theme specified in ensuing geoprocessing tools
+        desc = arcpy.Describe(inReportingUnitFeature)
+        linearUnits = desc.spatialReference.linearUnitName
+        
+    if dimension.upper() == 'LENGTH':
+        conversionFactor = arcpyutil.conversion.factorToMeters(linearUnits)
+    elif dimension.upper() == 'AREA':
+        conversionFactor = arcpyutil.conversion.factorToSquareMeters(linearUnits)
+    else:
+        conversionFactor = 0
+
+    arcpy.AddMessage('linear units = %s and conversion factor = %s' % (linearUnits, conversionFactor))
+    return conversionFactor

@@ -70,6 +70,7 @@ class lcccConstants(baseMetricConstants):
         ]    
     fieldOverrideKey = shortName + gc.fieldOverrideName
     perUnitAreaMetrics = ("NITROGEN", "PHOSPHORUS")
+    percentageMetrics = ("IMPERVIOUS")
     
 
 class rlcpConstants(baseMetricConstants):

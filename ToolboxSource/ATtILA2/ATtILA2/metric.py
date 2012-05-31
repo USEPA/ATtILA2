@@ -7,6 +7,8 @@ import errors
 import setupAndRestore
 from pylet import lcc
 
+from pylet.arcpyutil import conversion
+
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
 from ATtILA2 import utils
@@ -68,7 +70,6 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         
         setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
         
-        
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
                                              metricsBaseNameList, outTable, optionalGroupsList, 
                                              lcpConst, outIdField)
@@ -92,16 +93,17 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
         
-        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcccConst = metricConstants.lcccConstants()
         
         setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
+        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        conversionFactor = setupAndRestore.getGeometryConversionFactor(inReportingUnitFeature, "AREA")
+        
         
         utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
                                                        lccObj, metricsBaseNameList, outTable, optionalGroupsList, 
-                                                       lcccConst, outIdField)
+                                                       lcccConst, outIdField, conversionFactor)
         
     except Exception, e:
         errors.standardErrorHandling(e)
