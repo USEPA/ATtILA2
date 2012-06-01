@@ -7,8 +7,6 @@ import errors
 import setupAndRestore
 from pylet import lcc
 
-from pylet.arcpyutil import conversion
-
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
 from ATtILA2 import utils
@@ -25,13 +23,12 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
         
-        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcospConst = metricConstants.lcospConstants()
         
-        setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
             
         # append the slope threshold value to the field suffix
         generalSuffix = lcospConst.fieldSuffix
@@ -63,12 +60,11 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
         
-        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcpConst = metricConstants.lcpConstants()
         
-        setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
                                              metricsBaseNameList, outTable, optionalGroupsList, 
@@ -85,7 +81,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
 def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, 
                                       lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, 
                                       optionalFieldGroups):
-    """Inerface for script executing Land Cover Coefficient Calculator"""
+    """Interface for script executing Land Cover Coefficient Calculator"""
             
     try:
         
@@ -96,14 +92,12 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         lccObj = lcc.LandCoverClassification(lccFilePath)
         lcccConst = metricConstants.lcccConstants()
         
-        setupAndRestore.standardGridChecks(inLandCoverGrid, lccObj)
-        outIdField = setupAndRestore.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        conversionFactor = setupAndRestore.getGeometryConversionFactor(inReportingUnitFeature, "AREA")
-        
-        
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+       
         utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
                                                        lccObj, metricsBaseNameList, outTable, optionalGroupsList, 
-                                                       lcccConst, outIdField, conversionFactor)
+                                                       lcccConst, outIdField)
         
     except Exception, e:
         errors.standardErrorHandling(e)
