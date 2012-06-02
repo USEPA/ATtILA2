@@ -409,11 +409,15 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         
         # see what linear units are used in the tabulate area table 
         outputLinearUnits = settings.getOutputLinearUnits(inReportingUnitFeature)
+
         # using the output linear units, get the conversion factor to convert the tabulateArea area measures to hectares
-        conversionFactor = arcpyutil.conversion.getSqMeterConversionFactor(outputLinearUnits)
-        
-#        if conversionFactor == 0:
-#            arcpy.AddError("%s not found in lookup table." % outputLinearUnits.upper())
+        try:
+            conversionFactor = arcpyutil.conversion.getSqMeterConversionFactor(outputLinearUnits)
+        except:
+            arcpy.Delete_management(outTable)
+            arcpy.Delete_management(tabAreaTable._tableName)
+            #raise (ATtILA2.errors.standardErrorHandling(ATtILA2.errors.attilaException('conversionFactor')))
+            raise
         
         # from the lcc file object, get the dictionary with the VALUES attributes
         lccValuesDict = lccObj.values
