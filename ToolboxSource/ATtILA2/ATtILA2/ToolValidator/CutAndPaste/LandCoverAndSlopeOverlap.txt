@@ -19,5 +19,6 @@ class ToolValidator (ATtILA2.ToolValidator.lcospToolValidator):
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 
     srcDirName = sourceName
+    inRaster2Index = 6
 
     

@@ -62,6 +62,10 @@ class ProportionsValidator(object):
     snapRasterIndex = 0 
     optionalFieldsIndex = 0 
     
+    # Indexes of secondary input parameters
+    inRaster2Index = 0
+    inRaster3Index = 0
+    
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
     
@@ -114,6 +118,10 @@ class ProportionsValidator(object):
         self.outTableParameter = self.parameters[self.outTableIndex]
         self.snapRasterParameter = self.parameters[self.snapRasterIndex]
         self.optionsParameter = self.parameters[self.optionalFieldsIndex]
+        
+        # Assign parameters to secondary local variables
+        if self.inRaster2Index:
+            self.inRaster2Parameter = self.parameters[self.inRaster2Index]
         
         # Additional local variables
         self.currentFilePath = ""
@@ -348,10 +356,30 @@ class ProportionsValidator(object):
             if not arcpy.SearchCursor(self.inputTableParameter.value).next():
                 self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
-            # Check for is input feature layer has spatial reference
-            if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
-                self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            # Check for if input feature layer has spatial reference
+            # use arcpy.Exists to check if input parameter is a lyr file.
+            if arcpy.Exists(self.inputTableParameter.value):
+                # not a lyr file
+                if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            else:
+                # lyr file. Use .dataSource to get the path to the actual data file
+                if arcpy.Describe(self.inputTableParameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+
             
+        # CHECK ON SECONDARY INPUTS IF PROVIDED
+        
+        # Check if a second input raster is provided
+        if self.inRaster2Index:
+            # if provided, check if input raster2 is defined
+            if self.inRaster2Parameter.value:
+            
+                # Check for is input raster layer has spatial reference
+                if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
+                    self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                
+    
             
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
