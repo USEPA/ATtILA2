@@ -65,6 +65,7 @@ class ProportionsValidator(object):
     # Indexes of secondary input parameters
     inRaster2Index = 0
     inRaster3Index = 0
+    inFeature2Index = 0
     
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
@@ -122,7 +123,11 @@ class ProportionsValidator(object):
         # Assign parameters to secondary local variables
         if self.inRaster2Index:
             self.inRaster2Parameter = self.parameters[self.inRaster2Index]
-        
+            
+#        if self.inFeature2Index:
+#            self.inFeature2Parameter = self.parameters(self.inFeature2Index)
+
+               
         # Additional local variables
         self.currentFilePath = ""
         self.ruFilePath = ""
@@ -330,7 +335,7 @@ class ProportionsValidator(object):
             
         # Check if input raster is defined
         if self.inRasterParameter.value:
-            
+           
             # Check for is input raster layer has spatial reference
             if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
                 self.inRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
@@ -357,29 +362,37 @@ class ProportionsValidator(object):
                 self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
             # Check for if input feature layer has spatial reference
-            # use arcpy.Exists to check if input parameter is a lyr file.
-            if arcpy.Exists(self.inputTableParameter.value):
-                # not a lyr file
-                if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
-                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
-            else:
-                # lyr file. Use .dataSource to get the path to the actual data file
+            # query the dataSource attribute to see if input parameter is a lyr file.
+            if hasattr(self.inputTableParameter.value, "dataSource"):
                 if arcpy.Describe(self.inputTableParameter.value.dataSource).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            else:
+                if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
 
-            
+
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
-        # Check if a second input raster is provided
+        # Check if a second input raster is provided - use if raster can be either integer or float
         if self.inRaster2Index:
             # if provided, check if input raster2 is defined
             if self.inRaster2Parameter.value:
-            
-                # Check for is input raster layer has spatial reference
-                if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
-                    self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                # query the dataSource attribute to see if input parameter is a lyr file.
+                if hasattr(self.inRaster2Parameter.value, "dataSource"):
+                    if arcpy.Describe(self.inRaster2Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                        self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                else:
+                    if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
+                        self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+        
+        # Check if a second input feature is provided            
+#        if self.inFeature2Index:
+#            if self.inFeature2Parameter.value:
+#                # Check for if input feature layer has spatial reference
+#                # Check for is input raster layer has spatial reference
+#                if arcpy.Describe(self.inFeature2Parameter.value).spatialReference.name.lower() == "unknown":
+#                    self.inFeature2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
                 
-    
             
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
