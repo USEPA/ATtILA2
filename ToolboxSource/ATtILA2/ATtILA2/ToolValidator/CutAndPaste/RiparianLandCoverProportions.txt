@@ -19,3 +19,4 @@ class ToolValidator (ATtILA2.ToolValidator.rlcpToolValidator):
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 
     srcDirName = sourceName
+    inMultiFeatureIndex = 6

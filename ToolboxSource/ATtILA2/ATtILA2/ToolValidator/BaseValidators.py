@@ -65,7 +65,7 @@ class ProportionsValidator(object):
     # Indexes of secondary input parameters
     inRaster2Index = 0
     inRaster3Index = 0
-    inFeature2Index = 0
+    inMultiFeatureIndex = 0
     
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
@@ -87,6 +87,7 @@ class ProportionsValidator(object):
         self.metricDescription = validatorConstants.metricDescription
         self.noFeaturesMessage = validatorConstants.noFeaturesMessage
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         
         # Load global constants
@@ -120,12 +121,12 @@ class ProportionsValidator(object):
         self.snapRasterParameter = self.parameters[self.snapRasterIndex]
         self.optionsParameter = self.parameters[self.optionalFieldsIndex]
         
-        # Assign parameters to secondary local variables
+        # Assign secondary input parameters to local variables
         if self.inRaster2Index:
             self.inRaster2Parameter = self.parameters[self.inRaster2Index]
             
-#        if self.inFeature2Index:
-#            self.inFeature2Parameter = self.parameters(self.inFeature2Index)
+        if self.inMultiFeatureIndex:
+            self.inMultiFeatureParameter = self.parameters[self.inMultiFeatureIndex]
 
                
         # Additional local variables
@@ -232,8 +233,6 @@ class ProportionsValidator(object):
             self.lccClassesParameter.value = ""
         
         # Prevent the changing of the classification scheme from causing dialog errors when metrics are already checked    
-#        if self.lccClassesParameter.hasBeenValidated and self.lccClassesParameter.altered:
-#            self.lccClassesParameter.value = ""
         if not self.lccSchemeParameter.hasBeenValidated:
             self.lccClassesParameter.value = ""
             
@@ -364,7 +363,7 @@ class ProportionsValidator(object):
                 self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
             # Check for if input feature layer has spatial reference
-            # query the dataSource attribute to see if input parameter is a lyr file.
+            # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
             if hasattr(self.inputTableParameter.value, "dataSource"):
                 if arcpy.Describe(self.inputTableParameter.value.dataSource).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
@@ -375,11 +374,11 @@ class ProportionsValidator(object):
 
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
-        # Check if a second input raster is provided - use if raster can be either integer or float
+        # Check if a secondary input raster is indicated - use if raster can be either integer or float
         if self.inRaster2Index:
             # if provided, check if input raster2 is defined
             if self.inRaster2Parameter.value:
-                # query the dataSource attribute to see if input parameter is a lyr file.
+                # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
                 if hasattr(self.inRaster2Parameter.value, "dataSource"):
                     if arcpy.Describe(self.inRaster2Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
                         self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
@@ -387,14 +386,20 @@ class ProportionsValidator(object):
                     if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
                         self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
         
-        # Check if a second input feature is provided            
-#        if self.inFeature2Index:
-#            if self.inFeature2Parameter.value:
-#                # Check for if input feature layer has spatial reference
-#                # Check for is input raster layer has spatial reference
-#                if arcpy.Describe(self.inFeature2Parameter.value).spatialReference.name.lower() == "unknown":
-#                    self.inFeature2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
-                
+        # Check if a secondary multiple input feature is indicated            
+        if self.inMultiFeatureIndex:
+            # if provided, get the valueTable and process each entry
+            if self.inMultiFeatureParameter.value:
+                multiFeatures = self.inMultiFeatureParameter.value
+                rowCount = multiFeatures.rowCount
+                for row in range(0, rowCount):
+                    value = multiFeatures.getValue(row, 0)
+                    if value:
+                        # check to see if it has a spatial reference
+                        d = arcpy.Describe(value)
+                        if d.spatialReference.name.lower() == "unknown":
+                            self.inMultiFeatureParameter.setErrorMessage(self.noSpatialReferenceMessageMulti)
+
             
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
