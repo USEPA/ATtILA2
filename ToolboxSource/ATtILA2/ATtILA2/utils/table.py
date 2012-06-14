@@ -71,14 +71,16 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
 
 
 def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField):
-    """ Processes tool dialog parameters and options for output table generation. Calls the table generation function.
+    """ Processes tool dialog parameters and options for output table generation. Class metrics option.
         
     **Description:**
 
         Processes the input and output parameters and selected options from the ATtILA tool dialog for output table
         generation. After processing the data, this function calls the CreateMetricTableOutput function which
         creates an empty table with fields for the reporting unit id, all selected metrics with appropriate fieldname
-        prefixes and suffixes (e.g. pUrb, rFor30), and any selected optional fields (e.g., LC_Overlap)
+        prefixes and suffixes (e.g. pUrb, rFor30), and any selected optional fields (e.g., LC_Overlap). 
+        
+        This function is used when the selected metrics are represented by the class nodes in the .lcc file
         
         Returns the created output table and a dictionary of the selected lcc classes and their generated fieldnames
         
@@ -193,6 +195,40 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
 
 
 def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField):
+    """ Processes tool dialog parameters and options for output table generation. Coefficient metrics option.
+        
+    **Description:**
+
+        Processes the input and output parameters and selected options from the ATtILA tool dialog for output table
+        generation. After processing the data, this function calls the CreateMetricTableOutput function which
+        creates an empty table with fields for the reporting unit id, all selected metrics with appropriate fieldname
+        prefixes and suffixes (e.g. pUrb, rFor30), and any selected optional fields (e.g., LC_Overlap). 
+        
+        This function is used when the selected metrics are represented by the coefficient node in the .lcc file
+        
+        Returns the created output table and a dictionary of the selected lcc coefficients and their generated fieldnames
+        
+    **Arguments:**
+
+        * *outTable* - file name including path for the ATtILA output table
+
+        * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
+                        (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+
+        * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
+                        (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
+        * *metricConst* - a class object with the variable constants for a particular metric family as attributes 
+        * *lccObj* - a class object of the selected land cover classification file 
+        * *outIdField* - the output id field. Generally a clone of the input id field except where the fieldtype = "OID"
+        
+    **Returns:**
+
+        * table (type unknown - string representation?)
+        * dict - a dictionary of BaseName keys with field name values (e.g., "unat":"UINDEX", "for":"pFor", 
+                        "NITROGEN":"N_Pload")
+        
+    """
+    
     maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
         
     # use the metricsBaseNameList to create a dictionary of ClassName keys with field name values using any user supplied field names

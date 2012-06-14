@@ -63,13 +63,14 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         * *reportingUnitIdField* - name of unique id field in reporting units
         * *inLandCoverGrid* - land cover raster
         * *lccObj* - land cover classification(lcc) object
-        * *metricsToRun* - list of class ids to include in processing
-        * *optionalFieldGroups* - optional fields to create
+        * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
+                        (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+        * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
+                        (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
-        * *newTableItems* - a tuple with the following items: 
-        ** the ATtILA created output table
-        ** metricsFieldnameDict - a dictionary keyed to the lcc class with final fieldname as value
+        * *newTable* - the ATtILA created output table 
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
         
     **Returns:**
 
@@ -250,11 +251,14 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         * *reportingUnitIdField* - name of unique id field in reporting units
         * *inLandCoverGrid* - land cover raster
         * *lccObj* - land cover classification(lcc) object
-        * *metricsToRun* - list of class ids to include in processing
-        * *outTable* - full path to an output table to be created/populated
-        * *optionalFieldGroups* - optional fields to create
+        * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
+                        (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+        * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
+                        (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
+        * *newTable* - the ATtILA created output table 
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
         
     **Returns:**
 
