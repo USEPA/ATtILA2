@@ -1,4 +1,4 @@
-""" Utilitites specific to area
+""" Utilities specific to area
 
 """
 from ATtILA2.constants import globalConstants
@@ -83,7 +83,7 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         # Set parameters for metric output field. 
         metricFieldParams = metricConst.fieldParameters
         
-        # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+        # Parameterize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
         if globalConstants.qaCheckName in optionalGroupsList:
             qaCheckFlds = metricConst.qaCheckFieldParameters
         else:
