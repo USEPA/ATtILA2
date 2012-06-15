@@ -1,4 +1,4 @@
-""" Utilitites specific to area
+""" Utilities specific to area
 
 """
 from ATtILA2.constants import globalConstants
