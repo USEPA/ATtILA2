@@ -115,6 +115,41 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         
     finally:
         setupAndRestore.standardRestore()
+        
+        
+def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+                            metricsToRun, inStreamFeatures, inBufferDistance, outTable, processingCellSize, snapRaster, 
+                            optionalFieldGroups):
+    """ Interface for script executing Riparian Land Cover Proportion Metrics """   
+    
+    try:
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+                                                                                 os.path.dirname(outTable), 
+                                                                                 [metricsToRun,optionalFieldGroups] )
+        
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        rlcpConst = metricConstants.rlcpConstants()
+        
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # append the buffer distance value to the field suffix
+        generalSuffix = rlcpConst.fieldSuffix
+        specificSuffix = generalSuffix + inBufferDistance
+        rlcpConst.fieldParameters[1] = specificSuffix
+        
+        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
+                                                                        rlcpConst, lccObj, outIdField)
+        
+#        utils.calculate.riparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
+#                                             metricsBaseNameList, optionalGroupsList, rlcpConst, outIdField, newTable, 
+#                                             metricsFieldnameDict, inStreamFeatures, inBufferDistance)
+        
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
 
 
 

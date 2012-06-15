@@ -79,9 +79,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
     """
     
     try:      
-        # store the area of each input reporting unit into dictionary (zoneID:area). used in grid overlap calculations.
-        zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)     
-
         # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         lccClassesDict = lccObj.classes
         
@@ -341,5 +338,3 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
             del tabAreaTableRow
         except:
             pass
-    
-    
