@@ -40,9 +40,13 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         # save the file if intermediate products option is checked by user
         if globalConstants.intermediateName in optionalGroupsList: 
             SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
+            
+        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
+                                                                        lcospConst, lccObj, outIdField)
         
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccObj, 
-                             metricsBaseNameList, outTable, optionalGroupsList, lcospConst, outIdField)
+                                             metricsBaseNameList, optionalGroupsList, lcospConst, outIdField, newTable, 
+                                             metricsFieldnameDict)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -66,9 +70,12 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
         outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
+        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
+                                                                        lcpConst, lccObj, outIdField)
+        
         utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                                             metricsBaseNameList, outTable, optionalGroupsList, 
-                                             lcpConst, outIdField)
+                                             metricsBaseNameList, optionalGroupsList, lcpConst, outIdField, newTable, 
+                                             metricsFieldnameDict)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -94,10 +101,14 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
         outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        newTable, metricsFieldnameDict = utils.table.tableWriterByCoefficient(outTable, metricsBaseNameList, 
+                                                                              optionalGroupsList, lcccConst, lccObj, 
+                                                                              outIdField)
        
         utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
-                                                       lccObj, metricsBaseNameList, outTable, optionalGroupsList, 
-                                                       lcccConst, outIdField)
+                                                       lccObj, metricsBaseNameList, optionalGroupsList, lcccConst, 
+                                                       outIdField, newTable, metricsFieldnameDict)
         
     except Exception, e:
         errors.standardErrorHandling(e)

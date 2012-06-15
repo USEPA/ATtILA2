@@ -2,7 +2,6 @@
 
 """
 from ATtILA2.constants import globalConstants
-import ATtILA2
 from ATtILA2.utils.tabarea import TabulateAreaTable
 from ATtILA2.utils import settings
 from pylet import arcpyutil
@@ -50,8 +49,8 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 
-def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                         metricsBaseNameList, outTable, optionalGroupsList, metricConst, outIdField):
+def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, metricsBaseNameList, 
+                         optionalGroupsList, metricConst, outIdField, newTable, metricsFieldnameDict):
     """ Creates *outTable* populated with land cover proportions metrics
     
     **Description:**
@@ -65,10 +64,12 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         * *inLandCoverGrid* - land cover raster
         * *lccObj* - land cover classification(lcc) object
         * *metricsToRun* - list of class ids to include in processing
-        * *outTable* - full path to an output table to be created/populated
         * *optionalFieldGroups* - optional fields to create
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
+        * *newTableItems* - a tuple with the following items: 
+        ** the ATtILA created output table
+        ** metricsFieldnameDict - a dictionary keyed to the lcc class with final fieldname as value
         
     **Returns:**
 
@@ -77,102 +78,18 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
     """
     
     try:      
-        # get the field name override key
-        fieldOverrideKey = metricConst.fieldOverrideKey
-
-        # Set parameters for metric output field. 
-        metricFieldParams = metricConst.fieldParameters
-        
-        # Parameterize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
-        if globalConstants.qaCheckName in optionalGroupsList:
-            qaCheckFlds = metricConst.qaCheckFieldParameters
-        else:
-            qaCheckFlds = None
-        
-        maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
-        if globalConstants.metricAddName in optionalGroupsList:
-            addAreaFldParams = globalConstants.areaFieldParameters
-            maxFieldNameSize = maxFieldNameSize - len(addAreaFldParams[0])
-        else:
-            addAreaFldParams = None
-        
-        # Process: inputs
-        # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
-        lccClassesDict = lccObj.classes    
-        
-        # use the metricsBaseNameList to create a dictionary of BaseName keys with field name values using any user supplied field names
-        metricsFieldnameDict = {}
-        outputFieldNames = set() # use this set to help make field names unique
-        
-        for mBaseName in metricsBaseNameList:
-            # generate unique number to replace characters at end of truncated field names
-            n = 1
-            
-            fieldOverrideName = lccClassesDict[mBaseName].attributes.get(fieldOverrideKey,None)
-            if fieldOverrideName: # a field name override exists
-                # see if the provided field name is too long for the output table type
-                if len(fieldOverrideName) > maxFieldNameSize:
-                    defaultFieldName = fieldOverrideName # keep track of the originally provided field name
-                    fieldOverrideName = fieldOverrideName[:maxFieldNameSize] # truncate field name to maximum allowable size
-                    
-                    # see if truncated field name is already used.
-                    # if so, truncate further and add a unique number to the end of the name
-                    while fieldOverrideName in outputFieldNames:
-                        # shorten the field name and increment it
-                        truncateTo = maxFieldNameSize - len(str(n))
-                        fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
-                        n = n + 1
-                    
-                    arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, fieldOverrideName))
-                    
-                # keep track of output field names    
-                outputFieldNames.add(fieldOverrideName)
-                # add output field name to dictionary
-                metricsFieldnameDict[mBaseName] = fieldOverrideName
-            else:
-                # generate output field name
-                outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
-                
-                # see if the provided field name is too long for the output table type
-                if len(outputFName) > maxFieldNameSize:
-                    defaultFieldName = outputFName # keep track of the originally generated field name
-                    
-                    prefixLen = len(metricFieldParams[0])
-                    suffixLen = len(metricFieldParams[1])
-                    maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
-                    
-                    # truncate field name to maximum allowable size    
-                    outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1]
-                    
-                    # see if truncated field name is already used.
-                    # if so, truncate further and add a unique number to the end of the name
-                    while outputFName in outputFieldNames:
-                        # shorten the field name and increment it
-                        truncateTo = maxBaseSize - len(str(n))
-                        outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
-                        n = n + 1
-                        
-                    arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
-                    
-                # keep track of output field names
-                outputFieldNames.add(outputFName)
-                # add output field name to dictionary
-                metricsFieldnameDict[mBaseName] = outputFName
-                    
-        # create the specified output table
-        newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                               metricFieldParams, qaCheckFlds, addAreaFldParams)
-        
         # store the area of each input reporting unit into dictionary (zoneID:area). used in grid overlap calculations.
         zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)     
-        
-        ### Tabulate Area Object ###
+
+        # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
+        lccClassesDict = lccObj.classes
         
         # name the table if the user has checked the Intermediates option. If table is not named, it will not be saved.
         if globalConstants.intermediateName in optionalGroupsList:
             tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
         else:
             tableName = None
+            
         tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
                                          lccObj)
         
@@ -197,13 +114,15 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPercentageAndArea[0])
                 
-                if addAreaFldParams:
+                if globalConstants.metricAddName in optionalGroupsList:
                     outTableRow.setValue(metricsFieldnameDict[mBaseName]+"_A", metricPercentageAndArea[1])
 
             # add QACheck calculations/values to row
-            if qaCheckFlds:
+            if globalConstants.qaCheckName in optionalGroupsList:
                 zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
                 overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
+                
+                qaCheckFlds = metricConst.qaCheckFieldParameters
                 outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
                 outTableRow.setValue(qaCheckFlds[1][0], tabAreaTableRow.totalArea)
                 outTableRow.setValue(qaCheckFlds[2][0], tabAreaTableRow.effectiveArea)
@@ -317,7 +236,8 @@ def getCoefficientPercentage(tabAreaDict, lccValuesDict, coeffId):
 
 
 def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                         metricsBaseNameList, outTable, optionalGroupsList, metricConst, outIdField):
+                                   metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
+                                   metricsFieldnameDict):
     """ Creates *outTable* populated with land cover coefficient metrics
     
     **Description:**
@@ -343,58 +263,6 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
     """
     
     try:
-        
-        maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
-            
-        # use the metricsBaseNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
-        metricsFieldnameDict = {}
-        outputFieldNames = set() # use this set to help make field names unique
-        
-        # get parameters for metric output field: [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
-        metricFieldParams = metricConst.fieldParameters
-        
-        for mBaseName in metricsBaseNameList:
-            # generate unique number to replace characters at end of truncated field names
-            n = 1
-            
-            fieldOverrideName = lccObj.coefficients[mBaseName].fieldName
-
-            # see if the provided field name is too long for the output table type
-            if len(fieldOverrideName) > maxFieldNameSize:
-                defaultFieldName = fieldOverrideName # keep track of the originally provided field name
-                fieldOverrideName = fieldOverrideName[:maxFieldNameSize] # truncate field name to maximum allowable size
-                
-                # see if truncated field name is already used.
-                # if so, truncate further and add a unique number to the end of the name
-                while fieldOverrideName in outputFieldNames:
-                    # shorten the field name and increment it
-                    truncateTo = maxFieldNameSize - len(str(n))
-                    fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
-                    n = n + 1
-                    
-                arcpy.AddWarning("Provided metric name too long for output location. Truncated %s to %s" % 
-                                 (defaultFieldName, fieldOverrideName))
-                
-            # keep track of output field names    
-            outputFieldNames.add(fieldOverrideName)
-            # add output field name to dictionary
-            metricsFieldnameDict[mBaseName] = fieldOverrideName
-
-        # set up field parameters for any optional output fields
-        if globalConstants.qaCheckName in optionalGroupsList:
-            # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
-            qaCheckFields = metricConst.qaCheckFieldParameters
-        else:
-            qaCheckFields = None
-                  
-        # create the specified output table
-        newTable = ATtILA2.utils.table.CreateMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                               metricFieldParams, qaCheckFields)
-
-    
-        
-        ### Tabulate Area Object ###
-        
         # store the area of each input reporting unit into dictionary (zoneID:area). used in grid overlap calculations.
         zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
         
@@ -414,7 +282,7 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         try:
             conversionFactor = arcpyutil.conversion.getSqMeterConversionFactor(outputLinearUnits)
         except:
-            arcpy.Delete_management(outTable)
+            arcpy.Delete_management(newTable)
             arcpy.Delete_management(tabAreaTable._tableName)
             #raise (ATtILA2.errors.standardErrorHandling(ATtILA2.errors.attilaException('conversionFactor')))
             raise
@@ -449,9 +317,11 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
                 outTableRow.setValue(metricsFieldnameDict[mBaseName], coefficientCalculation)
                 
             # add QACheck calculations/values to row
-            if qaCheckFields:
+            if globalConstants.qaCheckName in optionalGroupsList:
                 zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
                 overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
+                
+                qaCheckFields = metricConst.qaCheckFieldParameters
                 outTableRow.setValue(qaCheckFields[0][0], overlapCalc)
             
             # commit the row to the output table
