@@ -6,12 +6,57 @@ import arcpy
 import errors
 import setupAndRestore
 from pylet import lcc
+from pylet.arcpyutil import polygons
 
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
 from ATtILA2 import utils
+from ATtILA2.utils.tabarea import TabulateAreaTable
 
-
+    
+def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+                            metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
+    """ Interface for script executing Land Cover Proportion Metrics """   
+    
+    try:
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
+                                                                                 os.path.dirname(outTable), 
+                                                                                 [metricsToRun,optionalFieldGroups] )
+        # XML Land Cover Coding file loaded into memory
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.lcpConstants()
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field    
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
+        tableName = None
+        if globalConstants.intermediateName in optionalGroupsList: 
+            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+        zoneAreaDict = None
+        if globalConstants.qaCheckName in optionalGroupsList: 
+            zoneAreaDict = polygons.getIdAreaDict(inReportingUnitFeature, reportingUnitIdField)
+        # Construct the ATtILA metric output table
+        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
+                                                                        metricConst, lccObj, outIdField)
+        # generate a zonal tabulate area table
+        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
+                                         lccObj)
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, 
+                                             outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict)
+        
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
+        
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
                                    snapRaster, optionalFieldGroups):
@@ -25,57 +70,95 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
-        lcospConst = metricConstants.lcospConstants()
-        
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.lcospConstants()
+        # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
         outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
+        tableName = None
+        if globalConstants.intermediateName in optionalGroupsList: 
+            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+        zoneAreaDict = None
+        if globalConstants.qaCheckName in optionalGroupsList: 
+            zoneAreaDict = polygons.getIdAreaDict(inReportingUnitFeature, reportingUnitIdField)
             
         # append the slope threshold value to the field suffix
-        generalSuffix = lcospConst.fieldSuffix
+        generalSuffix = metricConst.fieldSuffix
         specificSuffix = generalSuffix + inSlopeThresholdValue
-        lcospConst.fieldParameters[1] = specificSuffix
+        metricConst.fieldParameters[1] = specificSuffix
         
-        SLPxLCGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
+        # replace the inLandCoverGrid
+        inLandCoverGrid = utils.raster.getIntersectOfGrids(lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
     
         # save the file if intermediate products option is checked by user
         if globalConstants.intermediateName in optionalGroupsList: 
-            SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))
-            
+            inLandCoverGrid.save(arcpy.CreateUniqueName(metricConst.shortName))
+        # Construct the ATtILA metric output table    
         newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
-                                                                        lcospConst, lccObj, outIdField)
-        
-        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, SLPxLCGrid, lccObj, 
-                                             metricsBaseNameList, optionalGroupsList, lcospConst, outIdField, newTable, 
-                                             metricsFieldnameDict)
+                                                                        metricConst, lccObj, outIdField)
+        # generate a zonal tabulate area table
+        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
+                                         lccObj)
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, 
+                                             outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict)
         
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
         setupAndRestore.standardRestore()
+        
 
-    
-def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
-                            metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
-    """ Interface for script executing Land Cover Proportion Metrics """   
+def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+                            metricsToRun, inStreamFeatures, inBufferDistance, outTable, processingCellSize, snapRaster, 
+                            optionalFieldGroups):
+    """ Interface for script executing Riparian Land Cover Proportion Metrics """   
     
     try:
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
-        
+        # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
-        lcpConst = metricConstants.lcpConstants()
-        
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.rlcpConstants()
+        # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
         outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
-        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
-                                                                        lcpConst, lccObj, outIdField)
+        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
+        tableName = None
+        if globalConstants.intermediateName in optionalGroupsList: 
+            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+        zoneAreaDict = None
+        if globalConstants.qaCheckName in optionalGroupsList: 
+            zoneAreaDict = polygons.getIdAreaDict(inReportingUnitFeature, reportingUnitIdField)
         
-        utils.calculate.landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                                             metricsBaseNameList, optionalGroupsList, lcpConst, outIdField, newTable, 
-                                             metricsFieldnameDict)
+        # append the buffer distance value to the field suffix
+        generalSuffix = metricConst.fieldSuffix
+        specificSuffix = generalSuffix + inBufferDistance
+        metricConst.fieldParameters[1] = specificSuffix
+        
+        # Construct the ATtILA metric output table
+        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
+                                                                        metricConst, lccObj, outIdField)
+        # generate a zonal tabulate area table
+        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
+                                         lccObj)
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, 
+                                             outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -89,26 +172,56 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
                                       lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, 
                                       optionalFieldGroups):
     """Interface for script executing Land Cover Coefficient Calculator"""
+    
+    from ATtILA2.utils import settings
+    from pylet.arcpyutil import conversion
             
     try:
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
-        
+        # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
-        lcccConst = metricConstants.lcccConstants()
-        
+        # get the dictionary with the LCC VALUES attributes
+        lccValuesDict = lccObj.values
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.lcccConstants()
+        # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
         outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
+        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
+        tableName = None
+        if globalConstants.intermediateName in optionalGroupsList: 
+            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+        zoneAreaDict = None
+        if globalConstants.qaCheckName in optionalGroupsList: 
+            zoneAreaDict = polygons.getIdAreaDict(inReportingUnitFeature, reportingUnitIdField)
+            
+        # see what linear units are used in the tabulate area table 
+        outputLinearUnits = settings.getOutputLinearUnits(inReportingUnitFeature)
+
+        # using the output linear units, get the conversion factor to convert the tabulateArea area measures to hectares
+        try:
+            conversionFactor = conversion.getSqMeterConversionFactor(outputLinearUnits)
+        except:
+            #raise (ATtILA2.errors.standardErrorHandling(ATtILA2.errors.attilaException('conversionFactor')))
+            raise
+
+        # Construct the ATtILA metric output table
         newTable, metricsFieldnameDict = utils.table.tableWriterByCoefficient(outTable, metricsBaseNameList, 
-                                                                              optionalGroupsList, lcccConst, lccObj, 
+                                                                              optionalGroupsList, metricConst, lccObj, 
                                                                               outIdField)
-       
-        utils.calculate.landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, 
-                                                       lccObj, metricsBaseNameList, optionalGroupsList, lcccConst, 
-                                                       outIdField, newTable, metricsFieldnameDict)
+        # generate a zonal tabulate area table
+        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
+                                         lccObj)
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalGroupsList, 
+                                                       metricConst, outIdField, newTable, tabAreaTable, 
+                                                       metricsFieldnameDict, zoneAreaDict, conversionFactor)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -116,40 +229,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
     finally:
         setupAndRestore.standardRestore()
         
-        
-def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
-                            metricsToRun, inStreamFeatures, inBufferDistance, outTable, processingCellSize, snapRaster, 
-                            optionalFieldGroups):
-    """ Interface for script executing Riparian Land Cover Proportion Metrics """   
-    
-    try:
-        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
-                                                                                 os.path.dirname(outTable), 
-                                                                                 [metricsToRun,optionalFieldGroups] )
-        
-        lccObj = lcc.LandCoverClassification(lccFilePath)
-        rlcpConst = metricConstants.rlcpConstants()
-        
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
-        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
-        # append the buffer distance value to the field suffix
-        generalSuffix = rlcpConst.fieldSuffix
-        specificSuffix = generalSuffix + inBufferDistance
-        rlcpConst.fieldParameters[1] = specificSuffix
-        
-        newTable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, 
-                                                                        rlcpConst, lccObj, outIdField)
-        
-#        utils.calculate.riparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-#                                             metricsBaseNameList, optionalGroupsList, rlcpConst, outIdField, newTable, 
-#                                             metricsFieldnameDict, inStreamFeatures, inBufferDistance)
-        
-    except Exception, e:
-        errors.standardErrorHandling(e)
-        
-    finally:
-        setupAndRestore.standardRestore()
+
 
 
 

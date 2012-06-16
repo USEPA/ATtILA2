@@ -2,9 +2,7 @@
 
 """
 from ATtILA2.constants import globalConstants
-from ATtILA2.utils.tabarea import TabulateAreaTable
-from ATtILA2.utils import settings
-from pylet import arcpyutil
+
 import arcpy
 
 
@@ -49,8 +47,8 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 
-def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, metricsBaseNameList, 
-                         optionalGroupsList, metricConst, outIdField, newTable, metricsFieldnameDict):
+def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
+                         tabAreaTable, metricsFieldnameDict, zoneAreaDict):
     """ Creates *outTable* populated with land cover proportions metrics
     
     **Description:**
@@ -59,10 +57,8 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         
     **Arguments:**
 
-        * *inReportingUnitFeature* - Input reporting units
-        * *reportingUnitIdField* - name of unique id field in reporting units
-        * *inLandCoverGrid* - land cover raster
-        * *lccObj* - land cover classification(lcc) object
+        * *lccClassesDict* - dictionary of metric class values 
+                        (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
         * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
                         (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
         * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
@@ -70,7 +66,10 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
         * *newTable* - the ATtILA created output table 
+        * *tabAreaTable* - tabulateArea request output from ArcGIS
         * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
+        * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
+                        Used in grid overlap calculations.
         
     **Returns:**
 
@@ -79,18 +78,6 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
     """
     
     try:      
-        # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
-        lccClassesDict = lccObj.classes
-        
-        # name the table if the user has checked the Intermediates option. If table is not named, it will not be saved.
-        if globalConstants.intermediateName in optionalGroupsList:
-            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
-        else:
-            tableName = None
-            
-        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
-                                         lccObj)
-        
         # create the cursor to add data to the output table
         outTableRows = arcpy.InsertCursor(newTable)        
         
@@ -113,10 +100,11 @@ def landCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCov
                 outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPercentageAndArea[0])
                 
                 if globalConstants.metricAddName in optionalGroupsList:
-                    outTableRow.setValue(metricsFieldnameDict[mBaseName]+"_A", metricPercentageAndArea[1])
+                    areaSuffix = globalConstants.areaFieldParameters[0]
+                    outTableRow.setValue(metricsFieldnameDict[mBaseName]+areaSuffix, metricPercentageAndArea[1])
 
             # add QACheck calculations/values to row
-            if globalConstants.qaCheckName in optionalGroupsList:
+            if zoneAreaDict:
                 zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
                 overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
                 
@@ -233,9 +221,8 @@ def getCoefficientPercentage(tabAreaDict, lccValuesDict, coeffId):
 
 
 
-def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccObj, 
-                                   metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
-                                   metricsFieldnameDict):
+def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, 
+                                   newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict, conversionFactor):
     """ Creates *outTable* populated with land cover coefficient metrics
     
     **Description:**
@@ -244,18 +231,20 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
         
     **Arguments:**
 
-        * *inReportingUnitFeature* - Input reporting units
-        * *reportingUnitIdField* - name of unique id field in reporting units
-        * *inLandCoverGrid* - land cover raster
-        * *lccObj* - land cover classification(lcc) object
+        * *lccValuesDict* - dictionary with all the individual VALUES and their attributes supplied in the LCC file 
+                        (e.g., lccValuesDict['21'].name = "Developed, Open Space";
+                               lccValuesDict['21'].getCoefficientValueById("NITROGEN") = 9.25)
         * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
                         (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
         * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
                         (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
-        * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+        * *metricConst* - an object with constants specific to the metric being run (lcp or lcosp, etc.)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
         * *newTable* - the ATtILA created output table 
         * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
+        * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
+                        Used in grid overlap calculations.
+        * *conversionFactor* - conversion factor to convert area measures to square meters. It is a float value
         
     **Returns:**
 
@@ -264,33 +253,6 @@ def landCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField,
     """
     
     try:
-        # store the area of each input reporting unit into dictionary (zoneID:area). used in grid overlap calculations.
-        zoneAreaDict = arcpyutil.polygons.getAreasByIdDict(inReportingUnitFeature, reportingUnitIdField)
-        
-        # name the table if the user has checked the Intermediates option. If table is not named, it will not be saved.
-        if globalConstants.intermediateName in optionalGroupsList:
-            tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
-        else:
-            tableName = None
-            
-        tabAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName, 
-                                         lccObj)
-        
-        # see what linear units are used in the tabulate area table 
-        outputLinearUnits = settings.getOutputLinearUnits(inReportingUnitFeature)
-
-        # using the output linear units, get the conversion factor to convert the tabulateArea area measures to hectares
-        try:
-            conversionFactor = arcpyutil.conversion.getSqMeterConversionFactor(outputLinearUnits)
-        except:
-            arcpy.Delete_management(newTable)
-            arcpy.Delete_management(tabAreaTable._tableName)
-            #raise (ATtILA2.errors.standardErrorHandling(ATtILA2.errors.attilaException('conversionFactor')))
-            raise
-        
-        # from the lcc file object, get the dictionary with the VALUES attributes
-        lccValuesDict = lccObj.values
-      
         # create the cursor to add data to the output table
         outTableRows = arcpy.InsertCursor(newTable)        
         
