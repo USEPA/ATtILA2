@@ -84,7 +84,7 @@ def main(_argv):
     # Copy the necessary files and folders to our output directory.
     shutil.copy2(toolbox,outputDir)
     copyFolder(tbSource,outputDir,ignoreFiles)
-    copyFolder(pylet,outputDir,ignoreFiles)
+    copyFolder(pylet,os.path.join(outputDir,tbSource),ignoreFiles)
     
     # Rename the ATtILA2.py file
     inName = os.path.join(outputDir,'ToolboxSource\\ATtILA2\\scripts\\RENAME-TO--ATtILA2.py--ON-DEPLOY.py')
