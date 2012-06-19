@@ -10,3 +10,13 @@ errorLookup = {
 errorCommentPrefix = "Error Comments:\n---------------\n"
 errorDetailsPrefix = "\nError Details:\n--------------\n"
 errorUnknown = "Unexpected Error"
+
+linearUnitConversionError = '''Unable to determine conversion factor necessary to convert output linear units to metric units.
+
+Please be sure that the Environment Settings > Output Coordinates are not set to a system defined with angular units of 
+Decimal Degrees. If an Environment Settings > Output Coordinates is not set, please be sure to select an 'Input reporting
+unit feature' that does not have a spatial reference defined with angular units of decimal degrees. 
+
+It is also possible for this error to occur if the linear units defined in the Output Coordinates, if one is set, or the 
+'Input reporting unit feature', if an Output Coordinates is not set, is not found in ATtILA's look up table. Please 
+compare your linear units with those found in the ATtILA Help file.'''

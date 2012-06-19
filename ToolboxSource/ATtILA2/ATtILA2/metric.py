@@ -10,6 +10,7 @@ from pylet.arcpyutil import polygons
 
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
+from ATtILA2.constants import errorConstants
 from ATtILA2 import utils
 from ATtILA2.utils.tabarea import TabulateAreaTable
 
@@ -208,8 +209,8 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         try:
             conversionFactor = conversion.getSqMeterConversionFactor(outputLinearUnits)
         except:
-            #raise (ATtILA2.errors.standardErrorHandling(ATtILA2.errors.attilaException('conversionFactor')))
-            raise
+            raise errors.attilaException(errorConstants.linearUnitConversionError)
+            #raise
 
         # Construct the ATtILA metric output table
         newTable, metricsFieldnameDict = utils.table.tableWriterByCoefficient(outTable, metricsBaseNameList, 
