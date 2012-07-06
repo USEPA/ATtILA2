@@ -337,7 +337,11 @@ class ProportionsValidator(object):
         # Check if input raster is defined
         if self.inRasterParameter.value:
            
+            if hasattr(self.inRasterParameter.value, "dataSource"):
+                self.inRasterParameter.Value = str(self.inRasterParameter.value.dataSource)
+                self.parameters[self.inRasterIndex].value = self.inRasterParameter.Value
             # Check for is input raster layer has spatial reference
+            #self.spRefCheck(self.inRasterParameter)
             if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
                 self.inRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
             
@@ -354,7 +358,7 @@ class ProportionsValidator(object):
             # Update Snap Raster Parameter if it is empty
             if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
                 self.snapRasterParameter.value = str(self.inRasterParameter.value)
-
+            
         # Check input features
         if self.inputTableParameter.value and not self.inputTableParameter.hasError():
         
@@ -370,8 +374,7 @@ class ProportionsValidator(object):
             else:
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
-
-
+            
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
         # Check if a secondary input raster is indicated - use if raster can be either integer or float
@@ -385,7 +388,7 @@ class ProportionsValidator(object):
                 else:
                     if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
                         self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
-        
+                
         # Check if a secondary multiple input feature is indicated            
         if self.inMultiFeatureIndex:
             # if provided, get the valueTable and process each entry
