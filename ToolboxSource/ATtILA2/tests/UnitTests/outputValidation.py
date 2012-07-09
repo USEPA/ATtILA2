@@ -40,10 +40,13 @@ def compare(refFile, testFile):
                 refCur = arcpy.SearchCursor(refFile)
                 testCur = arcpy.SearchCursor(testFile)
                 # Start testing table values, break on first difference
-                for refRow, testRow in zip(refCur,testCur):
+                for refRow in refCur:
+                    testRow = testCur.next()
                     for field in refDesc.fields:
                         if not refRow.getValue(field.name) == testRow.getValue(field.name):
                             return "Validation failed, an error was found in row: " + \
-                                str(refRow.getValue(refDesc.OIDFieldName)) + ", column: " + field.name
+                                str(refRow.getValue(refDesc.OIDFieldName)) + ", column: " + field.name + \
+                                "Expected: " + str(refRow.getValue(field.name)) + ", actual: " + \
+                                str(testRow.getValue(field.name))
      
     return "Validation failed, cause unknown"                       

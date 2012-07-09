@@ -1,5 +1,5 @@
 '''
-Test to evaluate consistency of LandCoverProportion Calculation
+Test to evaluate consistency of Land Cover Proportion Calculation
 
 Created July 2012
 
@@ -18,8 +18,8 @@ def runTest():
             
         print "Running LandCoverProportion calculation"
         ATtILA2.metric.runLandCoverProportions(p.inReportingUnitFeature, p.reportingUnitIdField, p.inLandCoverGrid, 
-                                               p._lccName, p.lccFilePath, p.metricsToRun, p.outTable, p.processingCellSize, 
-                                               p.snapRaster, p.optionalFieldGroups)
+                                               p._lccName, p.lccFilePath, p.metricsToRun_LCP, p.outTable, 
+                                               p.processingCellSize, p.snapRaster, p.optionalFieldGroups)
     
         print "Testing LandCoverProportion results"
         results = outputValidation.compare(p.refLandCoverOutput,p.outTable)

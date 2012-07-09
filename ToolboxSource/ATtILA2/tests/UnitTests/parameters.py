@@ -2,29 +2,42 @@
 Input and output parameters for all metric tests.  
 Created July, 2012
 
-@author: thultgren
+@author: thultgren Torrin Hultgren, hultgren.torrin@epa.gov
 '''
 
-#  Parameters for all tools
-inReportingUnitFeature = "testData\\blkgrp2000.shp"
+# General Parameters for all tools
+baseDir = 'C:\\temp\\ATtILA2_data\\testData\\'
+inReportingUnitFeature = baseDir + "blkgrp2000.shp"
 reportingUnitIdField = "BKG_KEY"
-inLandCoverGrid = "testData\\nlcd00"
+inLandCoverGrid = baseDir + "nlcd00"
 _lccName = 'NLCD 2001'
 lccFilePath = '..\\..\\..\\LandCoverClassifications\\NLCD 2001.lcc'
-#metricsToRun = "'nat  -  [NINDEX]  All natural land use';'wtle  -  [pwtle]  Emergent Herbaceous Wetland';'shrb  -  [pshrb]  Shrubland';'hrbt  -  [phrbt]  All Herbaceous';'hrbg  -  [phrbg]  Grassland, Herbaceous';'hrbo  -  [phrbo]  Herbaceous Other';'bart  -  [pbart]  Barren';'unat  -  [UINDEX]  All human land use';'devt  -  [pdevt]  All Developed';'devo  -  [pdevo]  Developed, Open Space';'devl  -  [pdevl]  Developed, Low Intensity';'devm  -  [pdevm]  Developed, Medium Intensity';'devh  -  [pdevh]  Developed, High Intensity';'agt  -  [pagt]  All Agriculture';'agp  -  [pagp]  Pasture';'agc  -  [pagc]  Cultivated Crops'"
-metricsToRun = "'nat  -  [NINDEX]  All natural land use';'for  -  [pfor]  Forest';'wtlt  -  [pwtlt]  All Wetlands';'wtlw  -  [pwtlw]  Woody Wetland';'wtle  -  [pwtle]  Emergent Herbaceous Wetland';'shrb  -  [pshrb]  Shrubland';'hrbt  -  [phrbt]  All Herbaceous';'hrbg  -  [phrbg]  Grassland, Herbaceous';'hrbo  -  [phrbo]  Herbaceous Other';'bart  -  [pbart]  Barren';'unat  -  [UINDEX]  All human land use';'devt  -  [pdevt]  All Developed';'devo  -  [pdevo]  Developed, Open Space';'devl  -  [pdevl]  Developed, Low Intensity';'devm  -  [pdevm]  Developed, Medium Intensity';'devh  -  [pdevh]  Developed, High Intensity';'agt  -  [pagt]  All Agriculture';'agp  -  [pagp]  Pasture';'agc  -  [pagc]  Cultivated Crops'"
-outTable = 'testOutput\\TestOutput.dbf'
+outTable = baseDir + 'TestOutput.dbf'
 processingCellSize = '30' 
-snapRaster = 'testData\\nlcd00'
+snapRaster = inLandCoverGrid
 optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
 
-# Parameters for LandCoverProportions
-refLandCoverOutput = 'testData\\TestOutput.dbf' # Reference output data
 
-# Parameters for LandCoverOnSlopeProportionsTest
-refLandCoverOnSlopeOutput = 'testData\\TestOutput.dbf' # Reference output data
-inSlopeGrid = ''
-inSlopeThresholdValue = ''
+# Parameters unique to LandCoverProportions
+refLandCoverOutput = baseDir + 'LandCoverReference.dbf' # Reference output data
+metricsToRun_LCP = "'nat  -  [NINDEX]  All natural land use';'for  -  [pfor]  Forest';'wtlt  -  [pwtlt]  All Wetlands';'wtlw  -  [pwtlw]  Woody Wetland';'wtle  -  [pwtle]  Emergent Herbaceous Wetland';'shrb  -  [pshrb]  Shrubland';'hrbt  -  [phrbt]  All Herbaceous';'hrbg  -  [phrbg]  Grassland, Herbaceous';'hrbo  -  [phrbo]  Herbaceous Other';'bart  -  [pbart]  Barren';'unat  -  [UINDEX]  All human land use';'devt  -  [pdevt]  All Developed';'devo  -  [pdevo]  Developed, Open Space';'devl  -  [pdevl]  Developed, Low Intensity';'devm  -  [pdevm]  Developed, Medium Intensity';'devh  -  [pdevh]  Developed, High Intensity';'agt  -  [pagt]  All Agriculture';'agp  -  [pagp]  Pasture';'agc  -  [pagc]  Cultivated Crops'"
 
 
+# Parameters unique to LandCoverOnSlopeProportionsTest
+refLandCoverOnSlopeOutput = baseDir + 'LandCoveronSlopeReference.dbf' # Reference output data
+metricsToRun_LCSP = "'agt  -  [agtSL]  All Agriculture';'agp  -  [agpSL]  Pasture';'agc  -  [agcSL]  Cultivated Crops'"
+inSlopeGrid = baseDir + 'slope_pct'
+inSlopeThresholdValue = '10'
 
+
+# Parameters unique to LandCoverCoefficient
+refLandCoverCoefficient = baseDir + 'LandCoverCoefficientReference.dbf' # Reference output data
+metricsToRun_LCC = "'IMPERVIOUS  -  [PCTIA]  Percent Cover Total Impervious Area';'NITROGEN  -  [N_Load]  Estimated Nitrogen Loading Based on Land Cover';'PHOSPHORUS  -  [P_Load]  Estimated Phosphorus Loading Based on Land Cover'"
+optionalFieldGroups_LCC = "'QAFIELDS  -  Add Quality Assurance Fields'"
+
+
+# Parameters unique to LandCoverProportions
+refRiparianLandCover = baseDir + 'riparianLandCoverReference.dbf' # Reference output data
+metricsToRun_RLC = "'nat  -  [rnat]  All natural land use';'for  -  [rfor]  Forest';'wtlt  -  [rwtlt]  All Wetlands';'wtlw  -  [rwtlw]  Woody Wetland';'wtle  -  [rwtle]  Emergent Herbaceous Wetland';'shrb  -  [rshrb]  Shrubland';'hrbt  -  [rhrbt]  All Herbaceous';'hrbg  -  [rhrbg]  Grassland, Herbaceous';'hrbo  -  [rhrbo]  Herbaceous Other';'bart  -  [rbart]  Barren';'unat  -  [runat]  All human land use';'devt  -  [rdevt]  All Developed';'devo  -  [rdevo]  Developed, Open Space';'devl  -  [rdevl]  Developed, Low Intensity';'devm  -  [rdevm]  Developed, Medium Intensity';'devh  -  [rdevh]  Developed, High Intensity';'agt  -  [ragt]  All Agriculture';'agp  -  [ragp]  Pasture';'agc  -  [ragc]  Cultivated Crops'"
+inStreamFeatures = baseDir + 'nhd_msite.shp'
+inBufferDistance = '100' 

@@ -1,5 +1,5 @@
 '''
-Test to evaluate consistency of LandCoverProportion Calculation
+Test to evaluate consistency of Land Cover on Slope Proportion Calculation
 
 Created July 2012
 
@@ -16,17 +16,14 @@ def runTest():
         if arcpy.Exists(p.outTable):
             arcpy.Delete_management(p.outTable)
             
-        print "Running LandCoverProportion calculation"
-        '''runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
-                                   metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
-                                   snapRaster, optionalFieldGroups):'''
+        print "Running LandCoverOnSlopeProportion calculation"
         ATtILA2.metric.runLandCoverOnSlopeProportions(p.inReportingUnitFeature, p.reportingUnitIdField, 
-                                                      p.inLandCoverGrid, p._lccName, p.lccFilePath, p.metricsToRun,
+                                                      p.inLandCoverGrid, p._lccName, p.lccFilePath, p.metricsToRun_LCSP,
                                                       p.inSlopeGrid, p.inSlopeThresholdValue, p.outTable, 
                                                       p.processingCellSize, p.snapRaster, p.optionalFieldGroups)
     
-        print "Testing LandCoverProportion results"
-        results = outputValidation.compare(p.refLandCoverOutput,p.outTable)
+        print "Testing LandCoverOnSlopeProportion results"
+        results = outputValidation.compare(p.refLandCoverOnSlopeOutput,p.outTable)
         
         print results
     
