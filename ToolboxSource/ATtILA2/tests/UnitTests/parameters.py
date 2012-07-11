@@ -6,15 +6,15 @@ Created July, 2012
 '''
 
 # General Parameters for all tools
-baseDir = 'C:\\temp\\ATtILA2_data\\testData\\'
+baseDir = 'C:\\temp\\ATtILA2_data\\testData\\'  # Set this to your root folder
 inReportingUnitFeature = baseDir + "blkgrp2000.shp"
 reportingUnitIdField = "BKG_KEY"
 inLandCoverGrid = baseDir + "nlcd00"
 _lccName = 'NLCD 2001'
-lccFilePath = '..\\..\\..\\LandCoverClassifications\\NLCD 2001.lcc'
+lccFilePath = r'C:\sync\ATtILA2\SourceCode\ATtILA2\ToolboxSource\LandCoverClassifications\NLCD 2001.lcc'  
 outTable = baseDir + 'TestOutput.dbf'
 processingCellSize = '30' 
-snapRaster = inLandCoverGrid
+snapRaster = inLandCoverGrid  # Set by default to the input LandCover Grid, may be changed.
 optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
 
 
@@ -33,7 +33,7 @@ inSlopeThresholdValue = '10'
 # Parameters unique to LandCoverCoefficient
 refLandCoverCoefficient = baseDir + 'LandCoverCoefficientReference.dbf' # Reference output data
 metricsToRun_LCC = "'IMPERVIOUS  -  [PCTIA]  Percent Cover Total Impervious Area';'NITROGEN  -  [N_Load]  Estimated Nitrogen Loading Based on Land Cover';'PHOSPHORUS  -  [P_Load]  Estimated Phosphorus Loading Based on Land Cover'"
-optionalFieldGroups_LCC = "'QAFIELDS  -  Add Quality Assurance Fields'"
+optionalFieldGroups_LCC = "'QAFIELDS  -  Add Quality Assurance Fields'"  # Only metric with different optional Field Groups
 
 
 # Parameters unique to LandCoverProportions
