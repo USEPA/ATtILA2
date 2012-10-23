@@ -30,8 +30,8 @@ def modifyReportingUnit(inPoints, inPolys, outFC, bufferDist, unitID):
     """
     try:
         # First perform a buffer on all the points with the specified distance.  
-        # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every reporting
-        # unit.  The output is written to the user's scratch workspace.
+        # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every 
+        # reporting unit.  The output is written to the user's scratch workspace.
         bufferedPts = arcpy.Buffer_analysis(inPoints,"%scratchworkspace%/bbfpts", bufferDist,"FULL","ROUND","LIST",unitID)
         
         # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
