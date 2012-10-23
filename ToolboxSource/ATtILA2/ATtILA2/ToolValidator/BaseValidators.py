@@ -66,6 +66,7 @@ class ProportionsValidator(object):
     inRaster2Index = 0
     inRaster3Index = 0
     inMultiFeatureIndex = 0
+    inVector2Index = 0
     
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
@@ -127,6 +128,9 @@ class ProportionsValidator(object):
             
         if self.inMultiFeatureIndex:
             self.inMultiFeatureParameter = self.parameters[self.inMultiFeatureIndex]
+            
+        if self.inVector2Index:
+            self.inVector2Parameter = self.parameters[self.inVector2Index]
 
                
         # Additional local variables
@@ -402,6 +406,18 @@ class ProportionsValidator(object):
                         d = arcpy.Describe(value)
                         if d.spatialReference.name.lower() == "unknown":
                             self.inMultiFeatureParameter.setErrorMessage(self.noSpatialReferenceMessageMulti)
+                            
+        # Check if a secondary vector input feature is indicated
+        if self.inVector2Index:
+            # if provided, check if input vector2 is defined
+            if self.inVector2Parameter.value:
+                # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
+                if hasattr(self.inVector2Parameter.value, "dataSource"):
+                    if arcpy.Describe(self.inVector2Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                        self.inVector2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                else:
+                    if arcpy.Describe(self.inVector2Parameter.value).spatialReference.name.lower() == "unknown":
+                        self.inVector2Parameter.setErrorMessage(self.noSpatialReferenceMessage) 
 
             
 class CoefficientValidator(ProportionsValidator):

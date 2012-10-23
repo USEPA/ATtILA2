@@ -154,7 +154,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.rlcpConstants()
         # append the buffer distance value to the field suffix
-        metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance
+        metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
                 
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalc()
@@ -168,6 +168,37 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         
         # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
         rlcpCalc.calculateLCP()
+              
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
+        
+    
+def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+                            metricsToRun, inPointFeatures, inBufferDistance, outTable, processingCellSize, snapRaster, 
+                            optionalFieldGroups):
+    """ Interface for script executing Riparian Land Cover Proportion Metrics """   
+    
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.rlcpConstants()
+        # append the buffer distance value to the field suffix
+        metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
+                
+        # Create new instance of metricCalc class to contain parameters
+        splcpCalc = metricCalc()
+        
+        # Initial class setup
+        splcpCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        # Generate output tables
+        splcpCalc.makeTables(inLandCoverGrid)
+        
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        splcpCalc.calculateLCP()
               
     except Exception, e:
         errors.standardErrorHandling(e)

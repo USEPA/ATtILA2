@@ -92,5 +92,23 @@ class rlcpConstants(baseMetricConstants):
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
 
+class splcpConstants(baseMetricConstants):
+    name = "SamplePointLandCoverProportions"
+    shortName = "splcp"
+    fieldPrefix = "s"
+    fieldSuffix = ""
+    overlapName = "SP_OVERLAP"
+    totalAreaName = "SPLCP_TOT_A"
+    effectiveAreaName = "SPLCP_EFF_A"
+    excludedAreaName = "SPLCP_EXC_A"
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName
 
 

@@ -11,7 +11,7 @@ class lcospToolValidator(BaseValidators.ProportionsValidator):
     """Tool Validator for LandCoverSlopeOverlap"""
     
     filterList = lcospConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeLcsoField
+    overrideAttributeName = lccConstants.XmlAttributeLcospField
     fieldPrefix = lcospConstants.fieldPrefix
     fieldSuffix = lcospConstants.fieldSuffix
     metricShortName = lcospConstants.shortName
@@ -43,4 +43,13 @@ class rlcpToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = rlcpConstants.fieldPrefix
     fieldSuffix = rlcpConstants.fieldSuffix
     metricShortName = rlcpConstants.shortName
+    
+class splcpToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for RiparianLandCoverProportions"""
+    
+    filterList = splcpConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeSplcpField
+    fieldPrefix = splcpConstants.fieldPrefix
+    fieldSuffix = splcpConstants.fieldSuffix
+    metricShortName = splcpConstants.shortName
     
