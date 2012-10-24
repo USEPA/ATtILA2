@@ -110,5 +110,24 @@ class splcpConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    
+class caeamConstants(baseMetricConstants):
+    name = "CoreAndEdgeAreaMetrics"
+    shortName = "caeam"
+    fieldPrefix = "e"
+    fieldSuffix = ""
+    overlapName = "CE_OVERLAP"
+    totalAreaName = "CAEAM_TOT_A"
+    effectiveAreaName = "CAEAM_EFF_A"
+    excludedAreaName = "CAEAM_EXC_A"
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName
 
 

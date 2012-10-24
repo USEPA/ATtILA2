@@ -53,3 +53,12 @@ class splcpToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = splcpConstants.fieldSuffix
     metricShortName = splcpConstants.shortName
     
+class caeamToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for LandCoverProportions """
+    
+    filterList = caeamConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeCaeamField
+    fieldPrefix = caeamConstants.fieldPrefix
+    fieldSuffix = caeamConstants.fieldSuffix    
+    metricShortName = caeamConstants.shortName 
+    
