@@ -2,7 +2,6 @@
 
 '''
 import os
-import arcpy
 import errors
 import setupAndRestore
 from pylet import lcc
@@ -139,6 +138,40 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
         lcspCalc.calculateLCP()
         
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
+        
+        
+def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+                            metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
+    """ Interface for script executing Land Cover Proportion Metrics """   
+    
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.caeamConstants()
+        # append the edge width distance value to the field suffix
+        metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
+        
+        # Create new instance of metricCalc class to contain parameters
+        caeamCalc = metricCalc()
+        
+        # Initial class setup
+        caeamCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        # replace the inLandCoverGrid
+        inLandCoverGrid = utils.raster.getEdgeCoreGrid(caeamCalc.lccObj, inLandCoverGrid, inEdgeWidth)
+
+        
+        # Generate output tables
+        caeamCalc.makeTables(inLandCoverGrid)
+        
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        caeamCalc.calculateLCP()
+  
     except Exception, e:
         errors.standardErrorHandling(e)
         
