@@ -15,9 +15,32 @@ from ATtILA2.utils.tabarea import TabulateAreaTable
 
 
 class metricCalc():
-    # Initial class setup
-    def setup(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+    def makeAttilaOutTable(self):
+        # Construct the ATtILA metric output table
+        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByClass(self.outTable, 
+                                                                                  self.metricsBaseNameList, 
+                                                                                  self.optionalGroupsList, 
+                                                                                  self.metricConst, self.lccObj, 
+                                                                                  self.outIdField)    
+    def makeTabAreaTable(self):
+        # generate a zonal tabulate area table
+        self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField, 
+                                              self.inLandCoverGrid, self.tableName, self.lccObj)
+    
+    def calculateMetrics(self):
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList, 
+                                             self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, 
+                                             self.metricsFieldnameDict, self.zoneAreaDict)
+    
+    def replaceLCGrid(self):
+        # Several metric Calculations require this step, but others skip it.
+        pass
+    
+    # Function to run all the steps in the calculation process
+    def run(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
+        # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
@@ -44,45 +67,19 @@ class metricCalc():
         self.inReportingUnitFeature = inReportingUnitFeature
         self.reportingUnitIdField = reportingUnitIdField
         self.metricConst = metricConst
-    
-    # Generate output tables
-    def makeTables(self, inLandCoverGrid):
-        # Construct the ATtILA metric output table
-        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByClass(self.outTable, 
-                                                                                  self.metricsBaseNameList, 
-                                                                                  self.optionalGroupsList, 
-                                                                                  self.metricConst, self.lccObj, 
-                                                                                  self.outIdField)
-        # generate a zonal tabulate area table
-        self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField, inLandCoverGrid, 
-                                              self.tableName, self.lccObj)
-    
-    def calculateLCP(self):
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList, 
-                                             self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, 
-                                             self.metricsFieldnameDict, self.zoneAreaDict)
- 
-class metricCalcLCC(metricCalc):
-    # Generate output tables
-    def makeTables(self, inLandCoverGrid):
-        # Construct the ATtILA metric output table
-        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByCoefficient(self.outTable, 
-                                                                                        self.metricsBaseNameList, 
-                                                                                        self.optionalGroupsList, 
-                                                                                        self.metricConst, self.lccObj, 
-                                                                                        self.outIdField)
-        # generate a zonal tabulate area table
-        self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField, inLandCoverGrid, 
-                                              self.tableName, self.lccObj)
-    
-    def calculateLCC(self, conversionFactor):
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        utils.calculate.landCoverCoefficientCalculator(self.lccObj.values, self.metricsBaseNameList, 
-                                                       self.optionalGroupsList, self.metricConst, self.outIdField, 
-                                                       self.newTable, self.tabAreaTable, self.metricsFieldnameDict, 
-                                                       self.zoneAreaDict, conversionFactor)
-    
+        
+        # Replace LandCover Grid, if necessary
+        self.replaceLCGrid()
+        
+        # Make Output Tables
+        self.makeAttilaOutTable()
+        
+        # Generate Tabulation tables
+        self.makeTabAreaTable()
+        
+        # Run final metric calculation
+        self.calculateMetrics()
+        
 
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
@@ -95,21 +92,22 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         # Create new instance of metricCalc class to contain parameters
         lcpCalc = metricCalc()
         
-        # Initial class setup
-        lcpCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        # Run Calculation
+        lcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-        
-        # Generate output tables
-        lcpCalc.makeTables(inLandCoverGrid)
-        
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        lcpCalc.calculateLCP()
   
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
         setupAndRestore.standardRestore()
+
+class metricCalcLCOSP(metricCalc):
+    # Subclass that overrides specific functions for the LandCoverOnSlopeProportions calculation
+    def replaceLCGrid(self):
+        # replace the inLandCoverGrid
+        self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid, 
+                                                           self.inSlopeThresholdValue)
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
@@ -123,20 +121,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
         # Create new instance of metricCalc class to contain parameters
-        lcspCalc = metricCalc()
+        lcspCalc = metricCalcLCOSP()
         
-        # Initial class setup
-        lcspCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        # Run Calculation
+        lcspCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-        
-        # replace the inLandCoverGrid
-        inLandCoverGrid = utils.raster.getIntersectOfGrids(lcspCalc.lccObj, inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue)
-    
-        # Generate output tables
-        lcspCalc.makeTables(inLandCoverGrid)
-        
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        lcspCalc.calculateLCP()
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -144,7 +133,12 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     finally:
         setupAndRestore.standardRestore()
         
-        
+class metricCalcCAEM(metricCalc):
+    # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
+    def replaceLCGrid(self):
+        # replace the inLandCoverGrid
+        self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(self.lccObj, self.inLandCoverGrid, self.inEdgeWidth)
+
 def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics """   
@@ -156,21 +150,11 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
         
         # Create new instance of metricCalc class to contain parameters
-        caeamCalc = metricCalc()
+        caeamCalc = metricCalcCAEM()
         
-        # Initial class setup
-        caeamCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        # Run Calculation
+        caeamCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-        
-        # replace the inLandCoverGrid
-        inLandCoverGrid = utils.raster.getEdgeCoreGrid(caeamCalc.lccObj, inLandCoverGrid, inEdgeWidth)
-
-        
-        # Generate output tables
-        caeamCalc.makeTables(inLandCoverGrid)
-        
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        caeamCalc.calculateLCP()
   
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -192,15 +176,9 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalc()
         
-        # Initial class setup
-        rlcpCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        # Run Calculation
+        rlcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-        
-        # Generate output tables
-        rlcpCalc.makeTables(inLandCoverGrid)
-        
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        rlcpCalc.calculateLCP()
               
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -208,7 +186,11 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
     finally:
         setupAndRestore.standardRestore()
         
-    
+class metricCalcSPLCP(metricCalc):
+    # Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation
+    def makeTabAreaTable(self):
+        pass
+
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, inPointFeatures, inBufferDistance, outTable, processingCellSize, snapRaster, 
                             optionalFieldGroups):
@@ -223,21 +205,33 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalc()
         
-        # Initial class setup
-        splcpCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        # Run Calculation
+        splcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-        
-        # Generate output tables
-        splcpCalc.makeTables(inLandCoverGrid)
-        
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        splcpCalc.calculateLCP()
               
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
         setupAndRestore.standardRestore()
+
+ 
+class metricCalcLCC(metricCalc):
+    # Subclass that overrides specific functions for the land Cover Coefficient calculation
+    def makeAttilaOutTable(self):
+        # Construct the ATtILA metric output table
+        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByCoefficient(self.outTable, 
+                                                                                        self.metricsBaseNameList, 
+                                                                                        self.optionalGroupsList, 
+                                                                                        self.metricConst, self.lccObj, 
+                                                                                        self.outIdField)
+    def calculateMetrics(self):
+        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverCoefficientCalculator(self.lccObj.values, self.metricsBaseNameList, 
+                                                       self.optionalGroupsList, self.metricConst, self.outIdField, 
+                                                       self.newTable, self.tabAreaTable, self.metricsFieldnameDict, 
+                                                       self.zoneAreaDict, self.conversionFactor)
+ 
     
 def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, 
                                       lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, 
@@ -253,11 +247,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         
         # Create new instance of metricCalc LCC subclass to contain parameters
         lccCalc = metricCalcLCC()
-        
-        # Initial class setup
-        lccCalc.setup(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-                            
+              
         # see what linear units are used in the tabulate area table 
         outputLinearUnits = settings.getOutputLinearUnits(inReportingUnitFeature)
 
@@ -267,11 +257,13 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         except:
             raise errors.attilaException(errorConstants.linearUnitConversionError)
             #raise
+               
+        # Set the conversion factor as a class attribute
+        lccCalc.conversionFactor = conversionFactor
         
-        lccCalc.makeTables(inLandCoverGrid)
-        
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        lccCalc.calculateLCC(conversionFactor)
+        # Run calculation
+        lccCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
     except Exception, e:
         errors.standardErrorHandling(e)
