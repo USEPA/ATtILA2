@@ -67,6 +67,7 @@ class metricCalc():
         self.inReportingUnitFeature = inReportingUnitFeature
         self.reportingUnitIdField = reportingUnitIdField
         self.metricConst = metricConst
+        self.inLandCoverGrid = inLandCoverGrid
         
         # Replace LandCover Grid, if necessary
         self.replaceLCGrid()
@@ -122,6 +123,9 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         
         # Create new instance of metricCalc class to contain parameters
         lcspCalc = metricCalcLCOSP()
+        
+        lcspCalc.inSlopeGrid = inSlopeGrid
+        lcspCalc.inSlopeThresholdValue = inSlopeThresholdValue
         
         # Run Calculation
         lcspCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
