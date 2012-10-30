@@ -15,28 +15,19 @@ from ATtILA2.utils.tabarea import TabulateAreaTable
 
 
 class metricCalc():
-    def makeAttilaOutTable(self):
-        # Construct the ATtILA metric output table
-        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByClass(self.outTable, 
-                                                                                  self.metricsBaseNameList, 
-                                                                                  self.optionalGroupsList, 
-                                                                                  self.metricConst, self.lccObj, 
-                                                                                  self.outIdField)    
-    def makeTabAreaTable(self):
-        # generate a zonal tabulate area table
-        self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField, 
-                                              self.inLandCoverGrid, self.tableName, self.lccObj)
+    """ This class contains the basic steps to perform a land cover metric calculation.
     
-    def calculateMetrics(self):
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList, 
-                                             self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, 
-                                             self.metricsFieldnameDict, self.zoneAreaDict)
+    **Description:**
     
-    def replaceLCGrid(self):
-        # Several metric Calculations require this step, but others skip it.
-        pass
+        The long metric calculation process only varies slightly from metric to metric.  By embedding the series of 
+        calculation steps and parameters in a class object, we can make any step that might need to be altered for 
+        a particular calculation into a separate function that can be overridden.  This cuts down on duplicate code and 
+        eases maintenance.  Each metric calculation need only instantiate a subclass of metricCalc, override the 
+        necessary functions, and then run the main 'run' function - all other code will be inherited from the main 
+        class.  If a new step needs to be pulled out of the main 'run' function so that it can be altered, it can be 
+        done without affecting any existing code.  
     
+    """
     # Function to run all the steps in the calculation process
     def run(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
@@ -70,16 +61,38 @@ class metricCalc():
         self.inLandCoverGrid = inLandCoverGrid
         
         # Replace LandCover Grid, if necessary
-        self.replaceLCGrid()
+        self._replaceLCGrid()
         
         # Make Output Tables
-        self.makeAttilaOutTable()
+        self._makeAttilaOutTable()
         
         # Generate Tabulation tables
-        self.makeTabAreaTable()
+        self._makeTabAreaTable()
         
         # Run final metric calculation
-        self.calculateMetrics()
+        self._calculateMetrics()
+        
+    def _makeAttilaOutTable(self):
+        # Internal function to construct the ATtILA metric output table
+        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByClass(self.outTable, 
+                                                                                  self.metricsBaseNameList, 
+                                                                                  self.optionalGroupsList, 
+                                                                                  self.metricConst, self.lccObj, 
+                                                                                  self.outIdField)    
+    def _makeTabAreaTable(self):
+        # Internal function to generate a zonal tabulate area table
+        self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField, 
+                                              self.inLandCoverGrid, self.tableName, self.lccObj)
+    
+    def _calculateMetrics(self):
+        # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList, 
+                                             self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, 
+                                             self.metricsFieldnameDict, self.zoneAreaDict)
+    
+    def _replaceLCGrid(self):
+        # Internal function to replace the landcover grid.  Several metric Calculations require this step, but others skip it.
+        pass
         
 
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
@@ -105,7 +118,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
 
 class metricCalcLCOSP(metricCalc):
     # Subclass that overrides specific functions for the LandCoverOnSlopeProportions calculation
-    def replaceLCGrid(self):
+    def _replaceLCGrid(self):
         # replace the inLandCoverGrid
         self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid, 
                                                            self.inSlopeThresholdValue)
@@ -139,7 +152,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         
 class metricCalcCAEM(metricCalc):
     # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
-    def replaceLCGrid(self):
+    def _replaceLCGrid(self):
         # replace the inLandCoverGrid
         self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(self.lccObj, self.inLandCoverGrid, self.inEdgeWidth)
 
@@ -192,7 +205,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         
 class metricCalcSPLCP(metricCalc):
     # Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation
-    def makeTabAreaTable(self):
+    def _makeTabAreaTable(self):
         pass
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
@@ -222,14 +235,14 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
  
 class metricCalcLCC(metricCalc):
     # Subclass that overrides specific functions for the land Cover Coefficient calculation
-    def makeAttilaOutTable(self):
+    def _makeAttilaOutTable(self):
         # Construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByCoefficient(self.outTable, 
                                                                                         self.metricsBaseNameList, 
                                                                                         self.optionalGroupsList, 
                                                                                         self.metricConst, self.lccObj, 
                                                                                         self.outIdField)
-    def calculateMetrics(self):
+    def _calculateMetrics(self):
         # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
         utils.calculate.landCoverCoefficientCalculator(self.lccObj.values, self.metricsBaseNameList, 
                                                        self.optionalGroupsList, self.metricConst, self.outIdField, 
