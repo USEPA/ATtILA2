@@ -3,3 +3,4 @@ import files
 import raster
 import settings
 import table
+import vector
