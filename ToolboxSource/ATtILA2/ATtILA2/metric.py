@@ -209,7 +209,7 @@ class metricCalcSPLCP(metricCalc):
         pass
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
-                            metricsToRun, inPointFeatures, inBufferDistance, outTable, processingCellSize, snapRaster, 
+                            metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, snapRaster, 
                             optionalFieldGroups):
     """ Interface for script executing Riparian Land Cover Proportion Metrics """   
     

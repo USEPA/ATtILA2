@@ -8,7 +8,7 @@ srcDirPath = os.path.join(tbxParentDirPath, sourceName)
 sys.path.append(srcDirPath)
 import ATtILA2
 
-class ToolValidator (ATtILA2.ToolValidator.splcpToolValidator):
+class ToolValidator (ATtILA2.ToolValidator.rlcpToolValidator):
     " Class for validating parameters "
 
     inTableIndex = 0
@@ -19,4 +19,4 @@ class ToolValidator (ATtILA2.ToolValidator.splcpToolValidator):
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 
     srcDirName = sourceName
-    inVector2Index = 6
+    inMultiFeatureIndex = 6

@@ -32,3 +32,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
         SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause)
     
     return SLPxLCGrid
+
+
+def getEdgeCoreGrid(lccObj, inLandCoverGrid, inEdgeWidth):
+    pass
