@@ -211,16 +211,19 @@ class metricCalcSPLCP(metricCalc):
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, snapRaster, 
                             optionalFieldGroups):
-    """ Interface for script executing Riparian Land Cover Proportion Metrics """   
+    """ Interface for script executing Sample Point Land Cover Proportion Metrics """   
     
     try:
         # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.rlcpConstants()
+        metricConst = metricConstants.splcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
+        
+        # Buffer the points and use the output as the new reporting units
+        inReportingUnitFeature = utils.vector.bufferPoints(inPointFeatures,inReportingUnitFeature,"#",inBufferDistance,ruLinkField)
                 
         # Create new instance of metricCalc class to contain parameters
-        splcpCalc = metricCalc()
+        splcpCalc = metricCalcSPLCP()
         
         # Run Calculation
         splcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
