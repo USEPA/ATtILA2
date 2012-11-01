@@ -198,7 +198,7 @@ if __name__ == "__main__":
         main(sys.argv)
     except Exception, e:
         # If an error occurred, print line number and error message
-        import traceback, sys
+        import sys
         tb = sys.exc_info()[2]
         print "Line %i" % tb.tb_lineno
         print e.message

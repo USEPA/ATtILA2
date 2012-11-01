@@ -4,13 +4,14 @@ Created Aug, 2012
 
 @author: thultgren, Torrin Hultgren, hultgren.torrin@epa.gov
 '''
-import arcpy
+import arcpy, time, vector
 
-inPoints = "C:/temp/ATtILA2_data/shpfiles/bufftstpts.shp"
+'''inPoints = "C:/temp/ATtILA2_data/shpfiles/bufftstpts.shp"
 inPolys = "C:/temp/ATtILA2_data/shpfiles/wtrshdDefinedProjection.shp"
 outFC = "C:/temp/ATtILA2_data/shpfiles/buffOutput.shp"
 bufferDist = "10000 Meters"
-unitID = "HUC_STR" #"MULTI_ID"
+unitID = "HUC_STR" #"MULTI_ID"'''
+
 
 def modifyReportingUnit(inPoints, inPolys, outFC, bufferDist, unitID):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -77,10 +78,14 @@ def modifyReportingUnit(inPoints, inPolys, outFC, bufferDist, unitID):
             if i == 0: # If it's the first time through
                 # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
                 # feature class.
+                print "performing first clip"
+                print time.strftime("%#c",time.localtime())
                 arcpy.Clip_analysis("buff_lyr","poly_lyr",outFC,"#")
                 i = 1 # Toggle the flag.
             else: # If it's not the first time through and the output feature class already exists
                 # Perform the clip, but output the result to memory rather than writing to disk
+                print "clipping " + unitID
+                print time.strftime("%#c",time.localtime())
                 clipResult = arcpy.Clip_analysis("buff_lyr","poly_lyr","in_memory/buff","#")
                 # Append the in-memory result to the output feature class
                 arcpy.Append_management(clipResult,outFC,"NO_TEST")
@@ -95,3 +100,21 @@ def modifyReportingUnit(inPoints, inPolys, outFC, bufferDist, unitID):
         del Rows
         # Delete the temporary buffered points layer from the scratch workspace.  
         arcpy.Delete_management(bufferedPts)
+
+def main(_argv):
+    inPoints = r"C:\temp\ATtILA2_data\Ohio\Shapefiles\nhd_msite.shp"
+    inPolys = r"C:\temp\ATtILA2_data\Ohio\TestPolygons\poly_testset_no_slivers.shp"
+    outFC = r"C:\temp\ATtILA2_data\Ohio\Shapefiles\buffOutput2.shp"
+    bufferDist = "500 Meters"
+    unitID = "LG_03_SITE" #"MULTI_ID"
+    vector.bufferFeaturesByIntersect(inPoints, inPolys, outFC, bufferDist, unitID)
+    
+if __name__ == "__main__":
+    try:    
+        main("")
+    except Exception, e:
+        # If an error occurred, print line number and error message
+        import sys
+        tb = sys.exc_info()[2]
+        print "Line %i" % tb.tb_lineno
+        print e.message
