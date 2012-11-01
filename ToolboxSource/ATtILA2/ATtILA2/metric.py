@@ -46,7 +46,8 @@ class metricCalc():
         
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
         self.tableName = None
-        if globalConstants.intermediateName in self.optionalGroupsList: 
+        self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
+        if self.saveIntermediates: 
             self.tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
         # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
         self.zoneAreaDict = None
@@ -121,7 +122,7 @@ class metricCalcLCOSP(metricCalc):
     def _replaceLCGrid(self):
         # replace the inLandCoverGrid
         self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid, 
-                                                           self.inSlopeThresholdValue)
+                                                           self.inSlopeThresholdValue, self.saveIntermediates)
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
