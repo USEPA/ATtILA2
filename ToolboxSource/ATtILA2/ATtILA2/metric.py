@@ -2,6 +2,7 @@
 
 '''
 import os
+import arcpy
 import errors
 import setupAndRestore
 from pylet import lcc
@@ -122,7 +123,10 @@ class metricCalcLCOSP(metricCalc):
     def _replaceLCGrid(self):
         # replace the inLandCoverGrid
         self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid, 
-                                                           self.inSlopeThresholdValue, self.saveIntermediates)
+                                                           self.inSlopeThresholdValue)
+        
+        if self.saveIntermediates:
+            self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))  
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 

@@ -1,11 +1,11 @@
 """ Utilities specific to rasters
 
 """
-import arcpy
+
 from arcpy.sa import Raster, Con
 
 
-def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue, saveIntermediates):
+def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue):
         
     # Generate the slope X land cover grid where areas below the threshold slope are
     # set to the value 'Maximum Land Cover Class Value + 1'.
@@ -29,10 +29,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
         # build a whereClause string (e.g. "VALUE = 11 or VALUE = 12") to identify where on the land cover grid excluded values occur
         whereExcludedClause = "VALUE = " + " or VALUE = ".join([str(item) for item in excludedValues])
     
-        SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause)
-        
-    if saveIntermediates:
-        SLPxLCGrid.save(arcpy.CreateUniqueName("slxlc"))        
+        SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause) 
     
     return SLPxLCGrid
 
