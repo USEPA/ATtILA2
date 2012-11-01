@@ -199,7 +199,13 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         metricConst = metricConstants.rlcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
-                
+                      
+        # Generate a default filename for the buffer feature class
+        bufferName = metricConst.shortName + inBufferDistance.split()[0]
+        
+        # Generate the buffer area to use in the metric calculation
+        utils.vector.bufferFeaturesByIntersect(inStreamFeatures, inReportingUnitFeature, bufferName, inBufferDistance, reportingUnitIdField)
+
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalc()
         
@@ -228,9 +234,12 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         metricConst = metricConstants.splcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
+
+        # Generate a default filename for the buffer feature class
+        bufferName = metricConst.shortName + inBufferDistance.split()[0]
         
         # Buffer the points and use the output as the new reporting units
-        inReportingUnitFeature = utils.vector.bufferPoints(inPointFeatures,inReportingUnitFeature,"#",inBufferDistance,ruLinkField)
+        inReportingUnitFeature = utils.vector.bufferFeaturesByID(inPointFeatures,inReportingUnitFeature,bufferName,inBufferDistance,ruLinkField)
                 
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP()
