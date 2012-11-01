@@ -67,6 +67,7 @@ class ProportionsValidator(object):
     inRaster3Index = 0
     inMultiFeatureIndex = 0
     inVector2Index = 0
+    inDistanceIndex = 0
     
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
@@ -90,6 +91,7 @@ class ProportionsValidator(object):
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
+        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -131,6 +133,9 @@ class ProportionsValidator(object):
             
         if self.inVector2Index:
             self.inVector2Parameter = self.parameters[self.inVector2Index]
+            
+        if self.inDistanceIndex:
+            self.inDistanceParameter = self.parameters[self.inDistanceIndex]
 
                
         # Additional local variables
@@ -378,6 +383,12 @@ class ProportionsValidator(object):
             else:
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+
+        # Check if processingCellSize is a positive number            
+        if self.processingCellSizeParameter.value:
+            cellSizeValue = self.processingCellSizeParameter.value
+            if float(str(cellSizeValue)) <= 0:
+                self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
             
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
@@ -418,7 +429,19 @@ class ProportionsValidator(object):
                 else:
                     if arcpy.Describe(self.inVector2Parameter.value).spatialReference.name.lower() == "unknown":
                         self.inVector2Parameter.setErrorMessage(self.noSpatialReferenceMessage) 
-
+                        
+        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        if self.inDistanceIndex:
+            if self.inDistanceParameter.value:
+                distanceValue = self.inDistanceParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strDistance = str(distanceValue).split()[0]
+                if float(strDistance) <= 0.0:
+                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            else:
+                # need the else condition as a 0 value won't trigger the if clause 
+                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                        
             
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """

@@ -20,3 +20,4 @@ class ToolValidator (ATtILA2.ToolValidator.rlcpToolValidator):
     optionalFieldsIndex = 11 
     srcDirName = sourceName
     inMultiFeatureIndex = 6
+    inDistanceIndex = 7

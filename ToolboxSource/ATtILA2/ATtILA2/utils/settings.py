@@ -53,3 +53,14 @@ def checkGridValuesInLCC(inLandCoverGrid, lccObj):
         
     del row
     del rows
+    
+    
+def checkGridCellDimensions(inLandCoverGrid):
+    """ Checks input raster cell dimensions. Warns user if the x and y values are different. """
+    XBand = arcpy.GetRasterProperties_management(inLandCoverGrid, "CELLSIZEX" )
+    YBand = arcpy.GetRasterProperties_management(inLandCoverGrid, "CELLSIZEY")
+    #Check to make sure the grid size are square if it is not generate an error
+    if int(float(str(XBand))) == int(float(str(YBand))):
+        pass
+    else:
+        arcpy.AddWarning(inLandCoverGrid+" is not square. Output calculations will be based on Processing Cell Size.")

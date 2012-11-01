@@ -42,6 +42,8 @@ class metricCalc():
         self.lccClassesDict = self.lccObj.classes
         # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, self.lccObj)
+        # alert user if the land cover grid cells are not square (default to size along x axis)
+        utils.settings.checkGridCellDimensions(inLandCoverGrid)
         # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field    
         self.outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
@@ -160,6 +162,9 @@ class metricCalcCAEAM(metricCalc):
     def _replaceLCGrid(self):
         # replace the inLandCoverGrid
         self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(self.lccObj, self.inLandCoverGrid, self.inEdgeWidth)
+        
+        if self.saveIntermediates:
+            self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset")) 
 
 def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
