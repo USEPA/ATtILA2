@@ -150,7 +150,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     finally:
         setupAndRestore.standardRestore()
         
-class metricCalcCAEM(metricCalc):
+class metricCalcCAEAM(metricCalc):
     # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
     def _replaceLCGrid(self):
         # replace the inLandCoverGrid
@@ -164,10 +164,10 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caeamConstants()
         # append the edge width distance value to the field suffix
-        metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
+        metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth        
         
         # Create new instance of metricCalc class to contain parameters
-        caeamCalc = metricCalcCAEM()
+        caeamCalc = metricCalcCAEAM()
         
         # Run Calculation
         caeamCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
