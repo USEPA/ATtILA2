@@ -221,8 +221,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         
 class metricCalcSPLCP(metricCalc):
     # Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation
-    def _makeTabAreaTable(self):
-        pass
+    pass
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, snapRaster, 
@@ -239,13 +238,13 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         bufferName = metricConst.shortName + inBufferDistance.split()[0]
         
         # Buffer the points and use the output as the new reporting units
-        inReportingUnitFeature = utils.vector.bufferFeaturesByID(inPointFeatures,inReportingUnitFeature,bufferName,inBufferDistance,ruLinkField)
-                
+        bufferedFeatures = utils.vector.bufferFeaturesByID(inPointFeatures,inReportingUnitFeature,bufferName,inBufferDistance,reportingUnitIdField,ruLinkField)
+        
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP()
         
         # Run Calculation
-        splcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        splcpCalc.run(bufferedFeatures, ruLinkField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
               
     except Exception, e:

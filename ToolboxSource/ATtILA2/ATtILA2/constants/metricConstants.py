@@ -98,9 +98,9 @@ class splcpConstants(baseMetricConstants):
     fieldPrefix = "s"
     fieldSuffix = ""
     overlapName = "SP_OVERLAP"
-    totalAreaName = "SPLCP_TOT_A"
-    effectiveAreaName = "SPLCP_EFF_A"
-    excludedAreaName = "SPLCP_EXC_A"
+    totalAreaName = "SPLCP_TOTA"
+    effectiveAreaName = "SPLCP_EFFA"
+    excludedAreaName = "SPLCP_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [

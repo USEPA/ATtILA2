@@ -4,7 +4,7 @@
 
 import arcpy, pylet
 
-def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, unitID):
+def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
         distance of a layer - the buffered features may be any geometry
     **Description:**
@@ -27,24 +27,24 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, unitID):
         # First perform a buffer on all the points with the specified distance.  
         # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every 
         # reporting unit.  The output is written to the user's scratch workspace.
-        bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"%scratchworkspace%/bFeats", bufferDist,"FULL","ROUND","LIST",unitID)
+        bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"%scratchworkspace%/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField)
         
         # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
         # improve performance if we set up the right syntax for the whereclauses ahead of time.
-        buffUnitID = arcpy.AddFieldDelimiters(bufferedFeatures,unitID)
-        repUnitID = arcpy.AddFieldDelimiters(repUnits,unitID)
+        buffUnitID = arcpy.AddFieldDelimiters(bufferedFeatures,ruLinkField)
+        repUnitID = arcpy.AddFieldDelimiters(repUnits,ruIDField)
         
         # Similarly, the syntax for the whereclause depends on the type of the reporting unit ID field. 
-        delimitBuffValues = valueDelimiter(arcpy.ListFields(bufferedFeatures,unitID)[0].type)
-        delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,unitID)[0].type)
+        delimitBuffValues = valueDelimiter(arcpy.ListFields(bufferedFeatures,ruLinkField)[0].type)
+        delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,ruIDField)[0].type)
 
         i = 0 # Flag used to create the outFeatures the first time through.
         # Create a Search cursor to iterate through the reporting units with buffered features.
-        Rows = arcpy.SearchCursor(bufferedFeatures,"","",unitID)
+        Rows = arcpy.SearchCursor(bufferedFeatures,"","",ruLinkField)
         # For each reporting unit:
         for row in Rows:
             # Get the reporting unit ID
-            rowID = row.getValue(unitID)
+            rowID = row.getValue(ruLinkField)
             # Set up the whereclause for the buffered features and the reporting units to select one of each
             whereClausePts = buffUnitID + " = " + delimitBuffValues(rowID)
             whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
