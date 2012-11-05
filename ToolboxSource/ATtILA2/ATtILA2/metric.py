@@ -204,14 +204,18 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         bufferName = metricConst.shortName + inBufferDistance.split()[0]
         
         # Generate the buffer area to use in the metric calculation
-        utils.vector.bufferFeaturesByIntersect(inStreamFeatures, inReportingUnitFeature, bufferName, inBufferDistance, reportingUnitIdField)
+        bufferedFeatures = utils.vector.bufferFeaturesByIntersect(inStreamFeatures, inReportingUnitFeature, bufferName, inBufferDistance, reportingUnitIdField)
 
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalc()
         
         # Run Calculation
-        rlcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        rlcpCalc.run(bufferedFeatures, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        # delete the buffered feature unless the user checked INTERMETIATES option
+        if not rlcpCalc.saveIntermediates:
+            arcpy.Delete_management(bufferedFeatures)
               
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -246,6 +250,10 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         # Run Calculation
         splcpCalc.run(bufferedFeatures, ruLinkField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        # delete the buffered feature unless the user checked INTERMETIATES option
+        if not splcpCalc.saveIntermediates:
+            arcpy.Delete_management(bufferedFeatures)
               
     except Exception, e:
         errors.standardErrorHandling(e)
