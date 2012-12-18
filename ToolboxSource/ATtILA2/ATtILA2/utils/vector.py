@@ -27,6 +27,7 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         # First perform a buffer on all the points with the specified distance.  
         # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every 
         # reporting unit.  The output is written to the user's scratch workspace.
+        arcpy.AddMessage("Buffering input features...")
         bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"%scratchworkspace%/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField)
         
         # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
@@ -53,6 +54,7 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
             # definition expression.
             arcpy.MakeFeatureLayer_management(bufferedFeatures,"buff_lyr",whereClausePts)
             arcpy.MakeFeatureLayer_management(repUnits,"poly_lyr",whereClausePolys)
+            arcpy.AddMessage("Clipping buffers for reporting unit " + str(rowID))
             if i == 0: # If it's the first time through
                 # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
                 # feature class.
@@ -72,10 +74,13 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         return outFeatures
     
     finally:
-        # Clean up the search cursor object
-        del Rows
-        # Delete the temporary buffered features layer from the scratch workspace.  
-        arcpy.Delete_management(bufferedFeatures)
+        try:
+            # Clean up the search cursor object
+            del Rows
+            # Delete the temporary buffered features layer from the scratch workspace.  
+            arcpy.Delete_management(bufferedFeatures)
+        except:
+            pass
 
 def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -86,7 +91,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         calculate metrics with the buffered areas. It is useful for generating metrics near streams that fall within the
         reporting unit.
     **Arguments:**
-        * *inFeatures* - feature class that will be buffered
+        * *inFeatures* - one or more feature class that will be buffered
         * *repUnits* - reporting units that will be used for the clip
         * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
         * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
@@ -96,6 +101,11 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         
         # Get a unique name with full path for the output features - will default to current workspace:
         outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
+        
+        inFeaturesList = inFeatures.split(";")
+        inFeatGeomDict = {}
+        for inFC in inFeaturesList:
+            inFeatGeomDict[inFC] = arcpy.Describe(inFC).shapeType
         
         # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
         # improve performance if we set up the right syntax for the whereclauses ahead of time.
@@ -119,10 +129,47 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
             # definition expression.
             arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
-            # Clip the features that should be buffered to this reporting unit, and output the result to memory.
-            clipResult = arcpy.Clip_analysis(inFeatures,"ru_lyr","in_memory/clip1","#")
-            # Buffer these in-memory selected features and merge the output into a single multipart feature
-            bufferResult = arcpy.Buffer_analysis(clipResult,"in_memory/clip_buffer",bufferDist,"FULL","ROUND","ALL","#")
+            
+            # Initialize list of buffered features to merge
+            bufferList = []
+            # Initialize list of polygon features for erase
+            eraseList = []
+            # Initialize a counter to help with naming intermediate results
+            j = 1
+            
+            # For each input Feature Class:
+            for inFC in inFeaturesList:
+                k = str(j) #string version of the counter
+                # Clip the features that should be buffered to this reporting unit, and output the result to memory.
+                clipResult = arcpy.Clip_analysis(inFC,"ru_lyr","in_memory/clip" + k,"#")
+                
+                if inFeatGeomDict[inFC] == "Polygon":
+                    eraseList.append(clipResult)
+                
+                # Buffer these in-memory selected features and merge the output into a single multipart feature
+                bufferResult = arcpy.Buffer_analysis(clipResult,"in_memory/clip_buffer" + k,bufferDist,"FULL","ROUND","ALL","#")
+                
+                # Add this result to the list of buffered features
+                bufferList.append(bufferResult)               
+                
+                j += 1 # increment counter
+                
+            if len(inFeaturesList) > 1:
+                # Union all of the buffered features
+                unionBuffer = arcpy.Union_analysis(bufferList,"in_memory/union_buffer","ONLY_FID")
+                # Dissolve the union layer
+                bufferResult = arcpy.Dissolve_management(unionBuffer,"in_memory/dissolve_union")
+            else:
+                bufferResult = bufferList[0]
+
+            # If the input features are polygons, we need to remove the interior polygons from the buffer areas.
+            for eraseFeatures in eraseList:
+                
+                newBufferResult = arcpy.Erase_analysis(bufferResult,eraseFeatures,"in_memory/erase_buffer")
+                arcpy.Delete_management(bufferResult)
+                bufferResult = newBufferResult
+            
+                
             # Add a field to this output that will contain the reporting unit ID so that when we merge the buffers
             # the reporting unit IDs will be maintained.  
             arcpy.AddField_management(bufferResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
@@ -137,21 +184,23 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 i = 1 # Toggle the flag.
             else: # If it's not the first time through and the output feature class already exists
                 # Perform the clip, but output the result to memory rather than writing to disk
-                clipResult2 = arcpy.Clip_analysis(bufferResult,"ru_lyr","in_memory/clip2","#")
+                clipResult2 = arcpy.Clip_analysis(bufferResult,"ru_lyr","in_memory/finalclip","#")
                 # Append the in-memory result to the output feature class
                 arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
                 # Delete the in-memory result to conserve system resources
                 arcpy.Delete_management(clipResult2)
-            # Delete the in-memory Feature Layers.  
-            arcpy.Delete_management(bufferResult)
-            arcpy.Delete_management(clipResult)
+            
+            arcpy.Delete_management("in_memory") # Clean up all in-memory data created for this reporting unit
             arcpy.Delete_management("ru_lyr")
     
         return outFeatures
     
     finally:
-        # Clean up the search cursor object
-        del Rows
+        try:
+            # Clean up the search cursor object
+            del Rows
+        except:
+            pass
 
 def valueDelimiter(fieldType):
     '''Utility for adding the appropriate delimiter to a value in a whereclause.'''

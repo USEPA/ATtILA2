@@ -213,7 +213,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.run(bufferedFeatures, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
-        # delete the buffered feature unless the user checked INTERMETIATES option
+        # delete the buffered feature unless the user checked INTERMEDIATES option
         if not rlcpCalc.saveIntermediates:
             arcpy.Delete_management(bufferedFeatures)
               

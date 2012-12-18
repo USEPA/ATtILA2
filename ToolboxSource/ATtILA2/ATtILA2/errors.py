@@ -46,4 +46,5 @@ def standardErrorHandling(exception):
     # Return python error messages for use in script tool
     arcpy.AddError(msg)
     
+    print msg  # To ensure message is printed to command line if run as standalone.
     raise(exception)
