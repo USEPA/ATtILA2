@@ -35,4 +35,8 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
 
 
 def getEdgeCoreGrid(lccObj, inLandCoverGrid, inEdgeWidth):
-    pass
+    # Generate the edge/core/other/excluded grid
+    LCGrid = Raster(inLandCoverGrid)
+    ECOGrid = LCGrid
+    
+    return ECOGrid

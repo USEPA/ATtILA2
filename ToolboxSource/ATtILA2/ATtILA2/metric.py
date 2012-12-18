@@ -179,6 +179,8 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         # Create new instance of metricCalc class to contain parameters
         caeamCalc = metricCalcCAEAM()
         
+        caeamCalc.inEdgeWidth = inEdgeWidth
+        
         # Run Calculation
         caeamCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
