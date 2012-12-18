@@ -114,8 +114,8 @@ class splcpConstants(baseMetricConstants):
 class caeamConstants(baseMetricConstants):
     name = "CoreAndEdgeAreaMetrics"
     shortName = "caeam"
-    fieldPrefix = "e"
-    fieldSuffix = ""
+    fieldPrefix = ""
+    fieldSuffix = "edge"
     overlapName = "CE_OVERLAP"
     totalAreaName = "CAEAM_TOTA"
     effectiveAreaName = "CAEAM_EFFA"
