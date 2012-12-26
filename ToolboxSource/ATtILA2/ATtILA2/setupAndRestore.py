@@ -14,8 +14,6 @@ _tempEnvironment2 = ""
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
     """ Standard setup for executing metrics. """
     
-
-    
     # Check out any necessary licenses
     arcpy.CheckOutExtension("spatial")
     

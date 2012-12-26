@@ -7,6 +7,7 @@ import errors
 import setupAndRestore
 from pylet import lcc
 from pylet.arcpyutil import polygons
+from pylet.arcpyutil.messages import AddMsg
 
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
@@ -15,7 +16,7 @@ from ATtILA2 import utils
 from ATtILA2.utils.tabarea import TabulateAreaTable
 
 
-class metricCalc():
+class metricCalc:
     """ This class contains the basic steps to perform a land cover metric calculation.
     
     **Description:**
@@ -29,13 +30,15 @@ class metricCalc():
         done without affecting any existing code.  
     
     """
-    # Function to run all the steps in the calculation process
-    def run(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+    
+    # Initialization
+    def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
         # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
                                                                                  [metricsToRun,optionalFieldGroups] )
+
         # XML Land Cover Coding file loaded into memory
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
@@ -63,7 +66,9 @@ class metricCalc():
         self.reportingUnitIdField = reportingUnitIdField
         self.metricConst = metricConst
         self.inLandCoverGrid = inLandCoverGrid
-        
+    
+    # Function to run all the steps in the calculation process    
+    def run(self):    
         # Replace LandCover Grid, if necessary
         self._replaceLCGrid()
         
@@ -108,11 +113,11 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         metricConst = metricConstants.lcpConstants()
         
         # Create new instance of metricCalc class to contain parameters
-        lcpCalc = metricCalc()
+        lcpCalc = metricCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                             metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
         # Run Calculation
-        lcpCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        lcpCalc.run()
   
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -142,14 +147,14 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
         # Create new instance of metricCalc class to contain parameters
-        lcspCalc = metricCalcLCOSP()
+        lcspCalc = metricCalcLCOSP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
         lcspCalc.inSlopeGrid = inSlopeGrid
         lcspCalc.inSlopeThresholdValue = inSlopeThresholdValue
         
         # Run Calculation
-        lcspCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        lcspCalc.run()
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -177,13 +182,13 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth        
         
         # Create new instance of metricCalc class to contain parameters
-        caeamCalc = metricCalcCAEAM()
+        caeamCalc = metricCalcCAEAM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
         caeamCalc.inEdgeWidth = inEdgeWidth
         
         # Run Calculation
-        caeamCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        caeamCalc.run()
   
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -209,11 +214,11 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         bufferedFeatures = utils.vector.bufferFeaturesByIntersect(inStreamFeatures, inReportingUnitFeature, bufferName, inBufferDistance, reportingUnitIdField)
 
         # Create new instance of metricCalc class to contain parameters
-        rlcpCalc = metricCalc()
+        rlcpCalc = metricCalc(bufferedFeatures, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
         # Run Calculation
-        rlcpCalc.run(bufferedFeatures, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        rlcpCalc.run()
         
         # delete the buffered feature unless the user checked INTERMEDIATES option
         if not rlcpCalc.saveIntermediates:
@@ -247,11 +252,11 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         bufferedFeatures = utils.vector.bufferFeaturesByID(inPointFeatures,inReportingUnitFeature,bufferName,inBufferDistance,reportingUnitIdField,ruLinkField)
         
         # Create new instance of metricCalc class to contain parameters
-        splcpCalc = metricCalcSPLCP()
+        splcpCalc = metricCalcSPLCP(bufferedFeatures, ruLinkField, inLandCoverGrid, lccFilePath, 
+                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
         # Run Calculation
-        splcpCalc.run(bufferedFeatures, ruLinkField, inLandCoverGrid, lccFilePath, 
-                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        splcpCalc.run()
         
         # delete the buffered feature unless the user checked INTERMETIATES option
         if not splcpCalc.saveIntermediates:
@@ -294,7 +299,8 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         metricConst = metricConstants.lcccConstants()
         
         # Create new instance of metricCalc LCC subclass to contain parameters
-        lccCalc = metricCalcLCC()
+        lccCalc = metricCalcLCC(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
               
         # see what linear units are used in the tabulate area table 
         outputLinearUnits = settings.getOutputLinearUnits(inReportingUnitFeature)
@@ -310,8 +316,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         lccCalc.conversionFactor = conversionFactor
         
         # Run calculation
-        lccCalc.run(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        lccCalc.run()
         
     except Exception, e:
         errors.standardErrorHandling(e)

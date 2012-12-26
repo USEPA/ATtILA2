@@ -6,7 +6,7 @@ Created on Sep 14, 2012
 '''
 
 import arcpy, os, sys, time
-
+from  pylet.datetimeutil import DateTimer
 
 def updateFieldProps(field):
     ''' This function translates the properties returned by the field describe function into the 
@@ -54,6 +54,8 @@ def calculateLength(lines):
     return lengthFieldName
 
 def splitDissolveMerge(lines,repUnits,uIDField,lineClass,mergedLines):
+    timer = DateTimer()
+    timer.start()
     # Create a scratch folder for the split lines
     splitFolder = createScratchFolder("split" + arcpy.Describe(lines).baseName,lines)
     
@@ -99,8 +101,82 @@ def splitDissolveMerge(lines,repUnits,uIDField,lineClass,mergedLines):
     # Clean up intermediate datasets
     arcpy.Delete_management(splitFolder)
     arcpy.Delete_management(dissolveFolder)
-
+    timer.stop()
     return mergedLines, lengthFieldName
+
+import pylet
+from pylet.arcpyutil.messages import AddMsg
+
+def splitDissolveMerge2(lines,repUnits,uIDField,lineClass,mergedLines):
+    timer = DateTimer()
+    timer.start()    
+    # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
+    # improve performance if we set up the right syntax for the whereclauses ahead of time.
+    repUnitID = arcpy.AddFieldDelimiters(repUnits,uIDField)
+    delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,uIDField)[0].type)
+    
+    # Get the properties of the unit ID field
+    pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
+        
+        
+    AddMsg("Splitting " + lines)
+    AddMsg(time.strftime("%#c",time.localtime()))
+    
+    i = 0 # Flag used to create the outFeatures the first time through.
+    # Create a Search cursor to iterate through the reporting units.
+    Rows = arcpy.SearchCursor(repUnits,"","",uIDField)
+
+    AddMsg("Performing a cut/dissolve/append for features in each reporting unit")
+    # For each reporting unit:
+    for row in Rows:            
+        
+        # Get the reporting unit ID
+        rowID = row.getValue(uIDField)
+        # Set up the whereclause for the reporting units to select one
+        whereClausePolys = repUnitID + " = " + delimitRUValues(uIDField)
+        # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
+        # definition expression.
+        arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
+
+        # Clip the features that should be buffered to this reporting unit, and output the result to memory.
+        clipResult = arcpy.Clip_analysis(lines,"ru_lyr","in_memory/clip","#")
+        # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
+        dissolveResult = arcpy.Dissolve_management(clipResult,"in_memory/dissolve",lineClass,"#","MULTI_PART","DISSOLVE_LINES")
+        # Add a field to this output shapefile that will contain the reporting unit ID (also the name of the shapefile)
+        # so that when we merge the shapefiles the ID will be preserved
+        arcpy.AddField_management(dissolveResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
+                                  uIDField.length,uIDField.aliasName,uIDField.isNullable,uIDField.required,
+                                  uIDField.domain)
+        arcpy.CalculateField_management(dissolveResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
+       
+        if i == 0: # If it's the first time through
+            # Save the output as the specified output feature class.
+            arcpy.Copy_management(dissolveResult,mergedLines)
+            i = 1 # Toggle the flag.
+        else: # If it's not the first time through and the output feature class already exists
+            # Append the in-memory result to the output feature class
+            arcpy.Append_management(dissolveResult,mergedLines,"NO_TEST")
+        
+        # Clean up intermediate datasets
+        arcpy.Delete_management(clipResult)
+        arcpy.Delete_management(dissolveResult)
+
+    ## Add and calculate a length field for the new shapefile
+    lengthFieldName = calculateLength(mergedLines)
+    timer.stop()
+    return mergedLines, lengthFieldName
+
+def valueDelimiter(fieldType):
+    '''Utility for adding the appropriate delimiter to a value in a whereclause.'''
+    if fieldType == 'String':
+        # If the field type is string, enclose the value in single quotes
+        def delimitValue(value):
+            return "'" + value + "'"
+    else:
+        # Otherwise the string is numeric, just convert it to a Python string type for concatenation with no quotes.
+        def delimitValue(value):
+            return str(value)
+    return delimitValue
 
 def main(_argv):
     # User Input
