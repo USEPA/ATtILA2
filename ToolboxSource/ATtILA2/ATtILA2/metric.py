@@ -8,13 +8,13 @@ import setupAndRestore
 from pylet import lcc
 from pylet.arcpyutil import polygons
 from pylet.arcpyutil.messages import AddMsg
+from pylet.datetimeutil import DateTimer
 
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
 from ATtILA2.constants import errorConstants
 from ATtILA2 import utils
 from ATtILA2.utils.tabarea import TabulateAreaTable
-
 
 class metricCalc:
     """ This class contains the basic steps to perform a land cover metric calculation.
@@ -34,6 +34,8 @@ class metricCalc:
     # Initialization
     def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
+        self.timer = DateTimer()
+        AddMsg(self.timer.start() + " Setting up environment variables")
         # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, 
                                                                                  os.path.dirname(outTable), 
@@ -82,6 +84,7 @@ class metricCalc:
         self._calculateMetrics()
         
     def _makeAttilaOutTable(self):
+        AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
         # Internal function to construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByClass(self.outTable, 
                                                                                   self.metricsBaseNameList, 
@@ -89,11 +92,13 @@ class metricCalc:
                                                                                   self.metricConst, self.lccObj, 
                                                                                   self.outIdField)    
     def _makeTabAreaTable(self):
+        AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
         # Internal function to generate a zonal tabulate area table
         self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField, 
                                               self.inLandCoverGrid, self.tableName, self.lccObj)
     
     def _calculateMetrics(self):
+        AddMsg(self.timer.split() + " Processsing the tabulate area table and computing metric values")
         # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
         utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList, 
                                              self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, 
@@ -134,6 +139,11 @@ class metricCalcLCOSP(metricCalc):
         
         if self.saveIntermediates:
             self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))  
+        
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj)
+        # alert user if the land cover grid cells are not square (default to size along x axis)
+        utils.settings.checkGridCellDimensions(self.inLandCoverGrid)        
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
