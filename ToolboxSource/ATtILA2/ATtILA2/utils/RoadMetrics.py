@@ -55,15 +55,18 @@ def calculateLength(lines):
 
 def splitDissolveMerge(lines,repUnits,uIDField,lineClass,mergedLines):
     timer = DateTimer()
-    timer.start()
+    AddMsg(timer.start())
     # Create a scratch folder for the split lines
     splitFolder = createScratchFolder("split" + arcpy.Describe(lines).baseName,lines)
     
-    print "Splitting " + lines
-    print time.strftime("%#c",time.localtime())
+    AddMsg("Splitting " + lines)
+    AddMsg(time.strftime("%#c",time.localtime()))
     # Split the Lines feature class by the reporting units - output will be individual shapefiles 
     # whose names equal the reporting unit ID values
     arcpy.Split_analysis(lines,repUnits,uIDField.name,splitFolder,"#")
+    
+    AddMsg("Split complete, beginning dissolve")
+    AddMsg(timer.split())
     
     # Get a list of the output feature classes
     arcpy.env.workspace = splitFolder
@@ -76,8 +79,8 @@ def splitDissolveMerge(lines,repUnits,uIDField,lineClass,mergedLines):
         descLines = arcpy.Describe(splitLine)
         dissolveFileName = descLines.baseName + "_dissolve." + descLines.extension
         dissolveFile = os.path.join(dissolveFolder,dissolveFileName)
-        print "Dissolving " + descLines.baseName
-        print time.strftime("%#c",time.localtime())
+        AddMsg("Dissolving " + descLines.baseName)
+        AddMsg(timer.split())
         # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
         arcpy.Dissolve_management(splitLine,dissolveFile,lineClass,"#","MULTI_PART","DISSOLVE_LINES")
         # Add a field to this output shapefile that will contain the reporting unit ID (also the name of the shapefile)
@@ -90,18 +93,21 @@ def splitDissolveMerge(lines,repUnits,uIDField,lineClass,mergedLines):
     # Get a list of the output feature classes
     arcpy.env.workspace = dissolveFolder
     dissolvedLineList = arcpy.ListFeatureClasses()
-    print "Merging " + mergedLines
-    print time.strftime("%#c",time.localtime())
+    AddMsg("Merging " + mergedLines)
+    AddMsg(timer.split())
     # Merge the dissolved roads back together
     mergedLines = arcpy.Merge_management(dissolvedLineList, mergedLines).getOutput(0)
     
     ## Add and calculate a length field for the new shapefile
     lengthFieldName = calculateLength(mergedLines)
 
+    AddMsg("Done merging, cleaning up...")
+    AddMsg(timer.stop())
+    
     # Clean up intermediate datasets
     arcpy.Delete_management(splitFolder)
     arcpy.Delete_management(dissolveFolder)
-    timer.stop()
+    AddMsg(timer.stop())
     return mergedLines, lengthFieldName
 
 import pylet
@@ -109,31 +115,32 @@ from pylet.arcpyutil.messages import AddMsg
 
 def splitDissolveMerge2(lines,repUnits,uIDField,lineClass,mergedLines):
     timer = DateTimer()
-    timer.start()    
+    AddMsg(timer.start())    
     # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
     # improve performance if we set up the right syntax for the whereclauses ahead of time.
-    repUnitID = arcpy.AddFieldDelimiters(repUnits,uIDField)
-    delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,uIDField)[0].type)
+    repUnitID = arcpy.AddFieldDelimiters(repUnits,uIDField.name)
+    AddMsg(repUnitID)
+    delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,uIDField.name)[0].type)
     
     # Get the properties of the unit ID field
     pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
-        
-        
+    
     AddMsg("Splitting " + lines)
     AddMsg(time.strftime("%#c",time.localtime()))
     
     i = 0 # Flag used to create the outFeatures the first time through.
     # Create a Search cursor to iterate through the reporting units.
-    Rows = arcpy.SearchCursor(repUnits,"","",uIDField)
+    Rows = arcpy.SearchCursor(repUnits,"","",uIDField.name)
 
     AddMsg("Performing a cut/dissolve/append for features in each reporting unit")
     # For each reporting unit:
     for row in Rows:            
         
         # Get the reporting unit ID
-        rowID = row.getValue(uIDField)
+        rowID = row.getValue(uIDField.name)
         # Set up the whereclause for the reporting units to select one
-        whereClausePolys = repUnitID + " = " + delimitRUValues(uIDField)
+        whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
+        AddMsg(whereClausePolys)
         # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
         # definition expression.
         arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
@@ -151,19 +158,20 @@ def splitDissolveMerge2(lines,repUnits,uIDField,lineClass,mergedLines):
        
         if i == 0: # If it's the first time through
             # Save the output as the specified output feature class.
-            arcpy.Copy_management(dissolveResult,mergedLines)
+            arcpy.CopyFeatures_management(dissolveResult,mergedLines)
             i = 1 # Toggle the flag.
         else: # If it's not the first time through and the output feature class already exists
             # Append the in-memory result to the output feature class
             arcpy.Append_management(dissolveResult,mergedLines,"NO_TEST")
         
         # Clean up intermediate datasets
+        arcpy.Delete_management("ru_lyr")
         arcpy.Delete_management(clipResult)
         arcpy.Delete_management(dissolveResult)
 
     ## Add and calculate a length field for the new shapefile
     lengthFieldName = calculateLength(mergedLines)
-    timer.stop()
+    AddMsg(timer.stop())
     return mergedLines, lengthFieldName
 
 def valueDelimiter(fieldType):
@@ -211,7 +219,7 @@ def main(_argv):
     mergedRoads = arcpy.CreateScratchName("mergedRoads","","FeatureClass",arcpy.Describe(inRoads).path)
     
     # First perform the split/dissolve/merge on the roads
-    mergedRoads, roadLengthFieldName = splitDissolveMerge(inRoads,inUnits,uIDField,roadClass,mergedRoads)
+    mergedRoads, roadLengthFieldName = splitDissolveMerge2(inRoads,inUnits,uIDField,roadClass,mergedRoads)
 
     ## Add a field for the road density
     densityFieldName = arcpy.ValidateFieldName("Density", mergedRoads)
@@ -228,7 +236,7 @@ def main(_argv):
     mergedStreams = arcpy.CreateScratchName("mergedStreams","","FeatureClass",arcpy.Describe(inStreams).path)
     
     # Next perform the split/dissolve/merge on the streams
-    mergedStreams, streamLengthFieldName = splitDissolveMerge(inStreams,inUnits,uIDField,"#",mergedStreams)
+    mergedStreams, streamLengthFieldName = splitDissolveMerge2(inStreams,inUnits,uIDField,"#",mergedStreams)
     
     # Get a unique name for the road/stream intersections:
     roadStreamMultiPoints = arcpy.CreateScratchName("roadStreamMultiPoints","","FeatureClass",arcpy.Describe(inUnits).path)
@@ -268,6 +276,7 @@ def main(_argv):
     # Cleanup the text ID Field if it was created
     if textIDFlag:
         arcpy.DeleteField_management(inUnits,unitID)
+
 
 if __name__ == "__main__":
     try:    
