@@ -45,43 +45,42 @@ class metricCalc:
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
         self.lccClassesDict = self.lccObj.classes
-        # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, self.lccObj)
-        # alert user if the land cover grid cells are not square (default to size along x axis)
-        utils.settings.checkGridCellDimensions(inLandCoverGrid)
-        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field    
-        self.outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
-        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
-        self.tableName = None
-        self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
-        if self.saveIntermediates: 
-            self.tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
-        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
-        self.zoneAreaDict = None
-        if globalConstants.qaCheckName in self.optionalGroupsList: 
-            self.zoneAreaDict = polygons.getIdAreaDict(inReportingUnitFeature, reportingUnitIdField)
-        
+
         # Save other input parameters as class attributes
         self.outTable = outTable
         self.inReportingUnitFeature = inReportingUnitFeature
         self.reportingUnitIdField = reportingUnitIdField
         self.metricConst = metricConst
         self.inLandCoverGrid = inLandCoverGrid
+
+    def _replaceLCGrid(self):
+        # Placeholder for internal function to replace the landcover grid.  Several metric Calculations require this step, but others skip it.
+        pass
     
-    # Function to run all the steps in the calculation process    
-    def run(self):    
-        # Replace LandCover Grid, if necessary
-        self._replaceLCGrid()
+    def _replaceRUFeatures(self):
+        # Placeholder for internal function for buffer calculations - most calculations don't require this step.
+        pass
+    
+    def _housekeeping(self):
+        # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
         
-        # Make Output Tables
-        self._makeAttilaOutTable()
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj)
+        # alert user if the land cover grid cells are not square (default to size along x axis)
+        utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field    
+        self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
         
-        # Generate Tabulation tables
-        self._makeTabAreaTable()
+        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
+        self.tableName = None
+        self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
+        if self.saveIntermediates: 
+            self.tableName = self.metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+        self.zoneAreaDict = None
+        if globalConstants.qaCheckName in self.optionalGroupsList: 
+            self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField)
         
-        # Run final metric calculation
-        self._calculateMetrics()
         
     def _makeAttilaOutTable(self):
         AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
@@ -100,13 +99,30 @@ class metricCalc:
     def _calculateMetrics(self):
         AddMsg(self.timer.split() + " Processsing the tabulate area table and computing metric values")
         # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+        # Default calculation is land cover proportions.  this may be overridden by some metrics.
         utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList, 
                                              self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, 
                                              self.metricsFieldnameDict, self.zoneAreaDict)
-    
-    def _replaceLCGrid(self):
-        # Internal function to replace the landcover grid.  Several metric Calculations require this step, but others skip it.
-        pass
+
+    # Function to run all the steps in the calculation process    
+    def run(self):    
+        # Replace LandCover Grid, if necessary
+        self._replaceLCGrid()
+        
+        # Replace Reporting Unit features, if necessary
+        self._replaceRUFeatures()
+        
+        # Perform additional housekeeping
+        self._housekeeping()
+        
+        # Make Output Tables
+        self._makeAttilaOutTable()
+        
+        # Generate Tabulation tables
+        self._makeTabAreaTable()
+        
+        # Run final metric calculation
+        self._calculateMetrics()
         
 
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
@@ -130,20 +146,6 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
     finally:
         setupAndRestore.standardRestore()
 
-class metricCalcLCOSP(metricCalc):
-    # Subclass that overrides specific functions for the LandCoverOnSlopeProportions calculation
-    def _replaceLCGrid(self):
-        # replace the inLandCoverGrid
-        self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid, 
-                                                           self.inSlopeThresholdValue)
-        
-        if self.saveIntermediates:
-            self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))  
-        
-        # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj)
-        # alert user if the land cover grid cells are not square (default to size along x axis)
-        utils.settings.checkGridCellDimensions(self.inLandCoverGrid)        
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, 
@@ -155,6 +157,17 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         metricConst = metricConstants.lcospConstants()
         # append the slope threshold value to the field suffix 
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
+        
+        # Create new subclass of metric calculation
+        class metricCalcLCOSP(metricCalc):
+            # Subclass that overrides specific functions for the LandCoverOnSlopeProportions calculation
+            def _replaceLCGrid(self):
+                # replace the inLandCoverGrid
+                self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid, 
+                                                                   self.inSlopeThresholdValue)
+                
+                if self.saveIntermediates:
+                    self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))  
         
         # Create new instance of metricCalc class to contain parameters
         lcspCalc = metricCalcLCOSP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
@@ -216,23 +229,30 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         metricConst = metricConstants.rlcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
-                      
-        # Generate a default filename for the buffer feature class
-        bufferName = metricConst.shortName + inBufferDistance.split()[0]
         
-        # Generate the buffer area to use in the metric calculation
-        bufferedFeatures = utils.vector.bufferFeaturesByIntersect(inStreamFeatures, inReportingUnitFeature, bufferName, inBufferDistance, reportingUnitIdField)
-
+        class metricCalcRLCP(metricCalc):
+            """ Subclass that overrides buffering function for the RiparianLandCoverProportions calculation """
+            def _replaceRUFeatures(self):
+                # Generate a default filename for the buffer feature class
+                self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
+                # Generate the buffer area to use in the metric calculation
+                self.inReportingUnitFeature = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures, 
+                                                                                     self.inReportingUnitFeature, 
+                                                                                     self.bufferName, self.inBufferDistance, 
+                                                                                     self.reportingUnitIdField)
+            def __del__(self):
+                """ Destructor function automatically called when the metric calculation class is no longer in use """
+                if not self.saveIntermediates:
+                    arcpy.Delete_management(self.bufferName)
+        
         # Create new instance of metricCalc class to contain parameters
-        rlcpCalc = metricCalc(bufferedFeatures, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
+        rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        rlcpCalc.inStreamFeatures = inStreamFeatures
         
         # Run Calculation
         rlcpCalc.run()
-        
-        # delete the buffered feature unless the user checked INTERMEDIATES option
-        if not rlcpCalc.saveIntermediates:
-            arcpy.Delete_management(bufferedFeatures)
               
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -240,10 +260,6 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
     finally:
         setupAndRestore.standardRestore()
         
-class metricCalcSPLCP(metricCalc):
-    # Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation
-    pass
-
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                             metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, snapRaster, 
                             optionalFieldGroups):
@@ -254,23 +270,30 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         metricConst = metricConstants.splcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
+        
+        class metricCalcSPLCP(metricCalc):
+            """ Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation """
+            def _replaceRUFeatures(self):
+                # Generate a default filename for the buffer feature class
+                self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
+                # Buffer the points and use the output as the new reporting units
+                self.inReportingUnitFeature = utils.vector.bufferFeaturesByID(self.inPointFeatures,
+                                                                              self.inReportingUnitFeature,
+                                                                              self.bufferName,self.inBufferDistance,
+                                                                              self.reportingUnitIdField,self.ruLinkField)
+            def __del__(self):
+                """ Destructor function automatically called when the metric calculation class is no longer in use """
+                if not self.saveIntermediates:
+                    arcpy.Delete_management(self.bufferName)
 
-        # Generate a default filename for the buffer feature class
-        bufferName = metricConst.shortName + inBufferDistance.split()[0]
-        
-        # Buffer the points and use the output as the new reporting units
-        bufferedFeatures = utils.vector.bufferFeaturesByID(inPointFeatures,inReportingUnitFeature,bufferName,inBufferDistance,reportingUnitIdField,ruLinkField)
-        
         # Create new instance of metricCalc class to contain parameters
-        splcpCalc = metricCalcSPLCP(bufferedFeatures, ruLinkField, inLandCoverGrid, lccFilePath, 
+        splcpCalc = metricCalcSPLCP(inReportingUnitFeature, ruLinkField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        splcpCalc.inBufferDistance =  inBufferDistance
         
         # Run Calculation
         splcpCalc.run()
-        
-        # delete the buffered feature unless the user checked INTERMETIATES option
-        if not splcpCalc.saveIntermediates:
-            arcpy.Delete_management(bufferedFeatures)
               
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -278,24 +301,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
     finally:
         setupAndRestore.standardRestore()
 
- 
-class metricCalcLCC(metricCalc):
-    # Subclass that overrides specific functions for the land Cover Coefficient calculation
-    def _makeAttilaOutTable(self):
-        # Construct the ATtILA metric output table
-        self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByCoefficient(self.outTable, 
-                                                                                        self.metricsBaseNameList, 
-                                                                                        self.optionalGroupsList, 
-                                                                                        self.metricConst, self.lccObj, 
-                                                                                        self.outIdField)
-    def _calculateMetrics(self):
-        # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-        utils.calculate.landCoverCoefficientCalculator(self.lccObj.values, self.metricsBaseNameList, 
-                                                       self.optionalGroupsList, self.metricConst, self.outIdField, 
-                                                       self.newTable, self.tabAreaTable, self.metricsFieldnameDict, 
-                                                       self.zoneAreaDict, self.conversionFactor)
- 
-    
+  
 def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, 
                                       lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster, 
                                       optionalFieldGroups):
@@ -308,7 +314,24 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcccConstants()
         
-        # Create new instance of metricCalc LCC subclass to contain parameters
+        # Create new LCC metric calculation subclass
+        class metricCalcLCC(metricCalc):
+            # Subclass that overrides specific functions for the land Cover Coefficient calculation
+            def _makeAttilaOutTable(self):
+                # Construct the ATtILA metric output table
+                self.newTable, self.metricsFieldnameDict = utils.table.tableWriterByCoefficient(self.outTable, 
+                                                                                                self.metricsBaseNameList, 
+                                                                                                self.optionalGroupsList, 
+                                                                                                self.metricConst, self.lccObj, 
+                                                                                                self.outIdField)
+            def _calculateMetrics(self):
+                # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+                utils.calculate.landCoverCoefficientCalculator(self.lccObj.values, self.metricsBaseNameList, 
+                                                               self.optionalGroupsList, self.metricConst, self.outIdField, 
+                                                               self.newTable, self.tabAreaTable, self.metricsFieldnameDict, 
+                                                               self.zoneAreaDict, self.conversionFactor)
+        
+        # Instantiate LCC metric calculation subclass 
         lccCalc = metricCalcLCC(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
               
