@@ -46,6 +46,12 @@ class metricCalc:
         # get the dictionary with the LCC CLASSES attributes
         self.lccClassesDict = self.lccObj.classes
 
+        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
+        self.tableName = None
+        self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
+        if self.saveIntermediates: 
+            self.tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+            
         # Save other input parameters as class attributes
         self.outTable = outTable
         self.inReportingUnitFeature = inReportingUnitFeature
@@ -71,11 +77,6 @@ class metricCalc:
         # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field    
         self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
         
-        # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
-        self.tableName = None
-        self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
-        if self.saveIntermediates: 
-            self.tableName = self.metricConst.shortName + globalConstants.tabulateAreaTableAbbv
         # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
         self.zoneAreaDict = None
         if globalConstants.qaCheckName in self.optionalGroupsList: 
@@ -249,7 +250,9 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
+        # Assign class attributes unique to this module.  
         rlcpCalc.inStreamFeatures = inStreamFeatures
+        rlcpCalc.inBufferDistance = inBufferDistance
         
         # Run Calculation
         rlcpCalc.run()
@@ -290,7 +293,10 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         splcpCalc = metricCalcSPLCP(inReportingUnitFeature, ruLinkField, inLandCoverGrid, lccFilePath, 
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
+        # Assign class attributes unique to this module.  
+        splcpCalc.inPointFeatures = inPointFeatures
         splcpCalc.inBufferDistance =  inBufferDistance
+        splcpCalc.ruLinkField = ruLinkField
         
         # Run Calculation
         splcpCalc.run()
