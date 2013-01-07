@@ -192,6 +192,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 bufferResult = bufferList[0]
 
             # If the input features are polygons, we need to remove the interior polygons from the buffer areas.
+            # Investigate alternate approach (with license check) of "OUTSIDE_ONLY" option in Buffer_analysis
             for eraseFeatures in eraseList:
                 
                 newBufferResult = arcpy.Erase_analysis(bufferResult,eraseFeatures,"in_memory/erase_buffer")
