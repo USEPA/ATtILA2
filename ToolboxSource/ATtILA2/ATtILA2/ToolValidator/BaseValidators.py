@@ -456,3 +456,250 @@ class CoefficientValidator(ProportionsValidator):
             lccList.append(line)
             
         return lccList
+    
+    
+class VectorsOnlyValidator(object):
+    """ Class for inheritance by ToolValidator Only
+    
+        This currently serves the following tools:
+            Road Density Metrics
+    
+
+        
+        Description of ArcToolbox parameters:
+        -------------------------------------
+        
+        inTableIndex:  Two consecutive parameters
+        1. Table(reporting units)
+        2. Field(dropdown):  Obtained from="<Table>"
+                 
+        outTableIndex: Index of output table parameter
+        1. table: required, output
+        
+        optionalFieldsIndex:  index of optional fields parameter
+        1. String: Properties: MultiValue=Yes
+        
+    
+    """
+    
+    # Indexes of input parameters
+    inTableIndex = 0 
+    outTableIndex = 0 
+    optionalFieldsIndex = 0 
+    
+    # Indexes of secondary input parameters
+    inMultiFeatureIndex = 0
+    inVector2Index = 0
+    inVector3Index = 0
+    inDistanceIndex = 0
+    
+    # Additional local variables
+    srcDirName = validatorConstants.tbxSourceFolderName
+    
+    # Metric Specific
+    filterList = []
+    
+    def __init__(self):
+        """ ESRI - Initialize ToolValidator class"""
+        
+        # Load metric constants        
+        self.inputIdFieldTypes = validatorConstants.inputIdFieldTypes
+        self.noFeaturesMessage = validatorConstants.noFeaturesMessage
+        self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
+        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
+        
+        # Load global constants
+        self.optionalFieldsName = validatorConstants.optionalFieldsName
+        
+        # Set relative indexes
+        self.inputFieldsIndex = self.inTableIndex + 1
+        
+        if self.inDistanceIndex:
+            self.useDistanceIndex = self.inDistanceIndex + 1
+        
+        # Assign parameters to local variables
+        self.parameters = arcpy.GetParameterInfo()
+        self.inputTableParameter = self.parameters[self.inTableIndex]
+        self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
+        self.outTableParameter = self.parameters[self.outTableIndex]
+        self.optionsParameter = self.parameters[self.optionalFieldsIndex]
+        
+        # Assign secondary input parameters to local variables
+        if self.inMultiFeatureIndex:
+            self.inMultiFeatureParameter = self.parameters[self.inMultiFeatureIndex]
+            
+        if self.inVector2Index:
+            self.inVector2Parameter = self.parameters[self.inVector2Index]
+            
+        if self.inVector3Index:
+            self.inVector3Parameter = self.parameters[self.inVector3Index]
+            
+        if self.inDistanceIndex:
+            self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+            self.useDistanceParameter = self.parameters[self.useDistanceIndex]
+
+               
+        # Additional local variables
+        self.currentFilePath = ""
+        self.ruFilePath = ""
+        self.initialized = False
+
+
+    def initializeParameters(self):
+        """ ESRI - Initialize parameters"""
+        
+        self.inDistanceParameter.enabled = False
+        
+        # Move parameters to optional section
+        self.optionsParameter.category = self.optionalFieldsName
+    
+        self.initialized = True
+        
+        
+    def updateParameters(self):
+        """ ESRI - Modify the values and properties of parameters before internal validation is performed.  
+        
+            This method is called whenever a parameter has been changed.
+        
+        """
+        
+        if not self.initialized:
+            self.initializeParameters()
+
+        self.updateInputFieldsParameter()
+        self.updateOutputTableParameter()
+        
+        if self.inDistanceIndex:
+            self.updateInDistanceParameter()
+
+    def updateInDistanceParameter(self):
+        if self.useDistanceParameter.value:
+            self.inDistanceParameter.enabled = True
+
+
+    def updateOutputTableParameter(self):
+        """ Update an output table parameter
+        
+        **Description:**
+            
+            Removes .shp that is automatically generated for output table parameters and replaces it with .dbf
+        
+        """
+       
+        if self.outTableParameter.value:
+            outTablePath = str(self.outTableParameter.value)
+            self.outTableParameter.value  = outTablePath.replace('.shp', '.dbf')
+
+    
+              
+        
+    def updateInputFieldsParameter(self):
+        """  Set selected input field to first field of specified type
+            
+             Specified types comes from self.inputIdFieldTypes set in __init__()
+             
+        """
+        
+        fieldTypes = set(self.inputIdFieldTypes)
+        tablePath = self.inputTableParameter.value
+        fieldName = self.inputFieldsParameter.value
+        
+        # Proceed only if table path exists, but field name hasn't been set
+        if tablePath and not fieldName:
+            try:
+                fields = arcpy.ListFields(tablePath)
+                
+                for field in fields:
+                    if field.type in fieldTypes:
+                        self.inputFieldsParameter.value = field.name
+                        break
+                    
+                if not self.inputFieldsParameter.value:
+                    for field in fields:
+                        if field.type == "OID":
+                            self.inputFieldsParameter.value = field.name
+                            break
+                        
+            except:
+                pass
+                
+        
+    def updateMessages(self):
+        """ ESRI - Modify the messages created by internal validation for each tool parameter.  
+        
+            This method is called after internal validation.
+            
+        """
+        
+        # Remove required on optional fields
+        self.optionsParameter.clearMessage()
+                                 
+        # Check input features
+        if self.inputTableParameter.value and not self.inputTableParameter.hasError():
+        
+            # Check for empty input features
+            if not arcpy.SearchCursor(self.inputTableParameter.value).next():
+                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+            
+            # Check for if input feature layer has spatial reference
+            # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
+            if hasattr(self.inputTableParameter.value, "dataSource"):
+                if arcpy.Describe(self.inputTableParameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            else:
+                if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+
+           
+        # CHECK ON SECONDARY INPUTS IF PROVIDED
+        
+        # Check if a secondary multiple input feature is indicated            
+        if self.inMultiFeatureIndex:
+            # if provided, get the valueTable and process each entry
+            if self.inMultiFeatureParameter.value:
+                multiFeatures = self.inMultiFeatureParameter.value
+                rowCount = multiFeatures.rowCount
+                for row in range(0, rowCount):
+                    value = multiFeatures.getValue(row, 0)
+                    if value:
+                        # check to see if it has a spatial reference
+                        d = arcpy.Describe(value)
+                        if d.spatialReference.name.lower() == "unknown":
+                            self.inMultiFeatureParameter.setErrorMessage(self.noSpatialReferenceMessageMulti)
+                            
+        # Check if a secondary vector input feature is indicated
+        if self.inVector2Index:
+            # if provided, check if input vector2 is defined
+            if self.inVector2Parameter.value:
+                # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
+                if hasattr(self.inVector2Parameter.value, "dataSource"):
+                    if arcpy.Describe(self.inVector2Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                        self.inVector2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                else:
+                    if arcpy.Describe(self.inVector2Parameter.value).spatialReference.name.lower() == "unknown":
+                        self.inVector2Parameter.setErrorMessage(self.noSpatialReferenceMessage) 
+                        
+        # Check if a tertiary vector input feature is indicated
+        if self.inVector3Index:
+            # if provided, check if input vector2 is defined
+            if self.inVector3Parameter.value:
+                # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
+                if hasattr(self.inVector3Parameter.value, "dataSource"):
+                    if arcpy.Describe(self.inVector3Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                        self.inVector3Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                else:
+                    if arcpy.Describe(self.inVector3Parameter.value).spatialReference.name.lower() == "unknown":
+                        self.inVector3Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                        
+        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        if self.inDistanceIndex:
+            if self.inDistanceParameter.value:
+                distanceValue = self.inDistanceParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strDistance = str(distanceValue).split()[0]
+                if float(strDistance) <= 0.0:
+                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+#            else:
+#                # need the else condition as a 0 value won't trigger the if clause 
+#                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)

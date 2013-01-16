@@ -129,5 +129,19 @@ class caeamConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    
+class rdmConstants(baseMetricConstants):
+    name = "RoadDensityMetrics"
+    shortName = "rdm"
+    fieldPrefix = ""
+    fieldSuffix = ""
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = []
+    fieldOverrideKey = shortName + gc.fieldOverrideName
 
 

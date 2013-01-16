@@ -45,7 +45,7 @@ class rlcpToolValidator(BaseValidators.ProportionsValidator):
     metricShortName = rlcpConstants.shortName
     
 class splcpToolValidator(BaseValidators.ProportionsValidator):
-    """ ToolValidator for RiparianLandCoverProportions"""
+    """ ToolValidator for SamplePointLandCoverProportions"""
     
     filterList = splcpConstants.optionalFilter
     overrideAttributeName = lccConstants.XmlAttributeSplcpField
@@ -54,11 +54,19 @@ class splcpToolValidator(BaseValidators.ProportionsValidator):
     metricShortName = splcpConstants.shortName
     
 class caeamToolValidator(BaseValidators.ProportionsValidator):
-    """ ToolValidator for LandCoverProportions """
+    """ ToolValidator for CoreAndEdgeAreaMetrics """
     
     filterList = caeamConstants.optionalFilter
     overrideAttributeName = lccConstants.XmlAttributeCaeamField
     fieldPrefix = caeamConstants.fieldPrefix
     fieldSuffix = caeamConstants.fieldSuffix    
-    metricShortName = caeamConstants.shortName 
+    metricShortName = caeamConstants.shortName
+    
+class rdmToolValidator(BaseValidators.VectorsOnlyValidator):
+    """ ToolValidator for RoadDensityMetrics """
+    
+    filterList = rdmConstants.optionalFilter
+    fieldPrefix = rdmConstants.fieldPrefix
+    fieldSuffix = rdmConstants.fieldSuffix    
+    metricShortName = rdmConstants.shortName
     
