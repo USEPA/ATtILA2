@@ -482,6 +482,8 @@ class VectorsOnlyValidator(object):
     
     """
     
+    from ATtILA2.constants import metricConstants
+    
     # Indexes of input parameters
     inTableIndex = 0 
     outTableIndex = 0 
@@ -492,6 +494,8 @@ class VectorsOnlyValidator(object):
     inVector2Index = 0
     inVector3Index = 0
     inDistanceIndex = 0
+    checkbox1Index = 0
+    checkbox2Index = 0
     
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
@@ -537,7 +541,12 @@ class VectorsOnlyValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
-            self.useDistanceParameter = self.parameters[self.useDistanceIndex]
+            
+        if self.checkbox1Index:
+            self.checkbox1Parameter = self.parameters[self.checkbox1Index]
+            
+        if self.checkbox2Index:
+            self.checkbox2Parameter = self.parameters[self.checkbox2Index]
 
                
         # Additional local variables
@@ -550,9 +559,13 @@ class VectorsOnlyValidator(object):
         """ ESRI - Initialize parameters"""
         
         self.inDistanceParameter.enabled = False
+        self.inVector3Parameter.enabled = False
         
         # Move parameters to optional section
         self.optionsParameter.category = self.optionalFieldsName
+        
+        # Set options filter
+        self.optionsParameter.filter.list = self.filterList
     
         self.initialized = True
         
@@ -570,12 +583,13 @@ class VectorsOnlyValidator(object):
         self.updateInputFieldsParameter()
         self.updateOutputTableParameter()
         
-        if self.inDistanceIndex:
-            self.updateInDistanceParameter()
+        if self.checkbox2Index:
+            self.updateCheckbox2Parameter()
 
-    def updateInDistanceParameter(self):
-        if self.useDistanceParameter.value:
+    def updateCheckbox2Parameter(self):
+        if self.checkbox2Parameter.value:
             self.inDistanceParameter.enabled = True
+            self.inVector3Parameter.enabled = True
 
 
     def updateOutputTableParameter(self):
