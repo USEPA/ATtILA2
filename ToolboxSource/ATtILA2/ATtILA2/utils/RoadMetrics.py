@@ -50,7 +50,8 @@ def calculateLength(lines):
     lengthFieldName = arcpy.Describe(lines).baseName + "Length"
     lengthFieldName = arcpy.ValidateFieldName(lengthFieldName, lines)
     arcpy.AddField_management(lines,lengthFieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
-    arcpy.CalculateField_management(lines, lengthFieldName,'!shape.length@KILOMETERS!',"PYTHON")
+    calcExpression = "!" + arcpy.Describe(lines).shapeFieldName + ".LENGTH@KILOMETERS!"
+    arcpy.CalculateField_management(lines, lengthFieldName,calcExpression,"PYTHON")
     return lengthFieldName
 
 def splitDissolveMerge(lines,repUnits,uIDField,lineClass,mergedLines):
@@ -187,6 +188,18 @@ def valueDelimiter(fieldType):
     return delimitValue
 
 def main(_argv):
+    """To Do:
+        link to toolbox - handle optional parameters
+        Configure single output workspace
+        distinguish between products and intermediates - handle optional cleanup of intermediates
+        Can we produce single summary output table?
+        Standardize naming conventions - and clarify departures from ATtILA1
+        Determine what code from normal metric calculation can be used, if any, or if this will be completely independent
+        Bring documentation in line with Michael's standard syntax
+        remove (archive?) old code
+        write module for any frequently repeated code (add/calculate field seems likely candidate)
+    """
+    
     # User Input
     #===================================================================================================================
     # inRoads = r"C:\temp\ATtILA2_data\shpfiles\mainrds.shp"
@@ -203,7 +216,6 @@ def main(_argv):
     inUnits = r"C:\temp\ATtILA2_data\Ohio\TestPolygons\poly_testset_no_slivers.shp"
     roadClass = ""
     unitID = "ID_USE1"
-    unitArea = "AREA"
     bufferDist = "30"
 
     # Get the field properties for the unitID, this will be frequently used
@@ -215,25 +227,45 @@ def main(_argv):
         uIDField = arcpy.ListFields(inUnits,unitID)[0]
     uIDField = updateFieldProps(uIDField)
     
+    # Add a field to the reporting units to hold the area value in square kilometers
+    unitArea = arcpy.ValidateFieldName("AREAKM2", inUnits)
+    arcpy.AddField_management(inUnits,unitArea,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
+    calcExpression = "!" + arcpy.Describe(inUnits).shapeFieldName + ".AREA@SQUAREKILOMETERS!"
+    arcpy.CalculateField_management(inUnits,unitArea,calcExpression,"PYTHON")
+    
     # Get a unique name for the merged roads:
-    mergedRoads = arcpy.CreateScratchName("mergedRoads","","FeatureClass",arcpy.Describe(inRoads).path)
+    mergedRoads = arcpy.CreateScratchName("RdsByRU","","FeatureClass",arcpy.Describe(inRoads).path)
     
     # First perform the split/dissolve/merge on the roads
     mergedRoads, roadLengthFieldName = splitDissolveMerge2(inRoads,inUnits,uIDField,roadClass,mergedRoads)
 
     ## Add a field for the road density
-    densityFieldName = arcpy.ValidateFieldName("Density", mergedRoads)
+    densityFieldName = arcpy.ValidateFieldName("RDDENS", mergedRoads)
     arcpy.AddField_management(mergedRoads,densityFieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
-    
+   
     # Next join the reporting units layer to the merged roads layer
     arcpy.JoinField_management(mergedRoads, unitID, inUnits, unitID, [unitArea])
-    calcExpression = "!" + roadLengthFieldName + "!/!" + unitArea + "!"
+    calcExpression = "!" + roadLengthFieldName + "!/!" + unitArea + "!"  
     arcpy.CalculateField_management(mergedRoads, densityFieldName, calcExpression,"PYTHON")
-    # No need to remove join?  
-    #arcpy.RemoveJoin_management(mergedRoads, arcpy.Describe(inUnits).baseName)    
+
+    ## Add a field for the road density regression for total impervious area
+    pctiaFieldName = arcpy.ValidateFieldName("PCTIA_RD", mergedRoads)
+    arcpy.AddField_management(mergedRoads,pctiaFieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
+ 
+    # Calculate the road density linear regression for total impervious area:
+    calcExpression = "pctiaCalc(!" + densityFieldName + "!)"
+    codeblock = """def pctiaCalc(RdDensity):
+    pctia = ((RdDensity - 1.78) / 0.16)
+    if (RdDensity < 1.79):
+        return 0
+    elif (RdDensity > 11):
+        return -1
+    else:
+        return pctia"""
+    arcpy.CalculateField_management(mergedRoads, pctiaFieldName, calcExpression,"PYTHON",codeblock)
     
     # Get a unique name for the merged streams:
-    mergedStreams = arcpy.CreateScratchName("mergedStreams","","FeatureClass",arcpy.Describe(inStreams).path)
+    mergedStreams = arcpy.CreateScratchName("StrByRU","","FeatureClass",arcpy.Describe(inStreams).path)
     
     # Next perform the split/dissolve/merge on the streams
     mergedStreams, streamLengthFieldName = splitDissolveMerge2(inStreams,inUnits,uIDField,"#",mergedStreams)
@@ -245,7 +277,7 @@ def main(_argv):
     arcpy.Intersect_analysis([mergedRoads,mergedStreams],roadStreamMultiPoints,"ALL","#","POINT")
     
     # Because we want a count of individual intersection features, break apart the multipoints into single points
-    roadStreamIntersects = arcpy.CreateScratchName("roadStreamIntersects","","FeatureClass",arcpy.Describe(inUnits).path)
+    roadStreamIntersects = arcpy.CreateScratchName("PtsOfXing","","FeatureClass",arcpy.Describe(inUnits).path)
     arcpy.MultipartToSinglepart_management(roadStreamMultiPoints,roadStreamIntersects)
     
     # Perform a frequency analysis to get a count of the number of crossings per class per reporting unit
@@ -268,7 +300,7 @@ def main(_argv):
     rnsFieldName = arcpy.ValidateFieldName("RNS", roadStreamBuffer)
     arcpy.AddField_management(roadStreamBuffer,rnsFieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
     
-    # Next join the merged streams layer to the roads/streambuffer intersection layer layer
+    # Next join the merged streams layer to the roads/streambuffer intersection layer
     arcpy.JoinField_management(roadStreamBuffer, unitID, mergedStreams, unitID, [streamLengthFieldName])
     calcExpression = "!" + roadLengthFieldName + "!/!" + streamLengthFieldName + "!"
     arcpy.CalculateField_management(roadStreamBuffer, rnsFieldName, calcExpression,"PYTHON")
@@ -276,7 +308,8 @@ def main(_argv):
     # Cleanup the text ID Field if it was created
     if textIDFlag:
         arcpy.DeleteField_management(inUnits,unitID)
-
+    # Cleanup the square kilometers field.
+    arcpy.DeleteField_management(inUnits,unitArea)
 
 if __name__ == "__main__":
     try:    
