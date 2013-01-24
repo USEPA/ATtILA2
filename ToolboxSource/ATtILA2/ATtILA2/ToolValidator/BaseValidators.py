@@ -68,7 +68,7 @@ class ProportionsValidator(object):
     inMultiFeatureIndex = 0
     inVector2Index = 0
     inDistanceIndex = 0
-    
+        
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
     
@@ -482,7 +482,6 @@ class VectorsOnlyValidator(object):
     
     """
     
-    from ATtILA2.constants import metricConstants
     
     # Indexes of input parameters
     inTableIndex = 0 
@@ -496,6 +495,7 @@ class VectorsOnlyValidator(object):
     inDistanceIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
+    checkboxInParameters = {}
     
     # Additional local variables
     srcDirName = validatorConstants.tbxSourceFolderName
@@ -558,8 +558,10 @@ class VectorsOnlyValidator(object):
     def initializeParameters(self):
         """ ESRI - Initialize parameters"""
         
-        self.inDistanceParameter.enabled = False
-        self.inVector3Parameter.enabled = False
+        if self.inDistanceIndex:
+            self.inDistanceParameter.enabled = False
+        if self.inVector3Index:
+            self.inVector3Parameter.enabled = False
         
         # Move parameters to optional section
         self.optionsParameter.category = self.optionalFieldsName
@@ -582,15 +584,21 @@ class VectorsOnlyValidator(object):
 
         self.updateInputFieldsParameter()
         self.updateOutputTableParameter()
-        
+
+        # if checkboxes are provided, use the indexes specified in the tool's validation script to identify the 
+        # parameter locations of any additional needed inputs for that checkbox and enable those parameters
+        if self.checkbox1Index:
+            cboxListeners = self.checkboxInParameters.values()[0]
+            self.updateCheckboxParameters(self.checkbox1Parameter, cboxListeners)
+
         if self.checkbox2Index:
-            self.updateCheckbox2Parameter()
+            cboxListeners = self.checkboxInParameters.values()[1]
+            self.updateCheckboxParameters(self.checkbox2Parameter, cboxListeners)
 
-    def updateCheckbox2Parameter(self):
-        if self.checkbox2Parameter.value:
-            self.inDistanceParameter.enabled = True
-            self.inVector3Parameter.enabled = True
-
+    def updateCheckboxParameters(self, checkboxParameter, cboxListeners):
+        if checkboxParameter.value:
+            for indx in cboxListeners:
+                self.parameters[indx].enabled = True
 
     def updateOutputTableParameter(self):
         """ Update an output table parameter
@@ -684,6 +692,11 @@ class VectorsOnlyValidator(object):
                             
         # Check if a secondary vector input feature is indicated
         if self.inVector2Index:
+            # Clear required on disabled input parameter and empty the input area
+            if not self.inVector2Parameter.enabled:
+                self.inVector2Parameter.clearMessage()
+                self.inVector2Parameter.value = ''
+            
             # if provided, check if input vector2 is defined
             if self.inVector2Parameter.value:
                 # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe

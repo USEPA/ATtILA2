@@ -14,7 +14,10 @@ class ToolValidator (ATtILA2.ToolValidator.rdmToolValidator):
     inTableIndex = 0
     srcDirName = sourceName
     inVector2Index = 2
-    inVector3Index = 3
-    inDistanceIndex = 6
-    outTableIndex = 8
-    optionalFieldsIndex = 9 
+    inVector3Index = 5
+    inDistanceIndex = 7
+    outTableIndex = 3
+    optionalFieldsIndex = 9
+    checkbox1Index = 6
+    checkbox2Index = 8
+    checkboxInParameters = {'checkbox1':[5], 'checkbox2':[5, 7]}

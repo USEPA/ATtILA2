@@ -15,7 +15,6 @@ class baseMetricConstants():
     fieldParameters = []
     qaCheckFieldParameters = []    
     fieldOverrideKey = ''
-    checkboxInParameters = {}
 
 class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"
@@ -144,6 +143,4 @@ class rdmConstants(baseMetricConstants):
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = shortName + gc.fieldOverrideName
-    checkboxInParameters = {'checkbox1':[5], 'checkbox2':[5, 7]}
-
-
+    
