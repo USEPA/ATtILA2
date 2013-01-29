@@ -365,17 +365,46 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
         
-def runRoadDensityCalculator():
+def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField,
+                             inStreamFeature, streamsByRoads, bufferDistance, roadsNearStreams, optionalFieldGroups):
     """Interface for script executing Road Density Calculator"""
-    
+    from arcpy import env
+    from pylet import arcpyutil
+    cleanUp = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
-        pass
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+        # Get the metric constants
+        metricConst = metricConstants.rdmConstants()
+        # Set the output workspace
+        _tempEnvironment1 = env.workspace
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        # Strip the description from the "additional option" and determine whether intermediates are stored.
+        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+        if globalConstants.intermediateName in processed:
+            msg = "\nIntermediates are stored in this directory: {0}\n"
+            arcpy.AddMessage(msg.format(env.workspace))   
+        # Get the field properties for the unitID, this will be frequently used
+        uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0] # This is an arcpy field object
+        if (uIDField.type <> "String"): # unit IDs that are not in string format can cause problems.  
+            # Create a unit ID with a string format
+            reportingUnitIdField = arcpyutil.fields.makeTextID(uIDField,inReportingUnitFeature)
+            # Make sure to clean this up later
+            cleanUp.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
+            # Obtain a field object from the new field.
+            uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0]
+            
+        uIDField = arcpyutil.fields.updateFieldProps(uIDField)
     
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
-        setupAndRestore.standardRestore()
+        for (function,arguments) in cleanUp:
+            # Flexibly executes any functions added to cleanup array.
+            function(*arguments)
+        env.workspace = _tempEnvironment1
 
 
 
