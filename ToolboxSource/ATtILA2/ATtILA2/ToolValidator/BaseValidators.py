@@ -519,9 +519,6 @@ class VectorsOnlyValidator(object):
         # Set relative indexes
         self.inputFieldsIndex = self.inTableIndex + 1
         
-        if self.inDistanceIndex:
-            self.useDistanceIndex = self.inDistanceIndex + 1
-        
         # Assign parameters to local variables
         self.parameters = arcpy.GetParameterInfo()
         self.inputTableParameter = self.parameters[self.inTableIndex]
