@@ -194,10 +194,12 @@ def main(_argv):
         distinguish between products and intermediates - handle optional cleanup of intermediates
         Can we produce single summary output table?
         Standardize naming conventions - and clarify departures from ATtILA1
+            In summary output table, need to ensure dedicated field per road class.
         Determine what code from normal metric calculation can be used, if any, or if this will be completely independent
         Bring documentation in line with Michael's standard syntax
         remove (archive?) old code
         write module for any frequently repeated code (add/calculate field seems likely candidate)
+        standardize messaging.
     """
     
     # User Input

@@ -365,8 +365,17 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
         
-
-
+def runRoadDensityCalculator():
+    """Interface for script executing Road Density Calculator"""
+    
+    try:
+        pass
+    
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
 
 
 
