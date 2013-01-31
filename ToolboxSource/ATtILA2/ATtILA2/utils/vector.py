@@ -241,7 +241,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         except:
             pass 
 
-def splitDissolveMerge(lines,repUnits,uIDField,lineClass='#',mergedLines):
+def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     '''This function performs a split, dissolve, and merge function on a set of line features.
     **Description:**
         This function iterates through a set of areal units, clipping line features to each unit, then dissolving those
