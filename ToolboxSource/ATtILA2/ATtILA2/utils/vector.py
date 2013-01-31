@@ -3,7 +3,9 @@
 """
 
 import arcpy, pylet
+from ATtILA2.constants import globalConstants
 from pylet.arcpyutil.messages import AddMsg
+from pylet.arcpyutil.fields import valueDelimiter
 
 def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -20,6 +22,9 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
         * *unitID* - a field that exists in both the inFeatures and repUnits that contains a unique identifier for the
                      reporting units.  A reporting unit may have multiple features, but the fields must match.
+        
+    **Returns:**
+        * *outFeatures* - output feature class 
     """
     try:
         # Get a unique name with full path for the output features - will default to current workspace:
@@ -117,6 +122,9 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
         * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
         * *unitID* - a field that exists in repUnits that contains a unique identifier for the reporting units.  
+        
+    **Returns:**
+        * *outFeatures* - output feature class 
     """
     try:
         
@@ -231,16 +239,140 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             # Clean up the search cursor object
             del Rows
         except:
-            pass
+            pass 
 
-def valueDelimiter(fieldType):
-    '''Utility for adding the appropriate delimiter to a value in a whereclause.'''
-    if fieldType == 'String':
-        # If the field type is string, enclose the value in single quotes
-        def delimitValue(value):
-            return "'" + value + "'"
-    else:
-        # Otherwise the string is numeric, just convert it to a Python string type for concatenation with no quotes.
-        def delimitValue(value):
-            return str(value)
-    return delimitValue
+def splitDissolveMerge(lines,repUnits,uIDField,lineClass='#',mergedLines):
+    '''This function performs a split, dissolve, and merge function on a set of line features.
+    **Description:**
+        This function iterates through a set of areal units, clipping line features to each unit, then dissolving those
+        lines (preserving different classes of lines, if that option is chosen, assigning the dissolved line features 
+        the ID of the areal unit, and then merges the multipart dissolved lines back into a single output feature class. 
+        The clipped and dissolved linear features are all stored in-memory, rather than written to disk, to improve 
+        performance.  Only when the features are merged/appended into a final output feature class are they written to 
+        disk.   
+    **Arguments:**
+        * *lines* - the input line feature class
+        * *repUnits* - the input representative areal units feature class that will be used to split the lines
+        * *uIDField* - the ID field of the representative areal units feature class.  Each dissolved line feature will be assigned the respective uID
+        * *lineClass* - optional field containing class values for the line feature class.  these classes are preserved through the split/dissolve/merge process
+        * *mergedLines* - name of the output feature class.
+    **Returns:**
+        * *mergedLines* - name of the output feature class.
+        * *lengthFieldName* - validated name of the field in the output feature class containing length values
+    '''
+    # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
+    # improve performance if we set up the right syntax for the whereclauses ahead of time.
+    repUnitID = arcpy.AddFieldDelimiters(repUnits,uIDField.name)
+    delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,uIDField.name)[0].type)
+    
+    # Get the properties of the unit ID field
+    pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
+
+    # Get a count of the number of reporting units to give an accurate progress estimate.
+    n = int(arcpy.GetCount_management(repUnits).getOutput(0))
+    # Initialize custom progress indicator
+    loopProgress = pylet.arcpyutil.messages.loopProgress(n)
+       
+    i = 0 # Flag used to create the outFeatures the first time through.
+    # Create a Search cursor to iterate through the reporting units.
+    Rows = arcpy.SearchCursor(repUnits,"","",uIDField.name)
+    AddMsg("Clipping and dissolving linear features in each reporting unit...")
+    # For each reporting unit:
+    for row in Rows:            
+        
+        # Get the reporting unit ID
+        rowID = row.getValue(uIDField.name)
+        # Set up the whereclause for the reporting units to select one
+        whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
+
+        # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
+        # definition expression.
+        arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
+
+        # Clip the features that should be buffered to this reporting unit, and output the result to memory.
+        clipResult = arcpy.Clip_analysis(lines,"ru_lyr","in_memory/clip","#")
+        # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
+        dissolveResult = arcpy.Dissolve_management(clipResult,"in_memory/dissolve",lineClass,"#","MULTI_PART","DISSOLVE_LINES")
+        # Add a field to this output shapefile that will contain the reporting unit ID (also the name of the shapefile)
+        # so that when we merge the shapefiles the ID will be preserved
+        arcpy.AddField_management(dissolveResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
+                                  uIDField.length,uIDField.aliasName,uIDField.isNullable,uIDField.required,
+                                  uIDField.domain)
+        arcpy.CalculateField_management(dissolveResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
+       
+        if i == 0: # If it's the first time through
+            # Save the output as the specified output feature class.
+            arcpy.CopyFeatures_management(dissolveResult,mergedLines)
+            i = 1 # Toggle the flag.
+        else: # If it's not the first time through and the output feature class already exists
+            # Append the in-memory result to the output feature class
+            arcpy.Append_management(dissolveResult,mergedLines,"NO_TEST")
+        
+        # Clean up intermediate datasets
+        arcpy.Delete_management("ru_lyr")
+        arcpy.Delete_management(clipResult)
+        arcpy.Delete_management(dissolveResult)
+        loopProgress.update()
+
+    ## Add and calculate a length field for the new shapefile
+    lengthFieldName = addLengthField(mergedLines)
+    return mergedLines, lengthFieldName
+
+def addAreaField(inAreaFeatures):
+    '''This function checks for the existence of a field containing polygon area in square kilometers and if it does
+        not exist, adds and populates it appropriate.
+    **Description:**
+        This function checks for the existence of a field containing polygon area in square kilometers and if it does
+        not exist, adds and populates it appropriate.
+    **Arguments:**
+        * *inAreaFeatures* - the input feature class that will receive the field.      
+    **Returns:**
+        * *areaFieldName* - validated fieldname      
+    '''
+    # Set a default for the area fieldName
+    areaFieldName = "AreaKM2"
+    # Set up the calculation expression for area in square kilometers
+    calcExpression = "!" + arcpy.Describe(inAreaFeatures).shapeFieldName + ".AREA@SQUAREKILOMETERS!"
+    areaFieldName = addCalculateField(inAreaFeatures,areaFieldName,calcExpression)
+    return areaFieldName    
+
+def addLengthField(inLineFeatures):
+    '''This function adds and populates a length field for the input line feature class
+    **Description:**
+        This function checks for the existence of a field containing line area in kilometers and if it does
+        not exist, adds and populates it appropriate.
+    **Arguments:**
+        * *inLineFeatures* - the input feature class that will receive the field.     
+    **Returns:**
+        * *lengthFieldName* - validated fieldname      
+    '''
+    # Set a default for the length fieldName
+    lengthFieldName = "LengthKM"
+    # Set up the calculation expression for length in kilometers
+    calcExpression = "!" + arcpy.Describe(inLineFeatures).shapeFieldName + ".LENGTH@KILOMETERS!"
+    lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,calcExpression)
+    return lengthFieldName
+
+def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
+    '''This function checks for the existence of the desired field, and if it does not exists, adds and populates it
+    using the given calculation expression
+    **Description:**
+        This function checks for the existence of the specified field and if it does
+        not exist, adds and populates it as appropriate.  The output field is assumed to be of type double.
+    **Arguments:**
+        * *inFeatures* - the input feature class that will receive the field.
+        * *fieldName* - field name string
+        * *calcExpression* - string calculation expression in python 
+        * *codeBlock* - optional python code block expression       
+    **Returns:**
+        * *fieldName* - validated fieldname      
+    '''
+    # Validate the desired field name for the dataset
+    fieldName = arcpy.ValidateFieldName(fieldName, inFeatures)
+    # Check for existence of field.
+    fieldList = arcpy.ListFields(inFeatures,fieldName)
+    if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
+        arcpy.AddField_management(inFeatures,fieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
+        arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
+    return fieldName      
+    

@@ -64,3 +64,17 @@ def checkGridCellDimensions(inLandCoverGrid):
         pass
     else:
         arcpy.AddWarning(inLandCoverGrid+" is not square. Output calculations will be based on Processing Cell Size.")
+        
+        
+def processUIDField(inReportingUnitFeature, reportingUnitIdField):
+    uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0] # This is an arcpy field object
+    if (uIDField.type <> "String"): # unit IDs that are not in string format can cause problems.  
+        # Create a unit ID with a string format
+        reportingUnitIdField = arcpyutil.fields.makeTextID(uIDField,inReportingUnitFeature)
+        # Make sure to clean this up later
+        globalConstants.cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
+        # Obtain a field object from the new field.
+        uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0]
+    # Convert the field properties from the default ArcPy field object into inputs for the AddField object.    
+    uIDField = arcpyutil.fields.updateFieldProps(uIDField)
+    return uIDField

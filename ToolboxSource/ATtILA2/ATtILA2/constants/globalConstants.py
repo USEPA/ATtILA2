@@ -19,3 +19,4 @@ defaultAreaFieldType = "DOUBLE"
 fieldOverrideName = "Field"
 metricNameTooLong = "Provided metric name too long for output location. Truncated {0} to {1} "
 tabulateAreaTableAbbv = "TA"
+cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup

@@ -370,8 +370,9 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
     from pylet import arcpyutil
-    cleanUp = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
+        # Work on making as generic as possible
+        ### Initialization
         # Start the timer
         timer = DateTimer()
         AddMsg(timer.start() + " Setting up environment variables")
@@ -385,23 +386,32 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace))   
-        # Get the field properties for the unitID, this will be frequently used
-        uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0] # This is an arcpy field object
-        if (uIDField.type <> "String"): # unit IDs that are not in string format can cause problems.  
-            # Create a unit ID with a string format
-            reportingUnitIdField = arcpyutil.fields.makeTextID(uIDField,inReportingUnitFeature)
-            # Make sure to clean this up later
-            cleanUp.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
-            # Obtain a field object from the new field.
-            uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0]
             
-        uIDField = arcpyutil.fields.updateFieldProps(uIDField)
+        # Get the field properties for the unitID, this will be frequently used
+        uIDField = utils.settings.processUIDField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # Add a field to the reporting units to hold the area value in square kilometers
+        unitArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        globalConstants.cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
+        
+        # Get a unique name for the merged roads:
+        mergedRoads = arcpy.CreateScratchName(metricConst.roadsByReportingUnitName,"","FeatureClass")
+        
+        # Calculate the density of the roads by reporting unit.
+        utils.calculate.lineDensityCalculator(inRoadFeature,inReportingUnitFeature,mergedRoads,
+                                              metricConst.densityFieldName,reportingUnitIdField,unitArea,
+                                              metricConst.totalImperviousAreaFieldName)
+        
+    
+    # Write vector density as standalone vector function
+    
+    # write STXRD and RNS as standalone vector functions
     
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
-        for (function,arguments) in cleanUp:
+        for (function,arguments) in globalConstants.cleanupList:
             # Flexibly executes any functions added to cleanup array.
             function(*arguments)
         env.workspace = _tempEnvironment1

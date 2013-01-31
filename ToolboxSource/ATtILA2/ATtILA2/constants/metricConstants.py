@@ -143,4 +143,7 @@ class rdmConstants(baseMetricConstants):
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    roadsByReportingUnitName = "RdsByRU"
+    densityFieldName = "RDDENS"
+    totalImperviousAreaFieldName = "PCTIA_RD"
     

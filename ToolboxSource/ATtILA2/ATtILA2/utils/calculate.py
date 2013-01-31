@@ -300,3 +300,30 @@ def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalG
             del tabAreaTableRow
         except:
             pass
+
+
+def lineDensityCalculator(inLines,inAreas,outLines,densityField,areaUID,unitArea,lineClass="",iaField=''):
+    '''Needs documentation'''
+    
+    import vector
+    
+    # First perform the split/dissolve/merge on the roads
+    mergedRoads, roadLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,lineClass,outLines)
+
+    # Next join the reporting units layer to the merged roads layer
+    arcpy.JoinField_management(mergedRoads, areaUID, inAreas, areaUID, [unitArea])
+    # Set up a calculation expression for density.
+    calcExpression = "!" + roadLengthFieldName + "!/!" + unitArea + "!"
+    densityField = vector.addCalculateField(inLines,densityField,calcExpression)
+
+    # Calculate the road density linear regression for total impervious area:
+    calcExpression = "pctiaCalc(!" + densityField + "!)"
+    codeblock = """def pctiaCalc(RdDensity):
+    pctia = ((RdDensity - 1.78) / 0.16)
+    if (RdDensity < 1.79):
+        return 0
+    elif (RdDensity > 11):
+        return -1
+    else:
+        return pctia"""
+    iaField = vector.addCalculateField(inLines,iaField,calcExpression,codeblock)
