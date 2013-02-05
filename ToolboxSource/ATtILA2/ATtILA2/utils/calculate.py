@@ -302,28 +302,57 @@ def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalG
             pass
 
 
-def lineDensityCalculator(inLines,inAreas,outLines,densityField,areaUID,unitArea,lineClass="",iaField=''):
-    '''Needs documentation'''
+def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField,lineClass="",iaField=""):
+    """ Creates *outLines* that contains one multipart linear feature for each *inArea* for calculating line density
+        in kilometers per square kilometer of area.
+    
+    **Description:**
+
+        Creates *outLines* that contains one multipart linear feature for each *inArea* for calculating line density
+        in kilometers per square kilometer of area.  If a line class is specified, then outLines will actually contain
+        one feature per class per input Area, and the linear density is also broken out by class.  If a field for 
+        calculating total impervious area is given, the function will add and populate that field with a linear
+        regression equation.
+        
+    **Arguments:**
+
+        * *inLines* - input linear feature class with full path
+        * *inAreas* - input areal unit feature class with full path
+        * *areaUID* - ID field for the areal units feature class.
+        * *unitArea* - field in the areal units feature class containing area in square kilometers.
+        * *outLines* - desired output linear features with full path
+        * *densityField* - desired fieldname for output density field
+        * *lineClass* - optional field in the input linear feature class containing classes of linear features.  
+        * *iaField* - if total impervious area should be calculated for these lines, the desired output fieldname
+        
+    **Returns:**
+
+        * None
+        
+    """
     
     import vector
     
     # First perform the split/dissolve/merge on the roads
-    mergedRoads, roadLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,lineClass,outLines)
+    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,lineClass,outLines)
 
     # Next join the reporting units layer to the merged roads layer
-    arcpy.JoinField_management(mergedRoads, areaUID, inAreas, areaUID, [unitArea])
+    arcpy.JoinField_management(outLines, areaUID, inAreas, areaUID, [unitArea])
     # Set up a calculation expression for density.
-    calcExpression = "!" + roadLengthFieldName + "!/!" + unitArea + "!"
+    calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
     densityField = vector.addCalculateField(inLines,densityField,calcExpression)
 
-    # Calculate the road density linear regression for total impervious area:
-    calcExpression = "pctiaCalc(!" + densityField + "!)"
-    codeblock = """def pctiaCalc(RdDensity):
-    pctia = ((RdDensity - 1.78) / 0.16)
-    if (RdDensity < 1.79):
-        return 0
-    elif (RdDensity > 11):
-        return -1
-    else:
-        return pctia"""
-    iaField = vector.addCalculateField(inLines,iaField,calcExpression,codeblock)
+    if iaField: # if a field has been specified for calculating total impervious area.
+        # Calculate the road density linear regression for total impervious area:
+        calcExpression = "pctiaCalc(!" + densityField + "!)"
+        codeblock = """def pctiaCalc(RdDensity):
+        pctia = ((RdDensity - 1.78) / 0.16)
+        if (RdDensity < 1.79):
+            return 0
+        elif (RdDensity > 11):
+            return -1
+        else:
+            return pctia"""
+        iaField = vector.addCalculateField(outLines,iaField,calcExpression,codeblock)
+    
+    return outLines, lineLengthFieldName

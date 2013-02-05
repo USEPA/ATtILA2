@@ -366,10 +366,11 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
         
 def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField,
-                             inStreamFeature, streamsByRoads, bufferDistance, roadsNearStreams, optionalFieldGroups):
+                             streamsByRoads, roadsNearStreams, inStreamFeature, bufferDistance, optionalFieldGroups):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
     from pylet import arcpyutil
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
         # Work on making as generic as possible
         ### Initialization
@@ -385,33 +386,81 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace))   
+            arcpy.AddMessage(msg.format(env.workspace)) 
+            cleanupList[0] = "KeepIntermediates"
             
         # Get the field properties for the unitID, this will be frequently used
-        uIDField = utils.settings.processUIDField(inReportingUnitFeature, reportingUnitIdField)
+        uIDField = utils.settings.processUIDField(inReportingUnitFeature, reportingUnitIdField,cleanupList)
         
+        AddMsg(timer.split() + " Calculating reporting unit area")
         # Add a field to the reporting units to hold the area value in square kilometers
+        # Check for existence of field.
+        fieldList = arcpy.ListFields(inReportingUnitFeature,metricConst.areaFieldname)
+        # Add and populate the area field (or just recalculate if it already exists
         unitArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
-        globalConstants.cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
+        if not fieldList: # if the list of fields that exactly match the validated fieldname is empty...
+            if not cleanupList[0] == "KeepIntermediates":
+                # ...add this to the list of items to clean up at the end.
+                cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
         
-        # Get a unique name for the merged roads:
-        mergedRoads = arcpy.CreateScratchName(metricConst.roadsByReportingUnitName,"","FeatureClass")
+        
+        AddMsg(timer.split() + " Calculating road density")
+        # Get a unique name for the merged roads and prep for cleanup
+        mergedRoads = utils.files.nameIntermediateFile(metricConst.roadsByReportingUnitName,cleanupList)
         
         # Calculate the density of the roads by reporting unit.
-        utils.calculate.lineDensityCalculator(inRoadFeature,inReportingUnitFeature,mergedRoads,
-                                              metricConst.densityFieldName,reportingUnitIdField,unitArea,
-                                              metricConst.totalImperviousAreaFieldName)
+        mergedRoads, roadLengthFieldName = utils.calculate.lineDensityCalculator(inRoadFeature,inReportingUnitFeature,
+                                                                                 uIDField,unitArea,mergedRoads,
+                                                                                 metricConst.roadDensityFieldName,
+                                                                                 roadClassField,
+                                                                                 metricConst.totalImperviousAreaFieldName)
+
+        # If the Streams By Roads (STXRD) box is checked...
+        if streamsByRoads:
+            AddMsg(timer.split() + " Calculating Streams By Roads (STXRD)")
+            # Get a unique name for the merged streams:
+            mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)   
         
-    
-    # Write vector density as standalone vector function
-    
-    # write STXRD and RNS as standalone vector functions
+            # Calculate the density of the streams by reporting unit.
+            mergedStreams, streamLengthFieldName = utils.calculate.lineDensityCalculator(inStreamFeature,
+                                                                                         inReportingUnitFeature,
+                                                                                         reportingUnitIdField,
+                                                                                         unitArea,mergedStreams,
+                                                                                         metricConst.streamDensityFieldName)
+            
+            # Get a unique name for the road/stream intersections:
+            roadStreamMultiPoints = utils.files.nameIntermediateFile(metricConst.roadStreamMultiPoints,cleanupList)
+            # Get a unique name for the points of crossing:
+            roadStreamIntersects = utils.files.nameIntermediateFile(metricConst.roadStreamIntersects,cleanupList)
+            # Get a unique name for the roads by streams summary table:
+            roadStreamSummary = utils.files.nameIntermediateFile(metricConst.roadStreamSummary,cleanupList)
+            
+            utils.vector.findIntersections(mergedRoads,mergedStreams,uIDField,roadStreamMultiPoints,
+                                           roadStreamIntersects,roadStreamSummary,roadClassField)
+            
+        if roadsNearStreams:
+            AddMsg(timer.split() + " Calculating Roads Near Streams (RNS)")
+            if not streamsByRoads:  # In case merged streams haven't already been calculated:
+                # Get a unique name for the merged streams:
+                mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)   
+                # Calculate the density of the streams by reporting unit.
+                utils.calculate.lineDensityCalculator(inStreamFeature,inReportingUnitFeature,reportingUnitIdField,unitArea,
+                                                      mergedStreams,metricConst.streamDensityFieldName)
+            # Get a unique name for the buffered streams:
+            streamBuffer = utils.files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
+            # Get a unique name for the road/stream intersections:
+            roadsNearStreams = utils.files.nameIntermediateFile(metricConst.roadsNearStreams,cleanupList)
+            
+            utils.vector.roadsNearStreams(mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName, 
+                                          reportingUnitIdField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName)
+            
+        # Build and populate final output table.
     
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
-        for (function,arguments) in globalConstants.cleanupList:
+        for (function,arguments) in cleanupList:
             # Flexibly executes any functions added to cleanup array.
             function(*arguments)
         env.workspace = _tempEnvironment1

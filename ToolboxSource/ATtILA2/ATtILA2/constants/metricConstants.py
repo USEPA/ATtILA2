@@ -143,7 +143,15 @@ class rdmConstants(baseMetricConstants):
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = shortName + gc.fieldOverrideName
-    roadsByReportingUnitName = "RdsByRU"
-    densityFieldName = "RDDENS"
+    areaFieldname = "AREAKM2"
+    roadDensityFieldName = "RDDENS"
+    streamDensityFieldName = "STRMDENS"
     totalImperviousAreaFieldName = "PCTIA_RD"
-    
+    rnsFieldName = "RNS"
+    roadsByReportingUnitName = ["RdsByRU","FeatureClass"]
+    streamsByReportingUnitName = ["StrByRU","FeatureClass"]
+    roadStreamMultiPoints = ["RdsXStrMP","FeatureClass"]
+    roadStreamIntersects = ["PtsOfXing","FeatureClass"]
+    roadStreamSummary = ["RdsXStrTbl","Dataset"]
+    streamBuffers = ["StrBuffers","FeatureClass"]
+    roadsNearStreams = ["RdsNrStrms","FeatureClass"]

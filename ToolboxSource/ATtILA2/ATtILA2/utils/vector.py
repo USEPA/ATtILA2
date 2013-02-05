@@ -3,7 +3,6 @@
 """
 
 import arcpy, pylet
-from ATtILA2.constants import globalConstants
 from pylet.arcpyutil.messages import AddMsg
 from pylet.arcpyutil.fields import valueDelimiter
 
@@ -318,6 +317,48 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     lengthFieldName = addLengthField(mergedLines)
     return mergedLines, lengthFieldName
 
+def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,roadClass=""):
+    '''This function performs an intersection analysis on two input line feature classes.  The desired output is 
+    a count of the number of intersections per reporting unit ID (both line feature classes already contain this ID).  
+    To obtain this cout the intersection output is first converted to singlepart features (from the default of multipart
+    and then a frequency analysis performed.
+    '''
+
+    # Intersect the roads and the streams - the output is a multipoint feature class with one feature per combination 
+    # of road class and streams per reporting unit
+    arcpy.Intersect_analysis([mergedRoads,mergedStreams],roadStreamMultiPoints,"ALL","#","POINT")
+    
+    # Because we want a count of individual intersection features, break apart the multipoints into single points
+    arcpy.MultipartToSinglepart_management(roadStreamMultiPoints,roadStreamIntersects)
+    
+    # Perform a frequency analysis to get a count of the number of crossings per class per reporting unit
+    fieldList = [ruID]
+    if roadClass:
+        fieldList.append(roadClass)
+    arcpy.Frequency_analysis(roadStreamIntersects,roadStreamSummary,fieldList)
+
+def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,ruID,streamBuffer,roadStreamBuffer,rnsFieldName):
+    '''This function calculates roads near streams by first buffering a streams layer by the desired distance
+    and then intersecting that buffer with a roads feature class.  This metric measures the total 
+    length of roads within the buffer distance divided by the total length of stream in the reporting unit, both lengths 
+    are measured in map units (e.g., m of road/m of stream).
+    '''
+    # For RNS metric, first buffer all the streams by the desired distance
+    arcpy.Buffer_analysis(mergedStreams,streamBuffer,bufferDist,"FULL","ROUND","ALL","#")
+    # Intersect the buffered streams with the merged roads
+    arcpy.Intersect_analysis([mergedRoads,streamBuffer],roadStreamBuffer,"ALL","#","INPUT")
+    ## Add and calculate a length field for the new shapefile
+    roadLengthFieldName = addLengthField(roadStreamBuffer)
+    
+    # Next join the merged streams layer to the roads/streambuffer intersection layer
+    arcpy.JoinField_management(roadStreamBuffer, ruID, mergedStreams, ruID, [streamLengthFieldName])
+    # Set up a calculation expression for the roads near streams fraction
+    calcExpression = "!" + roadLengthFieldName + "!/!" + streamLengthFieldName + "!"
+    # Add a field for the roads near streams fraction
+    rnsFieldName = addCalculateField(roadStreamBuffer,rnsFieldName,calcExpression)
+
+
+
 def addAreaField(inAreaFeatures):
     '''This function checks for the existence of a field containing polygon area in square kilometers and if it does
         not exist, adds and populates it appropriate.
@@ -346,15 +387,17 @@ def addLengthField(inLineFeatures):
     **Returns:**
         * *lengthFieldName* - validated fieldname      
     '''
+    # Get a describe object
+    lineDescription = arcpy.Describe(inLineFeatures)
     # Set a default for the length fieldName
-    lengthFieldName = "LengthKM"
+    lengthFieldName = "LengthKM" + lineDescription.baseName
     # Set up the calculation expression for length in kilometers
-    calcExpression = "!" + arcpy.Describe(inLineFeatures).shapeFieldName + ".LENGTH@KILOMETERS!"
+    calcExpression = "!" + lineDescription.shapeFieldName + ".LENGTH@KILOMETERS!"
     lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,calcExpression)
     return lengthFieldName
 
 def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
-    '''This function checks for the existence of the desired field, and if it does not exists, adds and populates it
+    '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
     using the given calculation expression
     **Description:**
         This function checks for the existence of the specified field and if it does
@@ -373,6 +416,8 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
     fieldList = arcpy.ListFields(inFeatures,fieldName)
     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
         arcpy.AddField_management(inFeatures,fieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
-        arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
+    else: # Otherwise warn the user that the field will be recalculated.
+        AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
+    arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
     return fieldName      
     
