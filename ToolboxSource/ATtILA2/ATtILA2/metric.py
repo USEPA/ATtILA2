@@ -464,6 +464,30 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             # Flexibly executes any functions added to cleanup array.
             function(*arguments)
         env.workspace = _tempEnvironment1
+        
+        
+
+def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
+    """ Interface for script executing Land Cover Diversity Metrics """   
+    
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.lcdConstants()
+        
+        pass
+        
+#        # Create new instance of metricCalc class to contain parameters
+#        lcdCalc = metricCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups, 
+#                             metricConst)
+#        
+#        # Run Calculation
+#        lcdCalc.run()
+  
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
 
 
 
