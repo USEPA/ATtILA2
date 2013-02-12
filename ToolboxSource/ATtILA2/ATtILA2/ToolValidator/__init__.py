@@ -70,3 +70,11 @@ class rdmToolValidator(BaseValidators.VectorsOnlyValidator):
     fieldSuffix = rdmConstants.fieldSuffix    
     metricShortName = rdmConstants.shortName
     
+class lcdToolValidator(BaseValidators.VectorsOnlyValidator):
+    """ ToolValidator for LandCoverDiversity """
+    
+    filterList = lcdConstants.optionalFilter
+    fieldPrefix = lcdConstants.fieldPrefix
+    fieldSuffix = lcdConstants.fieldSuffix
+    metricShortName = lcdConstants.shortName
+    

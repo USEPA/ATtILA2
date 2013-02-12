@@ -16,6 +16,22 @@ class baseMetricConstants():
     qaCheckFieldParameters = []    
     fieldOverrideKey = ''
 
+class lcdConstants(baseMetricConstants):
+    name = "LandCoverDiversity"
+    shortName = "lcd"
+    fieldPrefix = ""
+    fieldSuffix = ""
+    overlapName = "LCD_OVRLP"
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+                              [overlapName, gc.defaultIntegerFieldType, 6]
+                              ]   
+    fieldOverrideKey = shortName + gc.fieldOverrideName
+
 class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"
     shortName = "lcp"
