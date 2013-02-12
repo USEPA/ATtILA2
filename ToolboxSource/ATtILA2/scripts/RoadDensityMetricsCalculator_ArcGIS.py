@@ -8,17 +8,12 @@
 import sys
 from ATtILA2 import metric
 from pylet.arcpyutil import parameters
-import arcpy
 
 def main(_argv):
     
     # Script arguments
-    inputArguments = parameters.getParametersAsText([0, 2, 3, 7])
+    inputArguments = parameters.getParametersAsText([0, 2, 7])
     
-    inputArguments = []
-    for i in range(0,arcpy.GetArgumentCount()):
-        inputArguments.append(arcpy.GetParameter(i))
-
     metric.runRoadDensityCalculator(*inputArguments)
 
 if __name__ == "__main__":

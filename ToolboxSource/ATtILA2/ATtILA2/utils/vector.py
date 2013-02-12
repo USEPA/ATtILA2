@@ -286,12 +286,12 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
 
         # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
         # definition expression.
-        arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
-
+        ruLayer = arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
         # Clip the features that should be buffered to this reporting unit, and output the result to memory.
-        clipResult = arcpy.Clip_analysis(lines,"ru_lyr","in_memory/clip","#")
+        clipResult = arcpy.Clip_analysis(lines,ruLayer,"in_memory/clip","#").getOutput(0)
         # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
-        dissolveResult = arcpy.Dissolve_management(clipResult,"in_memory/dissolve",lineClass,"#","MULTI_PART","DISSOLVE_LINES")
+        dissolveResult = arcpy.Dissolve_management(clipResult,"in_memory/dissolve",lineClass,"#","MULTI_PART",
+                                                   "DISSOLVE_LINES").getOutput(0)
         # Add a field to this output shapefile that will contain the reporting unit ID (also the name of the shapefile)
         # so that when we merge the shapefiles the ID will be preserved
         arcpy.AddField_management(dissolveResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
@@ -308,7 +308,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
             arcpy.Append_management(dissolveResult,mergedLines,"NO_TEST")
         
         # Clean up intermediate datasets
-        arcpy.Delete_management("ru_lyr")
+        arcpy.Delete_management(ruLayer)
         arcpy.Delete_management(clipResult)
         arcpy.Delete_management(dissolveResult)
         loopProgress.update()
@@ -358,8 +358,7 @@ def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,
     rnsFieldName = addCalculateField(roadStreamBuffer,rnsFieldName,calcExpression)
 
 
-
-def addAreaField(inAreaFeatures):
+def addAreaField(inAreaFeatures, areaFieldName):
     '''This function checks for the existence of a field containing polygon area in square kilometers and if it does
         not exist, adds and populates it appropriate.
     **Description:**
@@ -370,10 +369,9 @@ def addAreaField(inAreaFeatures):
     **Returns:**
         * *areaFieldName* - validated fieldname      
     '''
-    # Set a default for the area fieldName
-    areaFieldName = "AreaKM2"
     # Set up the calculation expression for area in square kilometers
-    calcExpression = "!" + arcpy.Describe(inAreaFeatures).shapeFieldName + ".AREA@SQUAREKILOMETERS!"
+    shapeFieldName = arcpy.Describe(inAreaFeatures).shapeFieldName
+    calcExpression = "!{0}.AREA@SQUAREKILOMETERS!".format(shapeFieldName)
     areaFieldName = addCalculateField(inAreaFeatures,areaFieldName,calcExpression)
     return areaFieldName    
 
@@ -392,7 +390,7 @@ def addLengthField(inLineFeatures):
     # Set a default for the length fieldName
     lengthFieldName = "LengthKM" + lineDescription.baseName
     # Set up the calculation expression for length in kilometers
-    calcExpression = "!" + lineDescription.shapeFieldName + ".LENGTH@KILOMETERS!"
+    calcExpression = "!{0}.LENGTH@KILOMETERS!".format(lineDescription.shapeFieldName)
     lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,calcExpression)
     return lengthFieldName
 

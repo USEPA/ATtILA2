@@ -387,7 +387,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace)) 
-            cleanupList[0] = "KeepIntermediates"
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
             
         # Get the field properties for the unitID, this will be frequently used
         uIDField = utils.settings.processUIDField(inReportingUnitFeature, reportingUnitIdField,cleanupList)
