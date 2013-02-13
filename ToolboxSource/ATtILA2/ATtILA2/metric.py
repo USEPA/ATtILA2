@@ -365,8 +365,9 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
         
-def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField,
-                             streamsByRoads, roadsNearStreams, inStreamFeature, bufferDistance, optionalFieldGroups):
+def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="#",
+                             streamsByRoads="#", roadsNearStreams="#", inStreamFeature="#", bufferDistance="#", 
+                             optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
     from pylet import arcpyutil
@@ -386,11 +387,11 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace)) 
+            AddMsg(msg.format(env.workspace)) 
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
             
         # Get the field properties for the unitID, this will be frequently used
-        uIDField = utils.settings.processUIDField(inReportingUnitFeature, reportingUnitIdField,cleanupList)
+        uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
         
         AddMsg(timer.split() + " Calculating reporting unit area")
         # Add a field to the reporting units to hold the area value in square kilometers
@@ -399,7 +400,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # Add and populate the area field (or just recalculate if it already exists
         unitArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
         if not fieldList: # if the list of fields that exactly match the validated fieldname is empty...
-            if not cleanupList[0] == "KeepIntermediates":
+            if cleanupList and not cleanupList[0] == "KeepIntermediates":
                 # ...add this to the list of items to clean up at the end.
                 cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
         
@@ -424,7 +425,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             # Calculate the density of the streams by reporting unit.
             mergedStreams, streamLengthFieldName = utils.calculate.lineDensityCalculator(inStreamFeature,
                                                                                          inReportingUnitFeature,
-                                                                                         reportingUnitIdField,
+                                                                                         uIDField,
                                                                                          unitArea,mergedStreams,
                                                                                          metricConst.streamDensityFieldName)
             
@@ -444,7 +445,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 # Get a unique name for the merged streams:
                 mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)   
                 # Calculate the density of the streams by reporting unit.
-                utils.calculate.lineDensityCalculator(inStreamFeature,inReportingUnitFeature,reportingUnitIdField,unitArea,
+                utils.calculate.lineDensityCalculator(inStreamFeature,inReportingUnitFeature,uIDField,unitArea,
                                                       mergedStreams,metricConst.streamDensityFieldName)
             # Get a unique name for the buffered streams:
             streamBuffer = utils.files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
@@ -452,17 +453,19 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             roadsNearStreams = utils.files.nameIntermediateFile(metricConst.roadsNearStreams,cleanupList)
             
             utils.vector.roadsNearStreams(mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName, 
-                                          reportingUnitIdField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName)
+                                          uIDField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName)
             
         # Build and populate final output table.
+        AddMsg(timer.split() + " Producing final output table")
     
     except Exception, e:
         errors.standardErrorHandling(e)
         
     finally:
-        for (function,arguments) in cleanupList:
-            # Flexibly executes any functions added to cleanup array.
-            function(*arguments)
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
         env.workspace = _tempEnvironment1
         
         

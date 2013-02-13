@@ -16,7 +16,7 @@ outTable = baseDir + 'TestOutput.dbf'
 processingCellSize = '30' 
 snapRaster = inLandCoverGrid  # Set by default to the input LandCover Grid, may be changed.
 optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
-
+inStreamFeatures = baseDir + 'nhd_msite.shp'
 
 # Parameters unique to LandCoverProportions
 refLandCoverOutput = baseDir + 'LandCoverReference.dbf' # Reference output data
@@ -36,8 +36,18 @@ metricsToRun_LCC = "'IMPERVIOUS  -  [PCTIA]  Percent Cover Total Impervious Area
 optionalFieldGroups_LCC = "'QAFIELDS  -  Add Quality Assurance Fields'"  # Only metric with different optional Field Groups
 
 
-# Parameters unique to LandCoverProportions
+# Parameters unique to riparianLandCoverTest
 refRiparianLandCover = baseDir + 'riparianLandCoverReference.dbf' # Reference output data
 metricsToRun_RLC = "'nat  -  [rnat]  All natural land use';'for  -  [rfor]  Forest';'wtlt  -  [rwtlt]  All Wetlands';'wtlw  -  [rwtlw]  Woody Wetland';'wtle  -  [rwtle]  Emergent Herbaceous Wetland';'shrb  -  [rshrb]  Shrubland';'hrbt  -  [rhrbt]  All Herbaceous';'hrbg  -  [rhrbg]  Grassland, Herbaceous';'hrbo  -  [rhrbo]  Herbaceous Other';'bart  -  [rbart]  Barren';'unat  -  [runat]  All human land use';'devt  -  [rdevt]  All Developed';'devo  -  [rdevo]  Developed, Open Space';'devl  -  [rdevl]  Developed, Low Intensity';'devm  -  [rdevm]  Developed, Medium Intensity';'devh  -  [rdevh]  Developed, High Intensity';'agt  -  [ragt]  All Agriculture';'agp  -  [ragp]  Pasture';'agc  -  [ragc]  Cultivated Crops'"
-inStreamFeatures = baseDir + 'nhd_msite.shp'
 inBufferDistance = '100' 
+
+
+# Parameters unique to Road Density Metrics
+rdinReportingUnitFeature = baseDir + "reportingUnitsQuick.shp"
+rdreportingUnitIdField = "ID_USE1"
+inRoadFeature = baseDir + "mroads.shp"
+roadClassField = "ACC"
+streamsByRoads = False
+roadsNearStreams = False
+bufferDistance = "50 meters"
+rdoptionalFieldGroups = "'INTERMEDIATES  -  Retain Intermediate Layers Generated During Metric Calculation'"

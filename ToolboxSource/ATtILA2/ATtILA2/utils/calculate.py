@@ -334,13 +334,13 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     import vector
     
     # First perform the split/dissolve/merge on the roads
-    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,lineClass,outLines)
+    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,lineClass)
 
     # Next join the reporting units layer to the merged roads layer
-    arcpy.JoinField_management(outLines, areaUID, inAreas, areaUID, [unitArea])
+    arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])
     # Set up a calculation expression for density.
     calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
-    densityField = vector.addCalculateField(inLines,densityField,calcExpression)
+    densityField = vector.addCalculateField(outLines,densityField,calcExpression)
 
     if iaField: # if a field has been specified for calculating total impervious area.
         # Calculate the road density linear regression for total impervious area:

@@ -332,7 +332,7 @@ def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadS
     arcpy.MultipartToSinglepart_management(roadStreamMultiPoints,roadStreamIntersects)
     
     # Perform a frequency analysis to get a count of the number of crossings per class per reporting unit
-    fieldList = [ruID]
+    fieldList = [ruID.name]
     if roadClass:
         fieldList.append(roadClass)
     arcpy.Frequency_analysis(roadStreamIntersects,roadStreamSummary,fieldList)
@@ -351,7 +351,7 @@ def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,
     roadLengthFieldName = addLengthField(roadStreamBuffer)
     
     # Next join the merged streams layer to the roads/streambuffer intersection layer
-    arcpy.JoinField_management(roadStreamBuffer, ruID, mergedStreams, ruID, [streamLengthFieldName])
+    arcpy.JoinField_management(roadStreamBuffer, ruID.name, mergedStreams, ruID.name, [streamLengthFieldName])
     # Set up a calculation expression for the roads near streams fraction
     calcExpression = "!" + roadLengthFieldName + "!/!" + streamLengthFieldName + "!"
     # Add a field for the roads near streams fraction
@@ -413,7 +413,7 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
     # Check for existence of field.
     fieldList = arcpy.ListFields(inFeatures,fieldName)
     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
-        arcpy.AddField_management(inFeatures,fieldName,"DOUBLE","#","#","#","#","NON_NULLABLE","NON_REQUIRED","#")
+        arcpy.AddField_management(inFeatures,fieldName,"DOUBLE")
     else: # Otherwise warn the user that the field will be recalculated.
         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)

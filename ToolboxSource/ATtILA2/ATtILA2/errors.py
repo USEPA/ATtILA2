@@ -46,5 +46,9 @@ def standardErrorHandling(exception):
     # Return python error messages for use in script tool
     arcpy.AddError(msg)
     
+    # From ESRI's example, maybe this will return scripting errors?
+    if not arcpy.GetMessages(2) == "":
+        arcpy.AddError(arcpy.GetMessages(2))
+    
     print msg  # To ensure message is printed to command line if run as standalone.
     raise(exception)
