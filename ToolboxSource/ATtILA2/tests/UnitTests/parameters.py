@@ -50,4 +50,4 @@ roadClassField = "ACC"
 streamsByRoads = False
 roadsNearStreams = False
 bufferDistance = "50 meters"
-rdoptionalFieldGroups = "'INTERMEDIATES  -  Retain Intermediate Layers Generated During Metric Calculation'"
+rdoptionalFieldGroups = "#" #"'INTERMEDIATES  -  Retain Intermediate Layers Generated During Metric Calculation'"

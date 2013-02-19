@@ -389,7 +389,14 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             msg = "\nIntermediates are stored in this directory: {0}\n"
             AddMsg(msg.format(env.workspace)) 
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+
+        tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
+        inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
+                                                                             os.path.basename(tempReportingUnitFeature))
             
+        AddMsg(inReportingUnitFeature)
         # Get the field properties for the unitID, this will be frequently used
         uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
         
@@ -400,9 +407,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # Add and populate the area field (or just recalculate if it already exists
         unitArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
         if not fieldList: # if the list of fields that exactly match the validated fieldname is empty...
-            if cleanupList and not cleanupList[0] == "KeepIntermediates":
+            if not cleanupList[0] == "KeepIntermediates":
                 # ...add this to the list of items to clean up at the end.
-                cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
+                pass
+                #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
         
         
         AddMsg(timer.split() + " Calculating road density")
@@ -457,6 +465,17 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             
         # Build and populate final output table.
         AddMsg(timer.split() + " Producing final output table")
+        '''
+        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        get array of unique road class values
+        for each unique road class value, 
+            add corresponding road metric field to output table
+            create in-memory layer of intermediate table containing only that road class
+            join metric field to output table
+            copy metric values to created field
+        
+        
+        '''
     
     except Exception, e:
         errors.standardErrorHandling(e)

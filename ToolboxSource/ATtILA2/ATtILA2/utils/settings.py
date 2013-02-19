@@ -71,10 +71,11 @@ def processUIDField(inReportingUnitFeature, reportingUnitIdField, cleanupList):
     if (uIDField.type <> "String"): # unit IDs that are not in string format can cause problems.  
         # Create a unit ID with a string format
         reportingUnitIdField = arcpyutil.fields.makeTextID(uIDField,inReportingUnitFeature)
-        # Make sure to clean this up later
-        cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
+        # Make sure to clean this up later *** Since we're making the whole reporting unit FC into a temp copy, don't need to clean this up ***
+        #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
         # Obtain a field object from the new field.
         uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0]
     # Convert the field properties from the default ArcPy field object into inputs for the AddField object.    
     uIDField = arcpyutil.fields.updateFieldProps(uIDField)
     return uIDField
+
