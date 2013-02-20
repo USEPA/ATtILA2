@@ -371,9 +371,9 @@ class ProportionsValidator(object):
         # Check input features
         if self.inputTableParameter.value and not self.inputTableParameter.hasError():
         
-            # Check for empty input features
-            if not arcpy.SearchCursor(self.inputTableParameter.value).next():
-                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+        #    # Check for empty input features
+        #    if not arcpy.SearchCursor(self.inputTableParameter.value).next():
+        #        self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
             # Check for if input feature layer has spatial reference
             # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
@@ -458,7 +458,7 @@ class CoefficientValidator(ProportionsValidator):
         return lccList
     
     
-class VectorsOnlyValidator(object):
+class NoLccFileValidator(object):
     """ Class for inheritance by ToolValidator Only
     
         This currently serves the following tools:
@@ -657,9 +657,9 @@ class VectorsOnlyValidator(object):
         # Check input features
         if self.inputTableParameter.value and not self.inputTableParameter.hasError():
         
-            # Check for empty input features
-            if not arcpy.SearchCursor(self.inputTableParameter.value).next():
-                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+        #    # Check for empty input features
+        #    if arcpy.SearchCursor(self.inputTableParameter.value).next():
+        #        self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
             # Check for if input feature layer has spatial reference
             # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
@@ -669,7 +669,6 @@ class VectorsOnlyValidator(object):
             else:
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
-
            
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
