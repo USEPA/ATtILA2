@@ -78,3 +78,11 @@ class lcdToolValidator(BaseValidators.NoLccFileValidator):
     fieldSuffix = lcdConstants.fieldSuffix
     metricShortName = lcdConstants.shortName
     
+class pdmToolValidator(BaseValidators.NoLccFileValidator):
+    """ ToolValidator for PopulatonDensity Metrics """
+    
+    filterList = pdmConstants.optionalFilter
+    fieldPrefix = pdmConstants.fieldPrefix
+    fieldSuffix = pdmConstants.fieldSuffix
+    metricShortName = pdmConstants.shortName
+    
