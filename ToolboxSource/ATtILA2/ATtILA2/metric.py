@@ -512,7 +512,27 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         setupAndRestore.standardRestore()
 
 
-
+def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
+    """ Interface for script executing Land Cover Diversity Metrics """   
+    
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.pdmConstants()
+        
+        pass
+        
+#        # Create new instance of metricCalc class to contain parameters
+#        pdmCalc = metricCalc(inReportingUnitFeature, reportingUnitIdField, censusFeature, populationField, outTable, 
+#                populationChange="#", censusT2Feature="#", populationT2Field="#", optionalFieldGroups="#", metricConst)
+#        
+#        # Run Calculation
+#        pdmCalc.run()
+  
+    except Exception, e:
+        errors.standardErrorHandling(e)
+        
+    finally:
+        setupAndRestore.standardRestore()
 
 
 
