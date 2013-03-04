@@ -98,7 +98,7 @@ class metricCalc:
                                               self.inLandCoverGrid, self.tableName, self.lccObj)
 
     def _calculateMetrics(self):
-        AddMsg(self.timer.split() + " Processsing the tabulate area table and computing metric values")
+        AddMsg(self.timer.split() + " Processing the tabulate area table and computing metric values")
         # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
         # Default calculation is land cover proportions.  this may be overridden by some metrics.
         utils.calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList,
@@ -232,7 +232,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
 
         class metricCalcRLCP(metricCalc):
-        """ Subclass that overrides buffering function for the RiparianLandCoverProportions calculation """
+            """ Subclass that overrides buffering function for the RiparianLandCoverProportions calculation """
             def _replaceRUFeatures(self):
                 # Generate a default filename for the buffer feature class
                 self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
@@ -491,6 +491,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
     from pylet import arcpyutil
+    from arcpy import env
     """ Interface for script executing Land Cover Diversity Metrics """
 
     try:
@@ -498,7 +499,7 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         metricConst = metricConstants.lcdConstants()
 
         class metricLDCalc:
-    """ This class contains the  steps to perform a land cover diversity calculation."""
+            """ This class contains the  steps to perform a land cover diversity calculation."""
 
     # Initialization
             def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
@@ -514,15 +515,17 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 self.inLandCoverGrid = inLandCoverGrid
                 # Save optional selections to optionalGroupList
                 if optionalFieldGroups:
-                    #Check to see if both options for Landcover Diversity are selected
-                    if ";" in optionalFieldGroups:
+                    processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+                    if globalConstants.intermediateName and globalConstants.qaCheckName in processed:
                         self.optionalGroupsList = (globalConstants.qaCheckName, globalConstants.intermediateName)
-                    else:
-                        #If only one option is selected check which one
-                            if "Q" in optionalFieldGroups:
-                                self.optionalGroupsList = (globalConstants.qaCheckName)
-                            else:
-                                self.optionalGroupsList = (globalConstants.intermediateName)
+                    elif globalConstants.qaCheckName in processed:
+                        self.optionalGroupsList = (globalConstants.qaCheckName)
+                    elif globalConstants.intermediateName in processed:
+                        self.optionalGroupsList = (globalConstants.intermediateName)
+                        
+                    if globalConstants.intermediateName in processed:
+                        msg = "\nIntermediates are stored in this directory: {0}\n"
+                        AddMsg(msg.format(env.workspace))
                 else:
                     self.optionalGroupsList = []
                 # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
