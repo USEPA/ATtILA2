@@ -236,6 +236,8 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             def _replaceRUFeatures(self):
                 # Generate a default filename for the buffer feature class
                 self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
+                # Since the cleanup happens after the workspace has been reset to the default, preserve this path for cleanup
+                self.cleanUpBuffer = os.path.join(os.path.dirname(self.outTable),self.bufferName)
                 # Generate the buffer area to use in the metric calculation
                 self.inReportingUnitFeature = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures, 
                                                                                      self.inReportingUnitFeature, 
@@ -244,7 +246,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             def __del__(self):
                 """ Destructor function automatically called when the metric calculation class is no longer in use """
                 if not self.saveIntermediates:
-                    arcpy.Delete_management(self.bufferName)
+                    arcpy.Delete_management(self.cleanUpBuffer)
         
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath, 
@@ -424,6 +426,17 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                                                                                  roadClassField,
                                                                                  metricConst.totalImperviousAreaFieldName)
 
+        # Build and populate final output table.
+        AddMsg(timer.split() + " Producing final output table")
+        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        # Get a list of unique road class values
+        if roadClassField <> "#":
+            classValues = arcpyutil.fields.getUniqueValues(mergedRoads,roadClassField)
+        #
+        fromFields = [roadLengthFieldName, metricConst.roadDensityFieldName,metricConst.totalImperviousAreaFieldName]
+        #
+        utils.table.transferField(mergedRoads,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
+        
         # If the Streams By Roads (STXRD) box is checked...
         if streamsByRoads:
             AddMsg(timer.split() + " Calculating Streams By Roads (STXRD)")
@@ -463,19 +476,6 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             utils.vector.roadsNearStreams(mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName, 
                                           uIDField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName)
             
-        # Build and populate final output table.
-        AddMsg(timer.split() + " Producing final output table")
-        '''
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
-        get array of unique road class values
-        for each unique road class value, 
-            add corresponding road metric field to output table
-            create in-memory layer of intermediate table containing only that road class
-            join metric field to output table
-            copy metric values to created field
-        
-        
-        '''
     
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -486,7 +486,6 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         env.workspace = _tempEnvironment1
-        
         
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):

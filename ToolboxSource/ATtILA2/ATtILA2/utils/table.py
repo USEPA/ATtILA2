@@ -279,3 +279,31 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
     return newTable, metricsFieldnameDict
 
 
+def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#",classValues=[]):
+    """ This is currently undocumented and needs documentation """    
+    toTableView = arcpy.MakeTableView_management(toTable,"toTableView")
+    transferFields = zip(fromFields,toFields)
+    for (fromField,toField) in transferFields:
+        if classField == '#':
+            whereClause = ""
+            addJoinCalculateField(fromTable,toTableView,fromField,toField,joinField,whereClause)
+        else:
+            classFieldDelim = arcpy.AddFieldDelimiters(fromTable,classField)
+            delimitRUValues = arcpyutil.fields.valueDelimiter(arcpy.ListFields(fromTable,classField)[0].type)
+            for classVal in classValues:
+                outField = toField + str(classVal)
+                whereClause = classFieldDelim + " = " + delimitRUValues(classVal)
+                addJoinCalculateField(fromTable,toTableView,fromField,outField,joinField,whereClause)
+    arcpy.Delete_management(toTableView)
+
+def addJoinCalculateField(fromTable,toTableView,fromField,outField,joinField,whereClause):
+    """ This is currently undocumented and needs documentation """
+    # Get the properties of the from field for transfer
+    fromField = arcpy.ListFields(fromTable,fromField)[0]
+    arcpy.AddField_management(toTableView,outField,fromField.type,fromField.precision,fromField.scale,
+                          fromField.length,fromField.aliasName,fromField.isNullable,fromField.required,
+                          fromField.domain)        
+    fromTableView = arcpy.MakeTableView_management(fromTable,"fromTableView",whereClause)
+    arcpy.JoinField_management(toTableView,joinField,fromTableView,joinField,fromField.name)
+    arcpy.CalculateField_management(toTableView,fromField.name,'!'+ outField +'!',"PYTHON")
+    arcpy.Delete_management(fromTableView)

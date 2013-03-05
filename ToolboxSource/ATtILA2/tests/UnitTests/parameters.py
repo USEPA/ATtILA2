@@ -7,8 +7,8 @@ Created July, 2012
 
 # General Parameters for all tools
 baseDir = 'C:\\temp\\ATtILA2_data\\testData\\'  # Set this to your root folder
-inReportingUnitFeature = baseDir + "blkgrp2000.shp"
-reportingUnitIdField = "BKG_KEY"
+inReportingUnitFeature = baseDir + "reportingUnitsQuick.shp"
+reportingUnitIdField = "ID_USE1"
 inLandCoverGrid = baseDir + "nlcd00"
 _lccName = 'NLCD 2001'
 lccFilePath = r'C:\sync\ATtILA2\SourceCode\ATtILA2\ToolboxSource\LandCoverClassifications\NLCD 2001.lcc'  
