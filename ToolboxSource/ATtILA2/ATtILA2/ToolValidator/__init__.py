@@ -62,7 +62,7 @@ class caeamToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = caeamConstants.fieldSuffix    
     metricShortName = caeamConstants.shortName
     
-class rdmToolValidator(BaseValidators.VectorsOnlyValidator):
+class rdmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for RoadDensityMetrics """
     
     filterList = rdmConstants.optionalFilter
@@ -70,11 +70,19 @@ class rdmToolValidator(BaseValidators.VectorsOnlyValidator):
     fieldSuffix = rdmConstants.fieldSuffix    
     metricShortName = rdmConstants.shortName
     
-class lcdToolValidator(BaseValidators.VectorsOnlyValidator):
+class lcdToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for LandCoverDiversity """
     
     filterList = lcdConstants.optionalFilter
     fieldPrefix = lcdConstants.fieldPrefix
     fieldSuffix = lcdConstants.fieldSuffix
     metricShortName = lcdConstants.shortName
+    
+class pdmToolValidator(BaseValidators.NoLccFileValidator):
+    """ ToolValidator for PopulatonDensity Metrics """
+    
+    filterList = pdmConstants.optionalFilter
+    fieldPrefix = pdmConstants.fieldPrefix
+    fieldSuffix = pdmConstants.fieldSuffix
+    metricShortName = pdmConstants.shortName
     

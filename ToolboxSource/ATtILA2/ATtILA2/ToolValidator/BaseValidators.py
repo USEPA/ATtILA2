@@ -371,9 +371,9 @@ class ProportionsValidator(object):
         # Check input features
         if self.inputTableParameter.value and not self.inputTableParameter.hasError():
         
-            # Check for empty input features
-            if not arcpy.SearchCursor(self.inputTableParameter.value).next():
-                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+        #    # Check for empty input features
+        #    if not arcpy.SearchCursor(self.inputTableParameter.value).next():
+        #        self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
             # Check for if input feature layer has spatial reference
             # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
@@ -458,7 +458,7 @@ class CoefficientValidator(ProportionsValidator):
         return lccList
     
     
-class VectorsOnlyValidator(object):
+class NoLccFileValidator(object):
     """ Class for inheritance by ToolValidator Only
     
         This currently serves the following tools:
@@ -555,10 +555,11 @@ class VectorsOnlyValidator(object):
     def initializeParameters(self):
         """ ESRI - Initialize parameters"""
         
-        if self.inDistanceIndex:
-            self.inDistanceParameter.enabled = False
-        if self.inVector3Index:
-            self.inVector3Parameter.enabled = False
+        # disable dependent input fields until optional check boxes are selected    
+        if self.checkboxInParameters:
+            for val in self.checkboxInParameters.values():
+                for indx in val:
+                    self.parameters[indx].enabled = False  
         
         # Move parameters to optional section
         self.optionsParameter.category = self.optionalFieldsName
@@ -657,9 +658,9 @@ class VectorsOnlyValidator(object):
         # Check input features
         if self.inputTableParameter.value and not self.inputTableParameter.hasError():
         
-            # Check for empty input features
-            if not arcpy.SearchCursor(self.inputTableParameter.value).next():
-                self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
+        #    # Check for empty input features
+        #    if arcpy.SearchCursor(self.inputTableParameter.value).next():
+        #        self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
             
             # Check for if input feature layer has spatial reference
             # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
@@ -669,9 +670,16 @@ class VectorsOnlyValidator(object):
             else:
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
-
            
         # CHECK ON SECONDARY INPUTS IF PROVIDED
+        
+        # if optional check box is unselected, clear the parameter message area and value area    
+        if self.checkboxInParameters:
+            for val in self.checkboxInParameters.values():
+                for indx in val:
+                    if not self.parameters[indx].enabled:
+                        self.parameters[indx].clearMessage()
+                        self.parameters[indx].value = ''
         
         # Check if a secondary multiple input feature is indicated            
         if self.inMultiFeatureIndex:
@@ -689,12 +697,7 @@ class VectorsOnlyValidator(object):
                             
         # Check if a secondary vector input feature is indicated
         if self.inVector2Index:
-            # Clear required on disabled input parameter and empty the input area
-            if not self.inVector2Parameter.enabled:
-                self.inVector2Parameter.clearMessage()
-                self.inVector2Parameter.value = ''
-            
-            # if provided, check if input vector2 is defined
+            # check if input vector2 is defined
             if self.inVector2Parameter.value:
                 # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
                 if hasattr(self.inVector2Parameter.value, "dataSource"):
@@ -706,12 +709,7 @@ class VectorsOnlyValidator(object):
                         
         # Check if a tertiary vector input feature is indicated
         if self.inVector3Index:
-            # Clear required on disabled input parameter and empty the input area
-            if not self.inVector3Parameter.enabled:
-                self.inVector3Parameter.clearMessage()
-                self.inVector3Parameter.value = ''
-            
-            # if provided, check if input vector3 is defined
+            # check if input vector3 is defined
             if self.inVector3Parameter.value:
                 # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
                 if hasattr(self.inVector3Parameter.value, "dataSource"):
@@ -723,12 +721,7 @@ class VectorsOnlyValidator(object):
                         
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inDistanceIndex:
-            # Clear required on disabled buffer distance input and empty the input area
-            if not self.inDistanceParameter.enabled:
-                self.inDistanceParameter.clearMessage()
-                self.inDistanceParameter.value = ''
-            
-            # if enabled, check that the supplied value is positive
+            # check that the supplied value is positive
             if self.inDistanceParameter.value:
                 distanceValue = self.inDistanceParameter.value
                 # use the split function so this routine can be used for both long and linear unit data types
