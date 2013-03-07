@@ -317,7 +317,8 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     lengthFieldName = addLengthField(mergedLines)
     return mergedLines, lengthFieldName
 
-def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,roadClass=""):
+def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,
+                      streamLengthFieldName,xingsPerKMFieldName,roadClass=""):
     '''This function performs an intersection analysis on two input line feature classes.  The desired output is 
     a count of the number of intersections per reporting unit ID (both line feature classes already contain this ID).  
     To obtain this cout the intersection output is first converted to singlepart features (from the default of multipart
@@ -336,6 +337,13 @@ def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadS
     if roadClass:
         fieldList.append(roadClass)
     arcpy.Frequency_analysis(roadStreamIntersects,roadStreamSummary,fieldList)
+    
+    # Lastly, calculate the number of stream crossings per kilometer of streams.
+    # Join the stream layer to the summary table
+    arcpy.JoinField_management(roadStreamSummary, ruID.name, mergedStreams, ruID.name, [streamLengthFieldName])
+    # Set up a calculation expression for crossings per kilometer.
+    calcExpression = "!FREQUENCY!/!" + streamLengthFieldName + "!"    
+    addCalculateField(roadStreamSummary,xingsPerKMFieldName,calcExpression)
 
 def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,ruID,streamBuffer,roadStreamBuffer,rnsFieldName):
     '''This function calculates roads near streams by first buffering a streams layer by the desired distance
@@ -388,7 +396,7 @@ def addLengthField(inLineFeatures):
     # Get a describe object
     lineDescription = arcpy.Describe(inLineFeatures)
     # Set a default for the length fieldName
-    lengthFieldName = "LengthKM" + lineDescription.baseName
+    lengthFieldName = "LenKM" + lineDescription.baseName
     # Set up the calculation expression for length in kilometers
     calcExpression = "!{0}.LENGTH@KILOMETERS!".format(lineDescription.shapeFieldName)
     lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,calcExpression)
