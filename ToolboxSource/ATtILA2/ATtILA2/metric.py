@@ -236,17 +236,11 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             def _replaceRUFeatures(self):
                 # Generate a default filename for the buffer feature class
                 self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
-                # Since the cleanup happens after the workspace has been reset to the default, preserve this path for cleanup
-                self.cleanUpBuffer = os.path.join(os.path.dirname(self.outTable),self.bufferName)
                 # Generate the buffer area to use in the metric calculation
                 self.inReportingUnitFeature = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures,
                                                                                      self.inReportingUnitFeature,
                                                                                      self.bufferName, self.inBufferDistance,
                                                                                      self.reportingUnitIdField)
-            def __del__(self):
-                """ Destructor function automatically called when the metric calculation class is no longer in use """
-                if not self.saveIntermediates:
-                    arcpy.Delete_management(self.cleanUpBuffer)
         
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -257,8 +251,13 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.inBufferDistance = inBufferDistance
 
         # Run Calculation
-        rlcpCalc.run()
+        rlcpCalc.run()      
 
+        # Clean up intermediates
+        if not rlcpCalc.saveIntermediates:
+            # note, this is actually deleting the buffers, not the source reporting units.
+            arcpy.Delete_management(rlcpCalc.inReportingUnitFeature)
+        
     except Exception, e:
         errors.standardErrorHandling(e)
 
@@ -286,10 +285,6 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                                                                               self.inReportingUnitFeature,
                                                                               self.bufferName,self.inBufferDistance,
                                                                               self.reportingUnitIdField,self.ruLinkField)
-            def __del__(self):
-                """ Destructor function automatically called when the metric calculation class is no longer in use """
-                if not self.saveIntermediates:
-                    arcpy.Delete_management(self.bufferName)
 
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP(inReportingUnitFeature, ruLinkField, inLandCoverGrid, lccFilePath,
@@ -302,6 +297,11 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
 
         # Run Calculation
         splcpCalc.run()
+
+        # Clean up intermediates.  
+        if not splcpCalc.saveIntermediates:
+            # note, this is actually deleting the buffers, not the source reporting units.
+            arcpy.Delete_management(splcpCalc.bufferName)            
 
     except Exception, e:
         errors.standardErrorHandling(e)
