@@ -163,6 +163,8 @@ class rdmConstants(baseMetricConstants):
     roadDensityFieldName = "RDDENS"
     streamDensityFieldName = "STRMDENS"
     totalImperviousAreaFieldName = "PCTIA_RD"
+    streamRoadXingsCountFieldname = "STXRD_CNT"
+    xingsPerKMFieldName = "STXRD"
     rnsFieldName = "RNS"
     roadsByReportingUnitName = ["RdsByRU","FeatureClass"]
     streamsByReportingUnitName = ["StrByRU","FeatureClass"]

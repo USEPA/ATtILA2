@@ -280,30 +280,139 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
 
 
 def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#",classValues=[]):
-    """ This is currently undocumented and needs documentation """    
-    toTableView = arcpy.MakeTableView_management(toTable,"toTableView")
+    '''This function transfers a series of fields from one table to another, and, if a class field is specified, pivots
+       the metric fields for those class values into a new field for each class.
+    **Description:**
+        For each field specified, this function transfers the values from the source table to the destination table. 
+        If no class field is specified, this is accomplished by the addJoinCalculateField function - a simple join based
+        on reporting unit ID
+        If a class field is specified, this function uses a search cursor and update cursor to pivot the metrics to 
+        an output table with one row per reporting unit and a metric field for each class.
+    **Arguments:**
+        * *fromTable* - the source table
+        * *toTable* - the destination table
+        * *fromFields* - a python list of source fieldnames
+        * *toFields* - a python list of desired ouptut fieldnames in the same order as the fromFields list
+        * *joinField* - the field common to both tables on which to base the join.  it is assumed that in this context 
+                        the fields have the same name in both tables - if this is not a safe assumption, this function 
+                        may need to be modified in the future.
+        * *classField* - optional field with class values that will be pivoted to output fields
+        * *classValues* - a python list of unique values from the classField
+    '''
+    # Create a zipped list of fields to be transferred - packing and unpacking by using tuples is a little more elegant
     transferFields = zip(fromFields,toFields)
-    for (fromField,toField) in transferFields:
-        if classField == '#':
-            whereClause = ""
-            addJoinCalculateField(fromTable,toTableView,fromField,toField,joinField,whereClause)
-        else:
-            classFieldDelim = arcpy.AddFieldDelimiters(fromTable,classField)
-            delimitRUValues = arcpyutil.fields.valueDelimiter(arcpy.ListFields(fromTable,classField)[0].type)
-            for classVal in classValues:
-                outField = toField + str(classVal)
-                whereClause = classFieldDelim + " = " + delimitRUValues(classVal)
-                addJoinCalculateField(fromTable,toTableView,fromField,outField,joinField,whereClause)
-    arcpy.Delete_management(toTableView)
+    # Start with the simple case, where no class field is specified.
+    if classField == '#': 
+        # Iterate through the field list and run the addJoinCalculateField function
+        for (fromField,toField) in transferFields:
+            addJoinCalculateField(fromTable,toTable,fromField,toField,joinField)
+    else:
+        # Now the tougher case - pivoting class values.
+        # Create a dictionary that will link class values to tuples matching source fieldnames and valid destination fieldnames
+        transferClassFields = {}
+        # Sort the class values just so the output table fields are in a less random order
+        classValues.sort()
+        # For each combo of source and destination fields in the transferFields list
+        for (fromField,toField) in transferFields:
+            # For each class value in the class values list
+            for classValue in classValues:
+                # if the dictionary doesn't already have an element with this value as the key 
+                if not transferClassFields.has_key(classValue):
+                    # Add a new empty list to the dictionary with this classValue as key
+                    transferClassFields[classValue] = []
+                # Obtain a valid output fieldname that combines the desired output fieldname with this class value
+                classToField = getClassFieldName(toField,classValue,toTable)
+                # Save this combination of source and destination fieldnames to the list keyed to this class value in the dictionary
+                transferClassFields[classValue].append((fromField,classToField))
+                # Get the properties of the source field
+                fromFieldObj = arcpy.ListFields(fromTable,fromField)[0]
+                # Add the new field to the output table with the appropriate properties and the valid name
+                arcpy.AddField_management(toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
+                          fromFieldObj.length,fromFieldObj.aliasName,fromFieldObj.isNullable,fromFieldObj.required,
+                          fromFieldObj.domain) 
+        # In preparation for the upcoming whereclause, add the appropriate delimiters to the join field
+        joinFieldDelim = arcpy.AddFieldDelimiters(fromTable,joinField)
+        # In preparation for the upcoming whereclause, set up the appropriate delimiter function for the join value
+        delimitJoinValues = arcpyutil.fields.valueDelimiter(arcpy.ListFields(fromTable,joinField)[0].type)
+        # Initialize an update cursor on the output table
+        updateCursor = arcpy.UpdateCursor(toTable)
+        # For each row in the output table (each reporting unit)
+        for updateRow in updateCursor:
+            # Grab the reporting unit ID
+            joinID = updateRow.getValue(joinField)
+            # Create a whereclause for selecting the corresponding rows in the source table
+            whereClause = joinFieldDelim + " = " + delimitJoinValues(joinID)
+            # Initialize a search cursor on the source table for this reporting unit
+            fetchCursor = arcpy.SearchCursor(fromTable,whereClause)
+            # For each row in the source table (which should correspond to each class in this reporting unit)
+            for fetchRow in fetchCursor:
+                # obtain the class value that will link us to the correct output field
+                classValue = fetchRow.getValue(classField)
+                # for each desired output metric (which we have saved in a list of tuples with the input and valid output fieldnames)
+                for (fromField,toField) in transferClassFields[classValue]:
+                    # Set the output field value equal to the correct source value
+                    updateRow.setValue(toField,fetchRow.getValue(fromField))
+                # Clean up our row element for memory management and to remove locks
+                del fetchRow
+            # Clean up our row element for memory management and to remove locks
+            del fetchCursor
+            # Persist all of the updates for this row.
+            updateCursor.updateRow(updateRow)
+            # Clean up our row element for memory management and to remove locks
+            del updateRow
+        # Clean up our row element for memory management and to remove locks
+        del updateCursor
+            
 
-def addJoinCalculateField(fromTable,toTableView,fromField,outField,joinField,whereClause):
-    """ This is currently undocumented and needs documentation """
-    # Get the properties of the from field for transfer
-    fromField = arcpy.ListFields(fromTable,fromField)[0]
-    arcpy.AddField_management(toTableView,outField,fromField.type,fromField.precision,fromField.scale,
-                          fromField.length,fromField.aliasName,fromField.isNullable,fromField.required,
-                          fromField.domain)        
-    fromTableView = arcpy.MakeTableView_management(fromTable,"fromTableView",whereClause)
-    arcpy.JoinField_management(toTableView,joinField,fromTableView,joinField,fromField.name)
-    arcpy.CalculateField_management(toTableView,fromField.name,'!'+ outField +'!',"PYTHON")
-    arcpy.Delete_management(fromTableView)
+def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
+    '''This function transfers one field to another via a simple JoinField operation, but also allows for a field to be 
+       renamed as part of the transfer.
+    **Description:**
+        The arcpy.JoinField function permanently joins a specified field to an output table, but does not allow that
+        field to be renamed.  This function facilitates that renaming by first adding and populating the desired field
+        to the source table, then joining the renamed field to the output table, then cleaning up the renamed field
+        from the source table.  
+    **Arguments:**
+        * *fromTable* - the source table
+        * *toTable* - the destination table
+        * *fromField* - the source fieldname
+        * *toField* - the desired output fieldname
+        * *joinField* - the field common to both tables on which to base the join.  it is assumed that in this context 
+                        the fields have the same name in both tables - if this is not a safe assumption, this function 
+                        may need to be modified in the future.
+    '''
+    if fromField <> toField:
+        # Get the properties of the from field for transfer
+        fromField = arcpy.ListFields(fromTable,fromField)[0]
+        arcpy.AddField_management(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
+                              fromField.length,fromField.aliasName,fromField.isNullable,fromField.required,
+                              fromField.domain)        
+        arcpy.CalculateField_management(fromTable,toField,'!'+ fromField.name +'!',"PYTHON")
+    arcpy.JoinField_management(toTable,joinField,fromTable,joinField,toField)
+    if fromField <> toField:
+        arcpy.DeleteField_management(fromTable,toField)
+    
+def getClassFieldName(fieldName,classVal,table):
+    '''This function generates a valid fieldname based on the combination of a desired fieldname and a class value
+    **Description:**
+        The expectation for the ATtILA output table is one field per metric per class value, if a class is specified.
+        A simple concatenation of metric fieldname and class value has the potential to be trimmed, depending on the
+        limits of the output table format (i.e. 10 characters for dbf files).  This function thus concatenates the
+        desired fieldname with the specified class value, tries the arcpy field validation, and if the concatenated
+        fieldname gets shortened, trims the desired fieldname by the appropriate amount so that the class value is 
+        always the final characters of the fieldname string.  
+    **Arguments:**
+        * *fieldName* - the desired metric fieldname to which the class value will be appended
+        * *classVal* - the class value as a string
+        * *table* - the table to which the field will be added 
+    **Returns:**
+        * *validFieldName* - validated fieldname 
+    '''
+    testFieldName = fieldName + classVal
+    validFieldName = arcpy.ValidateFieldName(testFieldName, table)
+    if len(testFieldName)>len(validFieldName):
+        trim = len(validFieldName) - len(testFieldName)
+        testFieldName = fieldName[:trim] + classVal
+        validFieldName = arcpy.ValidateFieldName(testFieldName, table)
+    return validFieldName
+

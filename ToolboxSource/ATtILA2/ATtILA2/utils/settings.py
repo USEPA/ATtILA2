@@ -67,6 +67,8 @@ def checkGridCellDimensions(inLandCoverGrid):
         
         
 def processUIDField(inReportingUnitFeature, reportingUnitIdField, cleanupList):
+    """ This function checks to see whether the UID field is a text field, and if not, adds a new text field and copies
+    the ID values to it, and returns the properties of the new field."""
     uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0] # This is an arcpy field object
     if (uIDField.type <> "String"): # unit IDs that are not in string format can cause problems.  
         # Create a unit ID with a string format

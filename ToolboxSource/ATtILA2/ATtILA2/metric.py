@@ -236,17 +236,11 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             def _replaceRUFeatures(self):
                 # Generate a default filename for the buffer feature class
                 self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
-                # Since the cleanup happens after the workspace has been reset to the default, preserve this path for cleanup
-                self.cleanUpBuffer = os.path.join(os.path.dirname(self.outTable),self.bufferName)
                 # Generate the buffer area to use in the metric calculation
                 self.inReportingUnitFeature = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures,
                                                                                      self.inReportingUnitFeature,
                                                                                      self.bufferName, self.inBufferDistance,
                                                                                      self.reportingUnitIdField)
-            def __del__(self):
-                """ Destructor function automatically called when the metric calculation class is no longer in use """
-                if not self.saveIntermediates:
-                    arcpy.Delete_management(self.cleanUpBuffer)
         
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -257,8 +251,13 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.inBufferDistance = inBufferDistance
 
         # Run Calculation
-        rlcpCalc.run()
+        rlcpCalc.run()      
 
+        # Clean up intermediates
+        if not rlcpCalc.saveIntermediates:
+            # note, this is actually deleting the buffers, not the source reporting units.
+            arcpy.Delete_management(rlcpCalc.inReportingUnitFeature)
+        
     except Exception, e:
         errors.standardErrorHandling(e)
 
@@ -286,10 +285,6 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                                                                               self.inReportingUnitFeature,
                                                                               self.bufferName,self.inBufferDistance,
                                                                               self.reportingUnitIdField,self.ruLinkField)
-            def __del__(self):
-                """ Destructor function automatically called when the metric calculation class is no longer in use """
-                if not self.saveIntermediates:
-                    arcpy.Delete_management(self.bufferName)
 
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP(inReportingUnitFeature, ruLinkField, inLandCoverGrid, lccFilePath,
@@ -302,6 +297,11 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
 
         # Run Calculation
         splcpCalc.run()
+
+        # Clean up intermediates.  
+        if not splcpCalc.saveIntermediates:
+            # note, this is actually deleting the buffers, not the source reporting units.
+            arcpy.Delete_management(splcpCalc.bufferName)            
 
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -393,12 +393,13 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
-
+        
+        # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
+        # is more appropriate than altering the user's input data.
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
                                                                              os.path.basename(tempReportingUnitFeature))
 
-        AddMsg(inReportingUnitFeature)
         # Get the field properties for the unitID, this will be frequently used
         uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
 
@@ -412,6 +413,8 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             if not cleanupList[0] == "KeepIntermediates":
                 # ...add this to the list of items to clean up at the end.
                 pass
+                # *** this was previously necessary when the field was added to the input - now that a copy of the input
+                #     is used instead, this is not necessary.
                 #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
 
 
@@ -427,14 +430,14 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                                                                                  metricConst.totalImperviousAreaFieldName)
 
         # Build and populate final output table.
-        AddMsg(timer.split() + " Producing final output table")
+        AddMsg(timer.split() + " Compiling calculated values into output table")
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         # Get a list of unique road class values
         if roadClassField <> "#":
             classValues = arcpyutil.fields.getUniqueValues(mergedRoads,roadClassField)
-        #
+        # Compile a list of fields that will be transferred from the merged roads feature class into the output table
         fromFields = [roadLengthFieldName, metricConst.roadDensityFieldName,metricConst.totalImperviousAreaFieldName]
-        #
+        # Transfer the values to the output table, pivoting the class values into new fields if necessary.
         utils.table.transferField(mergedRoads,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
         
         # If the Streams By Roads (STXRD) box is checked...
@@ -456,9 +459,25 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             roadStreamIntersects = utils.files.nameIntermediateFile(metricConst.roadStreamIntersects,cleanupList)
             # Get a unique name for the roads by streams summary table:
             roadStreamSummary = utils.files.nameIntermediateFile(metricConst.roadStreamSummary,cleanupList)
-
+            
+            # Perform the roads/streams intersection and calculate the number of crossings and crossings per km
             utils.vector.findIntersections(mergedRoads,mergedStreams,uIDField,roadStreamMultiPoints,
-                                           roadStreamIntersects,roadStreamSummary,roadClassField)
+                                           roadStreamIntersects,roadStreamSummary,streamLengthFieldName,
+                                           metricConst.xingsPerKMFieldName,roadClassField)
+            
+            # Transfer values to final output table.
+            AddMsg(timer.split() + " Compiling calculated values into output table")
+            # Compile a list of fields that will be transferred from the merged roads feature class into the output table
+            fromFields = [streamLengthFieldName, metricConst.streamDensityFieldName]
+            # Transfer the values to the output table, pivoting the class values into new fields if necessary.
+            # Possible to add stream class values here if desired.
+            utils.table.transferField(mergedStreams,outTable,fromFields,fromFields,uIDField.name)
+            # Transfer crossings fields - note the renaming of the count field.
+            fromFields = ["FREQUENCY", metricConst.xingsPerKMFieldName]
+            toFields = [metricConst.streamRoadXingsCountFieldname,metricConst.xingsPerKMFieldName]
+            # Transfer the values to the output table, pivoting the class values into new fields if necessary.
+            utils.table.transferField(roadStreamSummary,outTable,fromFields,toFields,uIDField.name,roadClassField,classValues)
+            
 
         if roadsNearStreams:
             AddMsg(timer.split() + " Calculating Roads Near Streams (RNS)")
@@ -475,7 +494,11 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
 
             utils.vector.roadsNearStreams(mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName,
                                           uIDField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName)
-            
+            # Transfer values to final output table.
+            AddMsg(timer.split() + " Compiling calculated values into output table")
+            fromFields = [metricConst.rnsFieldName]
+            # Transfer the values to the output table, pivoting the class values into new fields if necessary.
+            utils.table.transferField(roadsNearStreams,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
     
     except Exception, e:
         errors.standardErrorHandling(e)
