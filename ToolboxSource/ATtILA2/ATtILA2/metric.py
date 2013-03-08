@@ -488,9 +488,9 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         env.workspace = _tempEnvironment1
         
 
-def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
+def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
+                          snapRaster, optionalFieldGroups):
     from pylet import arcpyutil
-    from arcpy import env
     """ Interface for script executing Land Cover Diversity Metrics """
 
     try:
@@ -500,33 +500,22 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         class metricLDCalc:
             """ This class contains the  steps to perform a land cover diversity calculation."""
 
-    # Initialization
-            def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
+            # Initialization
+            def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize,
+                         snapRaster, optionalFieldGroups):
                 self.timer = DateTimer()
                 AddMsg(self.timer.start() + " Setting up environment variables")
+                
                 # Run the setup
-                # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
-                self.tableName = None
-
+                metricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
+ 
+                self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, os.path.dirname(outTable), [metricsToRun,optionalFieldGroups])
+                
                 # Save other input parameters as class attributes
                 self.inReportingUnitFeature = inReportingUnitFeature
                 self.reportingUnitIdField = reportingUnitIdField
                 self.inLandCoverGrid = inLandCoverGrid
-                # Save optional selections to optionalGroupList
-                if optionalFieldGroups:
-                    processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
-                    if globalConstants.intermediateName and globalConstants.qaCheckName in processed:
-                        self.optionalGroupsList = (globalConstants.qaCheckName, globalConstants.intermediateName)
-                    elif globalConstants.qaCheckName in processed:
-                        self.optionalGroupsList = (globalConstants.qaCheckName)
-                    elif globalConstants.intermediateName in processed:
-                        self.optionalGroupsList = (globalConstants.intermediateName)
-                        
-                    if globalConstants.intermediateName in processed:
-                        msg = "\nIntermediates are stored in this directory: {0}\n"
-                        AddMsg(msg.format(env.workspace))
-                else:
-                    self.optionalGroupsList = []
+
                 # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
                 self.tableName = None
                 self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
@@ -548,16 +537,17 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 outTablePath, outTableName = os.path.split(outTable)
                 # Create new table to hold the results of the Land Cover Diversity
                 newTable = arcpy.CreateTable_management(outTablePath, outTableName)
-                # Remove extra "Field1" automatically created by arcpy.CreateTable_management
-                for f in arcpy.ListFields(outTable):
-                    if "FIELD1" == f.name:
-                        arcpy.DeleteField_management(outTable, f.name)
 
                 self.outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
 
                 outIdFieldType = arcpyutil.fields.convertFieldTypeKeyword(self.outIdField)
 
                 arcpy.AddField_management(newTable, self.outIdField.name, outIdFieldType, self.outIdField.precision, self.outIdField.scale)
+                
+                # Remove extra "Field1" automatically created by arcpy.CreateTable_management
+                for f in arcpy.ListFields(outTable):
+                    if "FIELD1" == f.name.upper():
+                        arcpy.DeleteField_management(outTable, f.name)
                 
   
                 # Add fields to output file - S, H, H_Prime, C, and QAField if selected
@@ -613,7 +603,8 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 # Create Output Table
                 self._makeAttilaLDOutTable()
 
-        ldCalc = metricLDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups)
+        ldCalc = metricLDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize,
+                              snapRaster, optionalFieldGroups)
         ldCalc.run()
 
 

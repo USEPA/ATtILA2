@@ -23,9 +23,11 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment2 = env.cellSize
     
     # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
-    env.snapRaster = snapRaster
+    if snapRaster:
+        env.snapRaster = snapRaster
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
-    env.cellSize = processingCellSize
+    if processingCellSize:
+        env.cellSize = processingCellSize
     
     itemTuples = []
     for itemDescriptionPair in itemDescriptionPairList:

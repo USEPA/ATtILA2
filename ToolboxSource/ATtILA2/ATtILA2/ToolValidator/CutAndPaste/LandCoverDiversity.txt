@@ -12,7 +12,9 @@ class ToolValidator (ATtILA2.ToolValidator.lcdToolValidator):
     " Class for validating parameters "
 
     inTableIndex = 0
-    optionalFieldsIndex = 4
+    optionalFieldsIndex = 6
     inRasterIndex = 2
     outTableIndex = 3
+    processingCellSizeIndex = 4 
+    snapRasterIndex = 5
     srcDirName = sourceName
