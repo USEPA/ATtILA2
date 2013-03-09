@@ -513,14 +513,13 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
                           snapRaster, optionalFieldGroups):
-    from pylet import arcpyutil
     """ Interface for script executing Land Cover Diversity Metrics """
 
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcdConstants()
 
-        class metricLDCalc:
+        class metricLCDCalc:
             """ This class contains the  steps to perform a land cover diversity calculation."""
 
             # Initialization
@@ -535,8 +534,10 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, os.path.dirname(outTable), [metricsToRun,optionalFieldGroups])
                 
                 # Save other input parameters as class attributes
+                self.outTable = outTable
                 self.inReportingUnitFeature = inReportingUnitFeature
                 self.reportingUnitIdField = reportingUnitIdField
+                self.metricConst = metricConst
                 self.inLandCoverGrid = inLandCoverGrid
 
                 # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
@@ -547,90 +548,54 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     
                 
             def _housekeeping(self):
-                # Perform additional housekeeping steps
-        
+                # alert user if the land cover grid cells are not square (default to size along x axis)
+                utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
+                # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+                self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
                 # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
                 self.zoneAreaDict = None
                 if globalConstants.qaCheckName in self.optionalGroupsList:
                     self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField)
                     
-            def _makeAttilaLDOutTable(self):
+            def _makeAttilaOutTable(self):
                 AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
-
-                outTablePath, outTableName = os.path.split(outTable)
-                # Create new table to hold the results of the Land Cover Diversity
-                newTable = arcpy.CreateTable_management(outTablePath, outTableName)
-
-                self.outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-
-                outIdFieldType = arcpyutil.fields.convertFieldTypeKeyword(self.outIdField)
-
-                arcpy.AddField_management(newTable, self.outIdField.name, outIdFieldType, self.outIdField.precision, self.outIdField.scale)
+                # Internal function to construct the ATtILA metric output table
+                self.newTable, self.metricsFieldnameDict = utils.table.tableWriterNoLcc(self.outTable,
+                                                                                        self.metricsBaseNameList,
+                                                                                        self.optionalGroupsList,
+                                                                                        self.metricConst,
+                                                                                        self.outIdField)
                 
-                # Remove extra "Field1" automatically created by arcpy.CreateTable_management
-                for f in arcpy.ListFields(outTable):
-                    if "FIELD1" == f.name.upper():
-                        arcpy.DeleteField_management(outTable, f.name)
-                
-  
-                # Add fields to output file - S, H, H_Prime, C, and QAField if selected
-                if globalConstants.qaCheckName in self.optionalGroupsList:
-                    fldlist = [metricConst.overlapName,"S","H","H_Prime","C"]
-                else:
-                    fldlist = ["S","H","H_Prime","C"]
-                    
-                for fld in fldlist:
-                    arcpy.AddField_management(outTable, fld, "DOUBLE")
-                #Populate and build Output Table with Results Dictionary 
-                rows = arcpy.InsertCursor(outTable)
-                for k in self.ResultDict.keys():
-                    row = rows.newRow()
-                    row.setValue(self.outIdField.name, k)
-                    h,hp,s,c = self.ResultDict[k].split(",")
-                    row.S = int(s)
-                    row.H = float(h)
-                    row.H_Prime = float(hp)
-                    row.C = float(c)
-                    #if QAField is selected update overlap field
-                    if globalConstants.qaCheckName in self.optionalGroupsList:
-                        row.setValue(metricConst.overlapName, self.OverlapDict[k])
-                    rows.insertRow(row)
-                del row, rows
-
-
-            def _makeLDTabAreaTable(self):
+            def _makeTabAreaTable(self):
                 AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
                 # Internal function to generate a zonal tabulate area table
                 self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
                                                       self.inLandCoverGrid, self.tableName)
-
-            def _calculateLDMetrics(self):
+                
+            def _calculateMetrics(self):
                 AddMsg(self.timer.split() + " Processing the tabulate area table and computing metric values")
                 # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+                utils.calculate.landCoverDiversity(self.optionalGroupsList, self.metricConst, self.outIdField, 
+                                                   self.newTable, self.tabAreaTable, self.metricsFieldnameDict, self.zoneAreaDict)
                 
-                #  ResultDict = {}
-                self.ResultDict, self.OverlapDict = utils.calculate.createTotalTable(self.tabAreaTable, self.zoneAreaDict)
-
-
-        # Function to run all the steps in the calculation process
+            # Function to run all the steps in the calculation process
             def run(self):
-
                 # Perform additional housekeeping
                 self._housekeeping()
+                
+                # Make Output Tables
+                self._makeAttilaOutTable()
+                
                 # Generate Tabulation tables
-                self._makeLDTabAreaTable()
-
+                self._makeTabAreaTable()
+                
                 # Run final metric calculation
-                self._calculateLDMetrics()
+                self._calculateMetrics()
+                
 
-                # Create Output Table
-                self._makeAttilaLDOutTable()
-
-        ldCalc = metricLDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize,
+        lcdCalc = metricLCDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize,
                               snapRaster, optionalFieldGroups)
-        ldCalc.run()
-
-
+        lcdCalc.run()
 
     except Exception, e:
         errors.standardErrorHandling(e)

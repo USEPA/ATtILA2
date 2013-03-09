@@ -279,6 +279,103 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
     return newTable, metricsFieldnameDict
 
 
+def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricConst, outIdField):
+    """ Processes tool dialog parameters and options for output table generation. Non LCC metrics option.
+        
+    **Description:**
+
+        Processes the input and output parameters and selected options from the ATtILA tool dialog for output table
+        generation. After processing the data, this function calls the CreateMetricTableOutput function which
+        creates an empty table with fields for the reporting unit id, all selected metrics with appropriate fieldname
+        prefixes and suffixes (e.g. pUrb, rFor30), and any selected optional fields (e.g., LC_Overlap). 
+        
+        This function is used when the selected metrics are independent of an .lcc file
+        
+        Returns the created output table and a dictionary of the selected metrics and their generated fieldnames
+        
+    **Arguments:**
+
+        * *outTable* - file name including path for the ATtILA output table
+
+        * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
+                        (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+
+        * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
+                        (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
+        * *metricConst* - a class object with the variable constants for a particular metric family as attributes 
+        * *outIdField* - the output id field. Generally a clone of the input id field except where the fieldtype = "OID"
+        
+    **Returns:**
+
+        * table (type unknown - string representation?)
+        * dict - a dictionary of BaseName keys with field name values (e.g., "unat":"UINDEX", "for":"pFor", 
+                        "NITROGEN":"N_Pload")
+        
+    """
+
+    # Set parameters for metric output field. 
+    metricFieldParams = metricConst.fieldParameters
+    
+    # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+    if globalConstants.qaCheckName in optionalGroupsList:
+        qaCheckFlds = metricConst.qaCheckFieldParameters
+    else:
+        qaCheckFlds = None
+    
+    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
+    if globalConstants.metricAddName in optionalGroupsList:
+        addAreaFldParams = globalConstants.areaFieldParameters
+        maxFieldNameSize = maxFieldNameSize - len(addAreaFldParams[0])
+    else:
+        addAreaFldParams = None
+    
+    # Process: inputs   
+    
+    # use the metricsBaseNameList to create a dictionary of BaseName keys with field name values using any user supplied field names
+    metricsFieldnameDict = {}
+    outputFieldNames = set() # use this set to help make field names unique
+    
+    for mBaseName in metricsBaseNameList:
+        # generate unique number to replace characters at end of truncated field names
+        n = 1
+        
+        # generate output field name
+        outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
+        
+        # see if the provided field name is too long for the output table type
+        if len(outputFName) > maxFieldNameSize:
+            defaultFieldName = outputFName # keep track of the originally generated field name
+            
+            prefixLen = len(metricFieldParams[0])
+            suffixLen = len(metricFieldParams[1])
+            maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
+            
+            # truncate field name to maximum allowable size    
+            outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1]
+            
+            # see if truncated field name is already used.
+            # if so, truncate further and add a unique number to the end of the name
+            while outputFName in outputFieldNames:
+                # shorten the field name and increment it
+                truncateTo = maxBaseSize - len(str(n))
+                outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
+                n = n + 1
+                
+            arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
+            
+        # keep track of output field names
+        outputFieldNames.add(outputFName)
+        # add output field name to dictionary
+        metricsFieldnameDict[mBaseName] = outputFName
+                
+    # create the specified output table
+    newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
+                                                           metricFieldParams, qaCheckFlds, addAreaFldParams)
+    
+    return newTable, metricsFieldnameDict
+
+
+
 def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#",classValues=[]):
     '''This function transfers a series of fields from one table to another, and, if a class field is specified, pivots
        the metric fields for those class values into a new field for each class.

@@ -26,10 +26,10 @@ class lcdConstants(baseMetricConstants):
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 8, 4]
     qaCheckFieldParameters = [
                               [overlapName, gc.defaultIntegerFieldType, 6]
-                              ]   
+                              ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
 
 class lcpConstants(baseMetricConstants):
