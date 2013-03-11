@@ -628,7 +628,4 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
 
     finally:
         setupAndRestore.standardRestore()
-
-
-
-
+        

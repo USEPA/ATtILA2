@@ -512,4 +512,3 @@ def getClassFieldName(fieldName,classVal,table):
         testFieldName = fieldName[:trim] + classVal
         validFieldName = arcpy.ValidateFieldName(testFieldName, table)
     return validFieldName
-

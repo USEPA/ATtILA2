@@ -80,4 +80,3 @@ def processUIDField(inReportingUnitFeature, reportingUnitIdField, cleanupList):
     # Convert the field properties from the default ArcPy field object into inputs for the AddField object.    
     uIDField = arcpyutil.fields.updateFieldProps(uIDField)
     return uIDField
-

@@ -142,4 +142,3 @@ class TabulateAreaRow(object):
         del self._row
 
 
-

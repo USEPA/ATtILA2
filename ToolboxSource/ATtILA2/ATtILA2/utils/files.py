@@ -1,7 +1,6 @@
 
 
 import os, arcpy
-from ATtILA2.constants import globalConstants
 
 def getKeyFromFilePath(filePath, delimiter="_"):
     """ Parses full file path to return embedded key.
