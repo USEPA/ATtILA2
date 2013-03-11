@@ -516,21 +516,16 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
     """ Interface for script executing Land Cover Diversity Metrics """
 
     try:
-        # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.lcdConstants()
-
         class metricLCDCalc:
             """ This class contains the  steps to perform a land cover diversity calculation."""
 
             # Initialization
-            def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize,
-                         snapRaster, optionalFieldGroups):
+            def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, metricsToRun, outTable, 
+                         processingCellSize, snapRaster, optionalFieldGroups, metricConst):
                 self.timer = DateTimer()
                 AddMsg(self.timer.start() + " Setting up environment variables")
                 
                 # Run the setup
-                metricsToRun = metricConst.fixedMetricsToRun
- 
                 self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
                                                                                                   processingCellSize, 
                                                                                                   os.path.dirname(outTable), 
@@ -596,8 +591,12 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 self._calculateMetrics()
                 
 
-        lcdCalc = metricLCDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize,
-                              snapRaster, optionalFieldGroups)
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.lcdConstants()
+        metricsToRun = metricConst.fixedMetricsToRun
+        
+        lcdCalc = metricLCDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, metricsToRun, outTable, 
+                                processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         lcdCalc.run()
 
     except Exception, e:
