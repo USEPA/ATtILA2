@@ -529,9 +529,12 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 AddMsg(self.timer.start() + " Setting up environment variables")
                 
                 # Run the setup
-                metricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
+                metricsToRun = metricConst.fixedMetricsToRun
  
-                self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, os.path.dirname(outTable), [metricsToRun,optionalFieldGroups])
+                self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
+                                                                                                  processingCellSize, 
+                                                                                                  os.path.dirname(outTable), 
+                                                                                                  [metricsToRun,optionalFieldGroups])
                 
                 # Save other input parameters as class attributes
                 self.outTable = outTable
