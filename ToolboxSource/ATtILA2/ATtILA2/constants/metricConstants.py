@@ -174,6 +174,23 @@ class rdmConstants(baseMetricConstants):
     roadStreamSummary = ["RdsXStrTbl","Dataset"]
     streamBuffers = ["StrBuffers","FeatureClass"]
     roadsNearStreams = ["RdsNrStrms","FeatureClass"]
+
+class sdConstants(baseMetricConstants):
+    name = "StreamDensity"
+    shortName = "sd"
+    fieldPrefix = ""
+    fieldSuffix = ""
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = []
+    fieldOverrideKey = shortName + gc.fieldOverrideName
+    areaFieldname = "AREAKM2"
+    streamDensityFieldName = "STRMDENS"
+    streamsByReportingUnitName = ["StrByRU","FeatureClass"]
     
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
