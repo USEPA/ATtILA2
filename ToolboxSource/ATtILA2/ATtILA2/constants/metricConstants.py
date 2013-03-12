@@ -189,8 +189,8 @@ class sdConstants(baseMetricConstants):
     qaCheckFieldParameters = []
     fieldOverrideKey = shortName + gc.fieldOverrideName
     areaFieldname = "AREAKM2"
-    streamDensityFieldName = "STRMDENS"
-    streamsByReportingUnitName = ["StrByRU","FeatureClass"]
+    lineDensityFieldName = "STRMDENS"
+    linesByReportingUnitName = ["StrByRU","FeatureClass"]
     
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"

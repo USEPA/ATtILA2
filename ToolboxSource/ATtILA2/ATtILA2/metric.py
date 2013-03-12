@@ -511,6 +511,90 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         env.workspace = _tempEnvironment1
+
+
+def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, lineCategoryField="", 
+                               optionalFieldGroups="#"):
+    """Interface for script executing Road Density Calculator"""
+    from arcpy import env
+    from pylet import arcpyutil
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+    try:
+        # Work on making as generic as possible
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+        # Get the metric constants
+        metricConst = metricConstants.sdConstants()
+        # Set the output workspace
+        _tempEnvironment1 = env.workspace
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        # Strip the description from the "additional option" and determine whether intermediates are stored.
+        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+        if globalConstants.intermediateName in processed:
+            msg = "\nIntermediates are stored in this directory: {0}\n"
+            AddMsg(msg.format(env.workspace))
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
+        # is more appropriate than altering the user's input data.
+        tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
+        inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
+                                                                             os.path.basename(tempReportingUnitFeature))
+
+        # Get the field properties for the unitID, this will be frequently used
+        uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
+
+        AddMsg(timer.split() + " Calculating reporting unit area")
+        # Add a field to the reporting units to hold the area value in square kilometers
+        # Check for existence of field.
+        fieldList = arcpy.ListFields(inReportingUnitFeature,metricConst.areaFieldname)
+        # Add and populate the area field (or just recalculate if it already exists
+        unitArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        if not fieldList: # if the list of fields that exactly match the validated fieldname is empty...
+            if not cleanupList[0] == "KeepIntermediates":
+                # ...add this to the list of items to clean up at the end.
+                pass
+                # *** this was previously necessary when the field was added to the input - now that a copy of the input
+                #     is used instead, this is not necessary.
+                #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
+
+
+        AddMsg(timer.split() + " Calculating feature density")
+        # Get a unique name for the merged roads and prep for cleanup
+        mergedInLines = utils.files.nameIntermediateFile(metricConst.linesByReportingUnitName,cleanupList)
+
+        # Calculate the density of the roads by reporting unit.
+        mergedInLines, lineLengthFieldName = utils.calculate.lineDensityCalculator(inLineFeature,inReportingUnitFeature,
+                                                                                 uIDField,unitArea,mergedInLines,
+                                                                                 metricConst.lineDensityFieldName,
+                                                                                 lineCategoryField)
+
+        # Build and populate final output table.
+        AddMsg(timer.split() + " Compiling calculated values into output table")
+        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        # Get a list of unique road class values
+        if lineCategoryField:
+            categoryValues = arcpyutil.fields.getUniqueValues(mergedInLines,lineCategoryField)
+        else:
+            categoryValues = []
+        # Compile a list of fields that will be transferred from the merged roads feature class into the output table
+        fromFields = [lineLengthFieldName, metricConst.lineDensityFieldName]
+        # Transfer the values to the output table, pivoting the class values into new fields if necessary.
+        utils.table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,lineCategoryField,categoryValues)
+        
+    except Exception, e:
+        errors.standardErrorHandling(e)
+
+    finally:
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        env.workspace = _tempEnvironment1
         
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
