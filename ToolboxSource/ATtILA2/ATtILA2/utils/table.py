@@ -279,7 +279,7 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
     return newTable, metricsFieldnameDict
 
 
-def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#",classValues=[]):
+def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="",classValues=[]):
     '''This function transfers a series of fields from one table to another, and, if a class field is specified, pivots
        the metric fields for those class values into a new field for each class.
     **Description:**
@@ -302,7 +302,7 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
     # Create a zipped list of fields to be transferred - packing and unpacking by using tuples is a little more elegant
     transferFields = zip(fromFields,toFields)
     # Start with the simple case, where no class field is specified.
-    if classField == '#': 
+    if not classField: 
         # Iterate through the field list and run the addJoinCalculateField function
         for (fromField,toField) in transferFields:
             addJoinCalculateField(fromTable,toTable,fromField,toField,joinField)
@@ -381,14 +381,19 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
                         the fields have the same name in both tables - if this is not a safe assumption, this function 
                         may need to be modified in the future.
     '''
+    # If renaming is required, add a temp field to the fromtable with the new name
     if fromField <> toField:
         # Get the properties of the from field for transfer
         fromField = arcpy.ListFields(fromTable,fromField)[0]
+        # Add the new field with the new name
         arcpy.AddField_management(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
                               fromField.length,fromField.aliasName,fromField.isNullable,fromField.required,
                               fromField.domain)        
+        # Calculate the field
         arcpy.CalculateField_management(fromTable,toField,'!'+ fromField.name +'!',"PYTHON")
+    # Perform the joinfield
     arcpy.JoinField_management(toTable,joinField,fromTable,joinField,toField)
+    # If we added a temp field
     if fromField <> toField:
         arcpy.DeleteField_management(fromTable,toField)
     
@@ -403,16 +408,24 @@ def getClassFieldName(fieldName,classVal,table):
         always the final characters of the fieldname string.  
     **Arguments:**
         * *fieldName* - the desired metric fieldname to which the class value will be appended
-        * *classVal* - the class value as a string
+        * *classVal* - the class value 
         * *table* - the table to which the field will be added 
     **Returns:**
         * *validFieldName* - validated fieldname 
     '''
+    # Ensure we have a string value for the class
+    classVal = str(classVal)
+    # Build a test fieldname
     testFieldName = fieldName + classVal
+    # Run the test fieldname through ESRI's fieldname validator
     validFieldName = arcpy.ValidateFieldName(testFieldName, table)
+    # if the validator shortened the field
     if len(testFieldName)>len(validFieldName):
+        # figure out how much needs to be trimmed
         trim = len(validFieldName) - len(testFieldName)
+        # Trim this from the intended fieldname, so the class value isn't lost
         testFieldName = fieldName[:trim] + classVal
+        # Revalidate - to ensure there aren't duplicate fields.
         validFieldName = arcpy.ValidateFieldName(testFieldName, table)
     return validFieldName
 

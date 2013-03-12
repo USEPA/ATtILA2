@@ -367,7 +367,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
 
-def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="#",
+def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
                              streamsByRoads="#", roadsNearStreams="#", inStreamFeature="#", bufferDistance="#",
                              optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
@@ -433,8 +433,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         AddMsg(timer.split() + " Compiling calculated values into output table")
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         # Get a list of unique road class values
-        if roadClassField <> "#":
+        if roadClassField:
             classValues = arcpyutil.fields.getUniqueValues(mergedRoads,roadClassField)
+        else:
+            classValues = []
         # Compile a list of fields that will be transferred from the merged roads feature class into the output table
         fromFields = [roadLengthFieldName, metricConst.roadDensityFieldName,metricConst.totalImperviousAreaFieldName]
         # Transfer the values to the output table, pivoting the class values into new fields if necessary.
