@@ -31,6 +31,7 @@ class lcdConstants(baseMetricConstants):
                               [overlapName, gc.defaultIntegerFieldType, 6]
                               ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    fixedMetricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
 
 class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"

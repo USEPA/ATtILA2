@@ -367,7 +367,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
 
-def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="#",
+def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
                              streamsByRoads="#", roadsNearStreams="#", inStreamFeature="#", bufferDistance="#",
                              optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
@@ -433,8 +433,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         AddMsg(timer.split() + " Compiling calculated values into output table")
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         # Get a list of unique road class values
-        if roadClassField <> "#":
+        if roadClassField:
             classValues = arcpyutil.fields.getUniqueValues(mergedRoads,roadClassField)
+        else:
+            classValues = []
         # Compile a list of fields that will be transferred from the merged roads feature class into the output table
         fromFields = [roadLengthFieldName, metricConst.roadDensityFieldName,metricConst.totalImperviousAreaFieldName]
         # Transfer the values to the output table, pivoting the class values into new fields if necessary.
@@ -529,9 +531,12 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 AddMsg(self.timer.start() + " Setting up environment variables")
                 
                 # Run the setup
-                metricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
+                metricsToRun = metricConst.fixedMetricsToRun
  
-                self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, os.path.dirname(outTable), [metricsToRun,optionalFieldGroups])
+                self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
+                                                                                                  processingCellSize, 
+                                                                                                  os.path.dirname(outTable), 
+                                                                                                  [metricsToRun,optionalFieldGroups])
                 
                 # Save other input parameters as class attributes
                 self.outTable = outTable
