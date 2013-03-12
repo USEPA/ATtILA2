@@ -486,9 +486,12 @@ class NoLccFileValidator(object):
     # Indexes of input parameters
     inTableIndex = 0 
     outTableIndex = 0 
+    processingCellSizeIndex = 0
+    snapRasterIndex = 0 
     optionalFieldsIndex = 0 
     
     # Indexes of secondary input parameters
+    inRasterIndex = 0
     inMultiFeatureIndex = 0
     inVector2Index = 0
     inVector3Index = 0
@@ -511,6 +514,7 @@ class NoLccFileValidator(object):
         self.noFeaturesMessage = validatorConstants.noFeaturesMessage
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
+        self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
         
         # Load global constants
@@ -527,6 +531,15 @@ class NoLccFileValidator(object):
         self.optionsParameter = self.parameters[self.optionalFieldsIndex]
         
         # Assign secondary input parameters to local variables
+        if self.inRasterIndex:
+            self.inRasterParameter = self.parameters[self.inRasterIndex]
+            
+        if self.processingCellSizeIndex:
+            self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
+            
+        if self.snapRasterIndex:
+            self.snapRasterParameter = self.parameters[self.snapRasterIndex]
+        
         if self.inMultiFeatureIndex:
             self.inMultiFeatureParameter = self.parameters[self.inMultiFeatureIndex]
             
@@ -680,6 +693,32 @@ class NoLccFileValidator(object):
                     if not self.parameters[indx].enabled:
                         self.parameters[indx].clearMessage()
                         self.parameters[indx].value = ''
+                        
+        # Check if a raster is needed for metric calculations
+        if self.inRasterIndex:
+            if self.inRasterParameter.value:
+                if hasattr(self.inRasterParameter.value, "dataSource"):
+                    self.inRasterParameter.Value = str(self.inRasterParameter.value.dataSource)
+                    self.parameters[self.inRasterIndex].value = self.inRasterParameter.Value
+                # Check for is input raster layer has spatial reference
+                #self.spRefCheck(self.inRasterParameter)
+                if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
+                    self.inRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            
+                # Check if input raster is an integer grid
+                inRaster = arcpy.Raster(str(self.inRasterParameter.value))
+                if not inRaster.isInteger:
+                    self.inRasterParameter.setErrorMessage(self.nonIntegerGridMessage)
+            
+                # Update Processing cell size if empty
+                if not self.processingCellSizeParameter.value and not self.processingCellSizeParameter.hasError():
+                    cellSize = arcpy.Raster(str(self.inRasterParameter.value)).meanCellWidth #get from metadata
+                    self.processingCellSizeParameter.value = cellSize
+            
+                # Update Snap Raster Parameter if it is empty
+                if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
+                    self.snapRasterParameter.value = str(self.inRasterParameter.value)
+                
         
         # Check if a secondary multiple input feature is indicated            
         if self.inMultiFeatureIndex:

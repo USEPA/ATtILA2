@@ -357,81 +357,104 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     
     return outLines, lineLengthFieldName
 
-def createValueDict(alist):
-    valuedict={}
-    for a in alist:
-        valuedict[(int(a.split(":")[0]))] = float(a.split(":")[1])
-    return valuedict
 
-ResultsDict = {}
-def createTotalTable(tabAreaTable, zoneAreaDict):
-    TotalAreaDict = {}
-    CopyDict = {}
-    OverlapDict = {}
-    for tabAreaTableRow in tabAreaTable:
-        alist = []
-        TotalArea = 0
-        #Calculate Total Area Dictionary
-        for k in tabAreaTableRow.tabAreaDict.keys():
-            TotalArea = TotalArea + tabAreaTableRow.tabAreaDict[k]
-            alist.append(str(k) + ":" + str(tabAreaTableRow.tabAreaDict[k]))
+def landCoverDiversity(optionalGroupsList, metricConst, outIdField, newTable, 
+                         tabAreaTable, metricsFieldnameDict, zoneAreaDict):
+    """ Creates *outTable* populated with land cover diversity metrics
+    
+    **Description:**
 
-        TotalAreaDict[tabAreaTableRow.zoneIdValue] = TotalArea
-        CopyDict[tabAreaTableRow.zoneIdValue]= alist
-        # if QAField option is selected calculate overlap
-        if zoneAreaDict:
-            zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
-            overlapCalc = (zoneArea/TotalArea) * 100
-            OverlapDict[tabAreaTableRow.zoneIdValue] = overlapCalc
-    #Calculate proportional dictionary
-    createProportionsDict(CopyDict,TotalAreaDict)
+        Creates *outTable* populated with land cover diversity metrics...
+        
+    **Arguments:**
 
-    return ResultsDict, OverlapDict
+        * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
+                        (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
+        * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+        * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
+        * *newTable* - the ATtILA created output table 
+        * *tabAreaTable* - tabulateArea request output from ArcGIS
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
+        * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
+                        Used in grid overlap calculations.
+        
+    **Returns:**
 
+        * None
+        
+    """
+    
+    try:      
+        # create the cursor to add data to the output table
+        outTableRows = arcpy.InsertCursor(newTable)        
+        
+        for tabAreaTableRow in tabAreaTable:
+            
+            # initiate a row to add to the metric output table
+            outTableRow = outTableRows.newRow()
+            
+            # set the reporting unit id value in the output row
+            outTableRow.setValue(outIdField.name, tabAreaTableRow.zoneIdValue)
+            
+            # calculate the diversity indices (H, H_Prime, C, and S) for the current reporting unit  
+            h,hp,s,c = getDiversityIndices(tabAreaTableRow.tabAreaDict, tabAreaTableRow.totalArea)
+            
+            # populate metric fields
+            outTableRow.S = s
+            outTableRow.H = h
+            outTableRow.H_Prime = hp
+            outTableRow.C = c
 
-#Calculate Proportions
-def createProportionsDict(CopyDict, TotalAreaDict):
+            # add QACheck calculations/values to row
+            if zoneAreaDict:
+                zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+                overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
+                
+                qaCheckFlds = metricConst.qaCheckFieldParameters
+                outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+            
+            # commit the row to the output table
+            outTableRows.insertRow(outTableRow)
+                
+    finally:
+        
+        # delete cursor and row objects to remove locks on the data
+        try:
+            del outTableRows
+            del outTableRow
+            del tabAreaTable
+            del tabAreaTableRow
+        except:
+            pass
+
+        
+def getDiversityIndices(tabAreaDict, totalArea):
     import math
-    ProportionsDict = {}
 
-    for k in CopyDict.keys():
-        indivrowdict = {}
-        pSum = 0
-        S = 0
-        C = 0
-        indivrowdict = createValueDict(CopyDict[k])
-        for i in indivrowdict.keys():
-            if indivrowdict[i] >0:
-                #Calculate the percent land use for use in further calculations
-                P = indivrowdict[i] / TotalAreaDict[k]
-                #Calculate the sum for use in the Shannon-Weiner calculations
-                pSum = pSum + (P * math.log(P))
-                #Calculate the Simpson Index
-                C = C + P * P
-                #Calculate the simple diversity
-                S = S + 1
-                #Population the proportion dictionary
-                ProportionsDict[k] =  str(pSum) + "," + str(C) + "," + str(S)
+    pSum = 0
+    S = 0
+    C = 0
 
-    #Calculate final results to be reported out
-    for k in ProportionsDict.keys():
-        #Calculate Shannon-Weiner Diversity equation (H)
-        H = float(ProportionsDict[k].split(",") [0])* -1
+    for i in tabAreaDict.values():
+        if i >0:
+            #Calculate the percent land use for use in further calculations
+            P = i / totalArea
+            #Calculate the sum for use in the Shannon-Weiner calculations
+            pSum += (P * math.log(P))
+            #Calculate the Simpson Index
+            C += P * P
+            #Calculate the simple diversity
+            S += 1
 
-        #Calculate Simple Diversity equation
-        S = int(ProportionsDict[k].split(",")[2])
-        
-        #Calculate Shannon-Weiner Diversity equation (H prime)
-        Hprime = H/math.log(S)
-        
-        #Calculate Simpson Diversity equation
-        C = float(ProportionsDict[k].split(",")[1])
-        
-        #Create Results Dictionary
-        ResultsDict[k] = str(H) + "," + str(Hprime) + "," + str(S) + "," + str(C)
+    #Calculate Shannon-Weiner Diversity equation (H)
+    H = pSum * -1
+    
+    #Calculate Shannon-Weiner Diversity equation (H prime)
+    Hprime = H/math.log(S)
+    
+    #Create Results tuple to be reported out
+    diversityIndices = (H, Hprime, S, C)
 
-
-
-    return ResultsDict
+    return diversityIndices  
 
         
