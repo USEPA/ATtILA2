@@ -526,7 +526,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         timer = DateTimer()
         AddMsg(timer.start() + " Setting up environment variables")
         # Get the metric constants
-        metricConst = metricConstants.sdConstants()
+        metricConst = metricConstants.sdmConstants()
         # Set the output workspace
         _tempEnvironment1 = env.workspace
         env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))

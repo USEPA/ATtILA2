@@ -175,9 +175,9 @@ class rdmConstants(baseMetricConstants):
     streamBuffers = ["StrBuffers","FeatureClass"]
     roadsNearStreams = ["RdsNrStrms","FeatureClass"]
 
-class sdConstants(baseMetricConstants):
-    name = "StreamDensity"
-    shortName = "sd"
+class sdmConstants(baseMetricConstants):
+    name = "StreamDensityMetric"
+    shortName = "sdm"
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
