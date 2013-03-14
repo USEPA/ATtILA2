@@ -265,8 +265,8 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         setupAndRestore.standardRestore()
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                            metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, snapRaster,
-                            optionalFieldGroups):
+                            metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, 
+                            snapRaster, optionalFieldGroups):
     """ Interface for script executing Sample Point Land Cover Proportion Metrics """
 
     try:
@@ -368,7 +368,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
 def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
-                             streamsByRoads="#", roadsNearStreams="#", inStreamFeature="#", bufferDistance="#",
+                             streamRoadCrossings="#", roadsNearStreams="#", inStreamFeature="#", bufferDistance="#",
                              optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
@@ -443,8 +443,8 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         utils.table.transferField(mergedRoads,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
         
         # If the Streams By Roads (STXRD) box is checked...
-        if streamsByRoads:
-            AddMsg(timer.split() + " Calculating Streams By Roads (STXRD)")
+        if streamRoadCrossings and streamRoadCrossings <> "false":
+            AddMsg(timer.split() + " Calculating Stream and Road Crossings (STXRD)")
             # Get a unique name for the merged streams:
             mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)
 
@@ -473,7 +473,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             fromFields = [streamLengthFieldName, metricConst.streamDensityFieldName]
             # Transfer the values to the output table, pivoting the class values into new fields if necessary.
             # Possible to add stream class values here if desired.
-            utils.table.transferField(mergedStreams,outTable,fromFields,fromFields,uIDField.name)
+            utils.table.transferField(mergedStreams,outTable,fromFields,fromFields,uIDField.name,None)
             # Transfer crossings fields - note the renaming of the count field.
             fromFields = ["FREQUENCY", metricConst.xingsPerKMFieldName]
             toFields = [metricConst.streamRoadXingsCountFieldname,metricConst.xingsPerKMFieldName]
@@ -481,14 +481,16 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             utils.table.transferField(roadStreamSummary,outTable,fromFields,toFields,uIDField.name,roadClassField,classValues)
             
 
-        if roadsNearStreams:
+        if roadsNearStreams and roadsNearStreams <> "false":
             AddMsg(timer.split() + " Calculating Roads Near Streams (RNS)")
-            if not streamsByRoads:  # In case merged streams haven't already been calculated:
+            if not streamRoadCrossings or streamRoadCrossings == "false":  # In case merged streams haven't already been calculated:
                 # Get a unique name for the merged streams:
                 mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)
                 # Calculate the density of the streams by reporting unit.
-                utils.calculate.lineDensityCalculator(inStreamFeature,inReportingUnitFeature,uIDField,unitArea,
-                                                      mergedStreams,metricConst.streamDensityFieldName)
+                mergedStreams, streamLengthFieldName = utils.calculate.lineDensityCalculator(inStreamFeature,
+                                                                                             inReportingUnitFeature,
+                                                                                             uIDField,unitArea,mergedStreams,
+                                                                                             metricConst.streamDensityFieldName)
             # Get a unique name for the buffered streams:
             streamBuffer = utils.files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
             # Get a unique name for the road/stream intersections:
