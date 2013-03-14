@@ -186,33 +186,42 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     finally:
         setupAndRestore.standardRestore()
 
-class metricCalcCAEAM(metricCalc):
-    # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
-    def _replaceLCGrid(self):
-        # replace the inLandCoverGrid
-        self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(self.lccObj, self.inLandCoverGrid, self.inEdgeWidth)
-
-        if self.saveIntermediates:
-            self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-
 def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics """
 
     try:
+        from pylet import arcpyutil
+        
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caeamConstants()
         # append the edge width distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
-
-        # Create new instance of metricCalc class to contain parameters
-        caeamCalc = metricCalcCAEAM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-
-        caeamCalc.inEdgeWidth = inEdgeWidth
-
-        # Run Calculation
-        caeamCalc.run()
+        
+        metricsBaseNameList = arcpyutil.parameters.splitItemsAndStripDescriptions(metricsToRun, globalConstants.descriptionDelim)
+        
+        for m in metricsBaseNameList:
+        
+            class metricCalcCAEAM(metricCalc):
+                # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
+                def _replaceLCGrid(self):
+                    # replace the inLandCoverGrid
+                    self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
+                                                                        self.inEdgeWidth)
+            
+                    if self.saveIntermediates:
+                        self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+    
+            # Create new instance of metricCalc class to contain parameters
+            caeamCalc = metricCalcCAEAM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                          m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+    
+            caeamCalc.inEdgeWidth = inEdgeWidth
+    
+            # Run Calculation
+            caeamCalc.run()
+            
+            caeamCalc.metricsBaseNameList = metricsBaseNameList
 
     except Exception, e:
         errors.standardErrorHandling(e)

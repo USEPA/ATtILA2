@@ -34,9 +34,32 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(lccObj, inLandCoverGrid, inEdgeWidth):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth):
+    # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
+    lccValuesDict = lccObj.values
+    
+    # get the grid codes for this specified metric
+    ForestValueList = lccClassesDict[m].uniqueValueIds
+    
+    # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
+    WaterValueList = lccValuesDict.getExcludedValueIds()
+    
+    LandValueList = lccValuesDict.getIncludedValueIds()
+    
+    OtherValueList = LandValueList - ForestValueList
+    
+    import arcpy
+    arcpy.AddMessage(WaterValueList)
+    arcpy.AddMessage(LandValueList)
+    arcpy.AddMessage(ForestValueList)
+    arcpy.AddMessage(OtherValueList)
+    
     # Generate the edge/core/other/excluded grid
     LCGrid = Raster(inLandCoverGrid)
+    
+    
+    
+    
     ECOGrid = LCGrid
     
     return ECOGrid
