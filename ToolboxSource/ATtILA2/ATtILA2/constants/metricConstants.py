@@ -132,7 +132,7 @@ class caeamConstants(baseMetricConstants):
     name = "CoreAndEdgeAreaMetrics"
     shortName = "caeam"
     fieldPrefix = ""
-    fieldSuffix = "edge"
+    fieldSuffix = "e2a"
     overlapName = "CE_OVERLAP"
     totalAreaName = "CAEAM_TOTA"
     effectiveAreaName = "CAEAM_EFFA"
