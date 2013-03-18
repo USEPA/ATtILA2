@@ -386,7 +386,10 @@ class ProportionsValidator(object):
 
         # Check if processingCellSize is a positive number            
         if self.processingCellSizeParameter.value:
-            cellSizeValue = self.processingCellSizeParameter.value
+            try:
+                cellSizeValue = arcpy.Raster(str(self.processingCellSizeParameter.value)).meanCellWidth
+            except:
+                cellSizeValue = self.processingCellSizeParameter.value
             if float(str(cellSizeValue)) <= 0:
                 self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
             
