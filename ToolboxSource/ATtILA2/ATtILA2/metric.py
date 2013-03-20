@@ -207,7 +207,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
-                                                                        self.inEdgeWidth, os.path.dirname(outTable))
+                                                                        self.inEdgeWidth, os.path.dirname(outTable), processingCellSize)
             
                     if self.saveIntermediates:
                         self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
