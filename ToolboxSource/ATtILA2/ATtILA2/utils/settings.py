@@ -38,21 +38,13 @@ def getIdOutField(inFeature, inField):
 
 def checkGridValuesInLCC(inLandCoverGrid, lccObj):
     """ Checks input grid values. Warns user if values are undefined in LCC XML file. """
-    
-    # warn user if input land cover grid has values not defined in LCC file
-    rows = arcpy.SearchCursor(inLandCoverGrid) 
 
-    gridValues = []    
-    for row in rows:
-        gridValues.append(row.getValue("VALUE"))
+    gridValuesList = arcpyutil.raster.getRasterValues(inLandCoverGrid)
     
-    undefinedValues = [aVal for aVal in gridValues if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
+    undefinedValues = [aVal for aVal in gridValuesList if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
     if undefinedValues:
         arcpy.AddWarning("Following Grid Values undefined in LCC file: %s - Please refer to the %s documentation regarding undefined values." % 
                          (undefinedValues, globalConstants.titleATtILA))
-        
-    del row
-    del rows
     
     
 def checkGridCellDimensions(inLandCoverGrid):
