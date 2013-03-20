@@ -34,31 +34,32 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth, fallBackDirectory):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, fallBackDirectory, processingCellSize_str):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
-    
+    landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
     # get the grid codes for this specified metric
-    UserValueList = lccClassesDict[m].uniqueValueIds
-    
+#    UserValueList = lccClassesDict[m].uniqueValueIds
+    UserValueList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-    WaterValueList = lccValuesDict.getExcludedValueIds()
-    
-    LandValueList = lccValuesDict.getIncludedValueIds()
-    
-    OtherValueList = LandValueList - UserValueList
-   
+#    WaterValueList = lccValuesDict.getExcludedValueIds()
+    WaterValueList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+#    LandValueList = lccValuesDict.getIncludedValueIds()
+    LandValueList = lccValuesDict.getIncludedValueIds().intersection(landCoverValues)
+#    OtherValueList = LandValueList - UserValueList
+    OtherValueList = set(landCoverValues) - UserValueList - WaterValueList
     
     from arcpy import env
     import os
-    TempOutspace =  arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory) 
-    arcpy.AddMessage(WaterValueList)
-    arcpy.AddMessage(LandValueList)
-    arcpy.AddMessage(UserValueList)
-    arcpy.AddMessage(OtherValueList)
-    
+    TempOutspace =  fallBackDirectory
+    print TempOutspace
+    env.cellSize = processingCellSize_str
+#    arcpy.AddMessage(WaterValueList)
+#    arcpy.AddMessage(LandValueList)
+#    arcpy.AddMessage(UserValueList)
+#    arcpy.AddMessage(OtherValueList)
+
     # Generate the edge/core/other/excluded grid
-#    LCGrid = Raster(inLandCoverGrid)
     LCGrid = inLandCoverGrid
     
     #Extract User Categories from Landuse grid
@@ -90,71 +91,59 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth, 
     env.workspace = TempOutspace
     
     #Calculate the Euclidean distance using the NonUser
-    gridcellsize = getRasterGridSize(outputNUgrid) 
-    arcpy.AddMessage(gridcellsize)
-    maxdist = PatchEdgeWidth * gridcellsize
-    arcpy.AddMessage("MaxDist =" + str(maxdist))
-    outEucDistance = EucDistance(outputNUgrid, maxdist, str(gridcellsize))
-    outEucDistance.save("outEucDistance")
-#    #Create a new user grid with a single value for the user category (intermediate layer)
-#    #Convert User Value List into a list of integers
-#    intUserValueList = convertList(UserValueList)
-#    
-#    UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
-#    UserSingleReclass = Reclassify("ExtractUserCat", "VALUE", UserRemapRange)
-#    UserSingleReclass.save("UserSingleReclass")
-#    
-#    #Create new Euclidean distance raster with a single value and NoData converted to 0(intermediate layer)
-#    EucRemapRange = RemapRange([[0, maxdist, 2], ["noData", "noData", 0]])
-#    EucReclass = Reclassify(outEucDistance, "VALUE", EucRemapRange)
-#    EucReclass.save("EucReclass")
-#    #Run Add Euclidean_Con and ForestSingle together - result: Value 1 = Core, Value 3 = Edge
-#    outPlus = Plus(UserSingleReclass, EucReclass)
-#    outPlus.save("CoreEdge")
-#    
-#    #Add Pos field to CoreEdge raster and populate it
-#    arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge"), "POS", "TEXT", "#", "#", "10")
-#    updateValuestoRaster("CoreEdge")
-#
-#    #Change NoData to 0 in CoreEdge raster in prep for final output raster (intermediate layer)
-#    UserRemapRange = RemapRange([[1,1,1], [3,3,3], ["NoData", "NoData", 0]])
-#    ZeroedCE = Reclassify("CoreEdge", "VALUE", UserRemapRange)
-#    ZeroedCE.save("ZeroedCE")
-#    #Create new Water with a single value for water (intermediate layer)
-#    intWaterValueList = convertList(WaterValueList)
-#    
-#    WaterRemapRange = RemapRange([[min(intWaterValueList), max(intWaterValueList), 2], ["NoData", "NoData", 0]])
-#    H2OSingleReclass = Reclassify("ExtractWater", "VALUE", WaterRemapRange)
-#    H2OSingleReclass.save("H2OSingleReclass")
-#    #Create new Other with a single value for other (intermediate layer)
-#    intOtherValueList = convertList(OtherValueList)
-#    
-#    OtherRemapRange = RemapRange([[min(intOtherValueList), max(intOtherValueList), 4], ["NoData", "NoData", 0]])
-#    OtherSingleReclass = Reclassify("ExtractOther", "VALUE", OtherRemapRange)
-#    OtherSingleReclass.save("OtherSingleReclass")
-#    #Create Final Output Raster
-#    FinalOutputRas = CellStatistics([ZeroedCE, H2OSingleReclass, OtherSingleReclass], "SUM", "DATA")
-#    FinalRemapRange = RemapRange([[1,1,1],[2,2,2], [3,3,3], [4,4,4], [0,0,"NoData"]])
-#    FinalRaster = Reclassify(FinalOutputRas, "VALUE", FinalRemapRange)
-#    FinalRaster.save("CoreEdge_Final")
-#    
-#    arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge_Final"), "POS", "TEXT", "#", "#", "10")
-#    updateValuestoRaster("CoreEdge_Final")
+    gridcellsize_int = int(processingCellSize_str)
+    maxdist = int(PatchEdgeWidth_str) * gridcellsize_int
+    outEucDistance = EucDistance(outputNUgrid, maxdist, processingCellSize_str)
+
+    #Create a new user grid with a single value for the user category (intermediate layer)
+    #Convert User Value List into a list of integers
+    intUserValueList = convertList(UserValueList)
+    
+    UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
+    UserSingleReclass = Reclassify("ExtractUserCat", "VALUE", UserRemapRange)
+
+    
+    #Create new Euclidean distance raster with a single value and NoData converted to 0(intermediate layer)
+    EucRemapRange = RemapRange([[0, maxdist, 2], ["noData", "noData", 0]])
+    EucReclass = Reclassify(outEucDistance, "VALUE", EucRemapRange)
+
+    #Run Add Euclidean_Con and ForestSingle together - result: Value 1 = Core, Value 3 = Edge
+    outPlus = Plus(UserSingleReclass, EucReclass)
+    outPlus.save("CoreEdge_" + m)
+    
+    #Add Pos field to CoreEdge raster and populate it
+    arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge_" + m), "POS", "TEXT", "#", "#", "10")
+    updateValuestoRaster("CoreEdge_" + m)
+
+    #Change NoData to 0 in CoreEdge raster in prep for final output raster (intermediate layer)
+    UserRemapRange = RemapRange([[1,1,1], [3,3,3], ["NoData", "NoData", 0]])
+    ZeroedCE = Reclassify("CoreEdge_"+ m, "VALUE", UserRemapRange)
+
+    #Create new Water with a single value for water (intermediate layer)
+    intWaterValueList = convertList(WaterValueList)
+    
+    WaterRemapRange = RemapRange([[min(intWaterValueList), max(intWaterValueList), 2], ["NoData", "NoData", 0]])
+    H2OSingleReclass = Reclassify("ExtractWater", "VALUE", WaterRemapRange)
+
+    #Create new Other with a single value for other (intermediate layer)
+    intOtherValueList = convertList(OtherValueList)
+    
+    OtherRemapRange = RemapRange([[min(intOtherValueList), max(intOtherValueList), 4], ["NoData", "NoData", 0]])
+    OtherSingleReclass = Reclassify("ExtractOther", "VALUE", OtherRemapRange)
+
+    #Create Final Output Raster
+    FinalOutputRas = CellStatistics([ZeroedCE, H2OSingleReclass, OtherSingleReclass], "SUM", "DATA")
+    FinalRemapRange = RemapRange([[1,1,1],[2,2,2], [3,3,3], [4,4,4], [0,0,"NoData"]])
+    FinalRaster = Reclassify(FinalOutputRas, "VALUE", FinalRemapRange)
+    FinalRaster.save("CoreEdge_Final_" + m)
+    
+    arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge_Final_"+ m), "POS", "TEXT", "#", "#", "10")
+    updateValuestoRaster("CoreEdge_Final_" + m)
     
     ECOGrid = LCGrid
     
     return ECOGrid
-
-def getRasterGridSize(Landcovergrid):
-
-    #Get the cell size for the land use grid
-    XBand = arcpy.GetRasterProperties_management(Landcovergrid, "CELLSIZEX" )
-    YBand = arcpy.GetRasterProperties_management(Landcovergrid, "CELLSIZEY")
-    #Check to make sure the grid size are square if it is not generate an error
-    if int(float(str(XBand))) == int(float(str(YBand))):
-        return int(float(str(XBand)))
-    else:
-        arcpy.AddError("Uh oh the grids are not square!!! X Band Value will only be used")  
+ 
         
 def convertList(inList):
     outList = []
