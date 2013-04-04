@@ -198,8 +198,15 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         # append the edge width distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
         
-        metricsBaseNameList = arcpyutil.parameters.splitItemsAndStripDescriptions(metricsToRun, globalConstants.descriptionDelim)
-        
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+                                                                                 os.path.dirname(outTable),
+                                                                                 [metricsToRun,optionalFieldGroups] )
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        #Create the output table outside of metricCalc so that result can be added for multiple metrics
+        newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
+                                                                                  metricConst, lccObj, outIdField)
+        # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
         
             class metricCalcCAEAM(metricCalc):
@@ -211,7 +218,57 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
             
                     if self.saveIntermediates:
                         self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-    
+                #skip over make out table since it has already been made
+                def _makeAttilaOutTable(self):
+                    pass  
+                
+                def _makeTabAreaTable(self):
+                    AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
+                    # Internal function to generate a zonal tabulate area table
+                    class posTabAreaTable(TabulateAreaTable):
+                        #Update definition so Tabulate Table is run on the POS field.
+                        def _createNewTable(self):
+                            self._value = "POS"
+                            if self._tableName:
+                                self._destroyTable = False
+                                self._tableName = arcpy.CreateScratchName(self._tableName, "", self._datasetType)
+                            else:
+                                self._tableName = arcpy.CreateScratchName(self._tempTableName, "", self._datasetType)
+            
+        
+                            arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+                                 self._value, self._tableName)
+                            
+                            self._tabAreaTableRows = arcpy.SearchCursor(self._tableName)        
+                            self._tabAreaValueFields = arcpy.ListFields(self._tableName, "", "DOUBLE")
+                            self._tabAreaValues = [aFld.name for aFld in self._tabAreaValueFields]
+                            self._tabAreaDict = dict(zip(self._tabAreaValues,[])) 
+                             
+                    self.lccObj = None
+                    self.tabAreaTable = posTabAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
+                                              self.inLandCoverGrid, self.tableName, self.lccObj)
+                #Update housekeeping so it doesn't check for lcc codes
+                def _housekeeping(self):
+                    # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
+                    # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
+                    # alert user if the land cover grid cells are not square (default to size along x axis)
+                    utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
+                    # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+                    self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
+                
+                    # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+                    self.zoneAreaDict = None
+                    if globalConstants.qaCheckName in self.optionalGroupsList:
+                        self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField)
+                # Update calculateMetrics to calculate Core to Edge Ratio
+                def _calculateMetrics(self):
+                    self.newTable = newtable
+                    self.metricsFieldnameDict = metricsFieldnameDict
+
+                    # calculate Core to Edge ratio
+                    utils.calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
+                                                      self.zoneAreaDict, self.metricConst, m)
+
             # Create new instance of metricCalc class to contain parameters
             caeamCalc = metricCalcCAEAM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                           m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
