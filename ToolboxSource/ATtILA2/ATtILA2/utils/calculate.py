@@ -412,6 +412,7 @@ def landCoverDiversity(optionalGroupsList, metricConst, outIdField, newTable,
                 
                 qaCheckFlds = metricConst.qaCheckFieldParameters
                 outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+                
             
             # commit the row to the output table
             outTableRows.insertRow(outTableRow)
@@ -457,4 +458,71 @@ def getDiversityIndices(tabAreaDict, totalArea):
 
     return diversityIndices  
 
+def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict, metricConst,m):  
+        CoreEdgeDict = {}
+        OptionalDict = {}
+        try:    
+#             create a dictionary of Core/Edge Ratio results by zoneIdValue
+            for tabAreaTableRow in tabAreaTable:
+                EdgeValue = tabAreaTableRow.tabAreaDict["EDGE"]
+                CoreValue = tabAreaTableRow.tabAreaDict["CORE"]
+#             test to make sure values exist for this zoneId (ValueEdgeValue + CoreValue <> 0 )
+                try: 
+                    CtoERatio = (EdgeValue/(EdgeValue + CoreValue))*100
+                    CoreEdgeDict[tabAreaTableRow.zoneIdValue] = CtoERatio
+                except:
+#              if EdgeValue and CoreValue are both zero set ratio value to 0
+                    if EdgeValue == 0 and CoreValue == 0:
+                        CoreEdgeDict[tabAreaTableRow.zoneIdValue] = 0
+                    arcpy.AddWarning( m + " landuse doesn't exist in reporting unit feature " + tabAreaTableRow.zoneIdValue)
+                optTuple = (tabAreaTableRow.totalArea,tabAreaTableRow.effectiveArea,tabAreaTableRow.excludedArea)
+                OptionalDict[tabAreaTableRow.zoneIdValue]=optTuple
+#         Check to see if newTable has already been set up
+            rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
+            if rowcount == 0:
+                outTableRows = arcpy.InsertCursor(newTable)
+                for k in CoreEdgeDict.keys():
+                    # initiate a row to add to the metric output table
+                    outTableRow = outTableRows.newRow()
+                    
+                    # set the reporting unit id value in the output row
+                    outTableRow.setValue(outIdField.name, k)
+                    
+                    # commit the row to the output table
+                    outTableRows.insertRow(outTableRow)
+                del outTableRows, outTableRow
+                
+#         create the cursor to add data to the output table
+            outTableRows = arcpy.UpdateCursor(newTable)        
+            outTableRow = outTableRows.next()
+            while outTableRow:
+                uid = outTableRow.getValue(outIdField.name)
+                # populate the edge to core ratio for the current reporting unit  
+                outTableRow.setValue(metricsFieldnameDict[m], CoreEdgeDict[uid])
+                
+                # add QACheck calculations/values to row
+                if zoneAreaDict:
+                    zoneArea = zoneAreaDict[uid]
+#                    print "ZoneArea =" + str(zoneArea)
+                    overlapCalc = ((OptionalDict[uid][0])/zoneArea) * 100
+                    
+                    qaCheckFlds = metricConst.qaCheckFieldParameters
+                    outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+                    outTableRow.setValue(qaCheckFlds[1][0], OptionalDict[uid][0])
+                    outTableRow.setValue(qaCheckFlds[2][0], OptionalDict[uid][1])
+                    outTableRow.setValue(qaCheckFlds[3][0], OptionalDict[uid][2])
+                
+                # commit the row to the output table
+                outTableRows.updateRow(outTableRow)
+                outTableRow = outTableRows.next()
+        finally:
         
+            # delete cursor and row objects to remove locks on the data
+            try:
+                del outTableRows
+                del outTableRow
+                del tabAreaTable
+                del tabAreaTableRow
+                arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
+            except:
+                pass
