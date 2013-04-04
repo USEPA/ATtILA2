@@ -7,26 +7,27 @@ Created March 2013
 
 # General Parameters for all tools
 baseDir = r'C:\Projects\Heather_G\EastFork\EFLMR\gdb\EFLMR_StreamOrderPolys.gdb\Parameters'  # Set this to your root folder
-inReportingUnitFeature = "NHDPlusSP_lm_3rd_order_only_link"
+inReportingUnitFeature = baseDir + "\\NHDPlusSP_lm_3rd_order_only_link"
 reportingUnitIdField = "SuperID"
-inLandCoverGrid = r"L:\Public\ORD-PUB\NERL_NRMRL_EastFork\HG_GISData\EastFork_LittleMiami_MainDatabase.gdb\al_nlcd06_LM"
+inLandCoverGrid = r"C:\Projects\default\Default.gdb\al_nlcd06_LM"
 _lccName = 'NLCD 2001'
-lccFilePath = r'C:\Projects\M_Mehaffey\Attila2\python\ATtILA2\ToolboxSource\LandCoverClassifications\NLCD 2001.lcc'  
-outTable = r"c:\projects\default\default.gdb\\"+ 'TestOutput'
+lccFilePath = r'C:\Projects\M_Mehaffey\Attila2\python\ATtILA2\ToolboxSource\LandCoverClassifications\NLCD 2001.xml'  
+outTable = r"c:\projects\default\default.gdb\\"+ 'TestOutput_QAFields'
 processingCellSize = '30' 
 snapRaster = inLandCoverGrid  # Set by default to the input LandCover Grid, may be changed.
-optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
+#optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
+optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields'"
 #inStreamFeatures = baseDir + 'nhd_msite.shp'
-
 # Parameters unique to LandCoverProportions
-#refLandCoverOutput = baseDir + 'LandCoverReference.dbf' # Reference output data
+refLandCoverOutput = baseDir + 'LandCoverReference.dbf' # Reference output data
 metricsToRun = "'for  -  [pfor]  Forest'"
-inEdgeWidth = "5"
+
+inEdgeWidth = "1"
 
 
 ## Parameters unique to LandCoverOnSlopeProportionsTest
 #refLandCoverOnSlopeOutput = baseDir + 'LandCoveronSlopeReference.dbf' # Reference output data
-#metricsToRun_LCSP = "'agt  -  [agtSL]  All Agriculture';'agp  -  [agpSL]  Pasture';'agc  -  [agcSL]  Cultivated Crops'"
+metricsToRun_LCP = "'agt  -  [agtSL]  All Agriculture';'agp  -  [agpSL]  Pasture';'agc  -  [agcSL]  Cultivated Crops'"
 #inSlopeGrid = baseDir + 'slope_pct'
 #inSlopeThresholdValue = '10'
 
