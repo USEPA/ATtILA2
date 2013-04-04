@@ -38,26 +38,21 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
+    
     # get the grid codes for this specified metric
-#    UserValueList = lccClassesDict[m].uniqueValueIds
     UserValueList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
+    
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-#    WaterValueList = lccValuesDict.getExcludedValueIds()
     WaterValueList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
-#    LandValueList = lccValuesDict.getIncludedValueIds()
+
     LandValueList = lccValuesDict.getIncludedValueIds().intersection(landCoverValues)
-#    OtherValueList = LandValueList - UserValueList
+
     OtherValueList = set(landCoverValues) - UserValueList - WaterValueList
     
     from arcpy import env
     import os
     TempOutspace =  fallBackDirectory
-    print TempOutspace
     env.cellSize = processingCellSize_str
-#    arcpy.AddMessage(WaterValueList)
-#    arcpy.AddMessage(LandValueList)
-#    arcpy.AddMessage(UserValueList)
-#    arcpy.AddMessage(OtherValueList)
 
     # Generate the edge/core/other/excluded grid
     LCGrid = inLandCoverGrid
@@ -139,8 +134,8 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     
     arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge_Final_"+ m), "POS", "TEXT", "#", "#", "10")
     updateValuestoRaster("CoreEdge_Final_" + m)
-    
-    ECOGrid = LCGrid
+    print "Finished Core Edge Processing"
+    ECOGrid = "CoreEdge_Final_" + m
     
     return ECOGrid
  
