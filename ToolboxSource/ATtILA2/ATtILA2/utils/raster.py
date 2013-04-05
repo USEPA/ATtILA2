@@ -57,7 +57,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     # Generate the edge/core/other/excluded grid
     LCGrid = inLandCoverGrid
     
-    #Extract User Categories from Landuse grid
+    #Extract User Categories from Land use grid
     env.workspace = os.path.dirname(LCGrid)
     inputLC = os.path.basename(LCGrid)
 
@@ -65,22 +65,16 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     ExtractDict["ExtractUserCat"]= UserValueList
     ExtractDict["ExtractWater"] = WaterValueList
     ExtractDict["ExtractOther"] = OtherValueList
-    #Extract User, Water, and Other 
-    for k in ExtractDict.keys():
-        outputgrid = k
-        #Set up the values for the sql expression
-        StrValuesList = convertList(ExtractDict[k])
-        values = ",".join(StrValuesList)
-        #Extract the  selected categories from the Landuse grid
-        attExtract = ExtractByAttributes(inputLC, "VALUE IN (" + values + ")")
-        attExtract.save(os.path.join(TempOutspace, outputgrid))
     
-    #Extract Non User Categories from Landuse grid
-    outputNUgrid = "ExtractNonUser"
+    #Extract User, Water, and Other 
+    ExtractUserCat = ExtractLU(ExtractDict["ExtractUserCat"], inputLC)
+    ExtractWater =  ExtractLU(ExtractDict["ExtractWater"],inputLC)
+    ExtractOther = ExtractLU(ExtractDict["ExtractOther"], inputLC)
+                           
+    #Extract Non User Categories from Land use grid
     StrValuesList = convertList(ExtractDict["ExtractUserCat"])
     values = ",".join(StrValuesList)
-    attExtract = ExtractByAttributes(inputLC, "VALUE NOT IN (" + values +")")
-    attExtract.save(os.path.join(TempOutspace, outputNUgrid))
+    ExtractNonUserCat = ExtractByAttributes(inputLC, "VALUE NOT IN (" + values +")")
     
     #change workspace to output space
     env.workspace = TempOutspace
@@ -88,15 +82,14 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     #Calculate the Euclidean distance using the NonUser
     gridcellsize_int = int(processingCellSize_str)
     maxdist = int(PatchEdgeWidth_str) * gridcellsize_int
-    outEucDistance = EucDistance(outputNUgrid, maxdist, processingCellSize_str)
+    outEucDistance = EucDistance(ExtractNonUserCat, maxdist, processingCellSize_str)
 
     #Create a new user grid with a single value for the user category (intermediate layer)
     #Convert User Value List into a list of integers
     intUserValueList = convertList(UserValueList)
     
     UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
-    UserSingleReclass = Reclassify("ExtractUserCat", "VALUE", UserRemapRange)
-
+    UserSingleReclass = Reclassify(ExtractUserCat, "VALUE", UserRemapRange)
     
     #Create new Euclidean distance raster with a single value and NoData converted to 0(intermediate layer)
     EucRemapRange = RemapRange([[0, maxdist, 2], ["noData", "noData", 0]])
@@ -104,27 +97,23 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
 
     #Run Add Euclidean_Con and ForestSingle together - result: Value 1 = Core, Value 3 = Edge
     outPlus = Plus(UserSingleReclass, EucReclass)
-    outPlus.save("CoreEdge_" + m)
-    
-    #Add Pos field to CoreEdge raster and populate it
-    arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge_" + m), "POS", "TEXT", "#", "#", "10")
-    updateValuestoRaster("CoreEdge_" + m)
 
     #Change NoData to 0 in CoreEdge raster in prep for final output raster (intermediate layer)
     UserRemapRange = RemapRange([[1,1,1], [3,3,3], ["NoData", "NoData", 0]])
-    ZeroedCE = Reclassify("CoreEdge_"+ m, "VALUE", UserRemapRange)
-
+    
+    #ZeroedCE = Reclassify("CoreEdge_"+ m, "VALUE", UserRemapRange)
+    ZeroedCE = Reclassify(outPlus, "VALUE", UserRemapRange)
+    
     #Create new Water with a single value for water (intermediate layer)
     intWaterValueList = convertList(WaterValueList)
-    
     WaterRemapRange = RemapRange([[min(intWaterValueList), max(intWaterValueList), 2], ["NoData", "NoData", 0]])
-    H2OSingleReclass = Reclassify("ExtractWater", "VALUE", WaterRemapRange)
+    H2OSingleReclass = Reclassify(ExtractWater, "VALUE", WaterRemapRange)
 
     #Create new Other with a single value for other (intermediate layer)
     intOtherValueList = convertList(OtherValueList)
     
     OtherRemapRange = RemapRange([[min(intOtherValueList), max(intOtherValueList), 4], ["NoData", "NoData", 0]])
-    OtherSingleReclass = Reclassify("ExtractOther", "VALUE", OtherRemapRange)
+    OtherSingleReclass = Reclassify(ExtractOther, "VALUE", OtherRemapRange)
 
     #Create Final Output Raster
     FinalOutputRas = CellStatistics([ZeroedCE, H2OSingleReclass, OtherSingleReclass], "SUM", "DATA")
@@ -138,8 +127,16 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     ECOGrid = "CoreEdge_Final_" + m
     
     return ECOGrid
- 
-        
+
+# Extracts land use values so that they can be temporary.
+def ExtractLU(ValueList, inputLandcover):
+    #Set up the values for the sql expression
+    StrValuesList = convertList(ValueList)
+    values = ",".join(StrValuesList)
+    #Extract the  selected categories from the Landuse grid
+    attExtract = ExtractByAttributes(inputLandcover, "VALUE IN (" + values + ")")
+    return attExtract
+   
 def convertList(inList):
     outList = []
     for l in inList:
