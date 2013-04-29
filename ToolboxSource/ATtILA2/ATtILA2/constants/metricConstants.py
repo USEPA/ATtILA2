@@ -205,5 +205,6 @@ class pdmConstants(baseMetricConstants):
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    areaFieldname = "AREAKM2"
     populationDensityFieldName = "POPDENS"
     populationChangeFieldName = "POPCHG"
