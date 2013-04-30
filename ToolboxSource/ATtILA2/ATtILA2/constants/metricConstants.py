@@ -207,3 +207,27 @@ class pdmConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     populationDensityFieldName = "POPDENS"
     populationChangeFieldName = "POPCHG"
+    
+class mdcpConstants(baseMetricConstants):
+    name = "MeanDisttoClosestPatch"
+    shortName = "mdcp"
+    fieldPrefix = ""
+    fieldSuffix = "mdcp"
+    overlapName = "mdcp_OVERLAP"
+    totalAreaName = "mdcp_TOTA"
+    effectiveAreaName = "mdcp_EFFA"
+    excludedAreaName = "mdcp_EXCA"
+    rastertoPoly = ["FinalPatchPoly","FeatureClass"]
+    rastertoPoint = ["FinalPatchCentroids", "FeatureClass"]
+    polyDissolve = ["FinalPatch_poly_diss", "FeatureClass"]
+    clipPolyDissolve =["FinalPatch_poly_diss_clip", "FeatureClass"]
+    nearTable = ["NearTable", "Dataset"]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName

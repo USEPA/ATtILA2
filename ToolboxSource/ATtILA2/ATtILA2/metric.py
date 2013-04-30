@@ -188,7 +188,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 
 def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
-    """ Interface for script executing Land Cover Proportion Metrics """
+    """ Interface for script executing Core/Edge Metrics """
 
     try:
         from pylet import arcpyutil
@@ -782,3 +782,111 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
     finally:
         setupAndRestore.standardRestore()
         
+def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                   metricsToRun, maxSeparation, minPatchsize, SearchRadius, outTable,processingCellSize, snapRaster,
+                   optionalFieldGroups):
+        try:
+            from pylet import arcpyutil
+            from arcpy import env
+            cleanupList = []
+            # retrieve the attribute constants associated with this metric
+            metricConst = metricConstants.mdcpConstants()
+            # append the edge width distance value to the field suffix
+            
+            metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+                                                                                     os.path.dirname(outTable),
+                                                                                     [metricsToRun,optionalFieldGroups] )
+            lccObj = lcc.LandCoverClassification(lccFilePath)
+            outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+            
+            env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+            # Strip the description from the "additional option" and determine whether intermediates are stored.
+            processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+            if globalConstants.intermediateName in processed:
+                msg = "\nIntermediates are stored in this directory: {0}\n"
+                AddMsg(msg.format(env.workspace))
+                cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+            else:
+                cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+            
+            #Create the output table outside of metricCalc so that result can be added for multiple metrics
+            newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
+                                                                                          metricConst, lccObj, outIdField)
+            # Run metric calculate for each metric in list
+            for m in metricsBaseNameList:
+                # Subclass that overrides specific functions for the MDCP calculation
+                class metricCalcMDCP(metricCalc):
+
+                    def _replaceLCGrid(self):
+                        # replace the inLandCoverGrid
+                        AddMsg(self.timer.split() + " Creating Patches")
+                        self.inLandCoverGrid = utils.raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
+                                                                              os.path.dirname(outTable), self.maxSeparation,
+                                                                              self.minPatchsize, processingCellSize)
+                
+                        if self.saveIntermediates:
+                            self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                            
+                    #skip over make out table since it has already been made
+                    def _makeAttilaOutTable(self):
+                        pass
+
+                    #skip over make Tabulate Area Table since this metric does not require it
+                    def _makeTabAreaTable(self):
+                        pass
+                    
+                    #Update housekeeping so it doesn't check for lcc codes
+                    def _housekeeping(self):
+                        # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
+                        # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
+                        # alert user if the land cover grid cells are not square (default to size along x axis)
+                        utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
+                        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+                        self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
+                    
+                        # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+                        self.zoneAreaDict = None
+                        if globalConstants.qaCheckName in self.optionalGroupsList:
+                            self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField)
+                    # Update calculateMetrics to populate Mean Distance to Closest Patch
+                    def _calculateMetrics(self):
+                        self.newTable = newtable
+                        self.metricsFieldnameDict = metricsFieldnameDict
+
+                        #calculate MDCP value    
+                        
+                        rastoPoly = utils.files.nameIntermediateFile(metricConst.rastertoPoly,cleanupList)
+                        rastoPt = utils.files.nameIntermediateFile(metricConst.rastertoPoint, cleanupList)
+                        polyDiss = utils.files.nameIntermediateFile(metricConst.polyDissolve, cleanupList)
+                        clipPolyDiss = utils.files.nameIntermediateFile(metricConst.clipPolyDissolve, cleanupList) 
+                        nearPatchTable = utils.files.nameIntermediateFile(metricConst.nearTable, cleanupList)                    
+                        AddMsg(self.timer.split() + " Calculating Mean Distances")
+                        
+                        self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, os.path.dirname(outTable),
+                                                                   self.inReportingUnitFeature, self.reportingUnitIdField,
+                                                                   SearchRadius, rastoPoly, rastoPt, polyDiss, clipPolyDiss,
+                                                                   nearPatchTable)
+                        # update
+                        utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.metricsFieldnameDict,
+                                                 self.metricConst, m)
+                # Create new instance of metricCalc class to contain parameters
+                mdcpCalc = metricCalcMDCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                          m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                
+                mdcpCalc.maxSeparation = maxSeparation
+                mdcpCalc.minPatchsize = minPatchsize
+                
+                #Run Calculation
+                mdcpCalc.run()
+                
+                mdcpCalc.metricsBaseNameList = metricsBaseNameList
+                AddMsg("MDCP analysis has been run for landuse " + m)
+        except Exception, e:
+            errors.standardErrorHandling(e)
+
+        finally:
+            setupAndRestore.standardRestore()
+            if not cleanupList[0] == "KeepIntermediates":
+                for (function,arguments) in cleanupList:
+                    # Flexibly executes any functions added to cleanup array.
+                    function(*arguments)

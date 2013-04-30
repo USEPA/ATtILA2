@@ -6,17 +6,17 @@ Created March 2013
 '''
 
 # General Parameters for all tools
-baseDir = r'C:\Projects\Heather_G\EastFork\EFLMR\gdb\EFLMR_StreamOrderPolys.gdb\Parameters'  # Set this to your root folder
-inReportingUnitFeature = baseDir + "\\NHDPlusSP_lm_3rd_order_only_link"
+baseDir = r'C:\Projects\default\Default.gdb'  # Set this to your root folder
+inReportingUnitFeature = baseDir + "\\Subwatersheds_1stOrder"
 reportingUnitIdField = "SuperID"
 inLandCoverGrid = r"C:\Projects\default\Default.gdb\al_nlcd06_LM"
 _lccName = 'NLCD 2001'
 lccFilePath = r'C:\Projects\M_Mehaffey\Attila2\python\ATtILA2\ToolboxSource\LandCoverClassifications\NLCD 2001.xml'  
-outTable = r"c:\projects\default\default.gdb\\"+ 'TestOutput_QAFields'
+outTable = r"c:\projects\default\default.gdb\\"+ 'TestOutput_MDCP_patch2'
 processingCellSize = '30' 
 snapRaster = inLandCoverGrid  # Set by default to the input LandCover Grid, may be changed.
 #optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
-optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields'"
+optionalFieldGroups = ""
 #inStreamFeatures = baseDir + 'nhd_msite.shp'
 # Parameters unique to LandCoverProportions
 refLandCoverOutput = baseDir + 'LandCoverReference.dbf' # Reference output data
@@ -24,6 +24,9 @@ metricsToRun = "'for  -  [pfor]  Forest'"
 
 inEdgeWidth = "1"
 
+maxSeparation = 0
+minPatchSize = 2
+SearchRadius = "200"
 
 ## Parameters unique to LandCoverOnSlopeProportionsTest
 #refLandCoverOnSlopeOutput = baseDir + 'LandCoveronSlopeReference.dbf' # Reference output data

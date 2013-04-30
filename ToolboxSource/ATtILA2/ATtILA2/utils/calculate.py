@@ -526,3 +526,59 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
                 arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
             except:
                 pass
+def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m):
+    try:
+    #       Check to see if newTable has already been set up
+            rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
+            if rowcount == 0:
+                outTableRows = arcpy.InsertCursor(newTable)
+                for k in mdcpDict.keys():
+                    # initiate a row to add to the metric output table
+                    outTableRow = outTableRows.newRow()
+                    
+                    # set the reporting unit id value in the output row
+                    outTableRow.setValue(outIdField.name, k)
+                    
+                    # commit the row to the output table
+                    outTableRows.insertRow(outTableRow)
+                del outTableRows, outTableRow
+            #Add new fields for the lu for pwon and pwn
+            arcpy.AddField_management(newTable, "PWN_" + m, "Double")
+            arcpy.AddField_management(newTable, "PWON_" + m, "Double")    
+#         create the cursor to add data to the output table
+            outTableRows = arcpy.UpdateCursor(newTable)        
+            outTableRow = outTableRows.next()
+            while outTableRow:
+                uid = outTableRow.getValue(outIdField.name)
+                # populate the mean distance to edge patch for the current reporting unit  
+                outTableRow.setValue(metricsFieldnameDict[m], mdcpDict[uid].split(",")[2])
+                outTableRow.setValue("PWN_" + m, mdcpDict[uid].split(",")[0])
+                outTableRow.setValue("PWON_" + m, mdcpDict[uid].split(",")[1])
+#                # add QACheck calculations/values to row
+#                if zoneAreaDict:
+#                    zoneArea = zoneAreaDict[uid]
+##                    print "ZoneArea =" + str(zoneArea)
+#                    overlapCalc = ((OptionalDict[uid][0])/zoneArea) * 100
+#                    
+#                    qaCheckFlds = metricConst.qaCheckFieldParameters
+#                    outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+#                    outTableRow.setValue(qaCheckFlds[1][0], OptionalDict[uid][0])
+#                    outTableRow.setValue(qaCheckFlds[2][0], OptionalDict[uid][1])
+#                    outTableRow.setValue(qaCheckFlds[3][0], OptionalDict[uid][2])
+#                
+                # commit the row to the output table
+                outTableRows.updateRow(outTableRow)
+                outTableRow = outTableRows.next()
+    finally:
+        
+            # delete cursor and row objects to remove locks on the data
+            try:
+                del outTableRows
+                del outTableRow
+                del tabAreaTable
+                del tabAreaTableRow
+                arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
+            except:
+                pass
+    
+    

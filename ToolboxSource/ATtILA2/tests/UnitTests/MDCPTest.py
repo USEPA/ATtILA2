@@ -1,5 +1,5 @@
 '''
-Test to evaluate consistency of Core Edge Calculation
+Test to evaluate Mean Distance to Closest Patch Calculation
 
 
 '''
@@ -7,7 +7,7 @@ Test to evaluate consistency of Core Edge Calculation
 import arcpy
 import ATtILA2
 import parameters_eid as p
-import outputValidation
+
 from arcpy import env
 env.overwriteOutput = True
 
@@ -16,9 +16,9 @@ def runTest():
         if arcpy.Exists(p.outTable):
             arcpy.Delete_management(p.outTable)
             
-        print "Running Core Edge calculation"
-        ATtILA2.metric.runCoreAndEdgeAreaMetrics(p.inReportingUnitFeature, p.reportingUnitIdField,p.inLandCoverGrid, p._lccName, p.lccFilePath, 
-                                                 p.metricsToRun, p.inEdgeWidth, p.outTable, 
+        print "Running MDCP calculation"
+        ATtILA2.metric.runMDCPMetrics(p.inReportingUnitFeature, p.reportingUnitIdField,p.inLandCoverGrid, p._lccName, p.lccFilePath, 
+                                                 p.metricsToRun, p.maxSeparation, p.minPatchSize, p.SearchRadius, p.outTable, 
                                                  p.processingCellSize, p.snapRaster, p.optionalFieldGroups)
     
 #        print "Testing RiparianLandCoverProportions results"

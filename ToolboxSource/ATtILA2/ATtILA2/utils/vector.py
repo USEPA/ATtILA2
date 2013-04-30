@@ -426,4 +426,93 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
     return fieldName      
+
+def tabulateMDCP(PatchLURaster, TempOutspace, ReportingUnitFeature, ReportingUnitField, SearchRadius, rastoPoly, rastoPt, 
+                 polyDiss, clipPolyDiss, nearPatchTable):
+    from arcpy import env
+    resultDict = {}
+    #Convert Final Patch Raster to polygon
+##    env.workspace = os.path.dirname(PatchLURaster)
+#    arcpy.RasterToPolygon_conversion(PatchLURaster, TempOutspace + "\\FinalPatch_polygon", "NO_Simplify", "VALUE")
+    arcpy.RasterToPolygon_conversion(PatchLURaster, rastoPoly, "NO_Simplify", "VALUE")
+    #Convert Final Patch Raster to points to get the cell centroids
+    arcpy.RasterToPoint_conversion(PatchLURaster, rastoPt, "VALUE")
+
+#    env.workspace = TempOutspace
+    
+    #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+    arcpy.Dissolve_management(rastoPoly, polyDiss,"grid_code","#",
+                              "MULTI_PART","DISSOLVE_LINES")  
+    
+    #Get a list of Reporting Unit Feature ids
+    idlist = []
+    rows = arcpy.SearchCursor(ReportingUnitFeature)
+
+    for row in rows:
+        ruid = row.getValue(ReportingUnitField)
+        idlist.append(ruid)
+    del row, rows  
+#    print idlist
+    
+    #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
+    for i in idlist:
+        AddMsg("Generating Mean Distances for " + i)
+        squery = ReportingUnitField + "='" + i + "'"
+        #Create a feature layer of the single reporting unit
+        arcpy.MakeFeatureLayer_management(ReportingUnitFeature,"subwatersheds_Layer",squery,"#")
+
+        #Create a feature layer of the FinalPatch_poly_diss
+        arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
+
+        #Create a feature layer of the FinalPatch_centroids
+        arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+
+        #Select the centroids that are in the "subwatersheds_Layer"
+        arcpy.SelectLayerByLocation_management("FinalPatch_centroids_Layer","INTERSECT","subwatersheds_Layer")
+        
+        #Get a list of centroids within the selected Reporting Unit (this is necessary to match the raster processing
+        #selection which selects only grid cells whose center is within the reporting unit).
+        rows = arcpy.SearchCursor("FinalPatch_centroids_Layer")
+        centroidList = []
+        for row in rows:
+            gridid = row.getValue("Grid_Code")
+            if str(gridid) not in centroidList:
+                centroidList.append(str(gridid))
+
+        totalnumPatches = len(centroidList)
+        del row, rows  
+          
+        # Select the patches that have centroids within the "subwatershed_Layer" using the centroid list
+        values = ",".join(centroidList)
+        arcpy.SelectLayerByAttribute_management("FinalPatch_diss_Layer", "NEW_SELECTION", "GRID_CODE IN(" + values + ")")
+        arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
+        #Calculate Near Distances for each watershed
+#        arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], "neartable",
+#                                         SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
+        arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+                                         SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")   
+        #Get total number of patches with neighbors and calculate the mean distance
+        try:
+            rows = arcpy.SearchCursor("neartable")
+            distlist = []
+            for row in rows:
+                distance = row.getValue("NEAR_DIST")
+                distlist.append(distance)
+            del row, rows
+            pwnCount = len(distlist)
+            totalArea = sum(distlist)
+            averageDist = totalArea/pwnCount
+            pwonCount = totalnumPatches - pwnCount
+        except:
+            #if near table is empty the set values to default -999
+            rowcount = int(arcpy.GetCount_management("neartable").getOutput(0))
+            if rowcount == 0:
+                arcpy.AddWarning("No patches within search radius found for " + i)
+                pwnCount = -999
+                pwonCount = -999
+                averageDist = -999    
+            else:
+                AddMsg("Near Distance failed for some reason other than search distance")
+        resultDict[i] = str(pwnCount) +  "," + str(pwonCount) +"," + str(averageDist)
+    return resultDict
     
