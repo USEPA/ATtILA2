@@ -793,7 +793,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
                                                                              os.path.basename(tempReportingUnitFeature))
         # Add and populate the area field (or just recalculate if it already exists
-        unitArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        ruArea = utils.vector.addAreaField(inReportingUnitFeature,'ruArea')
         
         # this section will be repeated, should probably be wrapped and made a function.
         
@@ -803,8 +803,25 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,env.workspace,
                                                                              os.path.basename(tempCensusFeature))          
         # Add and populate the area field (or just recalculate if it already exists
-        unitArea = utils.vector.addAreaField(inCensusFeature,metricConst.areaFieldname)
+        popArea = utils.vector.addAreaField(inCensusFeature,'popArea')
         
+        # Set up a calculation expression for the density calculation
+        calcExpression = "!" + inPopField + "!/!" + unitArea + "!"
+        # Calculate the population density
+        inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'pDens1',calcExpression)
+        
+        # Intersect the reporting units with the population features.
+        intersectOutput = utils.files.nameIntermediateFile(["intersectOutput","FeatureClass"],cleanupList)
+        arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
+        
+        # Add and populate the area field of the intersected polygons
+        intArea = utils.vector.addAreaField(intersectOutput,'intArea')
+        
+        # Calculate the population of the intersected areas by multiplying population density by intersected area
+        # Set up a calculation expression for the density calculation
+        calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
+        # Calculate the population density
+        inPopDensityField = utils.vector.addCalculateField(intersectOutput,'intPop',calcExpression)
 
         '''Pseudocode notes
         following Road Density example...
