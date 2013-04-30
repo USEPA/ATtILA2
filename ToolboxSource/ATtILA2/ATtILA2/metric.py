@@ -760,14 +760,85 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         setupAndRestore.standardRestore()
 
 
-def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, optionalFieldGroups):
-    """ Interface for script executing Land Cover Diversity Metrics """
-
+def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outtable,
+                                   popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups):
+    """ Interface for script executing Population Density Metrics """
+    from arcpy import env
+    from pylet import arcpyutil
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pdmConstants()
 
-        pass
+        # Set the output workspace
+        _tempEnvironment1 = env.workspace
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        # Strip the description from the "additional option" and determine whether intermediates are stored.
+        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+        if globalConstants.intermediateName in processed:
+            msg = "\nIntermediates are stored in this directory: {0}\n"
+            AddMsg(msg.format(env.workspace))
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
+        # is more appropriate than altering the user's input data.
+        tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
+        inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
+                                                                             os.path.basename(tempReportingUnitFeature))
+        # Add and populate the area field (or just recalculate if it already exists
+        ruArea = utils.vector.addAreaField(inReportingUnitFeature,'ruArea')
+        
+        # this section will be repeated, should probably be wrapped and made a function.
+        
+        # Create a copy of the census feature class that we can add new fields to for calculations.  This 
+        # is more appropriate than altering the user's input data.
+        tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature","FeatureClass"],cleanupList)
+        inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,env.workspace,
+                                                                             os.path.basename(tempCensusFeature))          
+        # Add and populate the area field (or just recalculate if it already exists
+        popArea = utils.vector.addAreaField(inCensusFeature,'popArea')
+        
+        # Set up a calculation expression for the density calculation
+        calcExpression = "!" + inPopField + "!/!" + unitArea + "!"
+        # Calculate the population density
+        inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'pDens1',calcExpression)
+        
+        # Intersect the reporting units with the population features.
+        intersectOutput = utils.files.nameIntermediateFile(["intersectOutput","FeatureClass"],cleanupList)
+        arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
+        
+        # Add and populate the area field of the intersected polygons
+        intArea = utils.vector.addAreaField(intersectOutput,'intArea')
+        
+        # Calculate the population of the intersected areas by multiplying population density by intersected area
+        # Set up a calculation expression for the density calculation
+        calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
+        # Calculate the population density
+        inPopDensityField = utils.vector.addCalculateField(intersectOutput,'intPop',calcExpression)
+
+        '''Pseudocode notes
+        following Road Density example...
+        Make a copy of the input reporting unit feature class
+        Calculate the area of the input reporting units  
+        Repeat for each population feature class:        
+            Make a copy of the input population feature class
+            Calculate the area of the input population features
+            Calculate the density of the input population features   
+            Intersect the population features with the reporting unit features
+            Calculate the area of the intersected polygons.
+            Multiply the population density by the intersection area to get population for intersection polygons
+            Summarize by reporting unit ID, summing population
+            Calculate reporting unit density by dividing population by area.
+        Join 2nd population count & density to first table, calculate delta.
+        clean up
+        '''
 
 #        # Create new instance of metricCalc class to contain parameters
 #        pdmCalc = metricCalc(inReportingUnitFeature, reportingUnitIdField, censusFeature, populationField, outTable,
