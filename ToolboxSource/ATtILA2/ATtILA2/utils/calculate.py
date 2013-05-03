@@ -526,6 +526,7 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
                 arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
             except:
                 pass
+<<<<<<< HEAD
 def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m):
     try:
     #       Check to see if newTable has already been set up
@@ -582,3 +583,51 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m)
                 pass
     
     
+=======
+            
+def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,tempWorkspace,
+                        outTable,metricConst,index,cleanupList):
+    from ATtILA2 import utils
+    import os
+    # Create a copy of the census feature class that we can add new fields to for calculations.  This 
+    # is more appropriate than altering the user's input data.
+    tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature_" + index,"FeatureClass"],cleanupList)
+    inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
+                                                                         os.path.basename(tempCensusFeature))          
+    # Add and populate the area field (or just recalculate if it already exists
+    popArea = utils.vector.addAreaField(inCensusFeature,'popArea')
+    
+    # Set up a calculation expression for the density calculation
+    calcExpression = "!" + inPopField + "!/!" + popArea + "!"
+    # Calculate the population density
+    inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'popDens',calcExpression)
+    
+    # Intersect the reporting units with the population features.
+    intersectOutput = utils.files.nameIntermediateFile(["intersectOutput_" + index,"FeatureClass"],cleanupList)
+    arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
+    
+    # Add and populate the area field of the intersected polygons
+    intArea = utils.vector.addAreaField(intersectOutput,'intArea')
+    
+    # Calculate the population of the intersected areas by multiplying population density by intersected area
+    # Set up a calculation expression for the density calculation
+    calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
+    # Calculate the population density
+    intPopField = utils.vector.addCalculateField(intersectOutput,'intPop',calcExpression)
+    
+    # Intersect the reporting units with the population features.
+    summaryTable = utils.files.nameIntermediateFile(["summaryTable_" + index,"FeatureClass"],cleanupList)
+    # Sum population for each reporting unit.
+    arcpy.Statistics_analysis(intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField)
+
+    # Compile a list of fields that will be transferred from the intersected feature class into the output table
+    fromFields = ["SUM_" + intPopField]
+    toField = 'popCount' + index
+    # Transfer the values to the output table
+    utils.table.transferField(summaryTable,outTable,fromFields,[toField],reportingUnitIdField,None)
+    
+    # Set up a calculation expression for the final density calculation
+    calcExpression = "!" + toField + "!/!" + ruArea + "!"
+    # Calculate the population density
+    utils.vector.addCalculateField(outTable,metricConst.populationDensityFieldName,calcExpression)
+>>>>>>> e990d3b... Completed population density calculation.  Still need to clean up documentation and create unit test.
