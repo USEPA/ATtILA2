@@ -760,7 +760,7 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         setupAndRestore.standardRestore()
 
 
-def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outtable,
+def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
                                    popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
     from arcpy import env
@@ -789,39 +789,33 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data.
+        AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
                                                                              os.path.basename(tempReportingUnitFeature))
         # Add and populate the area field (or just recalculate if it already exists
         ruArea = utils.vector.addAreaField(inReportingUnitFeature,'ruArea')
         
-        # this section will be repeated, should probably be wrapped and made a function.
+        # Build the final output table.
+        AddMsg(timer.split() + " Creating output table")
+        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         
-        # Create a copy of the census feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data.
-        tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature","FeatureClass"],cleanupList)
-        inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,env.workspace,
-                                                                             os.path.basename(tempCensusFeature))          
-        # Add and populate the area field (or just recalculate if it already exists
-        popArea = utils.vector.addAreaField(inCensusFeature,'popArea')
-        
-        # Set up a calculation expression for the density calculation
-        calcExpression = "!" + inPopField + "!/!" + unitArea + "!"
-        # Calculate the population density
-        inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'pDens1',calcExpression)
-        
-        # Intersect the reporting units with the population features.
-        intersectOutput = utils.files.nameIntermediateFile(["intersectOutput","FeatureClass"],cleanupList)
-        arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
-        
-        # Add and populate the area field of the intersected polygons
-        intArea = utils.vector.addAreaField(intersectOutput,'intArea')
-        
-        # Calculate the population of the intersected areas by multiplying population density by intersected area
-        # Set up a calculation expression for the density calculation
-        calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
-        # Calculate the population density
-        inPopDensityField = utils.vector.addCalculateField(intersectOutput,'intPop',calcExpression)
+        AddMsg(timer.split() + " Calculating population density")
+        # Perform population density calculation for first (only?) population feature class
+        utils.calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
+                                      env.workspace,outTable,metricConst,"1",cleanupList)
+
+        if popChangeYN:
+            AddMsg(timer.split() + " Calculating population density for second feature class")
+            # Perform population density calculation for second population feature class
+            utils.calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature2,inPopField2,
+                                          env.workspace,outTable,metricConst,"2",cleanupList)
+            
+            AddMsg(timer.split() + " Calculating population change")
+            # Set up a calculation expression for population change
+            calcExpression = "(!" + 'popCount1' + "!-!" + 'popCount2' + "!)/!" + 'popCount1' + "!"
+            # Calculate the population density
+            utils.vector.addCalculateField(outTable,metricConst.populationChangeFieldName,calcExpression)       
 
         '''Pseudocode notes
         following Road Density example...
@@ -840,18 +834,15 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         clean up
         '''
 
-#        # Create new instance of metricCalc class to contain parameters
-#        pdmCalc = metricCalc(inReportingUnitFeature, reportingUnitIdField, censusFeature, populationField, outTable,
-#                populationChange="#", censusT2Feature="#", populationT2Field="#", optionalFieldGroups="#", metricConst)
-#
-#        # Run Calculation
-#        pdmCalc.run()
-
     except Exception, e:
         errors.standardErrorHandling(e)
 
     finally:
-        setupAndRestore.standardRestore()
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        env.workspace = _tempEnvironment1
         
 def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                    metricsToRun, maxSeparation, minPatchsize, SearchRadius, outTable,processingCellSize, snapRaster,
