@@ -16,7 +16,8 @@ outTable = r"c:\projects\default\default.gdb\\"+ 'TestOutput_MDCP_patch2'
 processingCellSize = '30' 
 snapRaster = inLandCoverGrid  # Set by default to the input LandCover Grid, may be changed.
 #optionalFieldGroups = "'QAFIELDS  -  Add Quality Assurance Fields';'AREAFIELDS  -  Add Area Fields for All Land Cover Classes'"
-optionalFieldGroups = ""
+optionalFieldGroups = "'INTERMEDIATES  -  Retain Intermediate Layers Generated During Metric Calculation'" 
+
 #inStreamFeatures = baseDir + 'nhd_msite.shp'
 # Parameters unique to LandCoverProportions
 refLandCoverOutput = baseDir + 'LandCoverReference.dbf' # Reference output data
