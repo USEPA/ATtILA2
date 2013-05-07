@@ -438,7 +438,7 @@ def tabulateMDCP(PatchLURaster, TempOutspace, ReportingUnitFeature, ReportingUni
     #Convert Final Patch Raster to points to get the cell centroids
     arcpy.RasterToPoint_conversion(PatchLURaster, rastoPt, "VALUE")
 
-#    env.workspace = TempOutspace
+    env.workspace = TempOutspace
     
     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
     arcpy.Dissolve_management(rastoPoly, polyDiss,"grid_code","#",
@@ -493,7 +493,7 @@ def tabulateMDCP(PatchLURaster, TempOutspace, ReportingUnitFeature, ReportingUni
                                          SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")   
         #Get total number of patches with neighbors and calculate the mean distance
         try:
-            rows = arcpy.SearchCursor("neartable")
+            rows = arcpy.SearchCursor(nearPatchTable)
             distlist = []
             for row in rows:
                 distance = row.getValue("NEAR_DIST")
@@ -505,7 +505,7 @@ def tabulateMDCP(PatchLURaster, TempOutspace, ReportingUnitFeature, ReportingUni
             pwonCount = totalnumPatches - pwnCount
         except:
             #if near table is empty the set values to default -999
-            rowcount = int(arcpy.GetCount_management("neartable").getOutput(0))
+            rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
             if rowcount == 0:
                 arcpy.AddWarning("No patches within search radius found for " + i)
                 pwnCount = -999
