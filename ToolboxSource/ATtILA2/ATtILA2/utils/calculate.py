@@ -526,7 +526,7 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
                 arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
             except:
                 pass
-<<<<<<< HEAD
+
 def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m):
     try:
     #       Check to see if newTable has already been set up
@@ -582,16 +582,49 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m)
             except:
                 pass
     
-    
-=======
             
 def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,tempWorkspace,
-                        outTable,metricConst,index,cleanupList):
+                  outTable,metricConst,cleanupList,index=""):
+    """ Performs a transfer of population from input census features to input reporting unit features using simple
+        areal weighting.  
+    
+    **Description:**
+
+        This function makes a temporary copy of the input census features, and using that temporary copy, adds and 
+        calculates a field containing the census unit area in square kilometers, and adds and populates a field containing 
+        the population density per square kilometer.  The temporary features and their attributes are then intersected
+        with the input reporting units.  The area of the intersected polygons is calculated, and then multiplied by
+        the population density value from the census data, giving a population count for the intersected polygons.
+        Finally, the population counts are summarized by reporting unit ID, giving a population count for each reporting
+        unit, and that population count is transferred to the output table, and an appropriate density value calculated.
+        
+    **Arguments:**
+
+        * *inReportingUnitFeature* - input Reporting Unit feature class with full path.
+        * *reportingUnitIdField* - the name of the field in the reporting unit feature class containing a unique identifier
+        * *ruArea* - the name of the field in the reporting unit feature class containing the unit area in square kilometers
+        * *inCensusFeature* - input population feature class with full path
+        * *inPopField* - the name of the field in the population feature class containing count values
+        * *tempWorkspace* - an Esri workspace (folder or file geodatabase) where intermediate values will be stored
+        * *outTable* -  the output table that will contain calculated population and density values
+        * *metricConst* - an ATtILA2 object containing constant values to match documentation
+        * *cleanupList* - object containing commands and parameters to perform at cleanup time.
+        * *index* - if this function is going to be run multiple times, this index is used to keep track of intermediate
+                    outputs and fieldnames.
+        
+    **Returns:**
+
+        * None
+        
+    """
     from ATtILA2 import utils
     import os
+    # If the user specified an index, add an underscore as prefix.
+    if index <> "":
+        index = "_" + index
     # Create a copy of the census feature class that we can add new fields to for calculations.  This 
     # is more appropriate than altering the user's input data.
-    tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature_" + index,"FeatureClass"],cleanupList)
+    tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature" + index,"FeatureClass"],cleanupList)
     inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
                                                                          os.path.basename(tempCensusFeature))          
     # Add and populate the area field (or just recalculate if it already exists
@@ -603,7 +636,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'popDens',calcExpression)
     
     # Intersect the reporting units with the population features.
-    intersectOutput = utils.files.nameIntermediateFile(["intersectOutput_" + index,"FeatureClass"],cleanupList)
+    intersectOutput = utils.files.nameIntermediateFile(["intersectOutput" + index,"FeatureClass"],cleanupList)
     arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
     
     # Add and populate the area field of the intersected polygons
@@ -616,7 +649,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     intPopField = utils.vector.addCalculateField(intersectOutput,'intPop',calcExpression)
     
     # Intersect the reporting units with the population features.
-    summaryTable = utils.files.nameIntermediateFile(["summaryTable_" + index,"FeatureClass"],cleanupList)
+    summaryTable = utils.files.nameIntermediateFile(["summaryTable" + index,'Dataset'],cleanupList)
     # Sum population for each reporting unit.
     arcpy.Statistics_analysis(intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField)
 
@@ -630,4 +663,4 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     calcExpression = "!" + toField + "!/!" + ruArea + "!"
     # Calculate the population density
     utils.vector.addCalculateField(outTable,metricConst.populationDensityFieldName,calcExpression)
->>>>>>> e990d3b... Completed population density calculation.  Still need to clean up documentation and create unit test.
+
