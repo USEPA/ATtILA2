@@ -801,39 +801,28 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         
         AddMsg(timer.split() + " Calculating population density")
+        # Create an index value to keep track of intermediate outputs and fieldnames.
+        index = ""
+        if popChangeYN:
+            index = "1"
         # Perform population density calculation for first (only?) population feature class
         utils.calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
-                                      env.workspace,outTable,metricConst,"1",cleanupList)
+                                      env.workspace,outTable,metricConst,cleanupList,index)
 
         if popChangeYN:
+            index = "2"
             AddMsg(timer.split() + " Calculating population density for second feature class")
             # Perform population density calculation for second population feature class
             utils.calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature2,inPopField2,
-                                          env.workspace,outTable,metricConst,"2",cleanupList)
+                                          env.workspace,outTable,metricConst,cleanupList,index)
             
             AddMsg(timer.split() + " Calculating population change")
             # Set up a calculation expression for population change
-            calcExpression = "(!" + 'popCount1' + "!-!" + 'popCount2' + "!)/!" + 'popCount1' + "!"
+            calcExpression = "(!" + 'popCount_1' + "!-!" + 'popCount_2' + "!)/!" + 'popCount_1' + "!"
             # Calculate the population density
             utils.vector.addCalculateField(outTable,metricConst.populationChangeFieldName,calcExpression)       
 
-        '''Pseudocode notes
-        following Road Density example...
-        Make a copy of the input reporting unit feature class
-        Calculate the area of the input reporting units  
-        Repeat for each population feature class:        
-            Make a copy of the input population feature class
-            Calculate the area of the input population features
-            Calculate the density of the input population features   
-            Intersect the population features with the reporting unit features
-            Calculate the area of the intersected polygons.
-            Multiply the population density by the intersection area to get population for intersection polygons
-            Summarize by reporting unit ID, summing population
-            Calculate reporting unit density by dividing population by area.
-        Join 2nd population count & density to first table, calculate delta.
-        clean up
-        '''
-
+        AddMsg(timer.split() + " Calculation complete")
     except Exception, e:
         errors.standardErrorHandling(e)
 

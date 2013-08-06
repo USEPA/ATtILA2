@@ -51,3 +51,10 @@ streamsByRoads = True
 roadsNearStreams = True
 bufferDistance = "50 meters"
 rdoptionalFieldGroups = "'INTERMEDIATES  -  Retain Intermediate Layers Generated During Metric Calculation'" # "#" #
+
+# Parameters unique to Population Density Calculation
+inCensusFeature = baseDir + "blkgrp2000.shp"
+inPopField = "MALES"
+popChangeYN = True
+inCensusFeature2 = baseDir + "blkgrp2000.shp"
+inPopField2 = "FEMALES"
