@@ -20,7 +20,7 @@ def main(inputLayer):
         #Find groups of polygons that don't overlap
         nonoverlapGroupDict = findNonOverlapGroups(overlapDict)
 
-        #If overlaps exists creat new layers with no overlaps(creates new intermediate layer)
+        #If overlaps exists create new layers with no overlaps(creates new intermediate layer)
         createNoOverlapLayers(overlapList, nonoverlapGroupDict, OID)
     else:
         arcpy.AddMessage("No Overlaps Found")
@@ -111,29 +111,29 @@ def createNoOverlapLayers(overlapList, nonoverlapGroupDict, OID):
         
  
 def findNonOverlapGroups(overlapDict):
-    group = 1
-    nonoverlapGroupDict = {}
-    while len(overlapDict) <> 0:
-        alist = []
-        #get the first OID in the overlap Dictionary
-        k = overlapDict.keys()[0]
-        # loop through the dictionary to check which polygons the first oid overlaps
-        for z in overlapDict.keys():
-            #if OID is not in the overlapDict value for a key then add that key to a list - this means these oids don't overlap the first OID
-            if k not in overlapDict[z]:
-                alist.append(z)
-        #for each of the OID in alist         
-        for a in alist:
-            #Loop through the overlapDict
-            for k in overlapDict.keys():
-                #if the OID is in alist
-                if k in alist:
-                    #then loop through alist
-                    for a in alist:
-                        #Check to see if any of the OIDs overlap any of the others in the list
-                        #if it does then remove it from alist
-                        if a in overlapDict[k]:
-                            alist.remove(a)
+        group = 1
+        nonoverlapGroupDict = {}
+        while len(overlapDict) <> 0:
+            alist = []
+            #get the first OID in the overlap Dictionary
+            k = overlapDict.keys()[0]
+            # loop through the dictionary to check which polygons the first oid overlaps
+            for z in overlapDict.keys():
+                #if OID is not in the overlapDict value for a key then add that key to a list - this means these oids don't overlap the first OID
+                if k not in overlapDict[z]:
+                    alist.append(z)
+            #for each of the OID in alist         
+            for a in alist:
+                #Loop through the overlapDict
+                for k in overlapDict.keys():
+                    #if the OID is in alist
+                    if k in alist:
+                        #then loop through alist
+                        for a in alist:
+                            #Check to see if any of the OIDs overlap any of the others in the list
+                            #if it does then remove it from alist
+                            if a in overlapDict[k]:
+                                alist.remove(a)
 
 
         #Create a new dictionary that groups non overlapping polygons
@@ -149,24 +149,14 @@ def findNonOverlapGroups(overlapDict):
 
 def findOverlaps(polyFc):
     """ Get the OID values for polygon features that have areas of overlap with other polygons in the same theme.
-
         **Description:**
-        
         Identify polygons that have overlapping areas with other polygons in the same theme and generate a set of their 
         OID field value. Nested polygons (i.e., polygons contained within the boundaries of another polygon) are also
         selected with this routine. 
-        
-        
         **Arguments:**
-        
         * *polyFc* - Polygon Feature Class
-        
-        
         **Returns:** 
-        
         * set - A set of OID field values
-
-        
     """ 
     
     overlapSet = set()

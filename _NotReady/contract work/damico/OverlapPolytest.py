@@ -1,6 +1,7 @@
 import arcpy, sys
 from arcpy import env
-inputLayer = sys.argv[1]
+##inputLayer = sys.argv[1]
+inputLayer = r"C:\Projects\M_Mehaffey\Attila2\originals\TestData\Overlaps.gdb\overlaps\FullOverlap"
 arcpy.env.overwriteOutput = True
 ##inputLayer = r"C:\Projects\M_Mehaffey\Attila2\originals\TestData\Overlaps.gdb\overlaps\AL_IsoWetl100mBuffer_subset"
 overlaplist = []

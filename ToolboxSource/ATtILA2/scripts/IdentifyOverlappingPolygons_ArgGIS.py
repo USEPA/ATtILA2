@@ -11,10 +11,21 @@ overlaplist = []
 flist = []
 nonoverlapGroupDict = {}
 
+def checkOutputType(outputLoc):
+    odsc = arcpy.Describe(outputLoc)
+    # if output location is a folder then create a shapefile otherwise it will be a feature layer
+    if odsc.DataType == "Folder":
+        ext = ".shp"
+    else:
+        ext = ""
+    return ext
+
 def main(_argv):
     #Script arguments
-    inputArguments = parameters.getParametersAsText([0])
-    result, OID, overlapDict = polygons.findOverlaps(*inputArguments)
+    inputLayer = parameters.getParametersAsText([0])
+    outputLoc = parameters.getParametersAsText([1])
+    createOutput = parameters.getParametersAsText([2])
+    result, OID, overlapDict = polygons.findOverlaps(inputLayer)
     overlapList = result
     #If there are overlaps the find unique groups of nonoverlapping polygons
     if result:
@@ -22,18 +33,12 @@ def main(_argv):
         #Find groups of polygons that don't overlap
         nonoverlapGroupDict = polygons.findNonOverlapGroups(overlapDict)
 
-        #If overlaps exists creat new layers with no overlaps(creates new intermediate layer)
-        polygons.createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, *inputArguments)
+        #If overlaps exists create new layers with no overlaps(creates new intermediate layer)
+        ext = checkOutputType(outputLoc)
+        polygons.createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, outputLoc, ext)
     else:
         arcpy.AddMessage("No overlaps Found")
 
-    ##    #For each layer in flist add them to ArcMap
-    ##    # Add the feature layer to ArcMap - keep in mind this is just a temporary layer.  It is actually a subset of the input layer
-    ##    for f in flist:
-    ##        mxd = arcpy.mapping.MapDocument("Current")
-    ##        df = arcpy.mapping.ListDataFrames(mxd, "Layers") [0]
-    ##        addlayer = arcpy.mapping.Layer(f)
-    ##        arcpy.mapping.AddLayer(df, addlayer, "BOTTOM")
    
 if __name__ == "__main__":
     main(sys.argv)
