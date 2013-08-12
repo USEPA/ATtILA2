@@ -5,11 +5,17 @@
 
 import sys
 import arcpy
+arcpy.env.overwriteOutput = "True"
 from pylet.arcpyutil import parameters
 from pylet.arcpyutil import polygons
 overlaplist = []
 flist = []
 nonoverlapGroupDict = {}
+inputArguments = parameters.getParametersAsText([0])
+arcpy.AddMessage(inputArguments)
+inputLayer = inputArguments[0]
+outputLoc = inputArguments[1]
+checkOnly = inputArguments[2]
 
 def checkOutputType(outputLoc):
     odsc = arcpy.Describe(outputLoc)
@@ -22,9 +28,7 @@ def checkOutputType(outputLoc):
 
 def main(_argv):
     #Script arguments
-    inputLayer = parameters.getParametersAsText([0])
-    outputLoc = parameters.getParametersAsText([1])
-    createOutput = parameters.getParametersAsText([2])
+
     result, OID, overlapDict = polygons.findOverlaps(inputLayer)
     overlapList = result
     #If there are overlaps the find unique groups of nonoverlapping polygons
@@ -32,10 +36,24 @@ def main(_argv):
         arcpy.AddWarning("Warning your layer includes overlapping polygons! Calculating split")
         #Find groups of polygons that don't overlap
         nonoverlapGroupDict = polygons.findNonOverlapGroups(overlapDict)
+        
+        #if createOutput box is check only box is checked report numbr of layers need to create otherwise move
+        #onto create the datalayers
+        #Check to see if there are only any non overlapping polygons
+        strlist = []
+        for r in result:
+            strlist.append(str(r))
+        values = ",".join(strlist)
+        arcpy.MakeFeatureLayer_management(inputLayer, "No Polygons Overlap",OID + " NOT IN (" + values + ")")
+        totallyrs = str(len(nonoverlapGroupDict.keys()))
+        arcpy.AddMessage(totallyrs + " layers will be required to be create to ensure no overlapping")
+        if checkOnly == "false":
+#        if not checkOnly:
+            #If overlaps exists create new layers with no overlaps(creates new intermediate layer)
+            ext = checkOutputType(outputLoc)
+            arcpy.AddMessage("Creating non overlapping layers")
+            polygons.createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, outputLoc, ext)
 
-        #If overlaps exists create new layers with no overlaps(creates new intermediate layer)
-        ext = checkOutputType(outputLoc)
-        polygons.createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, outputLoc, ext)
     else:
         arcpy.AddMessage("No overlaps Found")
 
