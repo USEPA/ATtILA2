@@ -136,12 +136,12 @@
 			<coefficient id="PHOSPHORUS" value="" />
 			<coefficient id="IMPERVIOUS" value="" />
 		</value>		
-		<value id="22" name="Palustrine Aquatic Bed" >
+		<value id="22" name="Palustrine Aquatic Bed" excluded="true" >
 			<coefficient id="NITROGEN" value="" />
 			<coefficient id="PHOSPHORUS" value="" />
 			<coefficient id="IMPERVIOUS" value="" />
 		</value>
-		<value id="23" name="Estuarine Aquatic Bed" >
+		<value id="23" name="Estuarine Aquatic Bed" excluded="true" >
 			<coefficient id="NITROGEN" value="" />
 			<coefficient id="PHOSPHORUS" value="" />
 			<coefficient id="IMPERVIOUS" value="" />
@@ -225,14 +225,6 @@
 			<class id="tndr" name="Tundra">
 				<value id="24"/>
 			</class>					
-		</class>		
-		<class id="watt" name="Water" lcpField="WINDEX">
-			<class id="aqbp" name="Water">
-				<value id="22"/>
-			</class>				
-			<class id="aqbe" name="Water">
-				<value id="23"/>
-			</class>												
 		</class>					
 	</classes>
 
