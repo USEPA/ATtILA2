@@ -6,7 +6,7 @@ from ATtILA2.constants import globalConstants
 import arcpy
 
 
-def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum):
+def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum, excludedValues):
     """ Calculates the percentage of the reporting unit effective area occupied by the metric class codes and their 
     total area
     
@@ -26,6 +26,9 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
         
         * *effectiveAreaSum* - sum of the area of all grid cells in the reporting unit with codes not tagged as excluded 
                                 in the lcc file
+                                
+        * *excludedValues* - a set of grid values tagged in the xml lcc file to be excluded from the total area calculations
+                            (e.g. water areas when the user is concerned with land area calculations)
         
     **Returns:**
 
@@ -36,7 +39,8 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
     
     metricAreaSum = 0                         
     for aValueID in metricGridCodesList:
-        metricAreaSum += tabAreaDict.get(aValueID, 0) #add 0 if the lcc defined value is not found in the grid
+        if aValueID not in excludedValues:
+            metricAreaSum += tabAreaDict.get(aValueID, 0) #add 0 if the lcc defined value is not found in the grid
     
     if effectiveAreaSum > 0:
         metricPercentArea = (metricAreaSum / effectiveAreaSum) * 100
@@ -82,6 +86,9 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
         outTableRows = arcpy.InsertCursor(newTable)        
         
         for tabAreaTableRow in tabAreaTable:
+            tabAreaDict = tabAreaTableRow.tabAreaDict
+            effectiveArea = tabAreaTableRow.effectiveArea
+            excludedValues = tabAreaTableRow._excludedValues
             
             # initiate a row to add to the metric output table
             outTableRow = outTableRows.newRow()
@@ -94,8 +101,8 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                 # get the grid codes for this specified metric
                 metricGridCodesList = lccClassesDict[mBaseName].uniqueValueIds
                 # get the class percentage area and it's actual area from the tabulate area table
-                metricPercentageAndArea = getMetricPercentAreaAndSum(metricGridCodesList, tabAreaTableRow.tabAreaDict, 
-                                                                     tabAreaTableRow.effectiveArea)
+                metricPercentageAndArea = getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveArea, excludedValues)
+                
                 # add the calculation to the output row
                 outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPercentageAndArea[0])
                 
@@ -163,16 +170,17 @@ def getCoefficientPerUnitArea(tabAreaDict, lccValuesDict, coeffId, conversionFac
         valueHectares = valueSqMeters/10000.0
         totalHectaresInPolygon += valueHectares
         
-        # check to see if the grid value is defined in the LCC file. Undefined values are not added to the dividend
+        # check to see if the grid value is defined in the LCC file. Undefined values are not added to the dividend. 
+        # i.e., they will be treated as if they had a coefficient value of 0
         if aVal in lccValuesDict:
             valCoefficient = lccValuesDict[aVal].getCoefficientValueById(coeffId)
             weightedValue = valueHectares * valCoefficient
             coefficientTotalInPolygon += weightedValue
         
-        if coefficientTotalInPolygon > 0:    
-            coefficientCalculation = coefficientTotalInPolygon / totalHectaresInPolygon
-        else:
-            coefficientCalculation = 0
+    if coefficientTotalInPolygon > 0:    
+        coefficientCalculation = coefficientTotalInPolygon / totalHectaresInPolygon
+    else:
+        coefficientCalculation = 0
     
     return coefficientCalculation
 
@@ -203,19 +211,20 @@ def getCoefficientPercentage(tabAreaDict, lccValuesDict, coeffId):
     totalAreaInPolygon = 0
                         
     for aVal in tabAreaDict:
-        valueAreaFromOutput = tabAreaDict[aVal]
-        totalAreaInPolygon =+ valueAreaFromOutput
+        valueArea = tabAreaDict[aVal]
+        totalAreaInPolygon += valueArea
         
-        # check to see if the grid value is defined in the LCC file. Undefined values are not added to the dividend
+        # check to see if the grid value is defined in the LCC file. Undefined values are not added to the dividend. 
+        # i.e., they will be treated as if they had a coefficient value of 0
         if aVal in lccValuesDict:
             valCoefficient = lccValuesDict[aVal].getCoefficientValueById(coeffId)
-            weightedValue = valueAreaFromOutput * valCoefficient
+            weightedValue = valueArea * valCoefficient
             coefficientTotalInPolygon += weightedValue
             
-        if coefficientTotalInPolygon > 0:
-            coefficientCalculation = (coefficientTotalInPolygon / totalAreaInPolygon) * 100
-        else:
-            coefficientCalculation = 0
+    if coefficientTotalInPolygon > 0:
+        coefficientCalculation = (coefficientTotalInPolygon / totalAreaInPolygon) * 100    
+    else:
+        coefficientCalculation = 0
   
     return coefficientCalculation
 
