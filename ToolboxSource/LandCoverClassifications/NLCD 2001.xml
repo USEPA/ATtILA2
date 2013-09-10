@@ -1,181 +1,174 @@
-
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-	<metadata>
-		<name>NLCD 2001</name>
-		<description>National Land Cover Database 2001</description>
-	</metadata>
-	
-	<!-- 
+    <metadata>
+        <name>NLCD 2001</name>
+        <description>National Land Cover Database 2001</description>
+    </metadata>
+    <!-- 
 		* The "Coefficients" node contains coefficients to be assigned to values.
 		* 
 		* id - text, unique identifier
 		* name - text, name describing coefficient
 		* fieldName - text, name of field to be created for output
 	-->
-	<coefficients>
-		<coefficient id="NITROGEN" name="Estimated Nitrogen Loading Based on Land Cover" fieldName="N_Load"/>
-		<coefficient id="PHOSPHORUS" name="Estimated Phosphorus Loading Based on Land Cover" fieldName="P_Load"/>
-		<coefficient id="IMPERVIOUS" name="Percent Cover Total Impervious Area" fieldName="PCTIA"/>
-	</coefficients>
-	
-	
-	
-	<!--  
+    <coefficients>
+        <coefficient id="NITROGEN" name="Estimated Nitrogen Loading Based on Land Cover" fieldName="N_Load" />
+        <coefficient id="PHOSPHORUS" name="Estimated Phosphorus Loading Based on Land Cover" fieldName="P_Load" />
+        <coefficient id="IMPERVIOUS" name="Percent Cover Total Impervious Area" fieldName="PCTIA" />
+    </coefficients>
+    <!--  
 		* The "values" node defines the full set of values that can exist in a landcover raster
 		* The "excluded" attribute is used to exclude values from the total, excluded=false is the default
 		* Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here. 
 	-->
-	<values>
-		<value id="11" name="Open Water" excluded="true">
-			<coefficient id="NITROGEN" value="" />
-			<coefficient id="PHOSPHORUS" value="" />
-			<coefficient id="IMPERVIOUS" value="" />
-		</value>
-		<value id="12" name="Perennial Ice/ Snow" excluded="true" >
-			<coefficient id="NITROGEN" value="" />
-			<coefficient id="PHOSPHORUS" value="" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="21" name="Developed, Open Space" >
-			<coefficient id="NITROGEN" value="9.25" />
-			<coefficient id="PHOSPHORUS" value="1.385" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="22" name="Developed, Low Intensity" >
-			<coefficient id="NITROGEN" value="9.25" />
-			<coefficient id="PHOSPHORUS" value="1.385" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="23" name="Developed, Medium Intensity" >
-			<coefficient id="NITROGEN" value="9.25" />
-			<coefficient id="PHOSPHORUS" value="1.385" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="24" name="Developed, High Intensity" >
-			<coefficient id="NITROGEN" value="9.25" />
-			<coefficient id="PHOSPHORUS" value="1.385" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="31" name="Barren Land (Rock/Sand/Clay)" >
-			<coefficient id="NITROGEN" value="" />
-			<coefficient id="PHOSPHORUS" value="" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="32" name="Unconsolidated Shore" >
-			<coefficient id="NITROGEN" value="" />
-			<coefficient id="PHOSPHORUS" value="" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="41" name="Deciduous Forest" >
-			<coefficient id="NITROGEN" value="2.447" />
-			<coefficient id="PHOSPHORUS" value="0.089" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="42" name="Evergreen Forest" >
-			<coefficient id="NITROGEN" value="2.447" />
-			<coefficient id="PHOSPHORUS" value="0.089" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="43" name="Mixed Forest" >
-			<coefficient id="NITROGEN" value="2.447" />
-			<coefficient id="PHOSPHORUS" value="0.089" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="51" name="Dwarf Scrub" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="52" name="Shrub/Scrub" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="71" name="Grassland/Herbaceous" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="72" name="Sedge/Herbaceous" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="73" name="Lichens" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="74" name="Moss" >		
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="81" name="Pasture/Hay" >
-			<coefficient id="NITROGEN" value="11.926" />
-			<coefficient id="PHOSPHORUS" value="0.68" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="82" name="Cultivated Crops" >
-			<coefficient id="NITROGEN" value="11.926" />
-			<coefficient id="PHOSPHORUS" value="0.68" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="90" name="Woody Wetlands" >
-			<coefficient id="NITROGEN" value="2.447" />
-			<coefficient id="PHOSPHORUS" value="0.089" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="91" name="Palustrine Forested Wetland" >
-			<coefficient id="NITROGEN" value="2.447" />
-			<coefficient id="PHOSPHORUS" value="0.089" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="92" name="Palustrine Scrub, Shrub Wetland" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="93" name="Estuarine Forested Wetlands" >
-			<coefficient id="NITROGEN" value="2.447" />
-			<coefficient id="PHOSPHORUS" value="0.089" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="94" name="Estuarine Scrub, Shrub Wetland" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="95" name="Emergent Herbaceous Wetlands" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="96" name="Palustrine Emergent Wetland (Persistent)" >
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="97" name="Palustrine Emergent Wetland" >	
-			<coefficient id="NITROGEN" value="0.564" />
-			<coefficient id="PHOSPHORUS" value="0.059" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>	
-		<value id="98" name="Palustrine Aquatic Bed" >
-			<coefficient id="NITROGEN" value="" />
-			<coefficient id="PHOSPHORUS" value="" />
-			<coefficient id="IMPERVIOUS" value="" />		
-		</value>
-		<value id="99" name="Estuarine Aquatic Bed" >
-			<coefficient id="NITROGEN" value="" />
-			<coefficient id="PHOSPHORUS" value="" />
-			<coefficient id="IMPERVIOUS" value="" />
-		</value>
-	</values>
-	
-	
-	
-	<!-- 
+    <values>
+        <value id="11" name="Open Water" excluded="true">
+            <coefficient id="NITROGEN" value="" />
+            <coefficient id="PHOSPHORUS" value="" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="12" name="Perennial Ice/ Snow" excluded="true">
+            <coefficient id="NITROGEN" value="" />
+            <coefficient id="PHOSPHORUS" value="" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="21" name="Developed, Open Space">
+            <coefficient id="NITROGEN" value="9.25" />
+            <coefficient id="PHOSPHORUS" value="1.385" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="22" name="Developed, Low Intensity">
+            <coefficient id="NITROGEN" value="9.25" />
+            <coefficient id="PHOSPHORUS" value="1.385" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="23" name="Developed, Medium Intensity">
+            <coefficient id="NITROGEN" value="9.25" />
+            <coefficient id="PHOSPHORUS" value="1.385" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="24" name="Developed, High Intensity">
+            <coefficient id="NITROGEN" value="9.25" />
+            <coefficient id="PHOSPHORUS" value="1.385" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="31" name="Barren Land (Rock/Sand/Clay)">
+            <coefficient id="NITROGEN" value="" />
+            <coefficient id="PHOSPHORUS" value="" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="32" name="Unconsolidated Shore">
+            <coefficient id="NITROGEN" value="" />
+            <coefficient id="PHOSPHORUS" value="" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="41" name="Deciduous Forest">
+            <coefficient id="NITROGEN" value="2.447" />
+            <coefficient id="PHOSPHORUS" value="0.089" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="42" name="Evergreen Forest">
+            <coefficient id="NITROGEN" value="2.447" />
+            <coefficient id="PHOSPHORUS" value="0.089" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="43" name="Mixed Forest">
+            <coefficient id="NITROGEN" value="2.447" />
+            <coefficient id="PHOSPHORUS" value="0.089" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="51" name="Dwarf Scrub">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="52" name="Shrub/Scrub">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="71" name="Grassland/Herbaceous">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="72" name="Sedge/Herbaceous">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="73" name="Lichens">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="74" name="Moss">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="81" name="Pasture/Hay">
+            <coefficient id="NITROGEN" value="11.926" />
+            <coefficient id="PHOSPHORUS" value="0.68" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="82" name="Cultivated Crops">
+            <coefficient id="NITROGEN" value="11.926" />
+            <coefficient id="PHOSPHORUS" value="0.68" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="90" name="Woody Wetlands">
+            <coefficient id="NITROGEN" value="2.447" />
+            <coefficient id="PHOSPHORUS" value="0.089" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="91" name="Palustrine Forested Wetland">
+            <coefficient id="NITROGEN" value="2.447" />
+            <coefficient id="PHOSPHORUS" value="0.089" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="92" name="Palustrine Scrub, Shrub Wetland">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="93" name="Estuarine Forested Wetlands">
+            <coefficient id="NITROGEN" value="2.447" />
+            <coefficient id="PHOSPHORUS" value="0.089" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="94" name="Estuarine Scrub, Shrub Wetland">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="95" name="Emergent Herbaceous Wetlands">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="96" name="Palustrine Emergent Wetland (Persistent)">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="97" name="Palustrine Emergent Wetland">
+            <coefficient id="NITROGEN" value="0.564" />
+            <coefficient id="PHOSPHORUS" value="0.059" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="98" name="Palustrine Aquatic Bed">
+            <coefficient id="NITROGEN" value="" />
+            <coefficient id="PHOSPHORUS" value="" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+        <value id="99" name="Estuarine Aquatic Bed">
+            <coefficient id="NITROGEN" value="" />
+            <coefficient id="PHOSPHORUS" value="" />
+            <coefficient id="IMPERVIOUS" value="" />
+        </value>
+    </values>
+    <!-- 
 		* The "classes" node contains values grouped into classes.
 		* A class can contain either values or classes but not both types
 		* Values contain only an id which refers to a value in values node.
@@ -185,74 +178,71 @@
 			- onSlopeVisible: Make available in "On Slope" metric category, default is false
 			- lcpField:  if present, it overides default "Land Cover Proportions" field name with the supplied value	
 	-->
-	<classes>
-		<class id="nat" name="All natural land use" lcpField="NINDEX" filter="lcosp">
-			<class  id="for" name="Forest" filter="lcosp">
-				<value id="41"/>
-				<value id="42"/>
-				<value id="43"/>
-			</class>
-			<class id="wtlt" name="All Wetlands" filter="lcosp">
-				<class id="wtlw" name="Woody Wetland" filter="lcosp">			
-					<value id="90"/>
-					<value id="91"/>
-					<value id="92"/>
-					<value id="93"/>
-					<value id="94"/>
-				</class>
-				<class id="wtle" name="Emergent Herbaceous Wetland" filter="lcosp">				
-					<value id="95"/>
-					<value id="96"/>
-					<value id="97"/>
-					<value id="98"/>
-					<value id="99"/>
-				</class>		
-			</class>
-			<class id="shrb" name="Shrubland" filter="lcosp">
-				<value id="51"/>
-				<value id="52"/>
-			</class>
-			<class id="hrbt" name="All Herbaceous" filter="lcosp">				
-				<class id="hrbg" name="Grassland, Herbaceous" filter="lcosp">
-					<value id="71"/>
-				</class>
-				<class id="hrbo" name="Herbaceous Other" filter="lcosp">			
-					<value id="72"/>
-					<value id="73"/>
-					<value id="74"/>
-				</class>
-			</class>			
-			<class id="bart" name="Barren" filter="lcosp">
-				<value id="31"/>
-				<value id="32"/>		
-			</class>		
-		</class>
-		
-		<class id="unat" name="All human land use" lcpField="UINDEX" filter="lcosp">
-			<class id="devt" name="All Developed" filter="lcosp">
-				<class id="devo" name="Developed, Open Space" filter="lcosp">
-					<value id="21"/>
-				</class>		
-				<class id="devl" name="Developed, Low Intensity" filter="lcosp">
-					<value id="22"/>
-				</class>
-				<class id="devm" name="Developed, Medium Intensity" filter="lcosp">
-					<value id="23"/>
-				</class>
-				<class id="devh" name="Developed, High Intensity" filter="lcosp">
-					<value id="24"/>
-				</class>							
-			</class>
-			<class id="agt" name="All Agriculture" >
-				<class id="agp" name="Pasture" >
-					<value id="81"/>
-				</class>
-				
-				<class id="agc" name="Cultivated Crops" >
-					<value id="82"/>
-				</class>
-				
-			</class>
-		</class>
-	</classes>
+    <classes>
+        <class id="nat" name="All natural land use" lcpField="NINDEX" filter="lcosp">
+            <class id="for" name="Forest" filter="lcosp">
+                <value id="41" />
+                <value id="42" />
+                <value id="43" />
+            </class>
+            <class id="wtlt" name="All Wetlands" filter="lcosp">
+                <class id="wtlw" name="Woody Wetland" filter="lcosp">
+                    <value id="90" />
+                    <value id="91" />
+                    <value id="92" />
+                    <value id="93" />
+                    <value id="94" />
+                </class>
+                <class id="wtle" name="Emergent Herbaceous Wetland" filter="lcosp">
+                    <value id="95" />
+                    <value id="96" />
+                    <value id="97" />
+                    <value id="98" />
+                    <value id="99" />
+                </class>
+            </class>
+            <class id="shrb" name="Shrubland" filter="lcosp">
+                <value id="51" />
+                <value id="52" />
+            </class>
+            <class id="hrbt" name="All Herbaceous" filter="lcosp">
+                <class id="hrbg" name="Grassland, Herbaceous" filter="lcosp">
+                    <value id="71" />
+                </class>
+                <class id="hrbo" name="Herbaceous Other" filter="lcosp">
+                    <value id="72" />
+                    <value id="73" />
+                    <value id="74" />
+                </class>
+            </class>
+            <class id="bart" name="Barren" filter="lcosp">
+                <value id="31" />
+                <value id="32" />
+            </class>
+        </class>
+        <class id="unat" name="All human land use" lcpField="UINDEX" filter="lcosp">
+            <class id="devt" name="All Developed" filter="lcosp">
+                <class id="devo" name="Developed, Open Space" filter="lcosp">
+                    <value id="21" />
+                </class>
+                <class id="devl" name="Developed, Low Intensity" filter="lcosp">
+                    <value id="22" />
+                </class>
+                <class id="devm" name="Developed, Medium Intensity" filter="lcosp">
+                    <value id="23" />
+                </class>
+                <class id="devh" name="Developed, High Intensity" filter="lcosp">
+                    <value id="24" />
+                </class>
+            </class>
+            <class id="agt" name="All Agriculture">
+                <class id="agp" name="Pasture">
+                    <value id="81" />
+                </class>
+                <class id="agc" name="Cultivated Crops">
+                    <value id="82" />
+                </class>
+            </class>
+        </class>
+    </classes>
 </root>
