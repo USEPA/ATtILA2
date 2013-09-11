@@ -270,9 +270,10 @@
 		* The id attribute is used for the root of the field name in the output(for example %forest would be P + for = Pfor)
 		* Two classes with the same id are not allowed.
 		* Special class attributes:
-			- onSlopeVisible: Make available in "On Slope" metric category, default is false
-			- lcpField:  if present, it overides default "Land Cover Proportions" field name with the supplied value
-			
+			- filter: a string of tool shortnames separated by a ";". If a shortname is provided, that class
+			          will not appear in the "Report metrics for these classes" section of that particular tool's gui dialog. Possible shortnames are: lcp, rlcp, lcosp, splcp, and caeam
+			- xxxxField:  if present, it overides the default output field name with the supplied string value. "xxxx" refers
+                          to a tool's shortname. Example, if lcpField="NINDEX" for the "nat" class, the default output, "pNat" will be overridden with "NINDEX"
 	-->
     <classes>
         <class id="ui" name="Unnatural surfaces" lcpField="UINDEX">

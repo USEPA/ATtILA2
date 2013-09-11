@@ -175,25 +175,27 @@
 		* The id attribute is used for the root of the field name in the output(for example %forest would be P + for = Pfor)
 		* Two classes with the same id are not allowed.
 		* Special class attributes:
-			- onSlopeVisible: Make available in "On Slope" metric category, default is false
-			- lcpField:  if present, it overides default "Land Cover Proportions" field name with the supplied value	
+			- filter: a string of tool shortnames separated by a ";". If a shortname is provided, that class
+			          will not appear in the "Report metrics for these classes" section of that particular tool's gui dialog. Possible shortnames are: lcp, rlcp, lcosp, splcp, and caeam
+			- xxxxField:  if present, it overides the default output field name with the supplied string value. "xxxx" refers
+                          to a tool's shortname. Example, if lcpField="NINDEX" for the "nat" class, the default output, "pNat" will be overridden with "NINDEX"
 	-->
     <classes>
-        <class id="nat" name="All natural land use" lcpField="NINDEX" filter="lcosp">
-            <class id="for" name="Forest" filter="lcosp">
+        <class id="nat" name="All natural land use" lcpField="NINDEX" filter="">
+            <class id="for" name="Forest" filter="">
                 <value id="41" />
                 <value id="42" />
                 <value id="43" />
             </class>
-            <class id="wtlt" name="All Wetlands" filter="lcosp">
-                <class id="wtlw" name="Woody Wetland" filter="lcosp">
+            <class id="wtlt" name="All Wetlands" filter="">
+                <class id="wtlw" name="Woody Wetland" filter="">
                     <value id="90" />
                     <value id="91" />
                     <value id="92" />
                     <value id="93" />
                     <value id="94" />
                 </class>
-                <class id="wtle" name="Emergent Herbaceous Wetland" filter="lcosp">
+                <class id="wtle" name="Emergent Herbaceous Wetland" filter="">
                     <value id="95" />
                     <value id="96" />
                     <value id="97" />
@@ -201,37 +203,37 @@
                     <value id="99" />
                 </class>
             </class>
-            <class id="shrb" name="Shrubland" filter="lcosp">
+            <class id="shrb" name="Shrubland" filter="">
                 <value id="51" />
                 <value id="52" />
             </class>
-            <class id="hrbt" name="All Herbaceous" filter="lcosp">
-                <class id="hrbg" name="Grassland, Herbaceous" filter="lcosp">
+            <class id="hrbt" name="All Herbaceous" filter="">
+                <class id="hrbg" name="Grassland, Herbaceous" filter="">
                     <value id="71" />
                 </class>
-                <class id="hrbo" name="Herbaceous Other" filter="lcosp">
+                <class id="hrbo" name="Herbaceous Other" filter="">
                     <value id="72" />
                     <value id="73" />
                     <value id="74" />
                 </class>
             </class>
-            <class id="bart" name="Barren" filter="lcosp">
+            <class id="bart" name="Barren" filter="">
                 <value id="31" />
                 <value id="32" />
             </class>
         </class>
-        <class id="unat" name="All human land use" lcpField="UINDEX" filter="lcosp">
-            <class id="devt" name="All Developed" filter="lcosp">
-                <class id="devo" name="Developed, Open Space" filter="lcosp">
+        <class id="unat" name="All human land use" lcpField="UINDEX" filter="">
+            <class id="devt" name="All Developed" filter="">
+                <class id="devo" name="Developed, Open Space" filter="">
                     <value id="21" />
                 </class>
-                <class id="devl" name="Developed, Low Intensity" filter="lcosp">
+                <class id="devl" name="Developed, Low Intensity" filter="">
                     <value id="22" />
                 </class>
-                <class id="devm" name="Developed, Medium Intensity" filter="lcosp">
+                <class id="devm" name="Developed, Medium Intensity" filter="">
                     <value id="23" />
                 </class>
-                <class id="devh" name="Developed, High Intensity" filter="lcosp">
+                <class id="devh" name="Developed, High Intensity" filter="">
                     <value id="24" />
                 </class>
             </class>
