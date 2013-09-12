@@ -818,9 +818,18 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             
             AddMsg(timer.split() + " Calculating population change")
             # Set up a calculation expression for population change
-            calcExpression = "(!" + 'popCount_1' + "!-!" + 'popCount_2' + "!)/!" + 'popCount_1' + "!"
+            calcExpression = "getPopChange(!popCount_1!,!popCount_2!)"
+            codeBlock = """def getPopChange(pop1,pop2):
+    if pop1 == 0:
+        if pop2 == 0:
+            return 0
+        else:
+            return 1
+    else:
+        return (pop2-pop1)/pop1"""
+            
             # Calculate the population density
-            utils.vector.addCalculateField(outTable,metricConst.populationChangeFieldName,calcExpression)       
+            utils.vector.addCalculateField(outTable,metricConst.populationChangeFieldName,calcExpression,codeBlock)       
 
         AddMsg(timer.split() + " Calculation complete")
     except Exception, e:
