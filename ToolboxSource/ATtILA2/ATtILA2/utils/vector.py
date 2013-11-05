@@ -240,7 +240,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         except:
             pass 
 
-def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
+def splitDissolveMerge_old(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     '''This function performs a split, dissolve, and merge function on a set of line features.
     **Description:**
         This function iterates through a set of areal units, clipping line features to each unit, then dissolving those
@@ -276,6 +276,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     # Create a Search cursor to iterate through the reporting units.
     Rows = arcpy.SearchCursor(repUnits,"","",uIDField.name)
     AddMsg("Clipping and dissolving linear features in each reporting unit...")
+    
     # For each reporting unit:
     for row in Rows:            
         
@@ -287,6 +288,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
         # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
         # definition expression.
         ruLayer = arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
+        
         # Clip the features that should be buffered to this reporting unit, and output the result to memory.
         clipResult = arcpy.Clip_analysis(lines,ruLayer,"in_memory/clip","#").getOutput(0)
         # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
@@ -312,7 +314,36 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass='#'):
         arcpy.Delete_management(clipResult)
         arcpy.Delete_management(dissolveResult)
         loopProgress.update()
+    
+    ## Add and calculate a length field for the new shapefile
+    lengthFieldName = addLengthField(mergedLines)
+    return mergedLines, lengthFieldName
 
+def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass=''):
+    '''This function performs a intersection and dissolve function on a set of line features.
+    **Description:**
+        This function intersects the representative units with line features, clipping lines at unit boundaries and 
+        giving unit attributes to each line.  The lines are then dissolved by the unit IDs (and a line class, if desired) 
+    **Arguments:**
+        * *lines* - the input line feature class
+        * *repUnits* - the input representative areal units feature class that will be used to split the lines
+        * *uIDField* - the ID field of the representative areal units feature class.  Each dissolved line feature will be assigned the respective uID
+        * *lineClass* - optional field containing class values for the line feature class.  these classes are preserved through the split/dissolve/merge process
+        * *mergedLines* - name of the output feature class.
+    **Returns:**
+        * *mergedLines* - name of the output feature class.
+        * *lengthFieldName* - validated name of the field in the output feature class containing length values
+    '''
+    # Intersect the lines and the areal units
+    intersection = arcpy.Intersect_analysis([repUnits, lines],r"in_memory/intersect","ALL","","INPUT")
+    dissolveFields = uIDField.name
+    if lineClass <> '':
+        dissolveFields = [uIDField.name, lineClass]
+    
+    # Dissolve the intersected lines on the unit ID (and optional line class) fields. 
+    arcpy.Dissolve_management(intersection,mergedLines,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
+    
+    arcpy.Delete_management(intersection)
     ## Add and calculate a length field for the new shapefile
     lengthFieldName = addLengthField(mergedLines)
     return mergedLines, lengthFieldName
