@@ -642,7 +642,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Set up a calculation expression for the density calculation
     calcExpression = "!" + inPopField + "!/!" + popArea + "!"
     # Calculate the population density
-    inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'popDens',calcExpression)
+    inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'popDens' + index,calcExpression)
     
     # Intersect the reporting units with the population features.
     intersectOutput = utils.files.nameIntermediateFile(["intersectOutput" + index,"FeatureClass"],cleanupList)
@@ -671,5 +671,5 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Set up a calculation expression for the final density calculation
     calcExpression = "!" + toField + "!/!" + ruArea + "!"
     # Calculate the population density
-    utils.vector.addCalculateField(outTable,metricConst.populationDensityFieldName,calcExpression)
+    utils.vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,calcExpression)
 
