@@ -26,7 +26,7 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
         * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
                                     (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
         * *metricsFieldnameDict* - a dictionary of BaseName keys with field name values 
-                                    (e.g., "unat":"UINDEX", "for":"pFor", "NITROGEN":"N_Pload")
+                                    (e.g., "unat":"UINDEX", "for":"pFor", "NITROGEN":"N_Load")
         * *metricFieldParams* - list of parameters to generate the selected metric output field 
                         (i.e., [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale])
         * *qaCheckFlds* - a list of filename parameter lists for one or more selected optional fields fieldname 
