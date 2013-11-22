@@ -43,8 +43,24 @@ def checkGridValuesInLCC(inLandCoverGrid, lccObj):
     
     undefinedValues = [aVal for aVal in gridValuesList if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
     if undefinedValues:
-        arcpy.AddWarning("Following Grid Values undefined in LCC file: %s - Please refer to the %s documentation regarding undefined values." % 
-                         (undefinedValues, globalConstants.titleATtILA))
+        arcpy.AddWarning("LCC XML file: grid value(s) %s undefined in LCC XML file - Please refer to the %s documentation regarding undefined values." % 
+                        (undefinedValues, globalConstants.titleATtILA))
+
+def checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict):
+    excludedValues = lccObj.values.getExcludedValueIds()
+    
+    for mBaseName in metricsBaseNameList: 
+        # get the grid codes for this specified class.
+        try:
+            # will FAIL for non-class based metrics (i.e. coefficient metrics that use all grid values) 
+            classGridCodesList = lccClassesDict[mBaseName].uniqueValueIds
+        except KeyError:
+            pass
+        else:
+            excludedClassValues = [aVal for aVal in classGridCodesList if aVal in excludedValues]
+            if excludedClassValues:
+                arcpy.AddWarning("LCC XML file: excluded value(s) %s in class %s definition - Please refer to the %s documentation regarding excluded values." % 
+                                (excludedClassValues, mBaseName.upper(), globalConstants.titleATtILA))
     
     
 def checkGridCellDimensions(inLandCoverGrid):

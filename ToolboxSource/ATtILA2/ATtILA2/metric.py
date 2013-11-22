@@ -45,7 +45,7 @@ class metricCalc:
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
         self.lccClassesDict = self.lccObj.classes
-
+        
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
         self.tableName = None
         self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
@@ -70,6 +70,8 @@ class metricCalc:
     def _housekeeping(self):
         # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
 
+        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
+        utils.settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict)
         # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj)
         # alert user if the land cover grid cells are not square (default to size along x axis)
