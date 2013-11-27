@@ -5,6 +5,7 @@ import os
 import arcpy
 import errors
 import setupAndRestore
+import string
 from pylet import lcc
 from pylet.arcpyutil import polygons
 from pylet.arcpyutil.messages import AddMsg
@@ -45,7 +46,7 @@ class metricCalc:
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
         self.lccClassesDict = self.lccObj.classes
-        
+
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
         self.tableName = None
         self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
@@ -70,8 +71,6 @@ class metricCalc:
     def _housekeeping(self):
         # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
 
-        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        utils.settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict)
         # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj)
         # alert user if the land cover grid cells are not square (default to size along x axis)
@@ -170,8 +169,9 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                                                                    self.inSlopeThresholdValue)
 
                 if self.saveIntermediates:
-                    self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-
+                    #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                    arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                    
         # Create new instance of metricCalc class to contain parameters
         lcspCalc = metricCalcLCOSP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
@@ -219,7 +219,9 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                                                                         self.inEdgeWidth, os.path.dirname(outTable), processingCellSize)
             
                     if self.saveIntermediates:
-                        self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                        #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                        arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+
                 #skip over make out table since it has already been made
                 def _makeAttilaOutTable(self):
                     pass  
@@ -795,6 +797,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
                                                                              os.path.basename(tempReportingUnitFeature))
+    
         # Add and populate the area field (or just recalculate if it already exists
         ruArea = utils.vector.addAreaField(inReportingUnitFeature,'ruArea')
         
@@ -805,13 +808,15 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         AddMsg(timer.split() + " Calculating population density")
         # Create an index value to keep track of intermediate outputs and fieldnames.
         index = ""
-        if popChangeYN:
+        #if popChangeYN:
+        if string.upper(str(popChangeYN)) == "TRUE":
             index = "1"
         # Perform population density calculation for first (only?) population feature class
         utils.calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
                                       env.workspace,outTable,metricConst,cleanupList,index)
 
-        if popChangeYN:
+        #if popChangeYN:
+        if string.upper(str(popChangeYN)) == "TRUE":
             index = "2"
             AddMsg(timer.split() + " Calculating population density for second feature class")
             # Perform population density calculation for second population feature class
@@ -887,7 +892,9 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
                                                                               self.minPatchsize, processingCellSize)
                 
                         if self.saveIntermediates:
-                            self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                            #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                            arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+
                             
                     #skip over make out table since it has already been made
                     def _makeAttilaOutTable(self):

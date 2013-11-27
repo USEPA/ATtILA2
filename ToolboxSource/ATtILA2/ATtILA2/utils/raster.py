@@ -1,10 +1,13 @@
 """ Utilities specific to rasters
 
 """
+import sys, os
 import arcpy
 from arcpy.sa import *
 from pylet import arcpyutil
 from arcpy import env
+# generate the log file
+    
 def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue):
         
     # Generate the slope X land cover grid where areas below the threshold slope are
@@ -66,7 +69,8 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     ExtractDict["ExtractWater"] = WaterValueList
     ExtractDict["ExtractOther"] = OtherValueList
     
-    #Extract User, Water, and Other 
+    #Extract User, Water, and Other
+
     ExtractUserCat = ExtractLU(ExtractDict["ExtractUserCat"], inputLC)
     ExtractWater =  ExtractLU(ExtractDict["ExtractWater"],inputLC)
     ExtractOther = ExtractLU(ExtractDict["ExtractOther"], inputLC)
@@ -74,6 +78,9 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     #Extract Non User Categories from Land use grid
     StrValuesList = convertList(ExtractDict["ExtractUserCat"])
     values = ",".join(StrValuesList)
+
+    if values == "":
+        values = "null"
     ExtractNonUserCat = ExtractByAttributes(inputLC, "VALUE NOT IN (" + values +")")
     
     #change workspace to output space
@@ -82,21 +89,26 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     #Calculate the Euclidean distance using the NonUser
     gridcellsize_int = int(processingCellSize_str)
     maxdist = int(PatchEdgeWidth_str) * gridcellsize_int
+    
     outEucDistance = EucDistance(ExtractNonUserCat, maxdist, processingCellSize_str)
+    
 
     #Create a new user grid with a single value for the user category (intermediate layer)
     #Convert User Value List into a list of integers
     intUserValueList = convertList(UserValueList)
-    
-    UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
-    UserSingleReclass = Reclassify(ExtractUserCat, "VALUE", UserRemapRange)
+    if len(intUserValueList) != 0:
+        UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
+        UserSingleReclass = Reclassify(ExtractUserCat, "VALUE", UserRemapRange)
     
     #Create new Euclidean distance raster with a single value and NoData converted to 0(intermediate layer)
     EucRemapRange = RemapRange([[0, maxdist, 2], ["noData", "noData", 0]])
     EucReclass = Reclassify(outEucDistance, "VALUE", EucRemapRange)
 
     #Run Add Euclidean_Con and ForestSingle together - result: Value 1 = Core, Value 3 = Edge
-    outPlus = Plus(UserSingleReclass, EucReclass)
+    if len(intUserValueList) == 0:
+        outPlus = EucReclass
+    else:
+        outPlus = Plus(UserSingleReclass, EucReclass)
 
     #Change NoData to 0 in CoreEdge raster in prep for final output raster (intermediate layer)
     UserRemapRange = RemapRange([[1,1,1], [3,3,3], ["NoData", "NoData", 0]])
@@ -134,6 +146,8 @@ def ExtractLU(ValueList, inputLandcover):
     StrValuesList = convertList(ValueList)
     values = ",".join(StrValuesList)
     #Extract the  selected categories from the Landuse grid
+    if values == "":
+        values = "null"    
     attExtract = ExtractByAttributes(inputLandcover, "VALUE IN (" + values + ")")
     return attExtract
    
@@ -183,7 +197,7 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirecto
     env.workspace = os.path.dirname(LCGrid)
     inputLC = os.path.basename(LCGrid)
     
-    #Extract User  
+    #Extract User
     ExtractUserCat = ExtractLU(UserValueList, inputLC)
     
     #reset workspace to user defined output space (this is necessary because ArcGIS looks for the input landcover in
@@ -198,9 +212,11 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirecto
     
     #Convert Forest Value List into a list of integers
     intUserValueList = convertList(UserValueList)
-    
-    UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
-    UserSingle = Reclassify(ExtractUserCat, "Value", UserRemapRange)
+    if len(intUserValueList) != 0:
+        UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
+        UserSingle = Reclassify(ExtractUserCat, "Value", UserRemapRange)
+    else:
+        UserSingle = ExtractUserCat
     
     #Check to see if Maximum Separation > 0 if it is then skip to regions group analysis otherwise run
     #Euclidean distance

@@ -473,8 +473,12 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
         try:    
 #             create a dictionary of Core/Edge Ratio results by zoneIdValue
             for tabAreaTableRow in tabAreaTable:
-                EdgeValue = tabAreaTableRow.tabAreaDict["EDGE"]
-                CoreValue = tabAreaTableRow.tabAreaDict["CORE"]
+                EdgeValue = 0
+                if ("EDGE" in tabAreaTableRow.tabAreaDict):
+                    EdgeValue = tabAreaTableRow.tabAreaDict["EDGE"]
+                CoreValue = 0
+                if ("CORE" in tabAreaTableRow.tabAreaDict):
+                    CoreValue = tabAreaTableRow.tabAreaDict["CORE"]
 #             test to make sure values exist for this zoneId (ValueEdgeValue + CoreValue <> 0 )
                 try: 
                     CtoERatio = (EdgeValue/(EdgeValue + CoreValue))*100
@@ -506,20 +510,28 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
             outTableRow = outTableRows.next()
             while outTableRow:
                 uid = outTableRow.getValue(outIdField.name)
-                # populate the edge to core ratio for the current reporting unit  
-                outTableRow.setValue(metricsFieldnameDict[m], CoreEdgeDict[uid])
+                # populate the edge to core ratio for the current reporting unit
+                if (uid in CoreEdgeDict):
+                    outTableRow.setValue(metricsFieldnameDict[m], CoreEdgeDict[uid])
+                else:
+                    outTableRow.setValue(metricsFieldnameDict[m], 0)
                 
                 # add QACheck calculations/values to row
                 if zoneAreaDict:
                     zoneArea = zoneAreaDict[uid]
-#                    print "ZoneArea =" + str(zoneArea)
-                    overlapCalc = ((OptionalDict[uid][0])/zoneArea) * 100
-                    
                     qaCheckFlds = metricConst.qaCheckFieldParameters
-                    outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
-                    outTableRow.setValue(qaCheckFlds[1][0], OptionalDict[uid][0])
-                    outTableRow.setValue(qaCheckFlds[2][0], OptionalDict[uid][1])
-                    outTableRow.setValue(qaCheckFlds[3][0], OptionalDict[uid][2])
+#                    print "ZoneArea =" + str(zoneArea)
+                    if (uid in OptionalDict):
+                        overlapCalc = ((OptionalDict[uid][0])/zoneArea) * 100
+                        outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+                        outTableRow.setValue(qaCheckFlds[1][0], OptionalDict[uid][0])
+                        outTableRow.setValue(qaCheckFlds[2][0], OptionalDict[uid][1])
+                        outTableRow.setValue(qaCheckFlds[3][0], OptionalDict[uid][2])
+                    else:
+                        outTableRow.setValue(qaCheckFlds[0][0], 0)
+                        outTableRow.setValue(qaCheckFlds[1][0], 0)
+                        outTableRow.setValue(qaCheckFlds[2][0], 0)
+                        outTableRow.setValue(qaCheckFlds[3][0], 0)                       
                 
                 # commit the row to the output table
                 outTableRows.updateRow(outTableRow)
@@ -634,8 +646,10 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Create a copy of the census feature class that we can add new fields to for calculations.  This 
     # is more appropriate than altering the user's input data.
     tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature" + index,"FeatureClass"],cleanupList)
+
     inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
-                                                                         os.path.basename(tempCensusFeature))          
+                                                                         os.path.basename(tempCensusFeature))
+
     # Add and populate the area field (or just recalculate if it already exists
     popArea = utils.vector.addAreaField(inCensusFeature,'popArea')
     
