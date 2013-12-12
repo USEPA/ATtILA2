@@ -15,11 +15,13 @@
         <xs:element name="coefficients">
           <xs:annotation>
             <xs:documentation>
-              * The "Coefficients" node contains coefficients to be assigned to values.
-              *
-              * id - text, unique identifier
-              * name - text, name describing coefficient
-              * fieldName - text, name of field to be created for output
+			  * The coefficients node contains coefficients to be assigned to values.
+			   
+			  * REQUIRED ATTRIBUTES
+			  * Id - text, unique identifier
+			  * Name - text, word or phrase describing coefficient
+			  * fieldName - text, name of field to be created for output
+			  * apMethod - text, "P" or "A", designates "P"ercentage or per unit "A"rea calculation routine
             </xs:documentation>
           </xs:annotation>
           <xs:complexType>
@@ -59,9 +61,22 @@
         <xs:element name="values">
           <xs:annotation>
             <xs:documentation>
-              * The "values" node defines the full set of values that can exist in a landcover raster
-              * The "excluded" attribute is used to exclude values from the total, excluded=false is the default
-              * Actual excluded values are always treated as excluded=true, cannot be used in classes, and should not be listed here.
+			  * The values node defines the full set of values that can exist in a land cover raster.
+			
+			  * REQUIRED ATTRIBUTES
+			  * Id - integer, raster code
+			  *
+			  * OPTIONAL ATTRIBUTES
+			  * Name - text, word or phrase describing value
+			  * excluded - boolean, "true" or "false" or "1" or "0"
+			  *          - used to exclude values from effective area calculations
+			  *          - excluded=false is the default 
+			
+			  * A value element can optionally contain one or more coefficient elements
+
+			  * REQUIRED COEFFICIENT ATTRIBUTES
+			  * Id - text, must match an Id attribute from a coefficients node element
+			  * value - decimal, weighting/calculation factor
             </xs:documentation>
           </xs:annotation>
           <xs:complexType>
@@ -95,18 +110,24 @@
         <xs:element name="classes">
           <xs:annotation>
             <xs:documentation>
-              * The "classes" node contains values grouped into classes.
-              * A class can contain either values or classes but not both types
-              * Values contain only an id which refers to a value in values node.
-              * The id attribute is used for the root of the field name in the output(for example %forest would be P + for = Pfor)
-              * Two classes with the same id are not allowed.
-              * Special class attributes:
-              - filter: a string of tool shortnames separated by a ";". If a shortname is provided, that class
-              will not appear in the "Report metrics for these classes" section of that particular tool's gui dialog.
-              Possible shortnames are: lcp, rlcp, lcosp, splcp, and caeam
-              - xxxxField:  if present, it overides the default output field name with the supplied string value. "xxxx" refers
-              to a tool's shortname. Possible shortnames are: lcp, rlcp, lcosp, splcp, and caeam
-              Example, if lcpField="NINDEX" for the "nat" class, the default output, "pNat" will be overridden with "NINDEX"
+			  * The classes node contains values from a land cover raster grouped into one or more classes.
+		
+			  * REQUIRED ATTRIBUTES
+			  * Id - text, unique identifier, also used for automated generation of output field name
+			
+			  * OPTIONAL ATTRIBUTES
+			  * Name - text, word or phrase describing class
+			  * filter - text, a string of one or more tool name abbreviations separated by a ";"
+			  *        - possible abbreviations are: lcp, rlcp, lcosp, splcp, and caeam
+			  *        - used to exclude the class from the selectable classes in the tool's GUI
+			  * xxxxField - text, overrides ATtILA-generated field name for output
+			  *           - where xxxx equals a tool name abbreviation
+			  *           - possible abbreviations are: lcp, rlcp, lcosp, splcp, and caeam
+			  *           - a separate xxxxField attribute can exist for each tool
+
+			  * A class can contain either values or classes but not both types.
+			  * Value elements contain only an Id attribute which refers to a value in a raster.
+			  * Values tagged as excluded="true" in the values node should not be included in any class.
             </xs:documentation>
           </xs:annotation>
           <xs:complexType>
