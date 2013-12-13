@@ -473,6 +473,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                                                                              os.path.basename(tempReportingUnitFeature))
 
         # Get the field properties for the unitID, this will be frequently used
+        # If the field is numeric, it creates a text version of the field.
         uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
 
         AddMsg(timer.split() + " Calculating reporting unit area")

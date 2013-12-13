@@ -76,13 +76,18 @@ def checkGridCellDimensions(inLandCoverGrid):
         
 def processUIDField(inReportingUnitFeature, reportingUnitIdField, cleanupList):
     """ This function checks to see whether the UID field is a text field, and if not, adds a new text field and copies
-    the ID values to it, and returns the properties of the new field."""
-    uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0] # This is an arcpy field object
+    the ID values to it, and returns the properties of the new field.  If the field is not found, it is assumed that
+    the original field was an object ID field that was lost in a format conversion, and the code switches to the new
+    objectID field."""
+    uIDFields = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)
+    if uIDFields == []: # If the list is empty, grab the field of type OID
+        uIDFields = arcpy.ListFields(inReportingUnitFeature,"",'OID')
+    uIDField = uIDFields[0] # This is an arcpy field object
     if (uIDField.type <> "String"): # unit IDs that are not in string format can cause problems.  
         # Create a unit ID with a string format
         reportingUnitIdField = arcpyutil.fields.makeTextID(uIDField,inReportingUnitFeature)
-        # Make sure to clean this up later *** Since we're making the whole reporting unit FC into a temp copy, don't need to clean this up ***
-        #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
+        # Make sure to clean this up later 
+        cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,reportingUnitIdField)))
         # Obtain a field object from the new field.
         uIDField = arcpy.ListFields(inReportingUnitFeature,reportingUnitIdField)[0]
     # Convert the field properties from the default ArcPy field object into inputs for the AddField object.    
