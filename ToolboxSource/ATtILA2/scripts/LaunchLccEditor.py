@@ -16,11 +16,11 @@ import arcpy
 def main(_argv):
       
     currentFolderPath = os.path.dirname(__file__)
-    binFolderName = "bin"
-    exeName = r"LandCoverClassificationEditor.pyw" 
+    binFolderName = "dist"
+    exeName = r"LCCEditor.pyw" 
     startMsg = "\nThe full path to the executable that will be launched:"
     indentMsg = "    "
-    endMsg = "\n"
+    endMsg = "\n"+"You may close ArcGIS without disrupting the editor."+"\n"
     
     pywPath = os.path.join(currentFolderPath, binFolderName, exeName)
     exePath = pywPath.replace('.pyw', '.exe')
@@ -30,6 +30,7 @@ def main(_argv):
     arcpy.AddMessage(endMsg)
     
     os.startfile(pywPath)
+
     
 if __name__ == "__main__":
     main(sys.argv)
