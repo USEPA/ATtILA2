@@ -22,6 +22,7 @@
 """
 
 import os, sys, zipfile, shutil
+from datetime import date
 
 def zipws(path, zip, keep):
     ''' Function for zipping files.  
@@ -68,12 +69,15 @@ def copyFolder(sourceFolder, destFolder, ignoreFiles):
 
 def main(_argv):
     
+    d = date.today()
+    dateStr = d.strftime("%d%b%Y")
+    
     outputDir = 'ATtILA_Deployment'
     toolbox = 'ATtILA2.tbx'
     tbSource = 'ToolboxSource'
     pylet = '../pylet'
-    outputZip = 'ATtILA2.zip'
-    ignoreFiles = shutil.ignore_patterns('.git*','tests')
+    outputZip = 'ATtILA_'+dateStr+'.zip'
+    ignoreFiles = shutil.ignore_patterns('.git*','*.lfn','*.wsp','tests','AutoSave','apidoc','CutAndPaste')
     
     # First create our output directory for staging the deployment.
     # If the directory already exists, remove it.
