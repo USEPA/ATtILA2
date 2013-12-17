@@ -474,7 +474,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
 
         # Get the field properties for the unitID, this will be frequently used
         # If the field is numeric, it creates a text version of the field.
-        uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
+        uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
 
         AddMsg(timer.split() + " Calculating reporting unit area")
         # Add a field to the reporting units to hold the area value in square kilometers
@@ -621,7 +621,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                                                                              os.path.basename(tempReportingUnitFeature))
 
         # Get the field properties for the unitID, this will be frequently used
-        uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField,cleanupList)
+        uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
 
         AddMsg(timer.split() + " Calculating reporting unit area")
         # Add a field to the reporting units to hold the area value in square kilometers
