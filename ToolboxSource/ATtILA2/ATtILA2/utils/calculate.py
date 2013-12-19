@@ -487,7 +487,7 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
 #              if EdgeValue and CoreValue are both zero set ratio value to 0
                     if EdgeValue == 0 and CoreValue == 0:
                         CoreEdgeDict[tabAreaTableRow.zoneIdValue] = 0
-                    arcpy.AddWarning( m + " landuse doesn't exist in reporting unit feature " + tabAreaTableRow.zoneIdValue)
+                    arcpy.AddWarning( m + " landuse doesn't exist in reporting unit feature " + str(tabAreaTableRow.zoneIdValue))
                 optTuple = (tabAreaTableRow.totalArea,tabAreaTableRow.effectiveArea,tabAreaTableRow.excludedArea)
                 OptionalDict[tabAreaTableRow.zoneIdValue]=optTuple
 #         Check to see if newTable has already been set up
@@ -674,6 +674,16 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Intersect the reporting units with the population features.
     summaryTable = utils.files.nameIntermediateFile(["summaryTable" + index,'Dataset'],cleanupList)
     # Sum population for each reporting unit.
+       
+    """ If the reportingUnitIdField field is not found, it is assumed that
+    the original field was an object ID field that was lost in a format conversion, and the code switches to the new
+    objectID field."""
+    uIDFields = arcpy.ListFields(intersectOutput,reportingUnitIdField)
+    if uIDFields == []: # If the list is empty, grab the field of type OID
+        uIDFields = arcpy.ListFields(intersectOutput,"",'OID')
+    uIDField = uIDFields[0] # This is an arcpy field object
+    reportingUnitIdField = uIDField.name
+
     arcpy.Statistics_analysis(intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField)
 
     # Compile a list of fields that will be transferred from the intersected feature class into the output table
