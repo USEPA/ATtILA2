@@ -489,7 +489,15 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
         # Calculate the field
         arcpy.CalculateField_management(fromTable,toField,'!'+ fromField.name +'!',"PYTHON")
     # Perform the joinfield
-    arcpy.JoinField_management(toTable,joinField,fromTable,joinField,toField)
+    """ If the joinField field is not found in toTable, it is assumed that
+    the joinField was an object ID field that was lost in a format conversion"""
+    uIDFields = arcpy.ListFields(toTable,joinField)
+    if uIDFields == []: # If the list is empty, grab the field of type OID
+        uIDFields = arcpy.ListFields(toTable,"",'OID')
+    uIDField = uIDFields[0] # This is an arcpy field object
+    joinField_In_toTable = uIDField.name    
+    #arcpy.JoinField_management(toTable,joinField,fromTable,joinField,toField)
+    arcpy.JoinField_management(toTable,joinField_In_toTable,fromTable,joinField,toField)
     # If we added a temp field
     if fromField <> toField:
         arcpy.DeleteField_management(fromTable,toField)

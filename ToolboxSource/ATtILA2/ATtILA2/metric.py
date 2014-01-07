@@ -196,6 +196,15 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
 
     try:
         from pylet import arcpyutil
+        from arcpy import env
+        #Perform clip for the input raster data and set inLandCoverGrid to be the new clipped data
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        clipRasterName = "clipLandCover"
+        if arcpy.Exists(clipRasterName):
+            arcpy.Delete_management(clipRasterName)
+        arcpy.Clip_management(inLandCoverGrid, "#", clipRasterName,inReportingUnitFeature, "0", "NONE")
+        arcpy.BuildRasterAttributeTable_management(clipRasterName, "Overwrite")
+        inLandCoverGrid =env.workspace + "\\" + clipRasterName
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caeamConstants()

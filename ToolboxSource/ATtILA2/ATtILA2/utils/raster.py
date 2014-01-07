@@ -84,11 +84,16 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     ExtractNonUserCat = ExtractByAttributes(inputLC, "VALUE NOT IN (" + values +")")
     
     #change workspace to output space
-    env.workspace = TempOutspace
+    #env.workspace = TempOutspace
+    # Modified, instead of a folder, the workspace should be a scratch workspace
+    env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
     
     #Calculate the Euclidean distance using the NonUser
-    gridcellsize_int = int(processingCellSize_str)
-    maxdist = int(PatchEdgeWidth_str) * gridcellsize_int
+    #gridcellsize_int = int(processingCellSize_str)
+    #maxdist = int(PatchEdgeWidth_str) * gridcellsize_int
+
+    gridcellsize_int = round(float(processingCellSize_str))
+    maxdist = round(float(PatchEdgeWidth_str)) * gridcellsize_int
     
     outEucDistance = EucDistance(ExtractNonUserCat, maxdist, processingCellSize_str)
     
