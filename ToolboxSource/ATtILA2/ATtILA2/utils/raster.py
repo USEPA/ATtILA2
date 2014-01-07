@@ -9,18 +9,25 @@ from arcpy import env
 # generate the log file
     
 def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue):
-        
+            
     # Generate the slope X land cover grid where areas below the threshold slope are
     # set to the value 'Maximum Land Cover Class Value + 1'.
     LCGrid = Raster(inLandCoverGrid)
     SLPGrid = Raster(inSlopeGrid)
-    AreaBelowThresholdValue = int(LCGrid.maximum + 1)
+    
+    # find the highest value found in LCC XML file or land cover grid  
+    lccValuesDict = lccObj.values
+    maxValue = LCGrid.maximum
+    xmlValues = lccObj.getUniqueValueIdsWithExcludes()
+    for v in xmlValues:
+        if v > maxValue:
+            maxValue = v
+    
+    AreaBelowThresholdValue = int(maxValue + 1)
     where_clause = "VALUE >= " + inSlopeThresholdValue
     SLPxLCGrid = Con(SLPGrid, LCGrid, AreaBelowThresholdValue, where_clause)
     
-    # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
-    lccValuesDict = lccObj.values
-    
+    # determine if a grid code is to be included in the effective reporting unit area calculation    
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
     excludedValues = lccValuesDict.getExcludedValueIds()
         
