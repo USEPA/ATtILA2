@@ -19,6 +19,19 @@ def getOutputLinearUnits(inputDataset):
         
     return linearUnits
 
+def getOutputSpatialReference(inputDataset):
+    """ Determines the output Spatial Reference """
+    # check for output coordinate system setting in the arc environment
+    if arcpy.env.outputCoordinateSystem:
+        # output coordinate system is set. pass info back to program
+        outSpatialReference = arcpy.env.outputCoordinateSystem
+    else:
+        # no output coordinate system set. get the spatial reference for the input dataset.
+        desc = arcpy.Describe(inputDataset)
+        outSpatialReference = desc.spatialReference
+        
+    return outSpatialReference
+
 
 def getIdOutField(inFeature, inField):
     """ Processes the InputField. If field is an OID type, alters the output field type and name """
