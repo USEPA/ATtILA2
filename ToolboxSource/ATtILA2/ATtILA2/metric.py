@@ -202,7 +202,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         from pylet import arcpyutil
         from arcpy import env
         #Perform clip for the input raster data and set inLandCoverGrid to be the new clipped data
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         clipRasterName = "clipLandCover"
         if arcpy.Exists(clipRasterName):
             arcpy.Delete_management(clipRasterName)
@@ -231,7 +231,8 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
-                                                                        self.inEdgeWidth, os.path.dirname(outTable), processingCellSize)
+                                                                        self.inEdgeWidth, os.path.dirname(outTable), 
+                                                                        globalConstants.scratchGDBFilename, processingCellSize)
             
                     if self.saveIntermediates:
                         #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
@@ -474,7 +475,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         metricConst = metricConstants.rdmConstants()
         # Set the output workspace
         _tempEnvironment1 = env.workspace
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -622,7 +623,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         metricConst = metricConstants.sdmConstants()
         # Set the output workspace
         _tempEnvironment1 = env.workspace
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -806,7 +807,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
 
         # Set the output workspace
         _tempEnvironment1 = env.workspace
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -891,7 +892,7 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
             lccObj = lcc.LandCoverClassification(lccFilePath)
             outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
             
-            env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(os.path.dirname(outTable))
+            env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
             # Strip the description from the "additional option" and determine whether intermediates are stored.
             processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
             if globalConstants.intermediateName in processed:

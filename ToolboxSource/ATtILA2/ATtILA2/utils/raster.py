@@ -44,7 +44,8 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, fallBackDirectory, processingCellSize_str):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, fallBackDirectory, scratchGDBFilename, 
+                    processingCellSize_str):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
@@ -93,7 +94,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     #change workspace to output space
     #env.workspace = TempOutspace
     # Modified, instead of a folder, the workspace should be a scratch workspace
-    env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
+    env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(scratchGDBFilename, fallBackDirectory)
     
     #Calculate the Euclidean distance using the NonUser
     #gridcellsize_int = int(processingCellSize_str)

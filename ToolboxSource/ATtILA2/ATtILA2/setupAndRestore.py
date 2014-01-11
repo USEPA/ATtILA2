@@ -21,11 +21,12 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment0 = env.snapRaster
     _tempEnvironment1 = env.workspace
     _tempEnvironment2 = env.cellSize
+
+    env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, fallBackDirectory)
     
-    # set the snap raster environment so the rasterized polygon theme aligns with land cover grid cell boundaries
+    # set the raster environments so the rasterized polygon theme aligns with land cover grid cell boundaries
     if snapRaster:
-        env.snapRaster = snapRaster
-    env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(fallBackDirectory)
+        env.snapRaster = snapRaster        
     if processingCellSize:
         env.cellSize = processingCellSize
     
