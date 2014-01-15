@@ -50,7 +50,6 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
     return metricPercentArea, metricAreaSum
 
 
-
 def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
                          tabAreaTable, metricsFieldnameDict, zoneAreaDict):
     """ Creates *outTable* populated with land cover proportions metrics
@@ -134,7 +133,6 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
             del tabAreaTableRow
         except:
             pass
-        
         
 
 def getCoefficientPerUnitArea(tabAreaDict, lccValuesDict, coeffId, conversionFactor):
@@ -227,7 +225,6 @@ def getCoefficientPercentage(tabAreaDict, lccValuesDict, coeffId):
         coefficientCalculation = 0
   
     return coefficientCalculation
-
 
 
 def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, 
@@ -465,30 +462,42 @@ def getDiversityIndices(tabAreaDict, totalArea):
     #Create Results tuple to be reported out
     diversityIndices = (H, Hprime, S, C)
 
-    return diversityIndices  
+    return diversityIndices 
 
-def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict, metricConst,m):  
+
+def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict, metricConst, m):  
         CoreEdgeDict = {}
         OptionalDict = {}
         try:    
 #             create a dictionary of Core/Edge Ratio results by zoneIdValue
             for tabAreaTableRow in tabAreaTable:
-                EdgeValue = 0
+                edgeArea = 0
                 if ("EDGE" in tabAreaTableRow.tabAreaDict):
-                    EdgeValue = tabAreaTableRow.tabAreaDict["EDGE"]
-                CoreValue = 0
+                    edgeArea = tabAreaTableRow.tabAreaDict["EDGE"]
+                coreArea = 0
                 if ("CORE" in tabAreaTableRow.tabAreaDict):
-                    CoreValue = tabAreaTableRow.tabAreaDict["CORE"]
-#             test to make sure values exist for this zoneId (ValueEdgeValue + CoreValue <> 0 )
+                    coreArea = tabAreaTableRow.tabAreaDict["CORE"]
+                otherArea = 0
+                if ("OTHER" in tabAreaTableRow.tabAreaDict):
+                    otherArea = tabAreaTableRow.tabAreaDict["OTHER"]
+                excludedArea = 0
+                if ("EXCLUDED" in tabAreaTableRow.tabAreaDict):
+                    excludedArea = tabAreaTableRow.tabAreaDict["EXCLUDED"]
+                
+#             test to make sure values exist for this zoneId (EdgeArea/(EdgeArea + CoreArea) <> 0 )
                 try: 
-                    CtoERatio = (EdgeValue/(EdgeValue + CoreValue))*100
+                    CtoERatio = (edgeArea/(edgeArea + coreArea))*100
                     CoreEdgeDict[tabAreaTableRow.zoneIdValue] = CtoERatio
                 except:
-#              if EdgeValue and CoreValue are both zero set ratio value to 0
-                    if EdgeValue == 0 and CoreValue == 0:
+#              if EdgeArea and CoreArea are both zero set ratio value to 0
+                    if edgeArea == 0 and coreArea == 0:
                         CoreEdgeDict[tabAreaTableRow.zoneIdValue] = 0
                     arcpy.AddWarning( m + " landuse doesn't exist in reporting unit feature " + str(tabAreaTableRow.zoneIdValue))
-                optTuple = (tabAreaTableRow.totalArea,tabAreaTableRow.effectiveArea,tabAreaTableRow.excludedArea)
+                    
+                totalArea = edgeArea + coreArea + otherArea + excludedArea
+                effectiveArea = totalArea - excludedArea
+                    
+                optTuple = (totalArea, effectiveArea, excludedArea)
                 OptionalDict[tabAreaTableRow.zoneIdValue]=optTuple
 #         Check to see if newTable has already been set up
             rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
@@ -544,9 +553,10 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
                 del outTableRow
                 del tabAreaTable
                 del tabAreaTableRow
-                arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
+                arcpy.AddMessage("Core/Edge Ratio calculations are complete for class: " + m)
             except:
                 pass
+  
 
 def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m):
     try:
@@ -599,7 +609,7 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m)
                 del outTableRow
                 del tabAreaTable
                 del tabAreaTableRow
-                arcpy.AddMessage("Core/Edge Ratio calculations are complete for " + m)
+                arcpy.AddMessage("MDCP calculations are complete for class: " + m)
             except:
                 pass
     

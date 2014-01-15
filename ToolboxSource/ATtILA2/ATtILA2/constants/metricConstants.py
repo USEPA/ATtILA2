@@ -21,7 +21,7 @@ class lcdConstants(baseMetricConstants):
     shortName = "lcd"
     fieldPrefix = ""
     fieldSuffix = ""
-    overlapName = "LCD_OVRLP"
+    overlapName = "LCD_OVER"
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
@@ -38,7 +38,7 @@ class lcpConstants(baseMetricConstants):
     shortName = "lcp"
     fieldPrefix = "p"
     fieldSuffix = ""
-    overlapName = "LCP_OVRLP"
+    overlapName = "LCP_OVER"
     totalAreaName = "LCP_TOTA"
     effectiveAreaName = "LCP_EFFA"
     excludedAreaName = "LCP_EXCA"
@@ -57,10 +57,10 @@ class lcospConstants(baseMetricConstants):
     shortName = "lcosp"
     fieldSuffix = "SL"
     fieldPrefix = ""
-    overlapName = "SL_OVRLP"
-    totalAreaName = "SL_TOTA"
-    effectiveAreaName = "SL_EFFA"
-    excludedAreaName = "SL_EXCA"
+    overlapName = "LCOSP_OVER"
+    totalAreaName = "LCOSP_TOTA"
+    effectiveAreaName = "LCOSP_EFFA"
+    excludedAreaName = "LCOSP_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
     qaCheckFieldParameters = [
@@ -76,7 +76,7 @@ class lcccConstants(baseMetricConstants):
     shortName = "lccc"
     fieldPrefix = ""
     fieldSuffix = ""
-    overlapName = "LCCC_OVRLP"
+    overlapName = "LCCC_OVER"
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
@@ -95,7 +95,7 @@ class rlcpConstants(baseMetricConstants):
     shortName = "rlcp"
     fieldPrefix = "r"
     fieldSuffix = ""
-    overlapName = "R_OVERLAP"
+    overlapName = "RLCP_OVER"
     totalAreaName = "RLCP_TOTA"
     effectiveAreaName = "RLCP_EFFA"
     excludedAreaName = "RLCP_EXCA"
@@ -114,7 +114,7 @@ class splcpConstants(baseMetricConstants):
     shortName = "splcp"
     fieldPrefix = "s"
     fieldSuffix = ""
-    overlapName = "SP_OVERLAP"
+    overlapName = "SPLCP_OVER"
     totalAreaName = "SPLCP_TOTA"
     effectiveAreaName = "SPLCP_EFFA"
     excludedAreaName = "SPLCP_EXCA"
@@ -132,12 +132,12 @@ class caeamConstants(baseMetricConstants):
     name = "CoreAndEdgeAreaMetrics"
     shortName = "caeam"
     fieldPrefix = ""
-    fieldSuffix = "e2a"
-    overlapName = "CE_OVERLAP"
+    fieldSuffix = "_E2A"
+    overlapName = "CAEAM_OVER"
     totalAreaName = "CAEAM_TOTA"
     effectiveAreaName = "CAEAM_EFFA"
     excludedAreaName = "CAEAM_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -213,11 +213,11 @@ class mdcpConstants(baseMetricConstants):
     name = "MeanDisttoClosestPatch"
     shortName = "mdcp"
     fieldPrefix = ""
-    fieldSuffix = "mdcp"
-    overlapName = "mdcp_OVERLAP"
-    totalAreaName = "mdcp_TOTA"
-    effectiveAreaName = "mdcp_EFFA"
-    excludedAreaName = "mdcp_EXCA"
+    fieldSuffix = "MDCP"
+    overlapName = "MDCP_OVER"
+    totalAreaName = "MDCP_TOTA"
+    effectiveAreaName = "MDCP_EFFA"
+    excludedAreaName = "MDCP_EXCA"
     rastertoPoly = ["FinalPatchPoly","FeatureClass"]
     rastertoPoint = ["FinalPatchCentroids", "FeatureClass"]
     polyDissolve = ["FinalPatch_poly_diss", "FeatureClass"]

@@ -1,12 +1,11 @@
 """ Utilities specific to rasters
 
 """
-import sys, os
 import arcpy
 from arcpy.sa import *
 from pylet import arcpyutil
 from arcpy import env
-# generate the log file
+
     
 def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue):
             
@@ -51,146 +50,60 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
     
     # get the grid codes for this specified metric
-    UserValueList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
+    ClassValueList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
     
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-    WaterValueList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+    ExcludedValueList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
 
-    LandValueList = lccValuesDict.getIncludedValueIds().intersection(landCoverValues)
-
-    OtherValueList = set(landCoverValues) - UserValueList - WaterValueList
+    # create grid where cover type of interest (e.g., forest) is coded 3, excluded values are coded 1, everything else is coded 2
+    reclassPairs = []
+    for val in landCoverValues:
+        oldValNewVal = []
+        oldValNewVal.append(val)
+        if val in ClassValueList:
+            oldValNewVal.append(3)
+            reclassPairs.append(oldValNewVal)
+        elif val in ExcludedValueList:
+            oldValNewVal.append(1)
+            reclassPairs.append(oldValNewVal)
+        else:
+            oldValNewVal.append(2)
+            reclassPairs.append(oldValNewVal)
     
-
-    import os
-    TempOutspace =  fallBackDirectory
-    env.cellSize = processingCellSize_str
-
-    # Generate the edge/core/other/excluded grid
-    LCGrid = inLandCoverGrid
+    reclassGrid = Reclassify(inLandCoverGrid,"Value", RemapValue(reclassPairs))
     
-    #Extract User Categories from Land use grid
-    env.workspace = os.path.dirname(LCGrid)
-    inputLC = os.path.basename(LCGrid)
+    # create an other grid
+    otherGrid = SetNull(reclassGrid, 1, "VALUE = 3")
+    
+    # generate the edge/core/other/excluded zones grid
+    distGrid = EucDistance(otherGrid)
+    edgeDist = round((float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str))
+    zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)    
 
-    ExtractDict = {}
-    ExtractDict["ExtractUserCat"]= UserValueList
-    ExtractDict["ExtractWater"] = WaterValueList
-    ExtractDict["ExtractOther"] = OtherValueList
-    
-    #Extract User, Water, and Other
-
-    ExtractUserCat = ExtractLU(ExtractDict["ExtractUserCat"], inputLC)
-    ExtractWater =  ExtractLU(ExtractDict["ExtractWater"],inputLC)
-    ExtractOther = ExtractLU(ExtractDict["ExtractOther"], inputLC)
-                           
-    #Extract Non User Categories from Land use grid
-    StrValuesList = convertList(ExtractDict["ExtractUserCat"])
-    values = ",".join(StrValuesList)
-
-    if values == "":
-        values = "null"
-    ExtractNonUserCat = ExtractByAttributes(inputLC, "VALUE NOT IN (" + values +")")
-    
-    #change workspace to output space
-    #env.workspace = TempOutspace
-    # Modified, instead of a folder, the workspace should be a scratch workspace
-    env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(scratchGDBFilename, fallBackDirectory)
-    
-    #Calculate the Euclidean distance using the NonUser
-    #gridcellsize_int = int(processingCellSize_str)
-    #maxdist = int(PatchEdgeWidth_str) * gridcellsize_int
-
-    gridcellsize_int = round(float(processingCellSize_str))
-    maxdist = round(float(PatchEdgeWidth_str)) * gridcellsize_int
-    
-    outEucDistance = EucDistance(ExtractNonUserCat, maxdist, processingCellSize_str)
-    
-
-    #Create a new user grid with a single value for the user category (intermediate layer)
-    #Convert User Value List into a list of integers
-    intUserValueList = convertList(UserValueList)
-    if len(intUserValueList) != 0:
-        UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
-        UserSingleReclass = Reclassify(ExtractUserCat, "VALUE", UserRemapRange)
-    
-    #Create new Euclidean distance raster with a single value and NoData converted to 0(intermediate layer)
-    EucRemapRange = RemapRange([[0, maxdist, 2], ["noData", "noData", 0]])
-    EucReclass = Reclassify(outEucDistance, "VALUE", EucRemapRange)
-
-    #Run Add Euclidean_Con and ForestSingle together - result: Value 1 = Core, Value 3 = Edge
-    if len(intUserValueList) == 0:
-        outPlus = EucReclass
-    else:
-        outPlus = Plus(UserSingleReclass, EucReclass)
-
-    #Change NoData to 0 in CoreEdge raster in prep for final output raster (intermediate layer)
-    UserRemapRange = RemapRange([[1,1,1], [3,3,3], ["NoData", "NoData", 0]])
-    
-    #ZeroedCE = Reclassify("CoreEdge_"+ m, "VALUE", UserRemapRange)
-    ZeroedCE = Reclassify(outPlus, "VALUE", UserRemapRange)
-    
-    #Create new Water with a single value for water (intermediate layer)
-    intWaterValueList = convertList(WaterValueList)
-    WaterRemapRange = RemapRange([[min(intWaterValueList), max(intWaterValueList), 2], ["NoData", "NoData", 0]])
-    H2OSingleReclass = Reclassify(ExtractWater, "VALUE", WaterRemapRange)
-
-    #Create new Other with a single value for other (intermediate layer)
-    intOtherValueList = convertList(OtherValueList)
-    
-    OtherRemapRange = RemapRange([[min(intOtherValueList), max(intOtherValueList), 4], ["NoData", "NoData", 0]])
-    OtherSingleReclass = Reclassify(ExtractOther, "VALUE", OtherRemapRange)
-
-    #Create Final Output Raster
-    FinalOutputRas = CellStatistics([ZeroedCE, H2OSingleReclass, OtherSingleReclass], "SUM", "DATA")
-    FinalRemapRange = RemapRange([[1,1,1],[2,2,2], [3,3,3], [4,4,4], [0,0,"NoData"]])
-    FinalRaster = Reclassify(FinalOutputRas, "VALUE", FinalRemapRange)
-    FinalRaster.save("CoreEdge_Final_" + m)
-    
-    arcpy.AddField_management(os.path.join(env.workspace, "CoreEdge_Final_"+ m), "POS", "TEXT", "#", "#", "10")
-    updateValuestoRaster("CoreEdge_Final_" + m)
-    print "Finished Core Edge Processing"
-    ECOGrid = "CoreEdge_Final_" + m
-    
-    return ECOGrid
-
-# Extracts land use values so that they can be temporary.
-def ExtractLU(ValueList, inputLandcover):
-    #Set up the values for the sql expression
-    StrValuesList = convertList(ValueList)
-    values = ",".join(StrValuesList)
-    #Extract the  selected categories from the Landuse grid
-    if values == "":
-        values = "null"    
-    attExtract = ExtractByAttributes(inputLandcover, "VALUE IN (" + values + ")")
-    return attExtract
-   
-def convertList(inList):
-    outList = []
-    for l in inList:
-        if type(l) is not int:
-            outList.append(int(l))
-        elif type(l) is int:
-            outList.append(str(l))  
-    return outList
+    arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
+    updateValuestoRaster(zonesGrid)
+        
+    return zonesGrid
 
 def updateValuestoRaster(Raster):
-    #Updates the POS field in the ForestCoreEdge with "Core" and "Edge" values
+    #Updates the CATEGORY field in the ForestCoreEdge with "Core" and "Edge" values
     rows = arcpy.UpdateCursor(Raster)
     row = rows.next()
     
     while row:
         #VALUE = 1 indicates a Core cell, Value = 3 is an Edge cell
         v = row.getValue("Value")
-        if v == 1:
-            row.POS = "Core"
+        if v == 4:
+            row.CATEGORY = "Core"
         elif v == 3:
-            row.POS = "Edge"
+            row.CATEGORY = "Edge"
         elif v == 2:
-            row.POS = "Water"
-        elif v == 4:
-            row.POS = "Other"
+            row.CATEGORY = "Other"
+        elif v == 1:
+            row.CATEGORY = "Excluded"
         rows.updateRow(row)
         row = rows.next()
+
 
 def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirectory, MaxSeperation, MinPatchSize, processingCellSize_str):
 
@@ -294,5 +207,25 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirecto
 #        if "PatchMetrics" in AnalysisList:
 #            tabulatePatchMetrics("FinalPatches")
 #        if "MDCP" in AnalysisList:
-#            tabulateMDCP("FinalPatches", TempOutspace, ReportingUnitFeature, ReportingUnitField, SearchRadius)    
+#            tabulateMDCP("FinalPatches", TempOutspace, ReportingUnitFeature, ReportingUnitField, SearchRadius)
+
+# Extracts land use values so that they can be temporary.
+def ExtractLU(ValueList, inputLandcover):
+    #Set up the values for the sql expression
+    StrValuesList = convertList(ValueList)
+    values = ",".join(StrValuesList)
+    #Extract the  selected categories from the Landuse grid
+    if values == "":
+        values = "null"    
+    attExtract = ExtractByAttributes(inputLandcover, "VALUE IN (" + values + ")")
+    return attExtract
+   
+def convertList(inList):
+    outList = []
+    for l in inList:
+        if type(l) is not int:
+            outList.append(int(l))
+        elif type(l) is int:
+            outList.append(str(l))  
+    return outList    
             

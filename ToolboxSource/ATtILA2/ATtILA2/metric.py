@@ -194,21 +194,16 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     finally:
         setupAndRestore.standardRestore()
 
+
 def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Core/Edge Metrics """
 
     try:
         from pylet import arcpyutil
-        from arcpy import env
-        #Perform clip for the input raster data and set inLandCoverGrid to be the new clipped data
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-        clipRasterName = "clipLandCover"
-        if arcpy.Exists(clipRasterName):
-            arcpy.Delete_management(clipRasterName)
-        arcpy.Clip_management(inLandCoverGrid, "#", clipRasterName,inReportingUnitFeature, "0", "NONE")
-        arcpy.BuildRasterAttributeTable_management(clipRasterName, "Overwrite")
-        inLandCoverGrid =env.workspace + "\\" + clipRasterName
+
+        # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
+        arcpyutil.environment.setBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize, inEdgeWidth)
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caeamConstants()
@@ -219,7 +214,8 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                                                                                  os.path.dirname(outTable),
                                                                                  [metricsToRun,optionalFieldGroups] )
         lccObj = lcc.LandCoverClassification(lccFilePath)
-        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)        
+     
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField)
@@ -230,13 +226,16 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
+                    AddMsg(self.timer.split() + " Generating core and edge grid for class: "+m)
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, os.path.dirname(outTable), 
                                                                         globalConstants.scratchGDBFilename, processingCellSize)
-            
+                    AddMsg(self.timer.split() + " Core and edge grid complete")
+                    
                     if self.saveIntermediates:
-                        #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-                        arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                        arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, m, "RasterDataset"))
+                        AddMsg(self.timer.split() + " Save intermediate grid complete")
+
 
                 #skip over make out table since it has already been made
                 def _makeAttilaOutTable(self):
@@ -245,10 +244,10 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                 def _makeTabAreaTable(self):
                     AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
                     # Internal function to generate a zonal tabulate area table
-                    class posTabAreaTable(TabulateAreaTable):
+                    class categoryTabAreaTable(TabulateAreaTable):
                         #Update definition so Tabulate Table is run on the POS field.
                         def _createNewTable(self):
-                            self._value = "POS"
+                            self._value = "CATEGORY"
                             if self._tableName:
                                 self._destroyTable = False
                                 self._tableName = arcpy.CreateScratchName(self._tableName, "", self._datasetType)
@@ -265,7 +264,8 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                             self._tabAreaDict = dict(zip(self._tabAreaValues,[])) 
                              
                     self.lccObj = None
-                    self.tabAreaTable = posTabAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
+                    
+                    self.tabAreaTable = categoryTabAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
                                               self.inLandCoverGrid, self.tableName, self.lccObj)
                 #Update housekeeping so it doesn't check for lcc codes
                 def _housekeeping(self):
@@ -310,6 +310,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
 
     finally:
         setupAndRestore.standardRestore()
+        
 
 def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inStreamFeatures, inBufferDistance, outTable, processingCellSize, snapRaster,

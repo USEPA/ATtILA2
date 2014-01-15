@@ -9,6 +9,7 @@ from ATtILA2.constants import globalConstants
 _tempEnvironment0 = ""
 _tempEnvironment1 = ""
 _tempEnvironment2 = ""
+_tempEnvironment3 = ""
 
 
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
@@ -21,6 +22,7 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment0 = env.snapRaster
     _tempEnvironment1 = env.workspace
     _tempEnvironment2 = env.cellSize
+    _tempEnvironment3 = env.extent
 
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, fallBackDirectory)
     
@@ -49,6 +51,7 @@ def standardRestore():
     env.snapRaster = _tempEnvironment0
     env.workspace = _tempEnvironment1
     env.cellSize = _tempEnvironment2
+    env.extent = _tempEnvironment3
     
     # return the spatial analyst license    
     try:
