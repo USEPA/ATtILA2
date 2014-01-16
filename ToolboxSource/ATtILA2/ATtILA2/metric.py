@@ -218,7 +218,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                  metricConst, lccObj, outIdField)
+                                                                                  metricConst, lccObj, outIdField, "test")
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
         
@@ -226,14 +226,14 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
-                    AddMsg(self.timer.split() + " Generating core and edge grid for class: "+m)
+                    AddMsg(self.timer.split() + " Generating core and edge grid for class: " + m)
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, os.path.dirname(outTable), 
                                                                         globalConstants.scratchGDBFilename, processingCellSize)
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
                     if self.saveIntermediates:
-                        arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, m, "RasterDataset"))
+                        arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, m+inEdgeWidth, "RasterDataset"))
                         AddMsg(self.timer.split() + " Save intermediate grid complete")
 
 
@@ -250,9 +250,9 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                             self._value = "CATEGORY"
                             if self._tableName:
                                 self._destroyTable = False
-                                self._tableName = arcpy.CreateScratchName(self._tableName, "", self._datasetType)
+                                self._tableName = arcpy.CreateScratchName(self._tableName, m+inEdgeWidth, self._datasetType)
                             else:
-                                self._tableName = arcpy.CreateScratchName(self._tempTableName, "", self._datasetType)
+                                self._tableName = arcpy.CreateScratchName(self._tempTableName, m+inEdgeWidth, self._datasetType)
             
         
                             arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
