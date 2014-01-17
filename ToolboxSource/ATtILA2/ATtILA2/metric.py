@@ -201,9 +201,6 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
 
     try:
         from pylet import arcpyutil
-
-        # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
-        arcpyutil.environment.setBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize, inEdgeWidth)
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caeamConstants()
@@ -213,8 +210,20 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
                                                                                  [metricsToRun,optionalFieldGroups] )
+        
+        # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
+        arcpyutil.environment.setBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize, inEdgeWidth)
+        
         lccObj = lcc.LandCoverClassification(lccFilePath)
-        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)        
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
+        utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)  
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
@@ -267,10 +276,12 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                     
                     self.tabAreaTable = categoryTabAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
                                               self.inLandCoverGrid, self.tableName, self.lccObj)
-                #Update housekeeping so it doesn't check for lcc codes
+                    
+                # Update housekeeping. Moved checks for undefined grid values and excluded grid values in class definitions
+                # out of the for loop. Now they are only ran once at the beginning of the metric run
                 def _housekeeping(self):
                     # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
-                    # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
+
                     # alert user if the land cover grid cells are not square (default to size along x axis)
                     utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
                     # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field

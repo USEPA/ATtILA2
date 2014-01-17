@@ -70,7 +70,7 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     return newTable
 
 
-def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField):
+def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, moreFields=None):
     """ Processes tool dialog parameters and options for output table generation. Class metrics option.
         
     **Description:**
@@ -104,6 +104,9 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
                         "NITROGEN":"N_Pload")
         
     """
+    
+    if moreFields:
+        arcpy.AddMessage(moreFields)
 
     # get the field name override key
     fieldOverrideKey = metricConst.fieldOverrideKey
