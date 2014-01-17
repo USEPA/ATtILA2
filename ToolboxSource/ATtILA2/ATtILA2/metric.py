@@ -227,7 +227,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                  metricConst, lccObj, outIdField, "test")
+                                                                                  metricConst, lccObj, outIdField, "more fields")
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
         
