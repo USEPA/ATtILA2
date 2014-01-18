@@ -69,8 +69,36 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
         
     return newTable
 
+def fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames):
+    n = 1
+    outputFName = outputFName[:maxFieldNameSize] # truncate field name to maximum allowable size
+    
+    # if truncated field name is already used, truncate further and add a number to the end of the name to make unique
+    while outputFName in outputFieldNames:
+        truncateTo = maxFieldNameSize - len(str(n))
+        outputFName = outputFName[:truncateTo]+str(n)
+        n = n + 1
+        
+    return outputFName
 
-def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, moreFields=None):
+def baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames):
+    prefixLen = len(metricFieldParams[0])
+    suffixLen = len(metricFieldParams[1])
+    maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
+    
+    n = 1 
+    outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1] # truncate field name to maximum allowable size 
+    
+    # if truncated field name is already used, truncate further and add a number to the end of the name to make unique
+    while outputFName in outputFieldNames:
+        # shorten the field name and increment it
+        truncateTo = maxBaseSize - len(str(n))
+        outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
+        n = n + 1
+        
+    return outputFName
+
+def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, additionalFields=None):
     """ Processes tool dialog parameters and options for output table generation. Class metrics option.
         
     **Description:**
@@ -104,91 +132,60 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
                         "NITROGEN":"N_Pload")
         
     """
-    
-    if moreFields:
-        arcpy.AddMessage(moreFields)
 
-    # get the field name override key
-    fieldOverrideKey = metricConst.fieldOverrideKey
-
-    # Set parameters for metric output field. 
+    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable) 
     metricFieldParams = metricConst.fieldParameters
-    
-    # Parameterize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+    metricsFieldnameDict = {} # create a dictionary of ClassName keys with user supplied field names values
+    outputFieldNames = set() # use this set to help make field names unique   
+    # Parameterize optional QA fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
     if globalConstants.qaCheckName in optionalGroupsList:
         qaCheckFlds = metricConst.qaCheckFieldParameters
     else:
         qaCheckFlds = None
-    
-    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
+        
+    # get the field name override key
+    fieldOverrideKey = metricConst.fieldOverrideKey
+    # get dictionary of LCC class attributes
+    lccClassesDict = lccObj.classes
+    # get the optional area field parameters if needed
     if globalConstants.metricAddName in optionalGroupsList:
         addAreaFldParams = globalConstants.areaFieldParameters
         maxFieldNameSize = maxFieldNameSize - len(addAreaFldParams[0])
     else:
         addAreaFldParams = None
     
-    # Process: inputs
-    # get dictionary of metric class values (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
-    lccClassesDict = lccObj.classes    
-    
-    # use the metricsBaseNameList to create a dictionary of BaseName keys with field name values using any user supplied field names
-    metricsFieldnameDict = {}
-    outputFieldNames = set() # use this set to help make field names unique
-    
     for mBaseName in metricsBaseNameList:
-        # generate unique number to replace characters at end of truncated field names
-        n = 1
-        
-        fieldOverrideName = lccClassesDict[mBaseName].attributes.get(fieldOverrideKey,None)
-        if fieldOverrideName: # a field name override exists
+        outputFName = lccClassesDict[mBaseName].attributes.get(fieldOverrideKey,None)
+        if outputFName: # a field name override exists
             # see if the provided field name is too long for the output table type
-            if len(fieldOverrideName) > maxFieldNameSize:
-                defaultFieldName = fieldOverrideName # keep track of the originally provided field name
-                fieldOverrideName = fieldOverrideName[:maxFieldNameSize] # truncate field name to maximum allowable size
+            if len(outputFName) > maxFieldNameSize:
+                # keep track of the originally provided field name
+                defaultFieldName = outputFName 
+                # truncate field name to maximum allowable size
+                outputFName = fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames)
+                # alert the user to the new field name    
+                arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
                 
-                # see if truncated field name is already used.
-                # if so, truncate further and add a unique number to the end of the name
-                while fieldOverrideName in outputFieldNames:
-                    # shorten the field name and increment it
-                    truncateTo = maxFieldNameSize - len(str(n))
-                    fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
-                    n = n + 1
-                
-                arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, fieldOverrideName))
-                
-            # keep track of output field names    
-            outputFieldNames.add(fieldOverrideName)
-            # add output field name to dictionary
-            metricsFieldnameDict[mBaseName] = fieldOverrideName
-        else:
-            # generate output field name
+        else: # generate output field name
             outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
             
             # see if the provided field name is too long for the output table type
             if len(outputFName) > maxFieldNameSize:
-                defaultFieldName = outputFName # keep track of the originally generated field name
-                
-                prefixLen = len(metricFieldParams[0])
-                suffixLen = len(metricFieldParams[1])
-                maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
-                
-                # truncate field name to maximum allowable size    
-                outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1]
-                
-                # see if truncated field name is already used.
-                # if so, truncate further and add a unique number to the end of the name
-                while outputFName in outputFieldNames:
-                    # shorten the field name and increment it
-                    truncateTo = maxBaseSize - len(str(n))
-                    outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
-                    n = n + 1
-                    
+                # keep track of the originally generated field name
+                defaultFieldName = outputFName
+                # truncate field name to maximum allowable size by shrinking the metrics base (class) name
+                outputFName = baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames)
+                # alert the user to the new field name    
                 arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
                 
-            # keep track of output field names
-            outputFieldNames.add(outputFName)
-            # add output field name to dictionary
-            metricsFieldnameDict[mBaseName] = outputFName
+        # keep track of output field names
+        outputFieldNames.add(outputFName)
+        # add output field name to dictionary
+        metricsFieldnameDict[mBaseName] = outputFName
+            
+        if additionalFields:
+            for addf in metricConst.additionalFields:
+                arcpy.AddMessage(addf)
                 
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
@@ -232,48 +229,31 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
         
     """
     
-    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
-        
-    # use the metricsBaseNameList to create a dictionary of ClassName keys with field name values using any user supplied field names
-    metricsFieldnameDict = {}
-    outputFieldNames = set() # use this set to help make field names unique
-    
-    # get parameters for metric output field: [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale]
+    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)
     metricFieldParams = metricConst.fieldParameters
-    
-    for mBaseName in metricsBaseNameList:
-        # generate unique number to replace characters at end of truncated field names
-        n = 1
-        
-        fieldOverrideName = lccObj.coefficients[mBaseName].fieldName
-
-        # see if the provided field name is too long for the output table type
-        if len(fieldOverrideName) > maxFieldNameSize:
-            defaultFieldName = fieldOverrideName # keep track of the originally provided field name
-            fieldOverrideName = fieldOverrideName[:maxFieldNameSize] # truncate field name to maximum allowable size
-            
-            # see if truncated field name is already used.
-            # if so, truncate further and add a unique number to the end of the name
-            while fieldOverrideName in outputFieldNames:
-                # shorten the field name and increment it
-                truncateTo = maxFieldNameSize - len(str(n))
-                fieldOverrideName = fieldOverrideName[:truncateTo]+str(n)
-                n = n + 1
-                
-            arcpy.AddWarning("Provided metric name too long for output location. Truncated %s to %s" % 
-                             (defaultFieldName, fieldOverrideName))
-            
-        # keep track of output field names    
-        outputFieldNames.add(fieldOverrideName)
-        # add output field name to dictionary
-        metricsFieldnameDict[mBaseName] = fieldOverrideName
-
-    # set up field parameters for any optional output fields
+    metricsFieldnameDict = {} # create a dictionary of ClassName keys with user supplied field names values
+    outputFieldNames = set() # use this set to help make field names unique       
+    # Parameterize optional QA fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
     if globalConstants.qaCheckName in optionalGroupsList:
-        # get optional fields and their parameters, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
         qaCheckFields = metricConst.qaCheckFieldParameters
     else:
         qaCheckFields = None
+    
+    for mBaseName in metricsBaseNameList:
+        outputFName = lccObj.coefficients[mBaseName].fieldName
+
+        # see if the provided field name is too long for the output table type
+        if len(outputFName) > maxFieldNameSize:
+            defaultFieldName = outputFName # keep track of the originally provided field name
+            # truncate field name to maximum allowable size
+            outputFName = fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames)
+            # alert the user to the new field name    
+            arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
+            
+        # keep track of output field names    
+        outputFieldNames.add(outputFName)
+        # add output field name to dictionary
+        metricsFieldnameDict[mBaseName] = outputFName
               
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
@@ -316,54 +296,32 @@ def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricCo
         
     """
 
-    # Set parameters for metric output field. 
+    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable) 
     metricFieldParams = metricConst.fieldParameters
-    
-    # Parameratize optional fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
+    metricsFieldnameDict = {} # create a dictionary of ClassName keys with user supplied field names values
+    outputFieldNames = set() # use this set to help make field names unique 
+    # Parameterize optional QA fields, e.g., optionalFlds = [["LC_Overlap","FLOAT",6,1]]
     if globalConstants.qaCheckName in optionalGroupsList:
         qaCheckFlds = metricConst.qaCheckFieldParameters
     else:
         qaCheckFlds = None
-    
-    maxFieldNameSize = arcpyutil.fields.getFieldNameSizeLimit(outTable)            
+                
     if globalConstants.metricAddName in optionalGroupsList:
         addAreaFldParams = globalConstants.areaFieldParameters
         maxFieldNameSize = maxFieldNameSize - len(addAreaFldParams[0])
     else:
-        addAreaFldParams = None
-    
-    # Process: inputs   
-    
-    # use the metricsBaseNameList to create a dictionary of BaseName keys with field name values using any user supplied field names
-    metricsFieldnameDict = {}
-    outputFieldNames = set() # use this set to help make field names unique
+        addAreaFldParams = None  
     
     for mBaseName in metricsBaseNameList:
-        # generate unique number to replace characters at end of truncated field names
-        n = 1
-        
-        # generate output field name
         outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
         
         # see if the provided field name is too long for the output table type
         if len(outputFName) > maxFieldNameSize:
-            defaultFieldName = outputFName # keep track of the originally generated field name
-            
-            prefixLen = len(metricFieldParams[0])
-            suffixLen = len(metricFieldParams[1])
-            maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
-            
-            # truncate field name to maximum allowable size    
-            outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1]
-            
-            # see if truncated field name is already used.
-            # if so, truncate further and add a unique number to the end of the name
-            while outputFName in outputFieldNames:
-                # shorten the field name and increment it
-                truncateTo = maxBaseSize - len(str(n))
-                outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
-                n = n + 1
-                
+            # keep track of the originally generated field name
+            defaultFieldName = outputFName
+            # truncate field name to maximum allowable size by shrinking the metrics base (class) name
+            outputFName = baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames)
+            # alert the user to the new field name    
             arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
             
         # keep track of output field names
