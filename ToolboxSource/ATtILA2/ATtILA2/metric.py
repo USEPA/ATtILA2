@@ -223,11 +223,14 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
         # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)  
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        
+        # set toggle to generate the percent core and percent area metrics
+        additionalFields = True
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                  metricConst, lccObj, outIdField, "more fields")
+                                                                                  metricConst, lccObj, outIdField, additionalFields)
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
         
@@ -871,7 +874,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         else:
             return 1
     else:
-        return (pop2-pop1)/pop1"""
+        return ((pop2-pop1)/pop1)*100"""
             
             # Calculate the population density
             utils.vector.addCalculateField(outTable,metricConst.populationChangeFieldName,calcExpression,codeBlock)       
