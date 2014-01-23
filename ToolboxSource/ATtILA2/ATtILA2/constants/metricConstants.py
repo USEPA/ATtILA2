@@ -15,6 +15,7 @@ class baseMetricConstants():
     fieldParameters = []
     qaCheckFieldParameters = []    
     fieldOverrideKey = ''
+    additionalFields = []
 
 class lcdConstants(baseMetricConstants):
     name = "LandCoverDiversity"
@@ -146,6 +147,9 @@ class caeamConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    coreField = ["", "_COR", gc.defaultDecimalFieldType, 6, 1]
+    edgeField = ["", "_EDG", gc.defaultDecimalFieldType, 6, 1]
+    additionalFields = [coreField, edgeField]
     
 class rdmConstants(baseMetricConstants):
     name = "RoadDensityMetrics"

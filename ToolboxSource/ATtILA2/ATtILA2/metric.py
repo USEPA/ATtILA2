@@ -206,6 +206,10 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         metricConst = metricConstants.caeamConstants()
         # append the edge width distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
+        # for the core and edge fields, add the edge width to the  field suffix
+        for i, aFldParams in enumerate(metricConst.additionalFields):
+            aFldParams[1] = aFldParams[1] + inEdgeWidth
+            metricConst.additionalFields[i] = aFldParams
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
@@ -224,13 +228,11 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
         # alert user if the land cover grid has values undefined in the LCC XML file
         utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
-        
-        # set toggle to generate the percent core and percent area metrics
-        additionalFields = True
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                  metricConst, lccObj, outIdField, additionalFields)
+                                                                                  metricConst, lccObj, outIdField, 
+                                                                                  metricConst.additionalFields)
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
         

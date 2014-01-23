@@ -10,7 +10,7 @@ from pylet import arcpyutil
 from ATtILA2.constants import globalConstants
 
 def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFieldnameDict, metricFieldParams, 
-                            qaCheckFlds=None, addAreaFldParams=None):
+                            qaCheckFlds=None, addAreaFldParams=None, additionalFields=None):
     """ Returns new empty table for ATtILA metric generation output with appropriate fields for selected metric
     
     **Description:**
@@ -25,8 +25,9 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
         * *reportingUnitIdField* - fieldname for the input reporting unit id field
         * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
                                     (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
-        * *metricsFieldnameDict* - a dictionary of BaseName keys with field name values 
-                                    (e.g., "unat":"UINDEX", "for":"pFor", "NITROGEN":"N_Load")
+        * *metricsFieldnameDict* - a dictionary of class keys with modified field name and class name tuples as value
+                        The tuple consists of the output fieldname and the modified class name
+                        (e.g., "forest":("fore0_E2A7","fore0", "for":("pFor","for"))
         * *metricFieldParams* - list of parameters to generate the selected metric output field 
                         (i.e., [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale])
         * *qaCheckFlds* - a list of filename parameter lists for one or more selected optional fields fieldname 
@@ -50,17 +51,23 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     outIdFieldType = arcpyutil.fields.convertFieldTypeKeyword(outIdField)
     
     arcpy.AddField_management(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale)
-                
+    
     # add metric fields to the output table.
-    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName], metricFieldParams[2], metricFieldParams[3], 
+    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
                                metricFieldParams[4])for mBaseName in metricsBaseNameList]
+
+    # add any metric specific additional fields to the output table
+    if additionalFields:
+        for aFldParams in additionalFields:
+            [arcpy.AddField_management(newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
+                                       aFldParams[3], aFldParams[4])for mBaseName in metricsBaseNameList]
 
     # add any optional fields to the output table
     if qaCheckFlds:
         [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
         
     if addAreaFldParams:
-        [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName]+addAreaFldParams[0], addAreaFldParams[1], 
+        [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
                                    addAreaFldParams[2], addAreaFldParams[3])for mBaseName in metricsBaseNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
@@ -69,34 +76,79 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
         
     return newTable
 
-def fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames):
+def fullNameTruncation(outputFldName, maxFieldNameSize, outputFieldNames):
+    """ Truncates the metric field name from the xxxxField class attribute to fit field name size restrictions
+    
+    **Description:**
+
+        Truncates the metric field name from the xxxxField class attribute in the LCC XML document to fit field name 
+        size restrictions.
+        
+    **Arguments:**
+
+        * *outFldName* - unadulterated field name either supplied from the xxxxField in the LCC XML document
+        * *maxFieldNameSize* - size determined by the output table type (dBASE - 10, INFO - 16, or geodatabase - 64)
+        * *outputFieldNames* - a set of used field names. Used to help make new field names unique
+        
+    **Returns:**
+
+        * string - the modified output field name
+        * string - the class name as modified
+        
+    """
     n = 1
-    outputFName = outputFName[:maxFieldNameSize] # truncate field name to maximum allowable size
+    outputFldName = outputFldName[:maxFieldNameSize] # truncate field name to maximum allowable size
+    outClassName = outputFldName[:maxFieldNameSize] 
     
     # if truncated field name is already used, truncate further and add a number to the end of the name to make unique
-    while outputFName in outputFieldNames:
+    while outputFldName in outputFieldNames:
         truncateTo = maxFieldNameSize - len(str(n))
-        outputFName = outputFName[:truncateTo]+str(n)
+        outputFldName = outputFldName[:truncateTo]+str(n)
+        outClassName = outputFldName
         n = n + 1
         
-    return outputFName
+    return outputFldName, outClassName
 
-def baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames):
+def baseNameTruncation(outputFldName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames):
+    """ Truncates the metric base name to fit field name size restrictions
+    
+    **Description:**
+
+        Truncates the metric base name to fit field name size restrictions
+        
+    **Arguments:**
+
+        * *outFldName* - unadulterated field name as generated by ATtILA from the class id and the field suffixes and 
+                        prefixes in the metric constants
+        * *metricFieldParams* - list of parameters to generate the selected metric output field 
+                        (i.e., [Fieldname_prefix, Fieldname_suffix, Field_type, Field_Precision, Field_scale])
+        * *maxFieldNameSize* - size determined by the output table type (dBASE - 10, INFO - 16, or geodatabase - 64)
+        * *mBaseName* - the class id from the LCC document (e.g., "for", "nat", "shrb", "agt")
+        * *outputFieldNames* - a set of used field names. Used to help make new field names unique
+        
+    **Returns:**
+
+        * string - the modified output field name
+        * string - the class name as modified
+        
+    """
     prefixLen = len(metricFieldParams[0])
     suffixLen = len(metricFieldParams[1])
     maxBaseSize = maxFieldNameSize - prefixLen - suffixLen
     
-    n = 1 
-    outputFName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1] # truncate field name to maximum allowable size 
+    n = 1
+    outputFldName = metricFieldParams[0] + mBaseName[:maxBaseSize] + metricFieldParams[1] # truncate field name to maximum allowable size 
+    outClassName = mBaseName[:maxBaseSize]
     
     # if truncated field name is already used, truncate further and add a number to the end of the name to make unique
-    while outputFName in outputFieldNames:
+    while outputFldName in outputFieldNames:
         # shorten the field name and increment it
         truncateTo = maxBaseSize - len(str(n))
-        outputFName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
+        outputFldName = metricFieldParams[0]+mBaseName[:truncateTo]+str(n)+metricFieldParams[1]
+        outClassName = mBaseName[:truncateTo]+str(n)
         n = n + 1
-        
-    return outputFName
+   
+    return outputFldName, outClassName
 
 def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, additionalFields=None):
     """ Processes tool dialog parameters and options for output table generation. Class metrics option.
@@ -124,6 +176,8 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
         * *metricConst* - a class object with the variable constants for a particular metric family as attributes 
         * *lccObj* - a class object of the selected land cover classification file 
         * *outIdField* - the output id field. Generally a clone of the input id field except where the fieldtype = "OID"
+        * *additionalFields* - a list of lists containing field parameters for additional metric fields to be generated
+                        (e.g., [[CoreField],[EdgeField]] in the CAEAM tool)
         
     **Returns:**
 
@@ -143,6 +197,19 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
     else:
         qaCheckFlds = None
         
+    if additionalFields:
+        # get the combined length of any provided field name prefix or suffix of the additional metric names
+        psLengths = [len(aFldParams[0]) + len(aFldParams[1])for aFldParams in metricConst.additionalFields]
+        # get the combined length of any provided field name prefix or suffix of the primary metric name
+        prefixsuffixLen = len(metricFieldParams[0]) + len(metricFieldParams[1])
+        # find the maximum length of all the prefix/suffix pairs  
+        diff = max(psLengths) - prefixsuffixLen
+        # determine the allowance needed in the field name for the prefixes and suffixes
+        reduceBy = max([0, diff])
+        # reduce the maximum field name size by the area needed by the prefixes and suffixes
+        maxFieldNameSize = maxFieldNameSize - reduceBy
+        
+
     # get the field name override key
     fieldOverrideKey = metricConst.fieldOverrideKey
     # get dictionary of LCC class attributes
@@ -156,40 +223,38 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
     
     for mBaseName in metricsBaseNameList:
         outputFName = lccClassesDict[mBaseName].attributes.get(fieldOverrideKey,None)
+        
         if outputFName: # a field name override exists
+            outClassName = outputFName
             # see if the provided field name is too long for the output table type
             if len(outputFName) > maxFieldNameSize:
                 # keep track of the originally provided field name
                 defaultFieldName = outputFName 
                 # truncate field name to maximum allowable size
-                outputFName = fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames)
-                # alert the user to the new field name    
+                outputFName, outClassName = fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames)
+                # alert the user to the new field name
                 arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
                 
         else: # generate output field name
             outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
-            
+            outClassName = mBaseName
             # see if the provided field name is too long for the output table type
             if len(outputFName) > maxFieldNameSize:
                 # keep track of the originally generated field name
                 defaultFieldName = outputFName
                 # truncate field name to maximum allowable size by shrinking the metrics base (class) name
-                outputFName = baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames)
+                outputFName, outClassName = baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames)
                 # alert the user to the new field name    
                 arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
-                
+        
         # keep track of output field names
         outputFieldNames.add(outputFName)
         # add output field name to dictionary
-        metricsFieldnameDict[mBaseName] = outputFName
+        metricsFieldnameDict[mBaseName] = [outputFName, outClassName]
             
-        if additionalFields:
-            for addf in metricConst.additionalFields:
-                arcpy.AddMessage(addf)
-                
     # create the specified output table
-    newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                           metricFieldParams, qaCheckFlds, addAreaFldParams)
+    newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict,metricFieldParams, 
+                                       qaCheckFlds,addAreaFldParams,additionalFields)
     
     return newTable, metricsFieldnameDict
 
@@ -241,12 +306,13 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
     
     for mBaseName in metricsBaseNameList:
         outputFName = lccObj.coefficients[mBaseName].fieldName
-
+        outClassName = outputFName
+        
         # see if the provided field name is too long for the output table type
         if len(outputFName) > maxFieldNameSize:
             defaultFieldName = outputFName # keep track of the originally provided field name
             # truncate field name to maximum allowable size
-            outputFName = fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames)
+            outputFName, outClassName = fullNameTruncation(outputFName, maxFieldNameSize, outputFieldNames)
             # alert the user to the new field name    
             arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
             
@@ -314,13 +380,14 @@ def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricCo
     
     for mBaseName in metricsBaseNameList:
         outputFName = metricFieldParams[0] + mBaseName + metricFieldParams[1]
+        outClassName = outputFName
         
         # see if the provided field name is too long for the output table type
         if len(outputFName) > maxFieldNameSize:
             # keep track of the originally generated field name
             defaultFieldName = outputFName
             # truncate field name to maximum allowable size by shrinking the metrics base (class) name
-            outputFName = baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames)
+            outputFName, outClassName = baseNameTruncation(outputFName, metricFieldParams, maxFieldNameSize, mBaseName, outputFieldNames)
             # alert the user to the new field name    
             arcpy.AddWarning(globalConstants.metricNameTooLong.format(defaultFieldName, outputFName))
             

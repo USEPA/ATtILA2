@@ -70,7 +70,9 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
         * *newTable* - the ATtILA created output table 
         * *tabAreaTable* - tabulateArea request output from ArcGIS
-        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname tuple as value
+                        The tuple consists of the output fieldname and the class name as modified
+                        (e.g., "forest":("fore0_E2A7","fore0")
         * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
                         Used in grid overlap calculations.
         
@@ -103,11 +105,11 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                 metricPercentageAndArea = getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveArea, excludedValues)
                 
                 # add the calculation to the output row
-                outTableRow.setValue(metricsFieldnameDict[mBaseName], metricPercentageAndArea[0])
+                outTableRow.setValue(metricsFieldnameDict[mBaseName][0], metricPercentageAndArea[0])
                 
                 if globalConstants.metricAddName in optionalGroupsList:
                     areaSuffix = globalConstants.areaFieldParameters[0]
-                    outTableRow.setValue(metricsFieldnameDict[mBaseName]+areaSuffix, metricPercentageAndArea[1])
+                    outTableRow.setValue(metricsFieldnameDict[mBaseName][0]+areaSuffix, metricPercentageAndArea[1])
 
             # add QACheck calculations/values to row
             if zoneAreaDict:
@@ -133,7 +135,7 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
             del tabAreaTableRow
         except:
             pass
-        
+               
 
 def getCoefficientPerUnitArea(tabAreaDict, lccValuesDict, coeffId, conversionFactor):
     """  Returns the estimated amount of substance per HECTARE based on supplied coefficient values
@@ -247,7 +249,9 @@ def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalG
         * *metricConst* - an object with constants specific to the metric being run (lcp or lcosp, etc.)
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
         * *newTable* - the ATtILA created output table 
-        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname tuple as value
+                        The tuple consists of the output fieldname and the class name as modified
+                        (e.g., "forest":("fore0_E2A7","fore0")                        
         * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
                         Used in grid overlap calculations.
         * *conversionFactor* - conversion factor to convert area measures to square meters. It is a float value
@@ -283,7 +287,7 @@ def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalG
                                      mBaseName)
                     
                 # add the calculation to the output row
-                outTableRow.setValue(metricsFieldnameDict[mBaseName], coefficientCalculation)
+                outTableRow.setValue(metricsFieldnameDict[mBaseName][0], coefficientCalculation)
                 
             # add QACheck calculations/values to row
             if globalConstants.qaCheckName in optionalGroupsList:
@@ -380,7 +384,9 @@ def landCoverDiversity(optionalGroupsList, metricConst, outIdField, newTable,
         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
         * *newTable* - the ATtILA created output table 
         * *tabAreaTable* - tabulateArea request output from ArcGIS
-        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname as value
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname tuple as value
+                        The tuple consists of the output fieldname and the class name as modified
+                        (e.g., "forest":("fore0_E2A7","fore0")
         * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
                         Used in grid overlap calculations.
         
@@ -465,97 +471,141 @@ def getDiversityIndices(tabAreaDict, totalArea):
     return diversityIndices 
 
 
-def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict, metricConst, m):  
-        CoreEdgeDict = {}
-        OptionalDict = {}
-        try:    
-#             create a dictionary of Core/Edge Ratio results by zoneIdValue
-            for tabAreaTableRow in tabAreaTable:
-                edgeArea = 0
-                if ("EDGE" in tabAreaTableRow.tabAreaDict):
-                    edgeArea = tabAreaTableRow.tabAreaDict["EDGE"]
-                coreArea = 0
-                if ("CORE" in tabAreaTableRow.tabAreaDict):
-                    coreArea = tabAreaTableRow.tabAreaDict["CORE"]
-                otherArea = 0
-                if ("OTHER" in tabAreaTableRow.tabAreaDict):
-                    otherArea = tabAreaTableRow.tabAreaDict["OTHER"]
-                excludedArea = 0
-                if ("EXCLUDED" in tabAreaTableRow.tabAreaDict):
-                    excludedArea = tabAreaTableRow.tabAreaDict["EXCLUDED"]
+def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, zoneAreaDict, metricConst, m):
+    """ Creates *outTable* populated with land cover edge to area metrics
+    
+    **Description:**
+
+        Populates the *outTable* with the land cover edge to area ratio, the percent area designated Core,
+        and the percent area that is designated Edge for each reporting unit for the supplied LCC class. 
+        
+    **Arguments:**
+
+        * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
+        * *newTable* - the ATtILA created output table 
+        * *tabAreaTable* - tabulateArea request output from ArcGIS
+        * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname tuple as value
+                        The tuple consists of the output fieldname and the class name as modified
+                        (e.g., "forest":("fore0_E2A7","fore0")
+        * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
+                        Used in grid overlap calculations.
+        * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+        * *m* - a metric BaseName parsed from the 'Metrics to run' input 
+                        (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+
+        
+    **Returns:**
+
+        * None
+        
+    """  
+    CoreEdgeDict = {}
+
+    try:    
+        # Calculate Core/Edge metrics and place results in dictionary with zoneIdValue as the key
+        for tabAreaTableRow in tabAreaTable:
+            edgeArea = 0
+            if ("EDGE" in tabAreaTableRow.tabAreaDict):
+                edgeArea = tabAreaTableRow.tabAreaDict["EDGE"]
+            coreArea = 0
+            if ("CORE" in tabAreaTableRow.tabAreaDict):
+                coreArea = tabAreaTableRow.tabAreaDict["CORE"]
+            otherArea = 0
+            if ("OTHER" in tabAreaTableRow.tabAreaDict):
+                otherArea = tabAreaTableRow.tabAreaDict["OTHER"]
+            excludedArea = 0
+            if ("EXCLUDED" in tabAreaTableRow.tabAreaDict):
+                excludedArea = tabAreaTableRow.tabAreaDict["EXCLUDED"]
                 
-#             test to make sure values exist for this zoneId (EdgeArea/(EdgeArea + CoreArea) <> 0 )
-                try: 
+            totalArea = edgeArea + coreArea + otherArea + excludedArea
+            effectiveArea = totalArea - excludedArea 
+            
+            # test to make sure land cover values exist in this zoneId, then gather metrics
+            if effectiveArea > 0:
+                percentEdge = (edgeArea/effectiveArea)*100
+                percentCore = (coreArea/effectiveArea)*100
+                if edgeArea or coreArea > 0: # don't want to divide by zero
                     CtoERatio = (edgeArea/(edgeArea + coreArea))*100
-                    CoreEdgeDict[tabAreaTableRow.zoneIdValue] = CtoERatio
-                except:
-#              if EdgeArea and CoreArea are both zero set ratio value to 0
-                    if edgeArea == 0 and coreArea == 0:
-                        CoreEdgeDict[tabAreaTableRow.zoneIdValue] = 0
-                    arcpy.AddWarning( m + " landuse doesn't exist in reporting unit feature " + str(tabAreaTableRow.zoneIdValue))
-                    
-                totalArea = edgeArea + coreArea + otherArea + excludedArea
-                effectiveArea = totalArea - excludedArea
-                    
-                optTuple = (totalArea, effectiveArea, excludedArea)
-                OptionalDict[tabAreaTableRow.zoneIdValue]=optTuple
-#         Check to see if newTable has already been set up
-            rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
-            if rowcount == 0:
-                outTableRows = arcpy.InsertCursor(newTable)
-                for k in CoreEdgeDict.keys():
-                    # initiate a row to add to the metric output table
-                    outTableRow = outTableRows.newRow()
-                    
-                    # set the reporting unit id value in the output row
-                    outTableRow.setValue(outIdField.name, k)
-                    
-                    # commit the row to the output table
-                    outTableRows.insertRow(outTableRow)
-                del outTableRows, outTableRow
-                
-#         create the cursor to add data to the output table
-            outTableRows = arcpy.UpdateCursor(newTable)        
-            outTableRow = outTableRows.next()
-            while outTableRow:
-                uid = outTableRow.getValue(outIdField.name)
-                # populate the edge to core ratio for the current reporting unit
-                if (uid in CoreEdgeDict):
-                    outTableRow.setValue(metricsFieldnameDict[m], CoreEdgeDict[uid])
                 else:
-                    outTableRow.setValue(metricsFieldnameDict[m], 0)
+                    arcpy.AddWarning( m + " landuse doesn't exist in reporting unit feature " + str(tabAreaTableRow.zoneIdValue))
+                    CtoERatio = 0
+            else:
+                arcpy.AddWarning("All landuse is tagged as EXCLUDED in reporting unit feature " + str(tabAreaTableRow.zoneIdValue))
+                percentEdge = 0
+                percentCore = 0
+                CtoERatio = 0
+                            
+            resultsTuple = (CtoERatio, percentCore, percentEdge, totalArea, effectiveArea, excludedArea)
+            CoreEdgeDict[tabAreaTableRow.zoneIdValue] = resultsTuple
+
+        
+        # Check to see if newTable has already been set up
+        rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
+        if rowcount == 0:
+            outTableRows = arcpy.InsertCursor(newTable)
+            for k in CoreEdgeDict.keys():
+                # initiate a row to add to the metric output table
+                outTableRow = outTableRows.newRow()
                 
-                # add QACheck calculations/values to row
-                if zoneAreaDict:
-                    zoneArea = zoneAreaDict[uid]
-                    qaCheckFlds = metricConst.qaCheckFieldParameters
-#                    print "ZoneArea =" + str(zoneArea)
-                    if (uid in OptionalDict):
-                        overlapCalc = ((OptionalDict[uid][0])/zoneArea) * 100
-                        outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
-                        outTableRow.setValue(qaCheckFlds[1][0], OptionalDict[uid][0])
-                        outTableRow.setValue(qaCheckFlds[2][0], OptionalDict[uid][1])
-                        outTableRow.setValue(qaCheckFlds[3][0], OptionalDict[uid][2])
-                    else:
-                        outTableRow.setValue(qaCheckFlds[0][0], 0)
-                        outTableRow.setValue(qaCheckFlds[1][0], 0)
-                        outTableRow.setValue(qaCheckFlds[2][0], 0)
-                        outTableRow.setValue(qaCheckFlds[3][0], 0)                       
+                # set the reporting unit id value in the output row
+                outTableRow.setValue(outIdField.name, k)
                 
                 # commit the row to the output table
-                outTableRows.updateRow(outTableRow)
-                outTableRow = outTableRows.next()
-        finally:
-        
-            # delete cursor and row objects to remove locks on the data
-            try:
-                del outTableRows
-                del outTableRow
-                del tabAreaTable
-                del tabAreaTableRow
-                arcpy.AddMessage("Core/Edge Ratio calculations are complete for class: " + m)
-            except:
-                pass
+                outTableRows.insertRow(outTableRow)
+            del outTableRows, outTableRow
+            
+        # assemble the names for the core and edge fields    
+        outClassName = metricsFieldnameDict[m][1]
+        coreFieldName = metricConst.coreField[0]+outClassName+metricConst.coreField[1]
+        edgeFieldName = metricConst.edgeField[0]+outClassName+metricConst.edgeField[1]
+            
+        # create the cursor to add data to the output table
+        outTableRows = arcpy.UpdateCursor(newTable)        
+        outTableRow = outTableRows.next()
+        while outTableRow:
+            uid = outTableRow.getValue(outIdField.name)
+            # populate the edge to core ratio for the current reporting unit
+            if (uid in CoreEdgeDict):
+                outTableRow.setValue(metricsFieldnameDict[m][0], CoreEdgeDict[uid][0])
+                outTableRow.setValue(coreFieldName, CoreEdgeDict[uid][1])
+                outTableRow.setValue(edgeFieldName, CoreEdgeDict[uid][2])
+            else:
+                outTableRow.setValue(metricsFieldnameDict[m][0], 0)
+                outTableRow.setValue(coreFieldName, 0)
+                outTableRow.setValue(edgeFieldName, 0)
+                    
+            
+            # add QACheck calculations/values to row
+            if zoneAreaDict:
+                zoneArea = zoneAreaDict[uid]
+                qaCheckFlds = metricConst.qaCheckFieldParameters
+
+                if (uid in CoreEdgeDict):
+                    overlapCalc = ((CoreEdgeDict[uid][3])/zoneArea) * 100
+                    outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+                    outTableRow.setValue(qaCheckFlds[1][0], CoreEdgeDict[uid][3])
+                    outTableRow.setValue(qaCheckFlds[2][0], CoreEdgeDict[uid][4])
+                    outTableRow.setValue(qaCheckFlds[3][0], CoreEdgeDict[uid][5])
+                else:
+                    outTableRow.setValue(qaCheckFlds[0][0], 0)
+                    outTableRow.setValue(qaCheckFlds[1][0], 0)
+                    outTableRow.setValue(qaCheckFlds[2][0], 0)
+                    outTableRow.setValue(qaCheckFlds[3][0], 0)                       
+            
+            # commit the row to the output table
+            outTableRows.updateRow(outTableRow)
+            outTableRow = outTableRows.next()
+    finally:
+    
+        # delete cursor and row objects to remove locks on the data
+        try:
+            del outTableRows
+            del outTableRow
+            del tabAreaTable
+            del tabAreaTableRow
+            arcpy.AddMessage("Core/Edge Ratio calculations are complete for class: " + m)
+        except:
+            pass
   
 
 def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m):
@@ -583,7 +633,7 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m)
             while outTableRow:
                 uid = outTableRow.getValue(outIdField.name)
                 # populate the mean distance to edge patch for the current reporting unit  
-                outTableRow.setValue(metricsFieldnameDict[m], mdcpDict[uid].split(",")[2])
+                outTableRow.setValue(metricsFieldnameDict[m][0], mdcpDict[uid].split(",")[2])
                 outTableRow.setValue("PWN_" + m, mdcpDict[uid].split(",")[0])
                 outTableRow.setValue("PWON_" + m, mdcpDict[uid].split(",")[1])
 #                # add QACheck calculations/values to row
