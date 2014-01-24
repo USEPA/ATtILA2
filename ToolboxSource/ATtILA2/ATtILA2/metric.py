@@ -503,10 +503,15 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data.
+        # is more appropriate than altering the user's input data. Keep only the OID, shape, and reportingUnitIdField fields
+        fieldMappings = arcpy.FieldMappings()
+        fieldMappings.addTable(inReportingUnitFeature)
+        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
+
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
-                                                                             os.path.basename(tempReportingUnitFeature))
+                                                                             os.path.basename(tempReportingUnitFeature),"",
+                                                                             fieldMappings)
 
         # Get the field properties for the unitID, this will be frequently used
         # If the field is numeric, it creates a text version of the field.
@@ -651,10 +656,15 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data.
+        # is more appropriate than altering the user's input data. Keep only the OID, shape, and reportingUnitIdField fields
+        fieldMappings = arcpy.FieldMappings()
+        fieldMappings.addTable(inReportingUnitFeature)
+        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
+
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
-                                                                             os.path.basename(tempReportingUnitFeature))
+                                                                             os.path.basename(tempReportingUnitFeature),"",
+                                                                             fieldMappings)
 
         # Get the field properties for the unitID, this will be frequently used
         uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
