@@ -319,7 +319,7 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
         # keep track of output field names    
         outputFieldNames.add(outputFName)
         # add output field name to dictionary
-        metricsFieldnameDict[mBaseName] = outputFName
+        metricsFieldnameDict[mBaseName] = [outputFName, outClassName]
               
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
@@ -394,7 +394,7 @@ def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricCo
         # keep track of output field names
         outputFieldNames.add(outputFName)
         # add output field name to dictionary
-        metricsFieldnameDict[mBaseName] = outputFName
+        metricsFieldnameDict[mBaseName] = [outputFName, outClassName]
                 
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
