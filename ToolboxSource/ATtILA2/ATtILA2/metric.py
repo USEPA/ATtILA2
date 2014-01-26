@@ -161,10 +161,17 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
 
     try:
+        from pylet import arcpyutil
+        from arcpy import env
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcospConstants()
         # append the slope threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
+        
+        # set the environmental extent to the intersection of the reporting unit theme, the land cover grid, and the
+        # slope grid. The extent will be aligned to the cell boundaries of the land cover grid
+        env.extent = arcpyutil.environment.getAlignedExtent(inLandCoverGrid, processingCellSize, [inReportingUnitFeature, inSlopeGrid])
+
 
         # Create new subclass of metric calculation
         class metricCalcLCOSP(metricCalc):
@@ -175,8 +182,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                                                                    self.inSlopeThresholdValue)
 
                 if self.saveIntermediates:
-                    #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-                    arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
+                    self.scratchName = arcpy.CreateScratchName(self.metricConst.shortName+"Raster", metricConst.fieldParameters[1], 
+                                                               "RasterDataset")
+                    self.inLandCoverGrid.save(self.scratchName)
+                    #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
+                    AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
                     
         # Create new instance of metricCalc class to contain parameters
         lcspCalc = metricCalcLCOSP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -201,6 +211,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
 
     try:
         from pylet import arcpyutil
+        from arcpy import env
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caeamConstants()
@@ -216,7 +227,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                                                                                  [metricsToRun,optionalFieldGroups] )
         
         # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
-        arcpyutil.environment.setBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize, inEdgeWidth)
+        env.extent = arcpyutil.environment.getBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize, inEdgeWidth)
         
         lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
@@ -247,8 +258,10 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
                     if self.saveIntermediates:
-                        arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, m+inEdgeWidth, "RasterDataset"))
-                        AddMsg(self.timer.split() + " Save intermediate grid complete")
+                        self.scratchName = arcpy.CreateScratchName(self.metricConst.shortName+"Raster", m+inEdgeWidth, "RasterDataset")
+                        self.inLandCoverGrid.save(self.scratchName)
+                        #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
+                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
 
 
                 #skip over make out table since it has already been made
@@ -916,6 +929,11 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
             metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                      os.path.dirname(outTable),
                                                                                      [metricsToRun,optionalFieldGroups] )
+            
+            # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
+            env.extent = arcpyutil.environment.getBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize)
+
+            
             lccObj = lcc.LandCoverClassification(lccFilePath)
             outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
             
@@ -945,9 +963,10 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
                                                                               self.minPatchsize, processingCellSize)
                 
                         if self.saveIntermediates:
-                            #self.inLandCoverGrid.save(arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-                            arcpy.CopyRaster_management(self.inLandCoverGrid, arcpy.CreateScratchName(self.metricConst.shortName, "", "RasterDataset"))
-
+                            self.scratchName = arcpy.CreateScratchName(self.metricConst.shortName+"Raster", m, "RasterDataset")
+                            self.inLandCoverGrid.save(self.scratchName)
+                            #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
+                            AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
                             
                     #skip over make out table since it has already been made
                     def _makeAttilaOutTable(self):
