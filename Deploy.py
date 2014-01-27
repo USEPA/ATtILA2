@@ -73,11 +73,12 @@ def main(_argv):
     dateStr = d.strftime("%d%b%Y")
     
     outputDir = 'ATtILA_Deployment'
-    toolbox = 'ATtILA2.tbx'
+    toolbox = 'ATtILA 10_0.tbx'
     tbSource = 'ToolboxSource'
     pylet = '../pylet'
     outputZip = 'ATtILA_'+dateStr+'.zip'
-    ignoreFiles = shutil.ignore_patterns('.git*','.settings','.project','.pydevproject','*.lfn','*.wsp','tests','AutoSave','apidoc','CutAndPaste')
+    ignoreFiles = shutil.ignore_patterns('.git*','.settings','.project','.pydevproject','*.lfn','*.wsp','tests',
+                                         'AutoSave','apidoc','CutAndPaste','*.bak','*.bat')
     
     # First create our output directory for staging the deployment.
     # If the directory already exists, remove it.
