@@ -23,6 +23,7 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment1 = env.workspace
     _tempEnvironment2 = env.cellSize
     _tempEnvironment3 = env.extent
+    _tempEnvironment4 = env.outputMFlag
 
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, fallBackDirectory)
     
@@ -41,6 +42,10 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
             msg = "\nIntermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace))    
     
+    # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
+    # Disable for the duration of the tool.
+    env.outputMFlag = "Disabled"
+    
     return itemTuples
 
     
@@ -52,6 +57,7 @@ def standardRestore():
     env.workspace = _tempEnvironment1
     env.cellSize = _tempEnvironment2
     env.extent = _tempEnvironment3
+    env.outputMFlag = _tempEnvironment4
     
     # return the spatial analyst license    
     try:
