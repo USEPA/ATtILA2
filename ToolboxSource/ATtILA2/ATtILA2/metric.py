@@ -521,6 +521,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         fieldMappings.addTable(inReportingUnitFeature)
         [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
 
+        AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
                                                                              os.path.basename(tempReportingUnitFeature),"",
@@ -674,6 +675,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         fieldMappings.addTable(inReportingUnitFeature)
         [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
 
+        AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
                                                                              os.path.basename(tempReportingUnitFeature),"",
@@ -858,14 +860,19 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data.
+        # is more appropriate than altering the user's input data. Keep only the OID, shape, and reportingUnitIdField fields
+        fieldMappings = arcpy.FieldMappings()
+        fieldMappings.addTable(inReportingUnitFeature)
+        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
+
         AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
         inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
-                                                                             os.path.basename(tempReportingUnitFeature))
-    
+                                                                             os.path.basename(tempReportingUnitFeature),"",
+                                                                             fieldMappings)
+
         # Add and populate the area field (or just recalculate if it already exists
-        ruArea = utils.vector.addAreaField(inReportingUnitFeature,'ruArea')
+        ruArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
         
         # Build the final output table.
         AddMsg(timer.split() + " Creating output table")

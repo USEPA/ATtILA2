@@ -705,10 +705,15 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
         index = "_" + index
     # Create a copy of the census feature class that we can add new fields to for calculations.  This 
     # is more appropriate than altering the user's input data.
-    tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature" + index,"FeatureClass"],cleanupList)
+    fieldMappings = arcpy.FieldMappings()
+    fieldMappings.addTable(inCensusFeature)
+    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> inPopField]
 
+    
+    tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature" + index,"FeatureClass"],cleanupList)
     inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
-                                                                         os.path.basename(tempCensusFeature))
+                                                                         os.path.basename(tempCensusFeature),"",
+                                                                         fieldMappings)
 
     # Add and populate the area field (or just recalculate if it already exists
     popArea = utils.vector.addAreaField(inCensusFeature,'popArea')
