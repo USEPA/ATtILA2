@@ -20,3 +20,7 @@ unit feature' that does not have a spatial reference defined with angular units 
 It is also possible for this error to occur if the linear units defined in the Output Coordinates, if one is set, or the 
 'Input reporting unit feature', if an Output Coordinates is not set, is not found in ATtILA's look up table. Please 
 compare your linear units with those found in the ATtILA Help file.'''
+
+nonOverlappingExtentsError = '''Input features do not overlap. Unable to perform spatial analysis.
+
+Please be sure that the areal extent of the input Reporting unit features overlaps with the areal extent of all other input layers. '''

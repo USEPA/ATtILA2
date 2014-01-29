@@ -10,6 +10,7 @@ _tempEnvironment0 = ""
 _tempEnvironment1 = ""
 _tempEnvironment2 = ""
 _tempEnvironment3 = ""
+_tempEnvironment4 = ""
 
 
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
