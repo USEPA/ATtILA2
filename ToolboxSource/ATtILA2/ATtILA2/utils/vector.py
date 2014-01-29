@@ -33,13 +33,13 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every 
         # reporting unit.  The output is written to the user's scratch workspace.
         AddMsg("Buffering input features...")
-        bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"%scratchworkspace%/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField)
+        bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"in_memory/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField)
         
         # If the input features are polygons, we need to erase the the input polyons from the buffer output
         inGeom = arcpy.Describe(inFeatures).shapeType
         if inGeom == "Polygon":
             AddMsg("Erasing polygon areas from buffer areas...")
-            newBufferFeatures = arcpy.Erase_analysis(bufferedFeatures,inFeatures,"%scratchworkspace%/bFeats2")
+            newBufferFeatures = arcpy.Erase_analysis(bufferedFeatures,inFeatures,"in_memory/bFeats2")
             arcpy.Delete_management(bufferedFeatures)
             bufferedFeatures = newBufferFeatures
         
@@ -214,19 +214,39 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                                       uIDField.domain)
             arcpy.CalculateField_management(bufferResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
             
-            if i == 0: # If it's the first time through
-                # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
-                # feature class.
-                arcpy.Clip_analysis(bufferResult,"ru_lyr",outFeatures,"#")
-                i = 1 # Toggle the flag.
-            else: # If it's not the first time through and the output feature class already exists
-                # Perform the clip, but output the result to memory rather than writing to disk
-                clipResult2 = arcpy.Clip_analysis(bufferResult,"ru_lyr","in_memory/finalclip","#")
-                # Append the in-memory result to the output feature class
-                arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
-                # Delete the in-memory result to conserve system resources
-                arcpy.Delete_management(clipResult2)
-            
+            # Because of the potential for invalid geometries in the buffered features, embed the clip in a try 
+            # statement to catch and handle errors.
+            try:
+                if i == 0: # If it's the first time through
+                    # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
+                    # feature class.
+                    arcpy.Clip_analysis(bufferResult,"ru_lyr",outFeatures,"#")
+                    i = 1 # Toggle the flag.
+                else: # If it's not the first time through and the output feature class already exists
+                    # Perform the clip, but output the result to memory rather than writing to disk
+                    clipResult2 = arcpy.Clip_analysis(bufferResult,"ru_lyr","in_memory/finalclip","#")
+                    # Append the in-memory result to the output feature class
+                    arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
+                    # Delete the in-memory result to conserve system resources
+                    arcpy.Delete_management(clipResult2)
+            except:
+                badBuffer = arcpy.FeatureClassToFeatureClass_conversion(bufferResult,"%scratchworkspace%","badbuffer")
+                # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+                arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+                if i == 0: # If it's the first time through
+                    # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
+                    # feature class.
+                    arcpy.Clip_analysis(badBuffer,"ru_lyr",outFeatures,"#")
+                    i = 1 # Toggle the flag.
+                else: # If it's not the first time through and the output feature class already exists
+                    # Perform the clip, but output the result to memory rather than writing to disk
+                    clipResult2 = arcpy.Clip_analysis(badBuffer,"ru_lyr","in_memory/finalclip","#")
+                    # Append the in-memory result to the output feature class
+                    arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
+                    # Delete the in-memory result to conserve system resources
+                    arcpy.Delete_management(clipResult2)
+                arcpy.Delete_management(badBuffer)
+
             arcpy.Delete_management("in_memory") # Clean up all in-memory data created for this reporting unit
             arcpy.Delete_management("ru_lyr")
             loopProgress.update()
@@ -239,6 +259,8 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             del Rows
         except:
             pass 
+
+
 
 def splitDissolveMerge_old(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     '''This function performs a split, dissolve, and merge function on a set of line features.
