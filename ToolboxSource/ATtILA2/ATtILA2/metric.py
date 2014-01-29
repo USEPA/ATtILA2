@@ -506,6 +506,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # Set the output workspace
         _tempEnvironment1 = env.workspace
         env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+        _tempEnvironment4 = env.outputMFlag
+        # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
+        # Disable for the duration of the tool.
+        env.outputMFlag = "Disabled"
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -641,6 +645,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         env.workspace = _tempEnvironment1
+        env.outputMFlag = _tempEnvironment4
 
 
 def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, lineCategoryField="", 
@@ -660,6 +665,10 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         # Set the output workspace
         _tempEnvironment1 = env.workspace
         env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+        _tempEnvironment4 = env.outputMFlag
+        # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
+        # Disable for the duration of the tool.
+        env.outputMFlag = "Disabled"
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -731,6 +740,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         env.workspace = _tempEnvironment1
+        env.outputMFlag = _tempEnvironment4
         
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
