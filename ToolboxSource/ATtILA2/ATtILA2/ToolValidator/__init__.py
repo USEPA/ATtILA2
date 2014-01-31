@@ -53,14 +53,14 @@ class splcpToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = splcpConstants.fieldSuffix
     metricShortName = splcpConstants.shortName
     
-class caeamToolValidator(BaseValidators.ProportionsValidator):
-    """ ToolValidator for CoreAndEdgeAreaMetrics """
+class caemToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for CoreAndEdgeMetrics """
     
-    filterList = caeamConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeCaeamField
-    fieldPrefix = caeamConstants.fieldPrefix
-    fieldSuffix = caeamConstants.fieldSuffix    
-    metricShortName = caeamConstants.shortName
+    filterList = caemConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeCaemField
+    fieldPrefix = caemConstants.fieldPrefix
+    fieldSuffix = caemConstants.fieldSuffix    
+    metricShortName = caemConstants.shortName
     
 class rdmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for RoadDensityMetrics """

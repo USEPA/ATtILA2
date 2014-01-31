@@ -657,8 +657,8 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m)
             try:
                 del outTableRows
                 del outTableRow
-                del tabAreaTable
-                del tabAreaTableRow
+#                del tabAreaTable
+#                del tabAreaTableRow
                 arcpy.AddMessage("MDCP calculations are complete for class: " + m)
             except:
                 pass

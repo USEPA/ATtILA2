@@ -10,6 +10,7 @@ from pylet import lcc
 from pylet.arcpyutil import polygons
 from pylet.arcpyutil.messages import AddMsg
 from pylet.datetimeutil import DateTimer
+from pylet.arcpyutil import environment
 
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
@@ -37,6 +38,11 @@ class metricCalc:
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
         self.timer = DateTimer()
         AddMsg(self.timer.start() + " Setting up environment variables")
+        
+        coords = environment.getIntersectionOfExtents([inReportingUnitFeature, inLandCoverGrid])
+        if (((coords[2] - coords[0]) <= 0) or ((coords[3] - coords[1]) <= 0)):
+            raise errors.attilaException(errorConstants.nonOverlappingExtentsError)
+        
         # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
@@ -205,7 +211,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         setupAndRestore.standardRestore()
 
 
-def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Core/Edge Metrics """
 
@@ -214,13 +220,12 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         from arcpy import env
         
         # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.caeamConstants()
+        metricConst = metricConstants.caemConstants()
         # append the edge width distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
         # for the core and edge fields, add the edge width to the  field suffix
-        for i, aFldParams in enumerate(metricConst.additionalFields):
-            aFldParams[1] = aFldParams[1] + inEdgeWidth
-            metricConst.additionalFields[i] = aFldParams
+        for i, fldParams in enumerate(metricConst.additionalFields):
+            fldParams[1] = metricConst.additionalSuffixes[i] + inEdgeWidth
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
@@ -247,7 +252,7 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
         
-            class metricCalcCAEAM(metricCalc):
+            class metricCalcCAEM(metricCalc):
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
@@ -324,15 +329,15 @@ def runCoreAndEdgeAreaMetrics(inReportingUnitFeature, reportingUnitIdField, inLa
                                                       self.zoneAreaDict, self.metricConst, m)
 
             # Create new instance of metricCalc class to contain parameters
-            caeamCalc = metricCalcCAEAM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+            caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                           m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
     
-            caeamCalc.inEdgeWidth = inEdgeWidth
+            caemCalc.inEdgeWidth = inEdgeWidth
     
             # Run Calculation
-            caeamCalc.run()
+            caemCalc.run()
             
-            caeamCalc.metricsBaseNameList = metricsBaseNameList
+            caemCalc.metricsBaseNameList = metricsBaseNameList
 
     except Exception, e:
         errors.standardErrorHandling(e)

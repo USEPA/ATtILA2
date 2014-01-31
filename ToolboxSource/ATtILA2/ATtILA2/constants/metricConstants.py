@@ -129,15 +129,15 @@ class splcpConstants(baseMetricConstants):
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
     
-class caeamConstants(baseMetricConstants):
-    name = "CoreAndEdgeAreaMetrics"
-    shortName = "caeam"
+class caemConstants(baseMetricConstants):
+    name = "CoreAndEdgeMetrics"
+    shortName = "caem"
     fieldPrefix = ""
     fieldSuffix = "_E2A"
-    overlapName = "CAEAM_OVER"
-    totalAreaName = "CAEAM_TOTA"
-    effectiveAreaName = "CAEAM_EFFA"
-    excludedAreaName = "CAEAM_EXCA"
+    overlapName = "CAEM_OVER"
+    totalAreaName = "CAEM_TOTA"
+    effectiveAreaName = "CAEM_EFFA"
+    excludedAreaName = "CAEM_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -147,8 +147,11 @@ class caeamConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
-    coreField = ["", "_COR", gc.defaultDecimalFieldType, 6, 1]
-    edgeField = ["", "_EDG", gc.defaultDecimalFieldType, 6, 1]
+    coreSuffix = "_COR"
+    edgeSuffix = "_EDG"
+    additionalSuffixes = [coreSuffix, edgeSuffix]
+    coreField = ["", coreSuffix, gc.defaultDecimalFieldType, 6, 1]
+    edgeField = ["", edgeSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [coreField, edgeField]
     
 class rdmConstants(baseMetricConstants):

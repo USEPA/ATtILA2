@@ -177,7 +177,7 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
         * *lccObj* - a class object of the selected land cover classification file 
         * *outIdField* - the output id field. Generally a clone of the input id field except where the fieldtype = "OID"
         * *additionalFields* - a list of lists containing field parameters for additional metric fields to be generated
-                        (e.g., [[CoreField],[EdgeField]] in the CAEAM tool)
+                        (e.g., [[CoreField],[EdgeField]] in the CAEM tool)
         
     **Returns:**
 

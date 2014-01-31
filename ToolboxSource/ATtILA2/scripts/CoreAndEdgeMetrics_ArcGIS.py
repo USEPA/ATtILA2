@@ -15,7 +15,7 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0, 2])
     
-    metric.runCoreAndEdgeAreaMetrics(*inputArguments)
+    metric.runCoreAndEdgeMetrics(*inputArguments)
     
     
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ def runTableTest():
                                                                                  os.path.dirname(p.outTable),
                                                                                  [p.metricsToRun,p.optionalFieldGroups] )
         lccObj = lcc.LandCoverClassification(p.lccFilePath)
-        metricConst = metricConstants.caeamConstants()
+        metricConst = metricConstants.caemConstants()
         outIdField = utils.settings.getIdOutField(p.inReportingUnitFeature, p.reportingUnitIdField)
         for m in metricsBaseNameList:
             Core = m + "_Core"
