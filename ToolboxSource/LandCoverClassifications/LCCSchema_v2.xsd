@@ -21,7 +21,7 @@
 			  * Id - text, unique identifier
 			  * Name - text, word or phrase describing coefficient
 			  * fieldName - text, name of field to be created for output
-			  * apMethod - text, "P" or "A", designates "P"ercentage or per unit "A"rea calculation routine
+			  * method - text, "P" or "A", designates "P"ercentage or per unit "A"rea calculation routine
             </xs:documentation>
           </xs:annotation>
           <xs:complexType>
@@ -38,7 +38,7 @@
                         </xs:simpleType>
                       </xs:attribute>
                       <xs:attribute type="xs:string" name="Name" use="required"/>
-                      <xs:attribute name="apMethod" use="required">
+                      <xs:attribute name="method" use="required">
                         <xs:simpleType>
                           <xs:restriction base="xs:string">
                             <xs:enumeration value="A"/>
