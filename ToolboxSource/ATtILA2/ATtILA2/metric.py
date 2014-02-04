@@ -10,7 +10,6 @@ from pylet import lcc
 from pylet.arcpyutil import polygons
 from pylet.arcpyutil.messages import AddMsg
 from pylet.datetimeutil import DateTimer
-from pylet.arcpyutil import environment
 
 from ATtILA2.constants import metricConstants
 from ATtILA2.constants import globalConstants
@@ -38,10 +37,6 @@ class metricCalc:
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
         self.timer = DateTimer()
         AddMsg(self.timer.start() + " Setting up environment variables")
-        
-        coords = environment.getIntersectionOfExtents([inReportingUnitFeature, inLandCoverGrid])
-        if (((coords[2] - coords[0]) <= 0) or ((coords[3] - coords[1]) <= 0)):
-            raise errors.attilaException(errorConstants.nonOverlappingExtentsError)
         
         # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
@@ -93,7 +88,7 @@ class metricCalc:
             # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
             # area of the reporting unit's polygon features to store in the zoneAreaDict
             self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
-            self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+            self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
 
 
     def _makeAttilaOutTable(self):
@@ -167,18 +162,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
 
     try:
-        from pylet import arcpyutil
-        from arcpy import env
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcospConstants()
         # append the slope threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
-        # set the environmental extent to the intersection of the reporting unit theme, the land cover grid, and the
-        # slope grid. The extent will be aligned to the cell boundaries of the land cover grid
-        env.extent = arcpyutil.environment.getAlignedExtent(inLandCoverGrid, processingCellSize, [inReportingUnitFeature, inSlopeGrid])
-
-
         # Create new subclass of metric calculation
         class metricCalcLCOSP(metricCalc):
             # Subclass that overrides specific functions for the LandCoverOnSlopeProportions calculation
@@ -216,9 +204,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
     """ Interface for script executing Core/Edge Metrics """
 
     try:
-        from pylet import arcpyutil
-        from arcpy import env
-        
+        timer = DateTimer()
+        AddMsg(timer.start())
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caemConstants()
         # append the edge width distance value to the field suffix
@@ -228,12 +215,9 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             fldParams[1] = metricConst.additionalSuffixes[i] + inEdgeWidth
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
-                                                                                 os.path.dirname(outTable),
-                                                                                 [metricsToRun,optionalFieldGroups] )
-        
-        # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
-        env.extent = arcpyutil.environment.getBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize, inEdgeWidth)
-        
+                                                                                os.path.dirname(outTable),
+                                                                                [metricsToRun,optionalFieldGroups] )
+
         lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
         lccClassesDict = lccObj.classes
@@ -249,7 +233,20 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   metricConst.additionalFields)
+ 
+        #Perform clip, buffered with the edge width, for the input raster data and set inLandCoverGrid to be the new clipped data        
+        from pylet import arcpyutil
+        from arcpy import env        
+        _tempEnvironment1 = env.workspace
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+
+        AddMsg(timer.split() + " Buffering Reporting unit features and clipping input grid")
+        #scratchName = arcpy.CreateScratchName(metricConst.shortName+"Clipped","","RasterDataset")
+        scratchName = arcpy.CreateScratchName(os.path.basename(inLandCoverGrid)+metricConst.shortName,"","RasterDataset")
+        inLandCoverGrid = utils.raster.clipGridByBuffer(inLandCoverGrid, inEdgeWidth, inReportingUnitFeature, scratchName)
+        
         # Run metric calculate for each metric in list
+        AddMsg(timer.split() + " Beginning calculations for selected classes")
         for m in metricsBaseNameList:
         
             class metricCalcCAEM(metricCalc):
@@ -317,7 +314,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                         # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
                         # area of the reporting unit's polygon features to store in the zoneAreaDict
                         self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
-                        self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+                        self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
 
                 # Update calculateMetrics to calculate Core to Edge Ratio
                 def _calculateMetrics(self):
@@ -338,6 +335,9 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             caemCalc.run()
             
             caemCalc.metricsBaseNameList = metricsBaseNameList
+            
+        if arcpy.Exists(scratchName):
+            arcpy.Delete_management(scratchName)
 
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -525,16 +525,12 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data. Keep only the OID, shape, and reportingUnitIdField fields
-        fieldMappings = arcpy.FieldMappings()
-        fieldMappings.addTable(inReportingUnitFeature)
-        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
-
+        # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
+        # values and will also keep only the OID, shape, and reportingUnitIdField fields
         AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
-        inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
-                                                                             os.path.basename(tempReportingUnitFeature),"",
-                                                                             fieldMappings)
+        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
+                                                           reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         # If the field is numeric, it creates a text version of the field.
@@ -684,16 +680,12 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data. Keep only the OID, shape, and reportingUnitIdField fields
-        fieldMappings = arcpy.FieldMappings()
-        fieldMappings.addTable(inReportingUnitFeature)
-        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
-
+        # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
+        # values and will also keep only the OID, shape, and reportingUnitIdField fields
         AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
-        inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
-                                                                             os.path.basename(tempReportingUnitFeature),"",
-                                                                             fieldMappings)
+        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
+                                                           reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         uIDField = utils.settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
@@ -794,7 +786,7 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
                     # area of the reporting unit's polygon features to store in the zoneAreaDict
                     self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
-                    self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+                    self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
                     
             def _makeAttilaOutTable(self):
                 AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
@@ -875,16 +867,12 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data. Keep only the OID, shape, and reportingUnitIdField fields
-        fieldMappings = arcpy.FieldMappings()
-        fieldMappings.addTable(inReportingUnitFeature)
-        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> reportingUnitIdField]
-
+        # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
+        # values and will also keep only the OID, shape, and reportingUnitIdField fields
         AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
         tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
-        inReportingUnitFeature = arcpy.FeatureClassToFeatureClass_conversion(inReportingUnitFeature,env.workspace,
-                                                                             os.path.basename(tempReportingUnitFeature),"",
-                                                                             fieldMappings)
+        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
+                                                           reportingUnitIdField,"","MULTI_PART")
 
         # Add and populate the area field (or just recalculate if it already exists
         ruArea = utils.vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
@@ -951,14 +939,11 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
             metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                      os.path.dirname(outTable),
                                                                                      [metricsToRun,optionalFieldGroups] )
-            
-            # set the environmental extent to that of the reporting unit theme, aligned to the land cover grid, and buffered with the edge width
-            env.extent = arcpyutil.environment.getBufferedExtent(inReportingUnitFeature, inLandCoverGrid, processingCellSize)
-
-            
+                        
             lccObj = lcc.LandCoverClassification(lccFilePath)
             outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
             
+            _tempEnvironment1 = env.workspace
             env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
             # Strip the description from the "additional option" and determine whether intermediates are stored.
             processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
@@ -1014,7 +999,7 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
                             # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
                             # area of the reporting unit's polygon features to store in the zoneAreaDict
                             self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
-                            self.zoneAreaDict = polygons.getIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+                            self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
 
                     # Update calculateMetrics to populate Mean Distance to Closest Patch
                     def _calculateMetrics(self):
