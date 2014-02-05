@@ -70,7 +70,7 @@ def copyFolder(sourceFolder, destFolder, ignoreFiles):
 def main(_argv):
     
     d = date.today()
-    dateStr = d.strftime("%d%b%Y")
+    dateStr = d.strftime("%Y%b%d")
     
     outputDir = 'ATtILA_Deployment'
     toolbox = 'ATtILA 10_0.tbx'
