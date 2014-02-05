@@ -18,24 +18,28 @@ from pylet.arcpyutil.messages import AddMsg
 from arcpy import env
 
 
-def clipGridByBuffer(inLandCoverGrid,inEdgeWidth,inReportingUnitFeature,outName):
+def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inEdgeWidth=None):
+    if arcpy.Exists(outName):
+        arcpy.Delete_management(outName)
+        
+    if inEdgeWidth:
+        # Buffering Reporting unit features...
         cellSize = arcpy.Raster(inLandCoverGrid).meanCellWidth
         linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
         bufferFloat = cellSize * (int(inEdgeWidth)+1)
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
-        
-        AddMsg("Buffering Reporting unit features...")
         arcpy.Buffer_analysis(inReportingUnitFeature, "in_memory/ru_buffer", bufferDistance, "#", "#", "ALL")
         
-        AddMsg("Clipping input grid to buffered extent...")
-        if arcpy.Exists(outName):
-            arcpy.Delete_management(outName)
+    # Clipping input grid to desired extent...
+    if inEdgeWidth:
         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName,"in_memory/ru_buffer", "", "NONE")
-        arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
-        
-        arcpy.Delete_management("in_memory")        
-        
-        return clippedGrid
+        arcpy.Delete_management("in_memory")
+    else:
+        clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, inReportingUnitFeature, "", "NONE")
+    
+    arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
+    
+    return clippedGrid
     
 def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue):
             
@@ -104,7 +108,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
             oldValNewVal.append(2)
             reclassPairs.append(oldValNewVal)
             
-    AddMsg("Step 1 of 4: Reclassing land cover grid to Class(3), Other(2), and Excluded(1)...")
+    AddMsg("Step 1 of 4: Reclassing land cover grid to 3 = Class, 2 = Other, and 1 = Excluded...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
 #    arcpy.BuildRasterAttributeTable_management(reclassGrid, "Overwrite")
 #    scratchName = arcpy.CreateScratchName(m+"_Reclass", "", "RasterDataset")
@@ -120,7 +124,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     AddMsg("Step 3 of 4: Finding distance from Other...")
     distGrid = EucDistance(otherGrid)
     
-    AddMsg("Step 4 of 4: Delimiting Class(3) areas to Edge(3) and Core(4)...")
+    AddMsg("Step 4 of 4: Delimiting Class areas to 3 = Edge and 4 = Core...")
     edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str))
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite") 
