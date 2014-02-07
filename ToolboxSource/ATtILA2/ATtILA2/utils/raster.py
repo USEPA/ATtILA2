@@ -24,7 +24,7 @@ def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inEdgeWidth=
         
     if inEdgeWidth:
         # Buffering Reporting unit features...
-        cellSize = arcpy.Raster(inLandCoverGrid).meanCellWidth
+        cellSize = Raster(inLandCoverGrid).meanCellWidth
         linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
         bufferFloat = cellSize * (int(inEdgeWidth)+1)
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)

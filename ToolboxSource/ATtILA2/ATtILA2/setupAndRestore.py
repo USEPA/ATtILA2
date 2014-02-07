@@ -11,6 +11,7 @@ _tempEnvironment1 = ""
 _tempEnvironment2 = ""
 _tempEnvironment3 = ""
 _tempEnvironment4 = ""
+_tempEnvironment5 = ""
 
 
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
@@ -25,6 +26,7 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment2 = env.cellSize
     _tempEnvironment3 = env.extent
     _tempEnvironment4 = env.outputMFlag
+    _tempEnvironment5 = env.outputZFlag
 
     env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, fallBackDirectory)
     
@@ -59,6 +61,7 @@ def standardRestore():
     env.cellSize = _tempEnvironment2
     env.extent = _tempEnvironment3
     env.outputMFlag = _tempEnvironment4
+    env.outputZFlag = _tempEnvironment5
     
     # return the spatial analyst license    
     try:

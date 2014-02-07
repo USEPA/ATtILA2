@@ -525,9 +525,11 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         _tempEnvironment1 = env.workspace
         env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         _tempEnvironment4 = env.outputMFlag
+        _tempEnvironment5 = env.outputZFlag
         # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
         # Disable for the duration of the tool.
         env.outputMFlag = "Disabled"
+        env.outputZFlag = "Disabled"
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -563,6 +565,15 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 #     is used instead, this is not necessary.
                 #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
 
+        # If necessary, create a copy of the road feature class to remove M values.  The env.outputMFlag will work
+        # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
+        # off. This is more appropriate than altering the user's input data.
+        desc = arcpy.Describe(inRoadFeature)
+        if desc.dataType == "ShapeFile" and desc.HasM:
+            AddMsg(timer.split() + " Creating temporary copy of stream layer")
+            tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature, env.workspace, os.path.basename(tempLineFeature))
+
 
         AddMsg(timer.split() + " Calculating road density")
         # Get a unique name for the merged roads and prep for cleanup
@@ -590,6 +601,16 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         
         # If the Streams By Roads (STXRD) box is checked...
         if streamRoadCrossings and streamRoadCrossings <> "false":
+            # If necessary, create a copy of the stream feature class to remove M values.  The env.outputMFlag will work
+            # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
+            # off. This is more appropriate than altering the user's input data.
+            desc = arcpy.Describe(inStreamFeature)
+            if desc.dataType == "ShapeFile" and desc.HasM:
+                AddMsg(timer.split() + " Creating temporary copy of stream layer")
+                tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+                inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
+
+            
             AddMsg(timer.split() + " Calculating Stream and Road Crossings (STXRD)")
             # Get a unique name for the merged streams:
             mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)
@@ -630,6 +651,15 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         if roadsNearStreams and roadsNearStreams <> "false":
             AddMsg(timer.split() + " Calculating Roads Near Streams (RNS)")
             if not streamRoadCrossings or streamRoadCrossings == "false":  # In case merged streams haven't already been calculated:
+                # Create a copy of the stream feature class, if necessary, to remove M values.  The env.outputMFlag will work
+                # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
+                # off. This is more appropriate than altering the user's input data.
+                desc = arcpy.Describe(inStreamFeature)
+                if desc.dataType == "ShapeFile" and desc.HasM:
+                    AddMsg(timer.split() + " Creating temporary copy of stream layer")
+                    tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+                    inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
+                
                 # Get a unique name for the merged streams:
                 mergedStreams = utils.files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)
                 # Calculate the density of the streams by reporting unit.
@@ -660,6 +690,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 function(*arguments)
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
+        env.outputZFlag = _tempEnvironment5
 
 
 def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, lineCategoryField="", 
@@ -680,9 +711,11 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         _tempEnvironment1 = env.workspace
         env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         _tempEnvironment4 = env.outputMFlag
+        _tempEnvironment5 = env.outputZFlag
         # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
         # Disable for the duration of the tool.
         env.outputMFlag = "Disabled"
+        env.outputZFlag = "Disabled"
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
@@ -716,6 +749,15 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                 # *** this was previously necessary when the field was added to the input - now that a copy of the input
                 #     is used instead, this is not necessary.
                 #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
+
+        # If necessary, create a copy of the stream feature class to remove M values.  The env.outputMFlag will work
+        # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
+        # off. This is more appropriate than altering the user's input data.
+        desc = arcpy.Describe(inLineFeature)
+        if desc.dataType == "ShapeFile" and desc.HasM:
+            AddMsg(timer.split() + " Creating temporary copy of stream layer")
+            tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+            inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, os.path.basename(tempLineFeature))
 
 
         AddMsg(timer.split() + " Calculating feature density")
@@ -751,6 +793,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                 function(*arguments)
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
+        env.outputZFlag = _tempEnvironment5
         
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
