@@ -5,6 +5,7 @@
 import arcpy, pylet
 from pylet.arcpyutil.messages import AddMsg
 from pylet.arcpyutil.fields import valueDelimiter
+from ATtILA2 import utils
 
 def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -19,8 +20,9 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         * *repUnits* - reporting units that will be used for the clip
         * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
         * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
-        * *unitID* - a field that exists in both the inFeatures and repUnits that contains a unique identifier for the
-                     reporting units.  A reporting unit may have multiple features, but the fields must match.
+        * *ruIDField* - a field that exists in repUnits that contains a unique identifier for the reporting units.  
+        * *ruLinkField* - a field that exists in the inFeatures that contains reporting unit IDs, linking buffered features
+                            to reporting units
         
     **Returns:**
         * *outFeatures* - output feature class 

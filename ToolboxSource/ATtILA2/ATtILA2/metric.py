@@ -455,9 +455,12 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                                                                               self.inReportingUnitFeature,
                                                                               self.bufferName,self.inBufferDistance,
                                                                               self.reportingUnitIdField,self.ruLinkField)
+                # Since we are replacing the reporting unit features with the buffered features we also need to replace
+                # the unique identifier field - which is now the ruLinkField.
+                self.reportingUnitIdField = self.ruLinkField
 
         # Create new instance of metricCalc class to contain parameters
-        splcpCalc = metricCalcSPLCP(inReportingUnitFeature, ruLinkField, inLandCoverGrid, lccFilePath,
+        splcpCalc = metricCalcSPLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
 
         # Assign class attributes unique to this module.
