@@ -603,7 +603,6 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
             del outTableRow
             del tabAreaTable
             del tabAreaTableRow
-            arcpy.AddMessage("Core/Edge Ratio calculations are complete for class: " + m)
         except:
             pass
   
@@ -709,8 +708,9 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     fieldMappings.addTable(inCensusFeature)
     [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name <> inPopField]
 
-    
-    tempCensusFeature = utils.files.nameIntermediateFile(["tempCensusFeature" + index,"FeatureClass"],cleanupList)
+    desc = arcpy.Describe(inCensusFeature)
+    tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+    tempCensusFeature = utils.files.nameIntermediateFile([tempName + index,"FeatureClass"],cleanupList)
     inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
                                                                          os.path.basename(tempCensusFeature),"",
                                                                          fieldMappings)
@@ -724,7 +724,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     inPopDensityField = utils.vector.addCalculateField(inCensusFeature,'popDens' + index,calcExpression)
     
     # Intersect the reporting units with the population features.
-    intersectOutput = utils.files.nameIntermediateFile(["intersectOutput" + index,"FeatureClass"],cleanupList)
+    intersectOutput = utils.files.nameIntermediateFile([metricConst.intersectOutputName + index,"FeatureClass"],cleanupList)
     arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
     
     # Add and populate the area field of the intersected polygons
@@ -737,7 +737,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     intPopField = utils.vector.addCalculateField(intersectOutput,'intPop',calcExpression)
     
     # Intersect the reporting units with the population features.
-    summaryTable = utils.files.nameIntermediateFile(["summaryTable" + index,'Dataset'],cleanupList)
+    summaryTable = utils.files.nameIntermediateFile([metricConst.summaryTableName + index,'Dataset'],cleanupList)
     # Sum population for each reporting unit.
        
     """ If the reportingUnitIdField field is not found, it is assumed that

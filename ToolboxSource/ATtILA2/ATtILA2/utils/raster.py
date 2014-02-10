@@ -41,7 +41,7 @@ def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inEdgeWidth=
     
     return clippedGrid
     
-def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue):
+def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue, timer):
             
     # Generate the slope X land cover grid where areas below the threshold slope are
     # set to the value 'Maximum Land Cover Class Value + 1'.
@@ -56,7 +56,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
         if v > maxValue:
             maxValue = v
 
-    AddMsg("Generating land cover above slope threshold grid...")    
+    AddMsg(timer.split() + " Generating land cover above slope threshold grid...")    
     AreaBelowThresholdValue = int(maxValue + 1)
     delimitedVALUE = arcpy.AddFieldDelimiters(SLPGrid,"VALUE")
     whereClause = delimitedVALUE+" >= " + inSlopeThresholdValue
@@ -72,7 +72,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     # In that case, the excluded land cover values are maintained in the low slope areas.
     if excludedValues:
         # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where on the land cover grid excluded values occur
-        AddMsg("Inserting EXCLUDED values into areas below slope threshold...")
+        AddMsg(timer.split() + " Inserting EXCLUDED values into areas below slope threshold...")
         stringStart = delimitedVALUE+" = "
         stringSep = " or "+delimitedVALUE+" = "
         whereExcludedClause = stringStart + stringSep.join([str(item) for item in excludedValues])
@@ -82,7 +82,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
 
 
 def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, fallBackDirectory, scratchGDBFilename, 
-                    processingCellSize_str):
+                    processingCellSize_str, timer):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
@@ -108,23 +108,23 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
             oldValNewVal.append(2)
             reclassPairs.append(oldValNewVal)
             
-    AddMsg("Step 1 of 4: Reclassing land cover grid to 3 = Class, 2 = Other, and 1 = Excluded...")
+    AddMsg(timer.split() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
 #    arcpy.BuildRasterAttributeTable_management(reclassGrid, "Overwrite")
 #    scratchName = arcpy.CreateScratchName(m+"_Reclass", "", "RasterDataset")
 #    reclassGrid.save(scratchName)
     
     # create an other grid
-    AddMsg("Step 2 of 4: Setting Class areas to Null...")
+    AddMsg(timer.split() + " Step 2 of 4: Setting Class areas to Null...")
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
     otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
 #    arcpy.BuildRasterAttributeTable_management(otherGrid, "Overwrite")
     
     # generate the edge/core/other/excluded zones grid
-    AddMsg("Step 3 of 4: Finding distance from Other...")
+    AddMsg(timer.split() + " Step 3 of 4: Finding distance from Other...")
     distGrid = EucDistance(otherGrid)
     
-    AddMsg("Step 4 of 4: Delimiting Class areas to 3 = Edge and 4 = Core...")
+    AddMsg(timer.split() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
     edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str))
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite") 

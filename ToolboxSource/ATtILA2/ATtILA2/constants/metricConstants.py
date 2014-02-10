@@ -174,13 +174,13 @@ class rdmConstants(baseMetricConstants):
     streamRoadXingsCountFieldname = "STXRD_CNT"
     xingsPerKMFieldName = "STXRD"
     rnsFieldName = "RNS"
-    roadsByReportingUnitName = ["RdsByRU","FeatureClass"]
-    streamsByReportingUnitName = ["StrByRU","FeatureClass"]
-    roadStreamMultiPoints = ["RdsXStrMP","FeatureClass"]
-    roadStreamIntersects = ["PtsOfXing","FeatureClass"]
-    roadStreamSummary = ["RdsXStrTbl","Dataset"]
-    streamBuffers = ["StrBuffers","FeatureClass"]
-    roadsNearStreams = ["RdsNrStrms","FeatureClass"]
+    roadsByReportingUnitName = [shortName+"_RdsByRU","FeatureClass"]
+    streamsByReportingUnitName = [shortName+"_StrByRU","FeatureClass"]
+    roadStreamMultiPoints = [shortName+"_RdsXStrMP","FeatureClass"]
+    roadStreamIntersects = [shortName+"_PtsOfXing","FeatureClass"]
+    roadStreamSummary = [shortName+"_RdsXStrTbl","Dataset"]
+    streamBuffers = [shortName+"_StrBuffers","FeatureClass"]
+    roadsNearStreams = [shortName+"_RdsNrStrms","FeatureClass"]
 
 class sdmConstants(baseMetricConstants):
     name = "StreamDensityMetric"
@@ -197,7 +197,7 @@ class sdmConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     areaFieldname = "AREAKM2"
     lineDensityFieldName = "STRMDENS"
-    linesByReportingUnitName = ["StrByRU","FeatureClass"]
+    linesByReportingUnitName = [shortName+"_StrByRU","FeatureClass"]
     
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
@@ -215,6 +215,8 @@ class pdmConstants(baseMetricConstants):
     areaFieldname = "AREAKM2"
     populationDensityFieldName = "POPDENS"
     populationChangeFieldName = "POPCHG"
+    intersectOutputName = shortName+"_intersectOutput"
+    summaryTableName = shortName+"_summaryTable"
     
 class mdcpConstants(baseMetricConstants):
     name = "MeanDisttoClosestPatch"
@@ -225,11 +227,11 @@ class mdcpConstants(baseMetricConstants):
     totalAreaName = "MDCP_TOTA"
     effectiveAreaName = "MDCP_EFFA"
     excludedAreaName = "MDCP_EXCA"
-    rastertoPoly = ["FinalPatchPoly","FeatureClass"]
-    rastertoPoint = ["FinalPatchCentroids", "FeatureClass"]
-    polyDissolve = ["FinalPatch_poly_diss", "FeatureClass"]
-    clipPolyDissolve =["FinalPatch_poly_diss_clip", "FeatureClass"]
-    nearTable = ["NearTable", "Dataset"]
+    rastertoPoly = [shortName+"_FinalPatchPoly","FeatureClass"]
+    rastertoPoint = [shortName+"_FinalPatchCentroids", "FeatureClass"]
+    polyDissolve = [shortName+"_FinalPatch_poly_diss", "FeatureClass"]
+    clipPolyDissolve =[shortName+"_FinalPatch_poly_diss_clip", "FeatureClass"]
+    nearTable = [shortName+"_NearTable", "Dataset"]
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [

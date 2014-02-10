@@ -152,7 +152,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         i = 0 # Flag used to create the outFeatures the first time through.
         # Create a Search cursor to iterate through the reporting units.
         Rows = arcpy.SearchCursor(repUnits,"","",unitID)
-
+        
         AddMsg("Buffering riparian features in each reporting unit")
         # For each reporting unit:
         for row in Rows:            
@@ -405,8 +405,10 @@ def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,
     are measured in map units (e.g., m of road/m of stream).
     '''
     # For RNS metric, first buffer all the streams by the desired distance
+    AddMsg("Buffering stream features...")
     arcpy.Buffer_analysis(mergedStreams,streamBuffer,bufferDist,"FULL","ROUND","ALL","#")
     # Intersect the buffered streams with the merged roads
+    AddMsg("Intersecting road features with stream buffers...")
     arcpy.Intersect_analysis([mergedRoads,streamBuffer],roadStreamBuffer,"ALL","#","INPUT")
     ## Add and calculate a length field for the new shapefile
     roadLengthFieldName = addLengthField(roadStreamBuffer)

@@ -8,6 +8,7 @@ import setupAndRestore
 import string
 from pylet import lcc
 from pylet.arcpyutil import polygons
+from pylet.arcpyutil import fields
 from pylet.arcpyutil.messages import AddMsg
 from pylet.datetimeutil import DateTimer
 
@@ -176,7 +177,8 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Clipping input land cover grid...")
-            scratchName = arcpy.CreateScratchName(os.path.basename(inLandCoverGrid)+metricConst.shortName,"","RasterDataset")
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
             AddMsg(timer.split() + " Clipping complete")
 
@@ -187,11 +189,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             def _replaceLCGrid(self):
                 # replace the inLandCoverGrid
                 self.inLandCoverGrid = utils.raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid,
-                                                                   self.inSlopeThresholdValue)
+                                                                   self.inSlopeThresholdValue,self.timer)
 
                 if self.saveIntermediates:
-                    self.scratchName = arcpy.CreateScratchName(self.metricConst.shortName+"Raster", metricConst.fieldParameters[1], 
-                                                               "RasterDataset")
+                    self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]
+                    self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
                     #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
                     AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
@@ -255,7 +257,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Buffering Reporting unit features and clipping input land cover grid...")
-            scratchName = arcpy.CreateScratchName(os.path.basename(inLandCoverGrid)+metricConst.shortName,"","RasterDataset")
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inEdgeWidth)
             AddMsg(timer.split() + " Buffering and clip complete")
         
@@ -269,11 +272,13 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     AddMsg(self.timer.split() + " Generating core and edge grid for Class: " + m)
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, os.path.dirname(outTable), 
-                                                                        globalConstants.scratchGDBFilename, processingCellSize)
+                                                                        globalConstants.scratchGDBFilename, processingCellSize,
+                                                                        self.timer)
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
                     if self.saveIntermediates:
-                        self.scratchName = arcpy.CreateScratchName(self.metricConst.shortName+"Raster", m+inEdgeWidth, "RasterDataset")
+                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
+                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                         self.inLandCoverGrid.save(self.scratchName)
                         #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
                         AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
@@ -292,9 +297,9 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                             self._value = "CATEGORY"
                             if self._tableName:
                                 self._destroyTable = False
-                                self._tableName = arcpy.CreateScratchName(self._tableName, m+inEdgeWidth, self._datasetType)
+                                self._tableName = arcpy.CreateScratchName(self._tableName+m+inEdgeWidth, "", self._datasetType)
                             else:
-                                self._tableName = arcpy.CreateScratchName(self._tempTableName, m+inEdgeWidth, self._datasetType)
+                                self._tableName = arcpy.CreateScratchName(self._tempTableName+m+inEdgeWidth, "", self._datasetType)
             
         
                             arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
@@ -337,6 +342,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     # calculate Core to Edge ratio
                     utils.calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m)
+                    AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
 
             # Create new instance of metricCalc class to contain parameters
             caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -373,8 +379,19 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         class metricCalcRLCP(metricCalc):
             """ Subclass that overrides buffering function for the RiparianLandCoverProportions calculation """
             def _replaceRUFeatures(self):
+                # check for duplicate ID entries in reportng unit feature. Perform dissolve if found
+                self.duplicateIds = fields.checkForDuplicateValues(self.inReportingUnitFeature, self.reportingUnitIdField)
+                
+                if self.duplicateIds:
+                    AddMsg("Duplicate ID values found in reporting unit feature. Forming multipart features...")
+                    # Get a unique name with full path for the output features - will default to current workspace:
+                    self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
+                    self.dissolveName = arcpy.CreateScratchName(self.namePrefix,"","FeatureClass")
+                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
+                                                                            self.reportingUnitIdField,"","MULTI_PART")
+                    
                 # Generate a default filename for the buffer feature class
-                self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
+                self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
                 # Generate the buffer area to use in the metric calculation
                 self.inReportingUnitFeature = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures,
                                                                                      self.inReportingUnitFeature,
@@ -396,6 +413,9 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         if not rlcpCalc.saveIntermediates:
             # note, this is actually deleting the buffers, not the source reporting units.
             arcpy.Delete_management(rlcpCalc.inReportingUnitFeature)
+            
+            if rlcpCalc.duplicateIds:
+                arcpy.Delete_management(rlcpCalc.dissolveName)
         
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -417,8 +437,19 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         class metricCalcSPLCP(metricCalc):
             """ Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation """
             def _replaceRUFeatures(self):
+                # check for duplicate ID entries. Perform dissolve if found
+                self.duplicateIds = fields.checkForDuplicateValues(self.inReportingUnitFeature, self.reportingUnitIdField)
+                
+                if self.duplicateIds:
+                    AddMsg("Duplicate ID values found in reporting unit feature. Forming multipart features...")
+                    # Get a unique name with full path for the output features - will default to current workspace:
+                    self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
+                    self.dissolveName = arcpy.CreateScratchName(self.namePrefix,"","FeatureClass")
+                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
+                                                                            self.reportingUnitIdField,"","MULTI_PART")
+                    
                 # Generate a default filename for the buffer feature class
-                self.bufferName = self.metricConst.shortName + self.inBufferDistance.split()[0]
+                self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
                 # Buffer the points and use the output as the new reporting units
                 self.inReportingUnitFeature = utils.vector.bufferFeaturesByID(self.inPointFeatures,
                                                                               self.inReportingUnitFeature,
@@ -431,7 +462,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
 
         # Assign class attributes unique to this module.
         splcpCalc.inPointFeatures = inPointFeatures
-        splcpCalc.inBufferDistance =  inBufferDistance
+        splcpCalc.inBufferDistance = inBufferDistance
         splcpCalc.ruLinkField = ruLinkField
 
         # Run Calculation
@@ -440,7 +471,10 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         # Clean up intermediates.  
         if not splcpCalc.saveIntermediates:
             # note, this is actually deleting the buffers, not the source reporting units.
-            arcpy.Delete_management(splcpCalc.bufferName)            
+            arcpy.Delete_management(splcpCalc.inReportingUnitFeature)
+            
+            if splcpCalc.duplicateIds:
+                arcpy.Delete_management(splcpCalc.dissolveName)
 
     except Exception, e:
         errors.standardErrorHandling(e)
@@ -534,7 +568,8 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
-            AddMsg(msg.format(env.workspace))
+            arcpy.AddMessage(msg.format(env.workspace)) 
+            #AddMsg(msg.format(env.workspace))
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -542,8 +577,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
-        AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
-        tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
+        desc = arcpy.Describe(inReportingUnitFeature)
+        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempReportingUnitFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
                                                            reportingUnitIdField,"","MULTI_PART")
 
@@ -570,8 +607,9 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # off. This is more appropriate than altering the user's input data.
         desc = arcpy.Describe(inRoadFeature)
         if desc.dataType == "ShapeFile" and desc.HasM:
-            AddMsg(timer.split() + " Creating temporary copy of stream layer")
-            tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+            tempName = "%s_%s" % (metricConst.shortName, arcpy.Describe(inRoadFeature).baseName)
+            tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+            AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature, env.workspace, os.path.basename(tempLineFeature))
 
 
@@ -606,8 +644,9 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             # off. This is more appropriate than altering the user's input data.
             desc = arcpy.Describe(inStreamFeature)
             if desc.dataType == "ShapeFile" and desc.HasM:
-                AddMsg(timer.split() + " Creating temporary copy of stream layer")
-                tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+                tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+                tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+                AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
                 inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
 
             
@@ -656,8 +695,9 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 # off. This is more appropriate than altering the user's input data.
                 desc = arcpy.Describe(inStreamFeature)
                 if desc.dataType == "ShapeFile" and desc.HasM:
-                    AddMsg(timer.split() + " Creating temporary copy of stream layer")
-                    tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+                    tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+                    tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+                    AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
                     inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
                 
                 # Get a unique name for the merged streams:
@@ -720,7 +760,8 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
-            AddMsg(msg.format(env.workspace))
+            arcpy.AddMessage(msg.format(env.workspace))
+            #AddMsg(msg.format(env.workspace))
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -728,8 +769,10 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
-        AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
-        tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
+        desc = arcpy.Describe(inReportingUnitFeature)
+        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempReportingUnitFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
                                                            reportingUnitIdField,"","MULTI_PART")
 
@@ -755,8 +798,9 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         # off. This is more appropriate than altering the user's input data.
         desc = arcpy.Describe(inLineFeature)
         if desc.dataType == "ShapeFile" and desc.HasM:
-            AddMsg(timer.split() + " Creating temporary copy of stream layer")
-            tempLineFeature = utils.files.nameIntermediateFile(["tempLineFeature","FeatureClass"],cleanupList)
+            tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+            tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+            AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
             inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, os.path.basename(tempLineFeature))
 
 
@@ -917,7 +961,8 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "\nIntermediates are stored in this directory: {0}\n"
-            AddMsg(msg.format(env.workspace))
+            arcpy.AddMessage(msg.format(env.workspace))
+            #AddMsg(msg.format(env.workspace))
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -925,8 +970,10 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
-        AddMsg(timer.split() + " Creating temporary copy of reporting unit layer")
-        tempReportingUnitFeature = utils.files.nameIntermediateFile(["tempReportingUnitFeature","FeatureClass"],cleanupList)
+        desc = arcpy.Describe(inReportingUnitFeature)
+        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempReportingUnitFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
                                                            reportingUnitIdField,"","MULTI_PART")
 
@@ -1005,7 +1052,8 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
 #        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
 #        if globalConstants.intermediateName in processed:
 #            msg = "\nIntermediates are stored in this directory: {0}\n"
-#            AddMsg(msg.format(env.workspace))
+#            arcpy.AddMessage(msg.format(env.workspace))
+#            #AddMsg(msg.format(env.workspace))
 #            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
 #        else:
 #            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -1023,7 +1071,8 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Buffering Reporting unit features and clipping input land cover grid...")
-            scratchName = arcpy.CreateScratchName(os.path.basename(inLandCoverGrid)+metricConst.shortName,"","RasterDataset")
+            namePrefix = "%s_%s" % (metricConst.shortName,os.path.basename(inLandCoverGrid))
+            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, maxSeparation)
             AddMsg(timer.split() + " Buffering and clip complete")
         
@@ -1040,7 +1089,8 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
                                                                           self.minPatchsize, processingCellSize)
             
                     if self.saveIntermediates:
-                        self.scratchName = arcpy.CreateScratchName(self.metricConst.shortName+"Raster", m, "RasterDataset")
+                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m
+                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                         self.inLandCoverGrid.save(self.scratchName)
                         #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
                         AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
@@ -1078,11 +1128,11 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
 
                     #calculate MDCP value    
                     
-                    rastoPoly = utils.files.nameIntermediateFile(metricConst.rastertoPoly,cleanupList)
-                    rastoPt = utils.files.nameIntermediateFile(metricConst.rastertoPoint, cleanupList)
-                    polyDiss = utils.files.nameIntermediateFile(metricConst.polyDissolve, cleanupList)
-                    clipPolyDiss = utils.files.nameIntermediateFile(metricConst.clipPolyDissolve, cleanupList) 
-                    nearPatchTable = utils.files.nameIntermediateFile(metricConst.nearTable, cleanupList)                    
+                    rastoPoly = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.rastertoPoly,cleanupList)
+                    rastoPt = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.rastertoPoint, cleanupList)
+                    polyDiss = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.polyDissolve, cleanupList)
+                    clipPolyDiss = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.clipPolyDissolve, cleanupList) 
+                    nearPatchTable = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.nearTable, cleanupList)                    
                     AddMsg(self.timer.split() + " Calculating Mean Distances")
                     
                     self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, os.path.dirname(outTable),
@@ -1103,7 +1153,7 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
             mdcpCalc.run()
             
             mdcpCalc.metricsBaseNameList = metricsBaseNameList
-            AddMsg("MDCP analysis has been run for landuse " + m)
+            AddMsg(timer.split() + " MDCP analysis has been run for landuse " + m)
     except Exception, e:
         errors.standardErrorHandling(e)
 
