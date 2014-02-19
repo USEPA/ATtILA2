@@ -312,7 +312,7 @@ def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalG
             pass
 
 
-def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField,lineClass="",iaField=""):
+def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField,inLengthField,lineClass="",iaField=""):
     """ Creates *outLines* that contains one multipart linear feature for each *inArea* for calculating line density
         in kilometers per square kilometer of area.
     
@@ -332,6 +332,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
         * *unitArea* - field in the areal units feature class containing area in square kilometers.
         * *outLines* - desired output linear features with full path
         * *densityField* - desired fieldname for output density field
+        * *inLengthField* - desired fieldname for output length field
         * *lineClass* - optional field in the input linear feature class containing classes of linear features.  
         * *iaField* - if total impervious area should be calculated for these lines, the desired output fieldname
         
@@ -344,7 +345,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     import vector
     
     # First perform the split/dissolve/merge on the roads
-    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,lineClass)
+    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,inLengthField,lineClass)
 
     # Next join the reporting units layer to the merged roads layer
     arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])

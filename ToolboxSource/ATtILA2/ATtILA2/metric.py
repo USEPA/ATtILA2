@@ -609,7 +609,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
         # off. This is more appropriate than altering the user's input data.
         desc = arcpy.Describe(inRoadFeature)
-        if desc.dataType == "ShapeFile" and desc.HasM:
+        if desc.HasM or desc.HasZ:
             tempName = "%s_%s" % (metricConst.shortName, arcpy.Describe(inRoadFeature).baseName)
             tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
@@ -624,6 +624,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         mergedRoads, roadLengthFieldName = utils.calculate.lineDensityCalculator(inRoadFeature,inReportingUnitFeature,
                                                                                  uIDField,unitArea,mergedRoads,
                                                                                  metricConst.roadDensityFieldName,
+                                                                                 metricConst.roadLengthFieldName,
                                                                                  roadClassField,
                                                                                  metricConst.totalImperviousAreaFieldName)
 
@@ -646,7 +647,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
             # off. This is more appropriate than altering the user's input data.
             desc = arcpy.Describe(inStreamFeature)
-            if desc.dataType == "ShapeFile" and desc.HasM:
+            if desc.HasM or desc.HasZ:
                 tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
                 tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
@@ -662,7 +663,8 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                                                                                          inReportingUnitFeature,
                                                                                          uIDField,
                                                                                          unitArea,mergedStreams,
-                                                                                         metricConst.streamDensityFieldName)
+                                                                                         metricConst.streamDensityFieldName,
+                                                                                         metricConst.streamLengthFieldName)
 
             # Get a unique name for the road/stream intersections:
             roadStreamMultiPoints = utils.files.nameIntermediateFile(metricConst.roadStreamMultiPoints,cleanupList)
@@ -697,7 +699,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
                 # off. This is more appropriate than altering the user's input data.
                 desc = arcpy.Describe(inStreamFeature)
-                if desc.dataType == "ShapeFile" and desc.HasM:
+                if desc.HasM or desc.HasZ:
                     tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
                     tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                     AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
@@ -709,14 +711,15 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 mergedStreams, streamLengthFieldName = utils.calculate.lineDensityCalculator(inStreamFeature,
                                                                                              inReportingUnitFeature,
                                                                                              uIDField,unitArea,mergedStreams,
-                                                                                             metricConst.streamDensityFieldName)
+                                                                                             metricConst.streamDensityFieldName,
+                                                                                             metricConst.streamLengthFieldName)
             # Get a unique name for the buffered streams:
             streamBuffer = utils.files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
             # Get a unique name for the road/stream intersections:
             roadsNearStreams = utils.files.nameIntermediateFile(metricConst.roadsNearStreams,cleanupList)
 
             utils.vector.roadsNearStreams(mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName,
-                                          uIDField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName)
+                                          uIDField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName,metricConst.roadLengthFieldName)
             # Transfer values to final output table.
             AddMsg(timer.split() + " Compiling calculated values into output table")
             fromFields = [metricConst.rnsFieldName]
@@ -796,11 +799,11 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                 #     is used instead, this is not necessary.
                 #cleanupList.append((arcpy.DeleteField_management,(inReportingUnitFeature,unitArea)))
 
-        # If necessary, create a copy of the stream feature class to remove M values.  The env.outputMFlag will work
-        # for most datasets except for shapefiles with M and Z values. The Z value will keep the M value from being stripped
-        # off. This is more appropriate than altering the user's input data.
+        # If necessary, create a copy of the stream feature class to remove M values.  The env.outputMFlag should work
+        # for most datasets except for shapefiles with M and Z values, but doesn't. The Z value will keep the M value 
+        # from being stripped off for several data types.
         desc = arcpy.Describe(inLineFeature)
-        if desc.dataType == "ShapeFile" and desc.HasM:
+        if desc.HasM or desc.HasZ:
             tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
             tempLineFeature = utils.files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
@@ -815,6 +818,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         mergedInLines, lineLengthFieldName = utils.calculate.lineDensityCalculator(inLineFeature,inReportingUnitFeature,
                                                                                  uIDField,unitArea,mergedInLines,
                                                                                  metricConst.lineDensityFieldName,
+                                                                                 metricConst.lineLengthFieldName,
                                                                                  lineCategoryField)
 
         # Build and populate final output table.

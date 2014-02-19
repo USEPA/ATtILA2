@@ -169,9 +169,11 @@ class rdmConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     areaFieldname = "AREAKM2"
     roadDensityFieldName = "RDDENS"
+    roadLengthFieldName = "RDKM"
     streamDensityFieldName = "STRMDENS"
-    totalImperviousAreaFieldName = "PCTIA_RD"
-    streamRoadXingsCountFieldname = "STXRD_CNT"
+    streamLengthFieldName = "STRMKM"
+    totalImperviousAreaFieldName = "RDTIA"
+    streamRoadXingsCountFieldname = "XCNT"
     xingsPerKMFieldName = "STXRD"
     rnsFieldName = "RNS"
     roadsByReportingUnitName = [shortName+"_RdsByRU","FeatureClass"]
@@ -196,6 +198,7 @@ class sdmConstants(baseMetricConstants):
     qaCheckFieldParameters = []
     fieldOverrideKey = shortName + gc.fieldOverrideName
     areaFieldname = "AREAKM2"
+    lineLengthFieldName = "STRMKM"
     lineDensityFieldName = "STRMDENS"
     linesByReportingUnitName = [shortName+"_StrByRU","FeatureClass"]
     
