@@ -551,7 +551,7 @@ def getClassFieldName(fieldName,classVal,table):
     # Build a test fieldname
     testFieldName = fieldName + classVal
     # Run the test fieldname through ESRI's fieldname validator
-    validFieldName = arcpy.ValidateFieldName(testFieldName, table)
+    validFieldName = arcpy.ValidateFieldName(testFieldName, arcpy.Describe(table).path)
     # if the validator shortened the field
     if len(testFieldName)>len(validFieldName):
         # figure out how much needs to be trimmed

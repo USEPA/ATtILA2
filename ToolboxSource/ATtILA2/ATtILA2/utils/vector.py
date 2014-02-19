@@ -5,7 +5,6 @@
 import arcpy, pylet
 from pylet.arcpyutil.messages import AddMsg
 from pylet.arcpyutil.fields import valueDelimiter
-from ATtILA2 import utils
 
 def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -343,7 +342,7 @@ def splitDissolveMerge_old(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     lengthFieldName = addLengthField(mergedLines)
     return mergedLines, lengthFieldName
 
-def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass=''):
+def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,inLengthField,lineClass=''):
     '''This function performs a intersection and dissolve function on a set of line features.
     **Description:**
         This function intersects the representative units with line features, clipping lines at unit boundaries and 
@@ -352,6 +351,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass=''):
         * *lines* - the input line feature class
         * *repUnits* - the input representative areal units feature class that will be used to split the lines
         * *uIDField* - the ID field of the representative areal units feature class.  Each dissolved line feature will be assigned the respective uID
+        * *inLengthField* - desired fieldname base for output length field
         * *lineClass* - optional field containing class values for the line feature class.  these classes are preserved through the split/dissolve/merge process
         * *mergedLines* - name of the output feature class.
     **Returns:**
@@ -369,7 +369,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,lineClass=''):
     
     arcpy.Delete_management(intersection)
     ## Add and calculate a length field for the new shapefile
-    lengthFieldName = addLengthField(mergedLines)
+    lengthFieldName = addLengthField(mergedLines,inLengthField)
     return mergedLines, lengthFieldName
 
 def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,
@@ -400,7 +400,7 @@ def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadS
     calcExpression = "!FREQUENCY!/!" + streamLengthFieldName + "!"    
     addCalculateField(roadStreamSummary,xingsPerKMFieldName,calcExpression)
 
-def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,ruID,streamBuffer,roadStreamBuffer,rnsFieldName):
+def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,ruID,streamBuffer,roadStreamBuffer,rnsFieldName,inLengthField):
     '''This function calculates roads near streams by first buffering a streams layer by the desired distance
     and then intersecting that buffer with a roads feature class.  This metric measures the total 
     length of roads within the buffer distance divided by the total length of stream in the reporting unit, both lengths 
@@ -413,7 +413,7 @@ def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,
     AddMsg("Intersecting road features with stream buffers...")
     arcpy.Intersect_analysis([mergedRoads,streamBuffer],roadStreamBuffer,"ALL","#","INPUT")
     ## Add and calculate a length field for the new shapefile
-    roadLengthFieldName = addLengthField(roadStreamBuffer)
+    roadLengthFieldName = addLengthField(roadStreamBuffer,inLengthField)
     
     # Next join the merged streams layer to the roads/streambuffer intersection layer
     arcpy.JoinField_management(roadStreamBuffer, ruID.name, mergedStreams, ruID.name, [streamLengthFieldName])
@@ -440,20 +440,22 @@ def addAreaField(inAreaFeatures, areaFieldName):
     areaFieldName = addCalculateField(inAreaFeatures,areaFieldName,calcExpression)
     return areaFieldName    
 
-def addLengthField(inLineFeatures):
+def addLengthField(inLineFeatures,lengthFieldName):
     '''This function adds and populates a length field for the input line feature class
     **Description:**
         This function checks for the existence of a field containing line area in kilometers and if it does
         not exist, adds and populates it appropriate.
     **Arguments:**
-        * *inLineFeatures* - the input feature class that will receive the field.     
+        * *inLineFeatures* - the input feature class that will receive the field. 
+        * *lengthFieldName* - the desired fieldname base for the output field    
     **Returns:**
         * *lengthFieldName* - validated fieldname      
     '''
     # Get a describe object
     lineDescription = arcpy.Describe(inLineFeatures)
     # Set a default for the length fieldName
-    lengthFieldName = "LenKM" + lineDescription.baseName
+    #lengthFieldName = "LenKM" + lineDescription.baseName
+    
     # Set up the calculation expression for length in kilometers
     calcExpression = "!{0}.LENGTH@KILOMETERS!".format(lineDescription.shapeFieldName)
     lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,calcExpression)
@@ -474,7 +476,8 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
         * *fieldName* - validated fieldname      
     '''
     # Validate the desired field name for the dataset
-    fieldName = arcpy.ValidateFieldName(fieldName, inFeatures)
+    fieldName = arcpy.ValidateFieldName(fieldName, arcpy.Describe(inFeatures).path)
+    
     # Check for existence of field.
     fieldList = arcpy.ListFields(inFeatures,fieldName)
     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
