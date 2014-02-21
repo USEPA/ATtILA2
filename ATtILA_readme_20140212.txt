@@ -1,0 +1,128 @@
+===========================================================================================
+Analytical Tools Interface for Landscape Assessments for ArcGIS (ATtILA for ArcGIS) ReadMe
+===========================================================================================
+
+**-**-2014
+
+This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see the manual located in \ATtILA\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm.
+
+---------------
+What is ATtILA?
+---------------
+
+ATtILA for ArcGIS is an Esri ArcGIS toolbox that allows users to easily calculate many common landscape metrics. GIS expertise is not required, but some experience with ArcGIS is recommended. Three metric groups (toolsets) are currently included in ATtILA:  Human Stressors, Landscape Characteristics, and Riparian Characteristics. ATtILA for ArcGIS is written using the Python programming language and is designed to accommodate spatial data from a variety of sources.
+
+-----------------------
+???Copyright and Licensing???
+-----------------------
+
+
+------------------
+Installing ATtILA
+------------------
+
+This README provides basic information on installing ATtILA for ArcGIS. For more detailed instructions on installing and using ATtILA, please see the manual located in \ATtILA\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm. New users should read through the manual at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS processes.
+
+REQUIREMENTS:
+-------------
+
+ATtILA for ArcGIS requires ArcGIS 10.0, service pack 4 or later and the Spatial Analyst extension.  ATtILA for ArcGIS has not yet been tested on ArcGIS 10.1 or later versions.
+
+INSTALLATION:
+------------
+
+1. Download the ATtILA for ArcGIS distribution zip file to a safe location, such as a Downloads directory.
+
+2. Extract the contents of the ATtILA.zip file to a location where you commonly store personal Toolboxes, such as your ArcGIS directory under MyDocuments.  Ensure the ATtILA 10_0.tbx file and the ToolboxSource folder are at the same directory level. ATILA for ArcGIS's directory structure is illustrated below:
+
+C:\Destination Folder\
+|--ToolboxSource\
+|--ATtILA 10_0.tbx
+|--ATtILA.zip
+
+OR
+
+C:\Destination Folder\
+-ToolboxSource\
+-ATtILA 10_0.tbx
+-ATtILA.zip
+
+OR
+
+C:\Destination Folder\
+->ToolboxSource\
+->ATtILA 10_0.tbx
+->ATtILA.zip
+
+OR
+
+-C:\Destination Folder\
+     -ToolboxSource\
+     -ATtILA 10_0.tbx
+     -ATtILA.zip
+
+3. Start ArcGIS ArcCatalog or ArcMap.  Open the ArcToolbox window, right click on ArcToolbox, and click on Add Toolbox. 
+	
+4. Navigate to Attila 10_0.tbx, select it and click Open.
+
+5. Check to see if the toolbox installed correctly, i.e., open Toolbox to see tools contained within.
+ 
+-ATtILA Tools
+    -Human Stressors
+        -Land Cover Coefficient Calculator
+        -Population Density Metrics
+        -Road Density Metrics
+    -Landscape Characteristics
+        -Core and Edge Metrics
+        -Land Cover Diversity
+        -Land Cover on Slope Proportions
+        -Stream Density Metrics
+    -Riparian Characteristics
+        -Riparian Land Cover Proportions
+        -Sample Point Land Cover Proportions
+        -Stream Density Metric
+    -Utilities
+        -Identify Overlapping Polygons
+    -Create or Modify Land Cover Classification (.xml) File
+
+NOTE: When installing ATtILA for ArcGIS using ArcCatalog, it may be necessary to restart ArcMap before the ATtILA for ArcGIS toolbox can be accessed from the ArcToolbox window within ArcMap. 
+
+NOTE: If installing ATtILA for ArcGIS to the ArcToolbox in ArcMap, you can either save the mxd to make the ATtILA for ArcGIS toolbox available for future sessions with the same map document, or right-click on ArcToolbox and select 'Save Settings' > 'To Default' to make the ATtILA for ArcGIS toolbox available from any ArcMap document. For more details on using ArcToolbox, search for "Using the ArcToolbox window" in ArcGIS's help documents.
+
+-------------
+Bug Reporting
+-------------
+
+Please report bugs and forward comments to: LEBProjects@epa.gov and include “ATtILA” in the subject line.
+
+----------------
+Acknowledgements
+----------------
+
+Programmers:
+-----------
+Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (EPA), and Torrin Hultgren (Innovate!, Inc.), with special assistance from Ellen D'Amico (Dynamac Corporation), BaoHong Ji (Innovate!, Inc.), and Doug Browning (EPA Student Services Contractor).
+
+David Gottlieb (EPA Student Services Contractor) wrote the code for the Land Cover Coding Editor.
+
+The original ATtILA ArcView extension tool was written in Avenue code by Don Ebert and Tim Wade with assistance from Dennis Yankee (Tennessee Valley Authority, Public Power Institute) who wrote code for the PCTIA_RD metric.
+
+The following programmers were not directly involved with the project, but gave permission for their code to be incorporated into the original of ATtILA and we greatly appreciate their generosity:
+
+-Laine, Jarko. 1998. Intersec Script, Novo.
+-Eichenlaub, Bill. 1998. Profiler Script (Version 1.0), National Park Service (http://arcscripts.esri.com/details.asp?dbid=11096).
+-O’Malley, Kevin. 1999. Two Theme Analyst Extension, http://arcscripts.esri.com/details.asp?dbid=10653
+-DeLaune, Mike. 2003. XTools Extension, Oregon Department of Forestry (http://arcscripts.esri.com/details.asp?dbid=11526).
+-Martin, Eugene. 1999. Spatial.AlignedGridExtract Script, University of Washington. http://arcscripts.esri.com/details.asp?dbid=10759
+-Fox, Timothy J. 1998. Nearest Feature Analysis Tool Script, USGS Upper Midwest Environmental Science Center. http://arcscripts.esri.com/details.asp?dbid=11234
+-Cosmas, Tom. 1999. Table.RenameField Script, New Jersey Department of Environmental Protection. (http://arcscripts.esri.com/details.asp?dbid=11402)
+-Schultz, Ron. 2003. Bearing extension (http://arcscripts.esri.com/details.asp?dbid=10310). 
+-Jenness, Jeff. 2005. Distance/Azimuth Tools (Version 1.4b), Jenness Enterprises (http://arcscripts.esri.com/details.asp?dbid=13239).
+
+
+Help Files:
+-----------
+Deborah Chaloud (EPA), Megan Culler (EPA Student Services Contractor), Steven Jett (Innovate!, Inc.), Caroline Erickson (EPA) and Bob Ohman (EPA Senior Environmental Employment Program) assisted with the help files.
+
+Other Contributors:
+Rose Marie Moore (EPA) helped with coordination and planning of the project. 
