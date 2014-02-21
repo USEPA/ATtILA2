@@ -16,7 +16,7 @@ import arcpy
 def main(_argv):
       
     currentFolderPath = os.path.dirname(__file__)
-    binFolderName = "dist"
+    binFolderName = "bin"
     exeName = r"LCCEditor.pyw" 
     startMsg = "\nThe full path to the executable that will be launched:"
     indentMsg = "    "
