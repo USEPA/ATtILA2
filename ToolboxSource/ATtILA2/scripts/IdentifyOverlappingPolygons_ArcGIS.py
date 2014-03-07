@@ -12,7 +12,7 @@ overlaplist = []
 flist = []
 nonoverlapGroupDict = {}
 inputArguments = parameters.getParametersAsText([0])
-arcpy.AddMessage(inputArguments)
+# arcpy.AddMessage(inputArguments)
 inputLayer = inputArguments[0]
 outputLoc = inputArguments[1]
 checkOnly = inputArguments[2]

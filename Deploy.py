@@ -74,6 +74,7 @@ def main(_argv):
     
     outputDir = 'ATtILA_Deployment'
     toolbox = 'ATtILA 10_0.tbx'
+    readme = 'README.txt'
     tbSource = 'ToolboxSource'
     pylet = '../pylet'
     outputZip = 'ATtILA_'+dateStr+'.zip'
@@ -88,6 +89,7 @@ def main(_argv):
     
     # Copy the necessary files and folders to our output directory.
     shutil.copy2(toolbox,outputDir)
+    shutil.copy2(readme,outputDir)
     copyFolder(tbSource,outputDir,ignoreFiles)
     copyFolder(pylet,os.path.join(outputDir,tbSource),ignoreFiles)
     
