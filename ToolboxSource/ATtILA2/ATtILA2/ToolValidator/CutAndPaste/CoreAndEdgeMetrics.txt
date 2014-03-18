@@ -19,4 +19,4 @@ class ToolValidator (ATtILA2.ToolValidator.caemToolValidator):
     outTableIndex = 7     
     processingCellSizeIndex = 8 
     snapRasterIndex = 9 
-    srcDirName = sourceName
+    srcDirName = srcDirPath

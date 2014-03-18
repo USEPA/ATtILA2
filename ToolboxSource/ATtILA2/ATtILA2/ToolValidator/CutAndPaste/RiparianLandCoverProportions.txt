@@ -18,6 +18,6 @@ class ToolValidator (ATtILA2.ToolValidator.rlcpToolValidator):
     processingCellSizeIndex = 9 
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 
-    srcDirName = sourceName
+    srcDirName = srcDirPath
     inMultiFeatureIndex = 6
     inDistanceIndex = 7

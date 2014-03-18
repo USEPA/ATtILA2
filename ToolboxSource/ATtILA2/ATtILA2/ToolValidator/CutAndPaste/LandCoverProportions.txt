@@ -18,4 +18,4 @@ class ToolValidator (ATtILA2.ToolValidator.lcpToolValidator):
     outTableIndex = 6     
     processingCellSizeIndex = 7 
     snapRasterIndex = 8 
-    srcDirName = sourceName
+    srcDirName = srcDirPath

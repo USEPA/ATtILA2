@@ -12,7 +12,7 @@ class ToolValidator (ATtILA2.ToolValidator.pdmToolValidator):
     " Class for validating parameters "
 
     inTableIndex = 0
-    srcDirName = sourceName
+    srcDirName = srcDirPath
     inVector2Index = 2
     inVector3Index = 6
     outTableIndex = 4

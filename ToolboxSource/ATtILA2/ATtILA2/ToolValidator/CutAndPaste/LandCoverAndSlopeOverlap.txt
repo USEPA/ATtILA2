@@ -18,7 +18,7 @@ class ToolValidator (ATtILA2.ToolValidator.lcospToolValidator):
     processingCellSizeIndex = 9 
     snapRasterIndex = 10 
     optionalFieldsIndex = 11 
-    srcDirName = sourceName
+    srcDirName = srcDirPath
     inRaster2Index = 6
 
     

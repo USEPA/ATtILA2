@@ -8,7 +8,6 @@ import arcpy
 import os
 from xml.dom.minidom import parse
 from glob import glob 
-import __main__
 from ATtILA2.constants import globalConstants
 from ATtILA2.constants import validatorConstants
 import pylet.lcc.constants as lccConstants
@@ -70,7 +69,7 @@ class ProportionsValidator(object):
     inDistanceIndex = 0
         
     # Additional local variables
-    srcDirName = validatorConstants.tbxSourceFolderName
+    srcDirName = ""
     
     # Metric Specific
     filterList = []
@@ -146,13 +145,8 @@ class ProportionsValidator(object):
 
     def initializeParameters(self):
         """ ESRI - Initialize parameters"""
-        absPath = os.path.dirname(os.path.abspath(getattr(__main__,'__file__','__main__.py')));
-        
         # Populate predefined LCC dropdown
-        #parentDir = os.path.dirname( absPath.split("#")[0])
-        parentDir = absPath
-        
-        self.srcDirPath = os.path.join(parentDir, self.srcDirName, )
+        self.srcDirPath = self.srcDirName
         self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*" + self.lccFileExtension)
         
         filterList = []
@@ -508,7 +502,7 @@ class NoLccFileValidator(object):
     checkboxInParameters = {}
     
     # Additional local variables
-    srcDirName = validatorConstants.tbxSourceFolderName
+    srcDirName = ""
     
     # Metric Specific
     filterList = []

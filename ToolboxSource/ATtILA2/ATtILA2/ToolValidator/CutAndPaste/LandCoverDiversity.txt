@@ -17,4 +17,4 @@ class ToolValidator (ATtILA2.ToolValidator.lcdToolValidator):
     outTableIndex = 3
     processingCellSizeIndex = 4 
     snapRasterIndex = 5
-    srcDirName = sourceName
+    srcDirName = srcDirPath
