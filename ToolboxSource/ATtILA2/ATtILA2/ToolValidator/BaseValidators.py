@@ -146,8 +146,7 @@ class ProportionsValidator(object):
     def initializeParameters(self):
         """ ESRI - Initialize parameters"""
         # Populate predefined LCC dropdown
-        self.srcDirPath = self.srcDirName
-        self.lccFileDirSearch = os.path.join(self.srcDirPath, self.lccFileDirName, "*" + self.lccFileExtension)
+        self.lccFileDirSearch = os.path.join(self.srcDirName, self.lccFileDirName, "*" + self.lccFileExtension)
         
         filterList = []
         self.lccLookup = {}
