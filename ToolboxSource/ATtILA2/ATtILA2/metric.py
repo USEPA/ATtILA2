@@ -35,7 +35,7 @@ class metricCalc:
 
     # Initialization
     def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst):
+              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, ignoreHighest=False):
         self.timer = DateTimer()
         AddMsg(self.timer.start() + " Setting up environment variables")
         
@@ -61,6 +61,7 @@ class metricCalc:
         self.reportingUnitIdField = reportingUnitIdField
         self.metricConst = metricConst
         self.inLandCoverGrid = inLandCoverGrid
+        self.ignoreHighest = ignoreHighest
 
     def _replaceLCGrid(self):
         # Placeholder for internal function to replace the landcover grid.  Several metric Calculations require this step, but others skip it.
@@ -76,7 +77,7 @@ class metricCalc:
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         utils.settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict)
         # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj)
+        utils.settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj, self.ignoreHighest)
         # alert user if the land cover grid cells are not square (default to size along x axis)
         utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
         # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
@@ -198,9 +199,12 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                     #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
                     AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
                     
+        # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
+        ignoreHighest = True
+        
         # Create new instance of metricCalc class to contain parameters
         lcspCalc = metricCalcLCOSP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, ignoreHighest)
 
         lcspCalc.inSlopeGrid = inSlopeGrid
         lcspCalc.inSlopeThresholdValue = inSlopeThresholdValue
@@ -240,8 +244,12 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        
+        # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
+        ignoreHighest = False
+        
         # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 

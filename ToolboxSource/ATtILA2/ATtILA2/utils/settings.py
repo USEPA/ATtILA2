@@ -49,10 +49,14 @@ def getIdOutField(inFeature, inField):
     return (newField)
 
 
-def checkGridValuesInLCC(inLandCoverGrid, lccObj):
+def checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest):
     """ Checks input grid values. Warns user if values are undefined in LCC XML file. """
 
     gridValuesList = arcpyutil.raster.getRasterValues(inLandCoverGrid)
+    
+    if ignoreHighest:
+        gridValuesList.sort()
+        gridValuesList = gridValuesList[:-1]
     
     undefinedValues = [aVal for aVal in gridValuesList if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
     if undefinedValues:
