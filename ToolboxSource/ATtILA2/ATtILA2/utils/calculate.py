@@ -448,6 +448,7 @@ def getDiversityIndices(tabAreaDict, totalArea):
     pSum = 0
     S = 0
     C = 0
+    Hprime = 0
 
     for i in tabAreaDict.values():
         if i >0:
@@ -464,7 +465,8 @@ def getDiversityIndices(tabAreaDict, totalArea):
     H = pSum * -1
     
     #Calculate Shannon-Weiner Diversity equation (H prime)
-    Hprime = H/math.log(S)
+    if S > 1:
+        Hprime = H/math.log(S)
     
     #Create Results tuple to be reported out
     diversityIndices = (H, Hprime, S, C)
