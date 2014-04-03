@@ -682,7 +682,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             roadStreamSummary = utils.files.nameIntermediateFile(metricConst.roadStreamSummary,cleanupList)
             
             # Perform the roads/streams intersection and calculate the number of crossings and crossings per km
-            utils.vector.findIntersections(mergedRoads,mergedStreams,uIDField,roadStreamMultiPoints,
+#             utils.vector.findIntersections(mergedRoads,mergedStreams,uIDField,roadStreamMultiPoints,
+#                                            roadStreamIntersects,roadStreamSummary,streamLengthFieldName,
+#                                            metricConst.xingsPerKMFieldName,roadClassField)
+            utils.vector.findIntersections(mergedRoads,inStreamFeature,mergedStreams,uIDField,roadStreamMultiPoints,
                                            roadStreamIntersects,roadStreamSummary,streamLengthFieldName,
                                            metricConst.xingsPerKMFieldName,roadClassField)
             
