@@ -190,10 +190,23 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 bufferList.append(bufferResult)               
                 
                 j += 1 # increment counter
-                
+               
             if len(inFeaturesList) > 1:
-                # Union all of the buffered features
-                unionBuffer = arcpy.Union_analysis(bufferList,"in_memory/union_buffer","ONLY_FID")
+                try:
+                    # Union all of the buffered features
+                    unionBuffer = arcpy.Union_analysis(bufferList,"in_memory/union_buffer","ONLY_FID")
+                except:
+                    arcpy.AddMessage("Bad Union")
+                    badList = []
+                    for aResult in bufferList:
+                        badBuffer = arcpy.FeatureClassToFeatureClass_conversion(aResult,"%scratchworkspace%","badBuffer")
+                        # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+                        arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+                        badList.append(badBuffer)
+                        unionBuffer = arcpy.Union_analysis(badList,"in_memory/union_buffer","ONLY_FID")
+                
+                    arcpy.Delete_management(badBuffer)
+                    
                 # Dissolve the union layer
                 bufferResult = arcpy.Dissolve_management(unionBuffer,"in_memory/dissolve_union")
             else:
@@ -201,11 +214,26 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
 
             # If the input features are polygons, we need to remove the interior polygons from the buffer areas.
             # Investigate alternate approach (with license check) of "OUTSIDE_ONLY" option in Buffer_analysis
-            for eraseFeatures in eraseList:
-                
-                newBufferResult = arcpy.Erase_analysis(bufferResult,eraseFeatures,"in_memory/erase_buffer")
-                arcpy.Delete_management(bufferResult)
-                bufferResult = newBufferResult
+            try:
+                for eraseFeatures in eraseList:
+                    newBufferResult = arcpy.Erase_analysis(bufferResult,eraseFeatures,"in_memory/erase_buffer")
+                    arcpy.Delete_management(bufferResult)
+                    bufferResult = newBufferResult
+            except:
+                for eraseFeatures in eraseList:
+                    badEraseFeatures = arcpy.FeatureClassToFeatureClass_conversion(eraseFeatures,"%scratchworkspace%","badEraseFeatures")
+                    badBuffer = arcpy.FeatureClassToFeatureClass_conversion(bufferResult,"%scratchworkspace%","badBuffer")
+                    # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+                    arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+                    arcpy.RepairGeometry_management(badEraseFeatures,"DELETE_NULL")
+                    arcpy.AddMessage("repaired 2")                  
+                    newBufferResult = arcpy.Erase_analysis(badBuffer,badEraseFeatures,"in_memory/erase_buffer")
+                    arcpy.Delete_management(bufferResult)
+                    bufferResult = newBufferResult
+                    
+                    arcpy.Delete_management(badBuffer)
+                    arcpy.Delete_management(badEraseFeatures)
+                                  
             
                 
             # Add a field to this output that will contain the reporting unit ID so that when we merge the buffers
@@ -372,7 +400,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,inLengthField,lineCla
     lengthFieldName = addLengthField(mergedLines,inLengthField)
     return mergedLines, lengthFieldName
 
-def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,
+def findIntersections(mergedRoads,inStreamFeature,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,
                       streamLengthFieldName,xingsPerKMFieldName,roadClass=""):
     '''This function performs an intersection analysis on two input line feature classes.  The desired output is 
     a count of the number of intersections per reporting unit ID (both line feature classes already contain this ID).  
@@ -382,7 +410,7 @@ def findIntersections(mergedRoads,mergedStreams,ruID,roadStreamMultiPoints,roadS
 
     # Intersect the roads and the streams - the output is a multipoint feature class with one feature per combination 
     # of road class and streams per reporting unit
-    arcpy.Intersect_analysis([mergedRoads,mergedStreams],roadStreamMultiPoints,"ALL","#","POINT")
+    arcpy.Intersect_analysis([mergedRoads,inStreamFeature],roadStreamMultiPoints,"ALL","#","POINT")
     
     # Because we want a count of individual intersection features, break apart the multipoints into single points
     arcpy.MultipartToSinglepart_management(roadStreamMultiPoints,roadStreamIntersects)
