@@ -102,7 +102,7 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         except:
             pass
 
-def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID):
+def bufferFeaturesByIntersect_old(inFeatures, repUnits, outFeatures, bufferDist, unitID):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
         distance of a layer - the buffered features may be any geometry
     **Description:**
@@ -288,7 +288,52 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         except:
             pass 
 
-
+def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID):
+    """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
+        distance of a layer - the buffered features may be any geometry
+    **Description:**
+        This tool intersects reporting units with buffered features that fall within the reporting unit. The buffer size (in map 
+        units) is determined by the user. A new feature class is created that can be used as a reporting unit theme to 
+        calculate metrics with the buffered areas. It is useful for generating metrics near streams that fall within the
+        reporting unit.
+        
+        This tool makes the assumption that there is no attribute that links the features to be buffered with the 
+        reporting units.  Because of this, it cannot buffer all the features at once - it must iterate through each
+        reporting unit, first clipping features to the reporting unit boundaries, then buffering only those features
+        and then finally clipping the buffers again to the reporting unit.  If the features can be linked to reporting
+        units via an attribute, it should be faster to use the bufferFeaturesByID tool instead.
+    **Arguments:**
+        * *inFeatures* - one or more feature class that will be buffered
+        * *repUnits* - reporting units that will be used for the clip
+        * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
+        * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
+        * *unitID* - a field that exists in repUnits that contains a unique identifier for the reporting units.  
+        
+    **Returns:**
+        * *outFeatures* - output feature class 
+    """
+    try:
+        outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
+        
+       
+        # Start by intersecting the input features and the reporting units 
+        firstIntersectionName = arcpy.CreateScratchName("firstIntersection","","FeatureClass")
+        firstIntersection = arcpy.Intersect_analysis([repUnits, inFeatures],firstIntersectionName,"ALL","","INPUT")
+        
+        # Dissolve the intersection into discrete unites by the reporting unit ID. 
+        firstDissolveName = arcpy.CreateScratchName("firstDissolve","","FeatureClass")
+        arcpy.Dissolve_management(firstIntersection,firstDissolveName,unitID,"","MULTI_PART","DISSOLVE_LINES")
+        
+        # Buffer the dissolved features
+        
+        # Intersect the buffers with the reporting units
+        
+        # Select only those intersection polygons that have matching reporting unit IDs
+        
+        # Dissolve those
+        
+    finally:
+        pass
 
 def splitDissolveMerge_old(lines,repUnits,uIDField,mergedLines,lineClass='#'):
     '''This function performs a split, dissolve, and merge function on a set of line features.
