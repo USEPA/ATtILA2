@@ -196,7 +196,6 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     # Union all of the buffered features
                     unionBuffer = arcpy.Union_analysis(bufferList,"in_memory/union_buffer","ONLY_FID")
                 except:
-                    arcpy.AddMessage("Bad Union")
                     badList = []
                     for aResult in bufferList:
                         badBuffer = arcpy.FeatureClassToFeatureClass_conversion(aResult,"%scratchworkspace%","badBuffer")
@@ -226,7 +225,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
                     arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
                     arcpy.RepairGeometry_management(badEraseFeatures,"DELETE_NULL")
-                    arcpy.AddMessage("repaired 2")                  
+                    
                     newBufferResult = arcpy.Erase_analysis(badBuffer,badEraseFeatures,"in_memory/erase_buffer")
                     arcpy.Delete_management(bufferResult)
                     bufferResult = newBufferResult
@@ -428,7 +427,7 @@ def findIntersections(mergedRoads,inStreamFeature,mergedStreams,ruID,roadStreamM
     calcExpression = "!FREQUENCY!/!" + streamLengthFieldName + "!"    
     addCalculateField(roadStreamSummary,xingsPerKMFieldName,calcExpression)
 
-def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,ruID,streamBuffer,roadStreamBuffer,rnsFieldName,inLengthField):
+def roadsNearStreams(inStreamFeature, mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,ruID,streamBuffer,tmpRoadsNearStreams,roadStreamBuffer,rnsFieldName,inLengthField,roadClass=""):
     '''This function calculates roads near streams by first buffering a streams layer by the desired distance
     and then intersecting that buffer with a roads feature class.  This metric measures the total 
     length of roads within the buffer distance divided by the total length of stream in the reporting unit, both lengths 
@@ -436,11 +435,23 @@ def roadsNearStreams(mergedStreams,bufferDist,mergedRoads,streamLengthFieldName,
     '''
     # For RNS metric, first buffer all the streams by the desired distance
     AddMsg("Buffering stream features...")
-    arcpy.Buffer_analysis(mergedStreams,streamBuffer,bufferDist,"FULL","ROUND","ALL","#")
+    arcpy.Buffer_analysis(inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND","ALL","#")
     # Intersect the buffered streams with the merged roads
     AddMsg("Intersecting road features with stream buffers...")
-    arcpy.Intersect_analysis([mergedRoads,streamBuffer],roadStreamBuffer,"ALL","#","INPUT")
-    ## Add and calculate a length field for the new shapefile
+#    arcpy.Intersect_analysis([mergedRoads,streamBuffer],roadStreamBuffer,"ALL","#","INPUT")
+    intersection = arcpy.Intersect_analysis([mergedRoads, streamBuffer],tmpRoadsNearStreams,"ALL","#","INPUT")
+    
+    # if overlapping polygons exist in reporting unit theme, the above intersection may result in several rows of data for a given reporting unit.
+    # perform a dissolve to get a 1 to 1 relationship with input to output. Include the class field if provided.
+    arcpy.AddMessage("Dissolving intersection result and calculating values...")
+    dissolveFields = ruID.name
+    if roadClass <> '':
+        dissolveFields = [ruID.name, roadClass] 
+    # Dissolve the intersected lines on the unit ID (and optional line class) fields.
+    arcpy.Dissolve_management(intersection,roadStreamBuffer,dissolveFields, "#","MULTI_PART","DISSOLVE_LINES")
+    arcpy.Delete_management(intersection)
+    
+    # Add and calculate a length field for the new shapefile
     roadLengthFieldName = addLengthField(roadStreamBuffer,inLengthField)
     
     # Next join the merged streams layer to the roads/streambuffer intersection layer

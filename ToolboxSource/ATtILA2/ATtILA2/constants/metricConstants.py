@@ -183,6 +183,7 @@ class rdmConstants(baseMetricConstants):
     roadStreamSummary = [shortName+"_RdsXStrTbl","Dataset"]
     streamBuffers = [shortName+"_StrBuffers","FeatureClass"]
     roadsNearStreams = [shortName+"_RdsNrStrms","FeatureClass"]
+    tmpRoadsNearStreams = [shortName+"_TmpRdsNrStrms","FeatureClass"]
 
 class sdmConstants(baseMetricConstants):
     name = "StreamDensityMetric"

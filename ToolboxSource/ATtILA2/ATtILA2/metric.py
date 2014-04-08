@@ -682,9 +682,6 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             roadStreamSummary = utils.files.nameIntermediateFile(metricConst.roadStreamSummary,cleanupList)
             
             # Perform the roads/streams intersection and calculate the number of crossings and crossings per km
-#             utils.vector.findIntersections(mergedRoads,mergedStreams,uIDField,roadStreamMultiPoints,
-#                                            roadStreamIntersects,roadStreamSummary,streamLengthFieldName,
-#                                            metricConst.xingsPerKMFieldName,roadClassField)
             utils.vector.findIntersections(mergedRoads,inStreamFeature,mergedStreams,uIDField,roadStreamMultiPoints,
                                            roadStreamIntersects,roadStreamSummary,streamLengthFieldName,
                                            metricConst.xingsPerKMFieldName,roadClassField)
@@ -726,14 +723,20 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                                                                                              metricConst.streamLengthFieldName)
             # Get a unique name for the buffered streams:
             streamBuffer = utils.files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
-            # Get a unique name for the road/stream intersections:
+            # Get a unique name for the dissolved road/stream intersections:
             roadsNearStreams = utils.files.nameIntermediateFile(metricConst.roadsNearStreams,cleanupList)
+            # Set a unique name for the pre-dissolved intersection road/stream intersections
+            tmpRoadsNearStreams = utils.files.nameIntermediateFile(metricConst.tmpRoadsNearStreams,cleanupList)
+            
+            # append the buffer distance to the rns field name base
+            distString = bufferDistance.split()[0]
+            rnsFieldName = metricConst.rnsFieldName+distString
 
-            utils.vector.roadsNearStreams(mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName,
-                                          uIDField, streamBuffer, roadsNearStreams, metricConst.rnsFieldName,metricConst.roadLengthFieldName)
+            utils.vector.roadsNearStreams(inStreamFeature, mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName,uIDField, streamBuffer, 
+                                          tmpRoadsNearStreams, roadsNearStreams, rnsFieldName,metricConst.roadLengthFieldName, roadClassField)
             # Transfer values to final output table.
             AddMsg(timer.split() + " Compiling calculated values into output table")
-            fromFields = [metricConst.rnsFieldName]
+            fromFields = [rnsFieldName]
             # Transfer the values to the output table, pivoting the class values into new fields if necessary.
             utils.table.transferField(roadsNearStreams,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
     
