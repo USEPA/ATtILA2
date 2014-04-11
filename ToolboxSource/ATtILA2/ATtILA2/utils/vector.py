@@ -2,7 +2,7 @@
 
 """
 
-import arcpy, pylet
+import arcpy, pylet, files
 from pylet.arcpyutil.messages import AddMsg
 from pylet.arcpyutil.fields import valueDelimiter
 
@@ -288,7 +288,7 @@ def bufferFeaturesByIntersect_old(inFeatures, repUnits, outFeatures, bufferDist,
         except:
             pass 
 
-def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID):
+def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID, cleanupList):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
         distance of a layer - the buffered features may be any geometry
     **Description:**
@@ -307,7 +307,8 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         * *repUnits* - reporting units that will be used for the clip
         * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
         * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
-        * *unitID* - a field that exists in repUnits that contains a unique identifier for the reporting units.  
+        * *unitID* - a field that exists in repUnits that contains a unique identifier for the reporting units. 
+        * *cleanupList* - a list object for tracking intermediate datasets for cleanup at the user's request. 
         
     **Returns:**
         * *outFeatures* - output feature class 
@@ -315,23 +316,80 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     try:
         outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
         
-       
-        # Start by intersecting the input features and the reporting units 
-        firstIntersectionName = arcpy.CreateScratchName("firstIntersection","","FeatureClass")
-        firstIntersection = arcpy.Intersect_analysis([repUnits, inFeatures],firstIntersectionName,"ALL","","INPUT")
+        # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
+        inFeaturesList = inFeatures.split(";")
+        outputList = []
+        for inFC in inFeaturesList:
+            inFCDesc = arcpy.Describe(inFC)
+            inFCName = inFCDesc.baseName
+            
+            # Start by intersecting the input features and the reporting units 
+            AddMsg("Intersecting "+inFCName+" and reporting units")
+            firstIntersectionName = files.nameIntermediateFile([inFCName+"_intersect","FeatureClass"], cleanupList)
+            intersectResult = arcpy.Intersect_analysis([repUnits,inFC],firstIntersectionName,"ALL","","INPUT")
+            
+            # We are later going to perform a second intersection with the reporting units layer, which will cause
+            # a name collision with the reporting unitID field - in anticipation of this, rename the unitID field.
+            # This functionality is dependent on the intermediate dataset being in a geodatabase - no shapefiles allowed.
+            # Workaround by adding new field rather than renaming existing.
+            newUnitID = arcpy.ValidateFieldName("new"+unitID, intersectResult)
+            gdbTest = arcpy.Describe(intersectResult).dataType
+            if gdbTest == "FeatureClass":
+                arcpy.AlterField_management(intersectResult,unitID,newUnitID,newUnitID)
+            else:
+                # Get the properties of the unitID field
+                fromFieldObj = arcpy.ListFields(intersectResult,unitID)[0]
+                # Add the new field to the output table with the appropriate properties and the valid name
+                arcpy.AddField_management(intersectResult,newUnitID,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
+                          fromFieldObj.length,fromFieldObj.aliasName,fromFieldObj.isNullable,fromFieldObj.required,
+                          fromFieldObj.domain)
+                # Copy the field values from the old to the new field
+                arcpy.CalculateField_management(intersectResult,newUnitID,arcpy.AddFieldDelimiters(intersectResult,unitID))
+
+            # Buffer these in-memory selected features and merge the output into multipart features by reporting unit ID
+            AddMsg("Buffering intersected features")
+            bufferName = files.nameIntermediateFile([inFCName+"_buffer","FeatureClass"],cleanupList)
+            bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+            
+            # If the input features are polygons, we need to erase the the input polygons from the buffer output
+            inGeom = inFCDesc.shapeType
+            if inGeom == "Polygon":
+                AddMsg("Erasing polygon areas from buffer areas...")
+                bufferErase = files.nameIntermediateFile([inFCName+"_bufferErase","FeatureClass"],cleanupList)
+                newBufferFeatures = arcpy.Erase_analysis(bufferResult,inFC,bufferErase)
+                bufferResult = newBufferFeatures
+            
+            # Intersect the buffers with the reporting units
+            AddMsg("Intersecting buffer features and reporting units")
+            secondIntersectionName = files.nameIntermediateFile([inFCName+"_2ndintersect","FeatureClass"],cleanupList)
+            secondIntersectResult = arcpy.Intersect_analysis([repUnits,bufferResult],secondIntersectionName,"ALL","","INPUT")            
+
+            # Select only those intersected features whose reporting unit IDs match 
+            # This ensures that buffer areas that fall outside of the input feature's reporting unit are excluded
+            whereClause = arcpy.AddFieldDelimiters(secondIntersectResult,unitID) + " = " + arcpy.AddFieldDelimiters(secondIntersectResult,newUnitID)
+            matchingBuffers = arcpy.MakeFeatureLayer_management(secondIntersectResult,"matchingBuffers",whereClause)
+
+            # Dissolve those by reporting Unit ID.  
+            AddMsg("Dissolving second intersection by reporting unit")
+            if len(inFeaturesList) > 1:
+                finalOutputName = files.nameIntermediateFile([inFCName+"_finalOutput","FeatureClass"],cleanupList)
+            else: 
+                finalOutputName = outFeatures # If this is the only one, we don't want to delete it as "intermediate"
+            finalOutput = arcpy.Dissolve_management(matchingBuffers,finalOutputName,unitID)
+            
+            # Clean up the feature layer selection for the next iteration.
+            arcpy.Delete_management(matchingBuffers)
+            
+            # keep track of list of outputs.  
+            outputList.append(finalOutput)
         
-        # Dissolve the intersection into discrete unites by the reporting unit ID. 
-        firstDissolveName = arcpy.CreateScratchName("firstDissolve","","FeatureClass")
-        arcpy.Dissolve_management(firstIntersection,firstDissolveName,unitID,"","MULTI_PART","DISSOLVE_LINES")
+        # merge and dissolve buffer features from all input feature classes into a single feature class.
+        if len(inFeaturesList) > 1:
+            mergeName = files.nameIntermediateFile(["mergeOutput","FeatureClass"],cleanupList)
+            mergeOutput = arcpy.Merge_management(outputList,mergeName)
+            finalOutput = arcpy.Dissolve_management(mergeOutput,outFeatures,unitID)
         
-        # Buffer the dissolved features
-        
-        # Intersect the buffers with the reporting units
-        
-        # Select only those intersection polygons that have matching reporting unit IDs
-        
-        # Dissolve those
-        
+        return finalOutput, cleanupList 
     finally:
         pass
 

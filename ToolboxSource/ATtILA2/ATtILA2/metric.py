@@ -377,7 +377,6 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                             metricsToRun, inStreamFeatures, inBufferDistance, outTable, processingCellSize, snapRaster,
                             optionalFieldGroups):
     """ Interface for script executing Riparian Land Cover Proportion Metrics """
-
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.rlcpConstants()
@@ -389,22 +388,27 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             def _replaceRUFeatures(self):
                 # check for duplicate ID entries in reportng unit feature. Perform dissolve if found
                 self.duplicateIds = fields.checkForDuplicateValues(self.inReportingUnitFeature, self.reportingUnitIdField)
-                
+                # Initiate our flexible cleanuplist
+                if rlcpCalc.saveIntermediates:
+                    rlcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    rlcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
                 if self.duplicateIds:
                     AddMsg("Duplicate ID values found in reporting unit feature. Forming multipart features...")
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
-                    self.dissolveName = arcpy.CreateScratchName(self.namePrefix,"","FeatureClass")
+                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
                     self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
                 # Generate the buffer area to use in the metric calculation
-                self.inReportingUnitFeature = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures,
+                self.inReportingUnitFeature, self.cleanupList = utils.vector.bufferFeaturesByIntersect(self.inStreamFeatures,
                                                                                      self.inReportingUnitFeature,
                                                                                      self.bufferName, self.inBufferDistance,
-                                                                                     self.reportingUnitIdField)
+                                                                                     self.reportingUnitIdField,
+                                                                                     self.cleanupList)
         
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -414,21 +418,19 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.inStreamFeatures = inStreamFeatures
         rlcpCalc.inBufferDistance = inBufferDistance
 
+        rlcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+
         # Run Calculation
         rlcpCalc.run()      
-
-        # Clean up intermediates
-        if not rlcpCalc.saveIntermediates:
-            # note, this is actually deleting the buffers, not the source reporting units.
-            arcpy.Delete_management(rlcpCalc.inReportingUnitFeature)
-            
-            if rlcpCalc.duplicateIds:
-                arcpy.Delete_management(rlcpCalc.dissolveName)
-        
+       
     except Exception, e:
         errors.standardErrorHandling(e)
 
     finally:
+        if not rlcpCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in rlcpCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
         setupAndRestore.standardRestore()
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
