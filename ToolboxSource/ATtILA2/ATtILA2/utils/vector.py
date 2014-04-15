@@ -331,10 +331,12 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             # We are later going to perform a second intersection with the reporting units layer, which will cause
             # a name collision with the reporting unitID field - in anticipation of this, rename the unitID field.
             # This functionality is dependent on the intermediate dataset being in a geodatabase - no shapefiles allowed.
-            # Workaround by adding new field rather than renaming existing.
+            # It is also only available starting in 10.2.1, so also check the version number before proceeding
+            # IF AlterField isn't an option, revert to add/calculate field methodology - slower and more clunky, but it works.
             newUnitID = arcpy.ValidateFieldName("new"+unitID, intersectResult)
             gdbTest = arcpy.Describe(intersectResult).dataType
-            if gdbTest == "FeatureClass":
+            arcVersion = arcpy.GetInstallInfo()['Version']
+            if gdbTest == "FeatureClass" and arcVersion >= '10.2.1':
                 arcpy.AlterField_management(intersectResult,unitID,newUnitID,newUnitID)
             else:
                 # Get the properties of the unitID field
@@ -349,15 +351,25 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             # Buffer these in-memory selected features and merge the output into multipart features by reporting unit ID
             AddMsg("Buffering intersected features")
             bufferName = files.nameIntermediateFile([inFCName+"_buffer","FeatureClass"],cleanupList)
-            bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
             
             # If the input features are polygons, we need to erase the the input polygons from the buffer output
             inGeom = inFCDesc.shapeType
             if inGeom == "Polygon":
-                AddMsg("Erasing polygon areas from buffer areas...")
-                bufferErase = files.nameIntermediateFile([inFCName+"_bufferErase","FeatureClass"],cleanupList)
-                newBufferFeatures = arcpy.Erase_analysis(bufferResult,inFC,bufferErase)
-                bufferResult = newBufferFeatures
+                # When we buffer polygons, we want to exclude the area of the polygon itself.  This can be done using the 
+                # "OUTSIDE_ONLY" option in the buffer tool, but that is only available with an advanced license.  Check for
+                # the right license level, revert to buffer/erase option if it's not available.
+                licenseLevel = arcpy.CheckProduct("ArcInfo")
+                if licenseLevel in ["AlreadyInitalized ","Available"]:
+                    bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID])
+                else:
+                    bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                    AddMsg("Erasing polygon areas from buffer areas...")
+                    bufferErase = files.nameIntermediateFile([inFCName+"_bufferErase","FeatureClass"],cleanupList)
+                    newBufferFeatures = arcpy.Erase_analysis(bufferResult,inFC,bufferErase)
+                    bufferResult = newBufferFeatures
+            else:
+                bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+            
             
             # Intersect the buffers with the reporting units
             AddMsg("Intersecting buffer features and reporting units")
