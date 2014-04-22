@@ -725,17 +725,19 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                                                                                              metricConst.streamLengthFieldName)
             # Get a unique name for the buffered streams:
             streamBuffer = utils.files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
+            # Set a unique name for the undissolved  road/stream buffer intersections
+            tmp1RdsNearStrms = utils.files.nameIntermediateFile(metricConst.tmp1RNS,cleanupList)
+            # Set a unique name for the undissolved  road/stream buffer intersections with reporting unit IDs attached
+            tmp2RdsNearStrms = utils.files.nameIntermediateFile(metricConst.tmp2RNS,cleanupList)
             # Get a unique name for the dissolved road/stream intersections:
             roadsNearStreams = utils.files.nameIntermediateFile(metricConst.roadsNearStreams,cleanupList)
-            # Set a unique name for the pre-dissolved intersection road/stream intersections
-            tmpRoadsNearStreams = utils.files.nameIntermediateFile(metricConst.tmpRoadsNearStreams,cleanupList)
             
             # append the buffer distance to the rns field name base
             distString = bufferDistance.split()[0]
             rnsFieldName = metricConst.rnsFieldName+distString
 
-            utils.vector.roadsNearStreams(inStreamFeature, mergedStreams, bufferDistance, mergedRoads, streamLengthFieldName,uIDField, streamBuffer, 
-                                          tmpRoadsNearStreams, roadsNearStreams, rnsFieldName,metricConst.roadLengthFieldName, roadClassField)
+            utils.vector.roadsNearStreams(inStreamFeature, mergedStreams, bufferDistance, inRoadFeature, inReportingUnitFeature, streamLengthFieldName,uIDField, streamBuffer, 
+                                          tmp1RdsNearStrms, tmp2RdsNearStrms, roadsNearStreams, rnsFieldName,metricConst.roadLengthFieldName, roadClassField)
             # Transfer values to final output table.
             AddMsg(timer.split() + " Compiling calculated values into output table")
             fromFields = [rnsFieldName]
