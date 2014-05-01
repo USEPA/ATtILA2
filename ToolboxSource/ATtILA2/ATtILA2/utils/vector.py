@@ -313,6 +313,9 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     **Returns:**
         * *outFeatures* - output feature class 
     """
+    from arcpy import env
+    import os
+    
     try:
         outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
         
@@ -322,6 +325,13 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         for inFC in inFeaturesList:
             inFCDesc = arcpy.Describe(inFC)
             inFCName = inFCDesc.baseName
+            
+            if inFCDesc.HasM or inFCDesc.HasZ:
+                AddMsg("Creating a copy of "+inFCName+" without M or Z values")
+                copyFCName = files.nameIntermediateFile([inFCName+"_copy","FeatureClass"], cleanupList)
+                inFC = arcpy.FeatureClassToFeatureClass_conversion(inFC, env.workspace, os.path.basename(copyFCName))
+                inFCDesc = arcpy.Describe(inFC)
+                inFCName = inFCDesc.baseName
             
             # Start by intersecting the input features and the reporting units 
             AddMsg("Intersecting "+inFCName+" and reporting units")
