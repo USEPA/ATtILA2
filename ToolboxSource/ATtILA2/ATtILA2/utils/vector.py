@@ -317,7 +317,8 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     import os
     
     try:
-        outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
+        toolShortName = outFeatures[:outFeatures.find("_")]
+        outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
         
         # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
         inFeaturesList = inFeatures.split(";")
@@ -328,13 +329,16 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             
             if inFCDesc.HasM or inFCDesc.HasZ:
                 AddMsg("Creating a copy of "+inFCName+" without M or Z values")
-                copyFCName = files.nameIntermediateFile([inFCName+"_copy","FeatureClass"], cleanupList)
+                copyFCNameBase = toolShortName+"_"+inFCName
+                copyFCName = files.nameIntermediateFile([copyFCNameBase,"FeatureClass"], cleanupList)
                 inFC = arcpy.FeatureClassToFeatureClass_conversion(inFC, env.workspace, os.path.basename(copyFCName))
                 inFCDesc = arcpy.Describe(inFC)
                 inFCName = inFCDesc.baseName
+            else:
+                inFCName = toolShortName+"_"+inFCDesc.baseName
             
             # Start by intersecting the input features and the reporting units 
-            AddMsg("Intersecting "+inFCName+" and reporting units")
+            AddMsg("Intersecting "+inFCDesc.baseName+" and reporting units")
             firstIntersectionName = files.nameIntermediateFile([inFCName+"_intersect","FeatureClass"], cleanupList)
             intersectResult = arcpy.Intersect_analysis([repUnits,inFC],firstIntersectionName,"ALL","","INPUT")
             
@@ -388,6 +392,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
 
             # Select only those intersected features whose reporting unit IDs match 
             # This ensures that buffer areas that fall outside of the input feature's reporting unit are excluded
+            AddMsg("Trimming buffer zones to reporting unit boundaries")
             whereClause = arcpy.AddFieldDelimiters(secondIntersectResult,unitID) + " = " + arcpy.AddFieldDelimiters(secondIntersectResult,newUnitID)
             matchingBuffers = arcpy.MakeFeatureLayer_management(secondIntersectResult,"matchingBuffers",whereClause)
 
