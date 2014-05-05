@@ -317,8 +317,13 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     import os
     
     try:
+<<<<<<< 66b0a73e4cb7879089774ed13950a663f55d8794
         toolShortName = outFeatures[:outFeatures.find("_")]
         outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
+=======
+        outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
+        
+>>>>>>> 757c687aea8142b06640125ef1d63e07a621ecfd
         
         # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
         inFeaturesList = inFeatures.split(";")
@@ -401,7 +406,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             if len(inFeaturesList) > 1:
                 finalOutputName = files.nameIntermediateFile([inFCName+"_finalOutput","FeatureClass"],cleanupList)
             else: 
-                finalOutputName = outFeatures # If this is the only one, we don't want to delete it as "intermediate"
+                finalOutputName = outFeatures # If this is the only one, it's already named.
             finalOutput = arcpy.Dissolve_management(matchingBuffers,finalOutputName,unitID)
             
             # Clean up the feature layer selection for the next iteration.

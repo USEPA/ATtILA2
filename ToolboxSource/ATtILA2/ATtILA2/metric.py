@@ -134,6 +134,9 @@ class metricCalc:
 
         # Run final metric calculation
         self._calculateMetrics()
+        
+        # ensure cleanup occurs.
+        del self.tabAreaTable
 
 
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
