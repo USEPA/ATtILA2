@@ -326,6 +326,13 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
 >>>>>>> 757c687aea8142b06640125ef1d63e07a621ecfd
         
         # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
+        # it appears that long directory paths in the multivalue input box causes the delimiter to be quote-semicolon-quote
+        # instead of just semicolon
+        if "';'" in inFeatures:
+            inFeatures = inFeatures.replace("';'",";")    
+        if '";"' in inFeatures:
+            inFeatures = inFeatures.replace('";"',";")
+
         inFeaturesList = inFeatures.split(";")
         outputList = []
         for inFC in inFeaturesList:
@@ -417,6 +424,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         
         # merge and dissolve buffer features from all input feature classes into a single feature class.
         if len(inFeaturesList) > 1:
+            AddMsg("Merging buffer zones from all input Stream features")
             mergeName = files.nameIntermediateFile(["mergeOutput","FeatureClass"],cleanupList)
             mergeOutput = arcpy.Merge_management(outputList,mergeName)
             finalOutput = arcpy.Dissolve_management(mergeOutput,outFeatures,unitID)
