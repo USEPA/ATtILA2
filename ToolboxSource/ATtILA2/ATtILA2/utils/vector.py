@@ -317,13 +317,8 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     import os
     
     try:
-<<<<<<< 66b0a73e4cb7879089774ed13950a663f55d8794
         toolShortName = outFeatures[:outFeatures.find("_")]
         outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
-=======
-        outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
-        
->>>>>>> 757c687aea8142b06640125ef1d63e07a621ecfd
         
         # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
         # it appears that long directory paths in the multivalue input box causes the delimiter to be quote-semicolon-quote
@@ -332,7 +327,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             inFeatures = inFeatures.replace("';'",";")    
         if '";"' in inFeatures:
             inFeatures = inFeatures.replace('";"',";")
-
+            
         inFeaturesList = inFeatures.split(";")
         outputList = []
         for inFC in inFeaturesList:
