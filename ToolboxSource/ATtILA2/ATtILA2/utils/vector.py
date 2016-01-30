@@ -330,9 +330,14 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             
         inFeaturesList = inFeatures.split(";")
         outputList = []
+        # Initialize list of polygon features for erase
+        eraseList = []        
+        
         for inFC in inFeaturesList:
             inFCDesc = arcpy.Describe(inFC)
             inFCName = inFCDesc.baseName
+            if inFCDesc.shapeType == "Polygon":
+                eraseList.append(inFC)
             
             if inFCDesc.HasM or inFCDesc.HasZ:
                 AddMsg("Creating a copy of "+inFCName+" without M or Z values")
@@ -423,6 +428,26 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             mergeName = files.nameIntermediateFile(["mergeOutput","FeatureClass"],cleanupList)
             mergeOutput = arcpy.Merge_management(outputList,mergeName)
             finalOutput = arcpy.Dissolve_management(mergeOutput,outFeatures,unitID)
+            # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
+            AddMsg("Removing interior waterbody areas from buffer result")
+            if len(eraseList) > 0:
+                #  Merge all eraseFeatures so we only have to do this once...
+                eraseName = files.nameIntermediateFile(["erasePolygons","FeatureClass"],cleanupList)
+                eraseFeatureClass = arcpy.Merge_management(eraseList,eraseName)
+                # Rename the old final output so that it becomes an intermediate dataset
+                oldfinalOutputName = files.nameIntermediateFile([outFeatures+"_preErase","FeatureClass"],cleanupList)
+                preEraseOutput = arcpy.Rename_management(finalOutput, oldfinalOutputName, "FeatureClass")
+                try:
+                    finalOutput = arcpy.Erase_analysis(preEraseOutput,eraseFeatureClass,outFeatures)
+                except:
+                    badEraseFeatures = arcpy.FeatureClassToFeatureClass_conversion(eraseFeatureClass,"%scratchworkspace%","badEraseFeatures")
+                    badBuffer = arcpy.FeatureClassToFeatureClass_conversion(preEraseOutput,"%scratchworkspace%","badBuffer")
+                    # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+                    arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+                    arcpy.RepairGeometry_management(badEraseFeatures,"DELETE_NULL")
+                    finalOutput = arcpy.Erase_analysis(badBuffer,badEraseFeatures,outFeatures)
+                    arcpy.Delete_management(badBuffer)
+                    arcpy.Delete_management(badEraseFeatures)
         
         return finalOutput, cleanupList 
     finally:
