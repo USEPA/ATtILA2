@@ -387,14 +387,20 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 licenseLevel = arcpy.CheckProduct("ArcInfo")
                 if licenseLevel in ["AlreadyInitalized ","Available"]:
                     bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID])
+                    AddMsg("Repairing buffer areas for input areal features...")
+                    arcpy.RepairGeometry_management (bufferResult)
                 else:
                     bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                    AddMsg("Repairing buffer areas for input areal features...")
+                    arcpy.RepairGeometry_management (bufferResult)
                     AddMsg("Erasing polygon areas from buffer areas...")
                     bufferErase = files.nameIntermediateFile([inFCName+"_bufferErase","FeatureClass"],cleanupList)
                     newBufferFeatures = arcpy.Erase_analysis(bufferResult,inFC,bufferErase)
                     bufferResult = newBufferFeatures
             else:
                 bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                AddMsg("Repairing buffer areas for input linear features...")
+                arcpy.RepairGeometry_management (bufferResult)
             
             
             # Intersect the buffers with the reporting units
