@@ -4,7 +4,7 @@ Analytical Tools Interface for Landscape Assessments for ArcGIS (ATtILA for ArcG
 
 03-05-2014
 
-This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see the manual located in \ATtILA\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm.
+This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see the manual located in \{ATtILA Destination Folder}\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm.
 
 ---------------
 What is ATtILA?
@@ -26,7 +26,7 @@ When this document review is complete and the comments are incorporated, then th
 Installing ATtILA
 ------------------
 
-This README provides basic information on installing ATtILA for ArcGIS. For more detailed instructions on installing and using ATtILA, please see the manual located in \ATtILA\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm. New users should read through the manual at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS processes.
+This README provides basic information on installing ATtILA for ArcGIS. For more detailed instructions on installing and using ATtILA, please see the manual located in \{ATtILA Destination Folder}\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm. Depending on the installation location, the help manual may fail to open reporting that 'Navigation to the webpage was cancelled.' This error often occurs when the CHM Help file is located on a network drive. To resolve, copy the file onto a local drive and reopen. New users should read through the manual at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS processes.
 
 REQUIREMENTS:
 -------------
@@ -38,7 +38,7 @@ INSTALLATION:
 
 1. Download the ATtILA for ArcGIS distribution zip file to a safe location, such as a Downloads directory.
 
-2. Extract the contents of the ATtILA.zip file to a location where you commonly store personal Toolboxes, such as your ArcGIS directory under MyDocuments.  Ensure the ATtILA 10_0.tbx file and the ToolboxSource folder are at the same directory level. ATILA for ArcGIS's directory structure is illustrated below:
+2. Extract the contents of the ATtILA.zip file to a location where you commonly store personal Toolboxes, such as your ArcGIS directory under MyDocuments.  Ensure the ATtILA 10_0.tbx file and the ToolboxSource folder are at the same directory level. ATtILA for ArcGIS's directory structure is illustrated below:
 
     |
     |--Destination Folder
@@ -76,7 +76,7 @@ INSTALLATION:
         -Core and Edge Metrics
         -Land Cover Diversity
         -Land Cover on Slope Proportions
-        -Stream Density Metrics
+		-Land Cover Proportions
     -Riparian Characteristics
         -Riparian Land Cover Proportions
         -Sample Point Land Cover Proportions
@@ -85,9 +85,9 @@ INSTALLATION:
         -Identify Overlapping Polygons
     -Create or Modify Land Cover Classification (.xml) File
 
-NOTE: When installing ATtILA for ArcGIS using ArcCatalog, it may be necessary to restart ArcMap before the ATtILA for ArcGIS toolbox can be accessed from the ArcToolbox window within ArcMap. 
-
 NOTE: If installing ATtILA for ArcGIS to the ArcToolbox in ArcMap, you can either save the mxd to make the ATtILA for ArcGIS toolbox available for future sessions with the same map document, or right-click on ArcToolbox and select 'Save Settings' > 'To Default' to make the ATtILA for ArcGIS toolbox available from any ArcMap document. For more details on using ArcToolbox, search for "Using the ArcToolbox window" in ArcGIS's help documents.
+	
+NOTE: When installing ATtILA for ArcGIS using ArcCatalog, it may be necessary to restart ArcMap before the ATtILA for ArcGIS toolbox can be accessed from the ArcToolbox window within ArcMap. 
 
 -------------
 Bug Reporting
