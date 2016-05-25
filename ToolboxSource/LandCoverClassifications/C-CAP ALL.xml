@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<lccSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="LCCSchema_v2.xsd">
+<lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LCCSchema_v2.xsd">
     <metadata>
         <name>C-CAP ALL</name>
-        <description>C-CAP ALL Land Cover Classification Schema. No raster values except those representing NODATA are excluded from the calculation of reporting unit effective area (i.e., effective area equals the total raster area within a reporting unit).</description>
+        <description>C-CAP ALL Land Cover Classification Schema. No raster values except those representing NODATA are excluded from the calculation of reporting unit effective area (i.e., effective area equals the total raster area within a reporting unit). Coefficient values for impervious area calculations are based on those reported in Caraco et al. (1998). Those supplied for the nitrogen loading and phosphorous loading estimates were obtained from Reckhow et al. (1980). As coefficient values can vary considerably for a given land cover type across locations, all provided values should be evaluated critically before use and altered when necessary. Complete literature citations are provided in the ATtILA for ArcGIS help file.</description>
     </metadata>
     <!--  
         * The coefficients node contains coefficients to be assigned to values.
@@ -14,9 +14,9 @@
         * method - text, "P" or "A", designates "P"ercentage or per unit "A"rea calculation routine
      -->
     <coefficients>
-        <coefficient Id="IMPERVIOUS" Name="Percent Cover Total Impervious Area" method="P" fieldName="PCTIA" />
-        <coefficient Id="NITROGEN" Name="Estimated Nitrogen Loading Based on Land Cover" method="A" fieldName="N_Load" />
-        <coefficient Id="PHOSPHORUS" Name="Estimated Phosphorus Loading Based on Land Cover" method="A" fieldName="P_Load" />
+        <coefficient Id="IMPERVIOUS" Name="Percent Cover Total Impervious Area" fieldName="PCTIA" method="P" />
+        <coefficient Id="NITROGEN" Name="Estimated Nitrogen Loading Based on Land Cover" fieldName="N_Load" method="A" />
+        <coefficient Id="PHOSPHORUS" Name="Estimated Phosphorus Loading Based on Land Cover" fieldName="P_Load" method="A" />
     </coefficients>
     <!--  
         * The values node defines the full set of values that can exist in a land cover raster.
@@ -48,101 +48,101 @@
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
         <value Id="2" Name="High Intensity Developed">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="9.25" />
-            <coefficient Id="PHOSPHORUS" value="1.385" />
+            <coefficient Id="IMPERVIOUS" value="0.9" />
+            <coefficient Id="NITROGEN" value="5.5" />
+            <coefficient Id="PHOSPHORUS" value="1.2" />
         </value>
         <value Id="3" Name="Medium Intensity Developed">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="9.25" />
-            <coefficient Id="PHOSPHORUS" value="1.385" />
+            <coefficient Id="IMPERVIOUS" value="0.6" />
+            <coefficient Id="NITROGEN" value="5.5" />
+            <coefficient Id="PHOSPHORUS" value="1.2" />
         </value>
         <value Id="4" Name="Low Intensity Developed">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="9.25" />
-            <coefficient Id="PHOSPHORUS" value="1.385" />
+            <coefficient Id="IMPERVIOUS" value="0.4" />
+            <coefficient Id="NITROGEN" value="5.5" />
+            <coefficient Id="PHOSPHORUS" value="1.2" />
         </value>
-        <value Id="5" Name="Open Spaces Developed">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="9.25" />
-            <coefficient Id="PHOSPHORUS" value="1.385" />
+        <value Id="5" Name="Open Space Developed">
+            <coefficient Id="IMPERVIOUS" value="0.1" />
+            <coefficient Id="NITROGEN" value="0.0" />
+            <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="6" Name="Cultivated Crops">
+        <value Id="6" Name="Cultivated Crop">
             <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="11.926" />
-            <coefficient Id="PHOSPHORUS" value="0.68" />
+            <coefficient Id="NITROGEN" value="5.0" />
+            <coefficient Id="PHOSPHORUS" value="0.9" />
         </value>
         <value Id="7" Name="Pasture/Hay">
             <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="11.926" />
-            <coefficient Id="PHOSPHORUS" value="0.68" />
+            <coefficient Id="NITROGEN" value="5.0" />
+            <coefficient Id="PHOSPHORUS" value="0.9" />
         </value>
         <value Id="8" Name="Grassland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.3" />
+            <coefficient Id="PHOSPHORUS" value="0.06" />
         </value>
         <value Id="9" Name="Deciduous Forest">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="2.447" />
-            <coefficient Id="PHOSPHORUS" value="0.089" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="2.5" />
+            <coefficient Id="PHOSPHORUS" value="0.25" />
         </value>
         <value Id="10" Name="Evergreen Forest">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="2.447" />
-            <coefficient Id="PHOSPHORUS" value="0.089" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="2.5" />
+            <coefficient Id="PHOSPHORUS" value="0.25" />
         </value>
         <value Id="11" Name="Mixed Forest">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="2.447" />
-            <coefficient Id="PHOSPHORUS" value="0.089" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="2.5" />
+            <coefficient Id="PHOSPHORUS" value="0.25" />
         </value>
         <value Id="12" Name="Scrub/Shrub">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.4" />
+            <coefficient Id="PHOSPHORUS" value="0.04" />
         </value>
         <value Id="13" Name="Palustrine Forested Wetland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="2.447" />
-            <coefficient Id="PHOSPHORUS" value="0.089" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="2.5" />
+            <coefficient Id="PHOSPHORUS" value="0.25" />
         </value>
         <value Id="14" Name="Palustrine Scrub/Shrub Wetland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.4" />
+            <coefficient Id="PHOSPHORUS" value="0.04" />
         </value>
         <value Id="15" Name="Palustrine Emergent Wetland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.3" />
+            <coefficient Id="PHOSPHORUS" value="0.06" />
         </value>
         <value Id="16" Name="Estuarine Forested Wetland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="2.447" />
-            <coefficient Id="PHOSPHORUS" value="0.089" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="2.5" />
+            <coefficient Id="PHOSPHORUS" value="0.25" />
         </value>
         <value Id="17" Name="Estuarine Scrub/Shrub Wetland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.4" />
+            <coefficient Id="PHOSPHORUS" value="0.04" />
         </value>
         <value Id="18" Name="Estuarine Emergent Wetland">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.3" />
+            <coefficient Id="PHOSPHORUS" value="0.06" />
         </value>
         <value Id="19" Name="Unconsolidated Shore">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="20" Name="Bare Land">
+        <value Id="20" Name="Barren Land">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="21" Name="Water">
+        <value Id="21" Name="Open Water">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
@@ -158,11 +158,11 @@
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
         <value Id="24" Name="Tundra">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.564" />
-            <coefficient Id="PHOSPHORUS" value="0.059" />
+            <coefficient Id="IMPERVIOUS" value="0.02" />
+            <coefficient Id="NITROGEN" value="0.3" />
+            <coefficient Id="PHOSPHORUS" value="0.06" />
         </value>
-        <value Id="25" Name="Snow/Ice">
+        <value Id="25" Name="Perennial Ice/Snow">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
@@ -177,11 +177,11 @@
         * OPTIONAL ATTRIBUTES
         * Name - text, word or phrase describing class
         * filter - text, a string of one or more tool name abbreviations separated by a ";"
-        *        - possible abbreviations are: lcp, rlcp, lcosp, splcp, and caeam
+        *        - possible abbreviations are: lcp, rlcp, lcosp, splcp, and caem
         *        - used to exclude the class from the selectable classes in the tool's GUI
         * xxxxField - text, overrides ATtILA-generated field name for output
         *           - where xxxx equals a tool name abbreviation
-        *           - possible abbreviations are: lcp, rlcp, lcosp, splcp, and caeam
+        *           - possible abbreviations are: lcp, rlcp, lcosp, splcp, and caem
         *           - a separate xxxxField attribute can exist for each tool
 
         * A class can contain either values or classes but not both types.
@@ -189,8 +189,8 @@
         * Values tagged as excluded="true" in the values node should not be included in any class.
      -->
     <classes>
-        <class Id="nat" Name="All Natural Land Use" filter="" lcpField="NINDEX">
-            <class Id="grss" Name="Natural Grasslands" filter="">
+        <class Id="NI" Name="All Natural Land Use" filter="" lcpField="NINDEX">
+            <class Id="hrb" Name="Herbaceous" filter="">
                 <value Id="8" />
             </class>
             <class Id="for" Name="Forest" filter="">
@@ -198,37 +198,37 @@
                 <value Id="10" />
                 <value Id="11" />
             </class>
-            <class Id="shrb" Name="Shrubland" filter="">
+            <class Id="shb" Name="Shrubland" filter="">
                 <value Id="12" />
             </class>
-            <class Id="wtlt" Name="Wetland - Total" filter="">
-                <class Id="wtlp" Name="Palustrine Wetland" filter="">
+            <class Id="wtl" Name="Wetland" filter="">
+                <class Id="wtlw" Name="Woody Wetland" filter="">
                     <value Id="13" />
                     <value Id="14" />
-                    <value Id="15" />
-                </class>
-                <class Id="wtle" Name="Estuarine Wetland" filter="">
                     <value Id="16" />
                     <value Id="17" />
+                </class>
+                <class Id="wtle" Name="Emergent Wetland" filter="">
+                    <value Id="15" />
                     <value Id="18" />
                 </class>
             </class>
-            <class Id="bart" Name="Barren - Total" filter="">
+            <class Id="bar" Name="Barren" filter="">
                 <value Id="19" />
                 <value Id="20" />
             </class>
-            <class Id="tndr" Name="Tundra" filter="">
-                <value Id="24" />
-            </class>
-            <class Id="watr" Name="Water" filter="">
+            <class Id="wtr" Name="Water" filter="">
                 <value Id="21" />
                 <value Id="22" />
                 <value Id="23" />
                 <value Id="25" />
             </class>
+            <class Id="tun" Name="Tundra" filter="">
+                <value Id="24" />
+            </class>
         </class>
-        <class Id="unat" Name="All Human Land Use" filter="" lcpField="UINDEX">
-            <class Id="devt" Name="Developed - Total" filter="">
+        <class Id="UI" Name="All Human Land Use" filter="" lcpField="UINDEX">
+            <class Id="dev" Name="Developed" filter="">
                 <class Id="devh" Name="High Intensity Developed" filter="">
                     <value Id="2" />
                 </class>
@@ -238,20 +238,20 @@
                 <class Id="devl" Name="Low Intensity Developed" filter="">
                     <value Id="4" />
                 </class>
-                <class Id="devo" Name="Open Spaces Developed" filter="">
+                <class Id="devo" Name="Open Space Developed" filter="">
                     <value Id="5" />
                 </class>
             </class>
-            <class Id="agt" Name="Agriculture - Total" filter="">
-                <class Id="agc" Name="Cultivated Crops" filter="">
+            <class Id="agr" Name="Agriculture" filter="">
+                <class Id="agrc" Name="Cultivated Crop" filter="">
                     <value Id="6" />
                 </class>
-                <class Id="agp" Name="Pasture/Hay" filter="">
+                <class Id="agrp" Name="Pasture/Hay" filter="">
                     <value Id="7" />
                 </class>
             </class>
         </class>
-        <class Id="uncl" Name="Unclassified" filter="">
+        <class Id="UC" Name="Unclassified" filter="">
             <value Id="1" />
         </class>
     </classes>
