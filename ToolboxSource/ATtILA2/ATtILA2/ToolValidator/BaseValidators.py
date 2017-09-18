@@ -67,6 +67,11 @@ class ProportionsValidator(object):
     inMultiFeatureIndex = 0
     inVector2Index = 0
     inDistanceIndex = 0
+    inWholeNumIndex = 0
+    inLinearUnitIndex = 0
+    checkbox1Index = 0
+    checkbox2Index = 0
+    checkboxInParameters = {}
         
     # Additional local variables
     srcDirName = ""
@@ -135,6 +140,18 @@ class ProportionsValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+            
+        if self.inWholeNumIndex:
+            self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
+            
+        if self.inLinearUnitIndex:
+            self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
+
+        if self.checkbox1Index:
+            self.checkbox1Parameter = self.parameters[self.checkbox1Index]
+            
+        if self.checkbox2Index:
+            self.checkbox2Parameter = self.parameters[self.checkbox2Index]
 
                
         # Additional local variables
@@ -145,6 +162,13 @@ class ProportionsValidator(object):
 
     def initializeParameters(self):
         """ ESRI - Initialize parameters"""
+        
+        # disable dependent input fields until optional check boxes are selected    
+        if self.checkboxInParameters:
+            for val in self.checkboxInParameters.values():
+                for indx in val:
+                    self.parameters[indx].enabled = False 
+        
         # Populate predefined LCC dropdown
         self.lccFileDirSearch = os.path.join(self.srcDirName, self.lccFileDirName, "*" + self.lccFileExtension)
         
@@ -182,6 +206,22 @@ class ProportionsValidator(object):
         self.updateInputLccParameters()
         self.updateInputFieldsParameter()
         self.updateOutputTableParameter()
+        
+        # if checkboxes are provided, use the indexes specified in the tool's validation script to identify the 
+        # parameter locations of any additional needed inputs for that checkbox and enable those parameters
+        if self.checkbox1Index:
+            cboxListeners = self.checkboxInParameters.values()[0]
+            self.updateCheckboxParameters(self.checkbox1Parameter, cboxListeners)
+
+        if self.checkbox2Index:
+            cboxListeners = self.checkboxInParameters.values()[1]
+            self.updateCheckboxParameters(self.checkbox2Parameter, cboxListeners)
+
+
+    def updateCheckboxParameters(self, checkboxParameter, cboxListeners):
+        if checkboxParameter.value:
+            for indx in cboxListeners:
+                self.parameters[indx].enabled = True
 
 
     def updateOutputTableParameter(self):
@@ -392,6 +432,14 @@ class ProportionsValidator(object):
             
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
+        # if optional check box is unselected, clear the parameter message area and value area    
+        if self.checkboxInParameters:
+            for val in self.checkboxInParameters.values():
+                for indx in val:
+                    if not self.parameters[indx].enabled:
+                        self.parameters[indx].clearMessage()
+                        self.parameters[indx].value = ''
+        
         # Check if a secondary input raster is indicated - use if raster can be either integer or float
         if self.inRaster2Index:
             # if provided, check if input raster2 is defined
@@ -441,7 +489,23 @@ class ProportionsValidator(object):
             else:
                 # need the else condition as a 0 value won't trigger the if clause 
                 self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
-                        
+                
+        # Check if distance input (e.g., maximum separation) is a positive number or zero           
+        if self.inWholeNumIndex:
+            if self.inWholeNumParameter.value:
+                wholeNumValue = self.inWholeNumParameter.value
+                if wholeNumValue < 0.0:
+                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+                
+        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        if self.inLinearUnitIndex:
+            if self.inLinearUnitParameter.value:
+                linearUnitValue = self.inLinearUnitParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strLinearUnit = str(linearUnitValue).split()[0]
+                if float(strLinearUnit) <= 0.0:
+                    self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                                       
             
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
@@ -496,6 +560,8 @@ class NoLccFileValidator(object):
     inVector2Index = 0
     inVector3Index = 0
     inDistanceIndex = 0
+    inWholeNumIndex = 0
+    inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
     checkboxInParameters = {}
@@ -551,7 +617,13 @@ class NoLccFileValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+
+        if self.inWholeNumIndex:
+            self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
             
+        if self.inLinearUnitIndex:
+            self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
+               
         if self.checkbox1Index:
             self.checkbox1Parameter = self.parameters[self.checkbox1Index]
             
@@ -770,3 +842,19 @@ class NoLccFileValidator(object):
 #            else:
 #                # need the else condition as a 0 value won't trigger the if clause 
 #                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+
+        # Check if distance input (e.g., maximum separation) is a positive number or zero           
+        if self.inWholeNumIndex:
+            if self.inWholeNumParameter.value:
+                wholeNumValue = self.inWholeNumParameter.value
+                if wholeNumValue < 0.0:
+                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+                
+        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        if self.inLinearUnitIndex:
+            if self.inLinearUnitParameter.value:
+                linearUnitValue = self.inLinearUnitParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strLinearUnit = str(linearUnitValue).split()[0]
+                if float(strLinearUnit) <= 0.0:
+                    self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)

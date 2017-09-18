@@ -86,3 +86,10 @@ class pdmToolValidator(BaseValidators.NoLccFileValidator):
     fieldSuffix = pdmConstants.fieldSuffix
     metricShortName = pdmConstants.shortName
     
+class pmToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for Patch Metrics """
+    
+    filterList = pmConstants.optionalFilter
+    fieldPrefix = pmConstants.fieldPrefix
+    fieldSuffix = pmConstants.fieldSuffix
+    metricShortName = pmConstants.shortName

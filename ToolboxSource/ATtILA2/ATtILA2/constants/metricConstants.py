@@ -246,3 +246,39 @@ class mdcpConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+
+class pmConstants(baseMetricConstants):
+    name = "PatchMetrics"
+    shortName = "pm"
+    fieldPrefix = ""
+    fieldSuffix = "_PLGP"
+    overlapName = "PM_OVER"
+    totalAreaName = "PM_TOTA"
+    effectiveAreaName = "PM_EFFA"
+    excludedAreaName = "PM_EXCA"
+    rastertoPoly = [shortName+"_FinalPatchPoly","FeatureClass"]
+    rastertoPoint = [shortName+"_FinalPatchCentroids", "FeatureClass"]
+    polyDissolve = [shortName+"_FinalPatch_poly_diss", "FeatureClass"]
+    clipPolyDissolve =[shortName+"_FinalPatch_poly_diss_clip", "FeatureClass"]
+    nearTable = [shortName+"_NearTable", "Dataset"]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName
+    numSuffix = "_NUM"
+    avgSuffix = "_AVG"
+    densSuffix = "_DENS"
+    lrgSuffix = "_LRG"
+    mdcpSuffix = "_MDCP"
+    additionalSuffixes = [numSuffix, avgSuffix, densSuffix, lrgSuffix]
+    numField = ["", numSuffix, gc.defaultDecimalFieldType, 6, 1]
+    avgField = ["", avgSuffix, gc.defaultDecimalFieldType, 6, 1]
+    densField = ["", densSuffix, gc.defaultDecimalFieldType, 6, 1]
+    lrgField = ["", lrgSuffix, gc.defaultDecimalFieldType, 6, 1]
+    mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 6, 1]
+    additionalFields = [numField, avgField, densField, lrgField]
