@@ -2,36 +2,26 @@
 
 """
 import arcpy
-from arcpy.sa import Raster
-from arcpy.sa import Con
-from arcpy.sa import Reclassify
-from arcpy.sa import RemapValue
-from arcpy.sa import SetNull
-from arcpy.sa import EucDistance
-from arcpy.sa import RemapRange
-from arcpy.sa import RegionGroup
-from arcpy.sa import ExtractByAttributes
-from arcpy.sa import Plus
-
+from arcpy.sa import Con,EucDistance,ExtractByAttributes,Plus,Raster,Reclassify,RegionGroup,RemapRange,RemapValue,SetNull
 from pylet import arcpyutil
 from pylet.arcpyutil.messages import AddMsg
 from arcpy import env
 
 
-def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inEdgeWidth=None):
+def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDistance=None):
     if arcpy.Exists(outName):
         arcpy.Delete_management(outName)
         
-    if inEdgeWidth:
+    if inBufferDistance:
         # Buffering Reporting unit features...
         cellSize = Raster(inLandCoverGrid).meanCellWidth
         linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
-        bufferFloat = cellSize * (int(inEdgeWidth)+1)
+        bufferFloat = cellSize * (int(inBufferDistance)+1)
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
         arcpy.Buffer_analysis(inReportingUnitFeature, "in_memory/ru_buffer", bufferDistance, "#", "#", "ALL")
         
     # Clipping input grid to desired extent...
-    if inEdgeWidth:
+    if inBufferDistance:
         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName,"in_memory/ru_buffer", "", "NONE")
         arcpy.Delete_management("in_memory")
     else:
@@ -110,17 +100,11 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
             
     AddMsg(timer.split() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
-#    arcpy.BuildRasterAttributeTable_management(reclassGrid, "Overwrite")
-#    scratchName = arcpy.CreateScratchName(m+"_Reclass", "", "RasterDataset")
-#    reclassGrid.save(scratchName)
     
-    # create an other grid
     AddMsg(timer.split() + " Step 2 of 4: Setting Class areas to Null...")
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
     otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
-#    arcpy.BuildRasterAttributeTable_management(otherGrid, "Overwrite")
     
-    # generate the edge/core/other/excluded zones grid
     AddMsg(timer.split() + " Step 3 of 4: Finding distance from Other...")
     distGrid = EucDistance(otherGrid)
     
@@ -130,11 +114,11 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite") 
 
     arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
-    updateValuestoRaster(zonesGrid)
-        
+    updateCoreEdgeCategoryLabels(zonesGrid)
+    
     return zonesGrid
 
-def updateValuestoRaster(Raster):
+def updateCoreEdgeCategoryLabels(Raster):
     #Updates the CATEGORY field in the ForestCoreEdge with "Core" and "Edge" values
     rows = arcpy.UpdateCursor(Raster)
     row = rows.next()
@@ -277,4 +261,100 @@ def convertList(inList):
         elif type(l) is int:
             outList.append(str(l))  
     return outList    
+    
+    
+def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirectory, maxSeparation, minPatchSize, 
+                         processingCellSize_str, timer):
+    # create a list of all the grid values in the selected landcover grid
+    landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
+    
+    # for the selected land cover class, get the class codes found in the input landcover grid
+    lccValuesDict = lccObj.values
+    classValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
+    
+    # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
+    excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+    
+    # create class (value = 3) / other (value = 0) / excluded grid (value = -9999) raster
+    # define the reclass values
+    classValue = 3
+    excludedValue = -9999
+    otherValue = 0
+    newValuesList = [classValue, excludedValue, otherValue]
+    
+    # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
+    AddMsg(timer.split() + "Reclassing land cover to Class:"+m+" = "+str(classValue)+", Other = "+str(otherValue)+
+           ", and Excluded = "+str(excludedValue)+"...")
+    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+     
+    # create patch raster where:
+    #    clusters of cells within the input threshold distance are considered a single patch
+    #    and patches below the input minimum size have been discarded
+    
+    # Ensure all parameter inputs are the appropriate number type
+    intMaxSeparation = int(maxSeparation)
+    intMinPatchSize = int(minPatchSize)
+    
+    # Check if Maximum Separation > 0 if it is then skip to regions group analysis otherwise run Euclidean distance
+    if intMaxSeparation == 0:
+        AddMsg(timer.split() + "Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
+        regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
+    else:
+        AddMsg(timer.split() + "Connecting clusters of Class:"+m+" within maximum separation distance...")
+        fltProcessingCellSize = float(processingCellSize_str)
+        maxSep = intMaxSeparation * float(processingCellSize_str)
+        delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
+        whereClause = delimitedVALUE+" < " + str(classValue)
+        classRaster = SetNull(reclassGrid, 1, whereClause)
+        eucDistanceRaster = EucDistance(classRaster, maxSep, fltProcessingCellSize)
+
+        # Run Region Group analysis on UserEuclidPlus, ignores 0/NoData values
+        AddMsg(timer.split() + "Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
+        UserEuclidRegionGroup = RegionGroup(eucDistanceRaster >= 0,"EIGHT","CROSS","ADD_LINK","0")
+
+        # Maintain the original boundaries of each patch
+        regionOther = Con(reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid)
+
+    if intMinPatchSize > 1:
+        AddMsg(timer.split() + "Eliminating clusters below threshold size...")
+        delimitedCOUNT = arcpy.AddFieldDelimiters(regionOther,"COUNT")
+        whereClause = delimitedCOUNT+" < " + str(intMinPatchSize)
+        regionOtherFinal = Con(regionOther, otherValue, regionOther, whereClause)
+    else:
+        regionOtherFinal = regionOther
+
+    # add the excluded class areas back to the raster if present
+    if excludedValuesList:
+        regionOtherExcluded = Con(reclassGrid == excludedValue, reclassGrid, regionOtherFinal)
+    else:
+        regionOtherExcluded = regionOtherFinal
+
+    return regionOtherExcluded
+
+    
+def getInOutOtherReclassPairs(allRasterValues, selectedValuesList, excludedValuesList, newValuesList):
+    # Generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    # Three reclass categories are defined:
+    #     first value in the newValuesList is the new code for all values in the selected Class
+    #     second value in the newValuesList is the code for any values tagged excluded in the LCC XML
+    #     third value in the newvaluesList is the new code for everything else
+    
+    newIncludedValue = newValuesList[0]
+    newExcludedValue = newValuesList[1]
+    newOtherValue = newValuesList[2]
+    reclassPairs = []
+    for val in allRasterValues:
+        oldValNewValPair = []
+        oldValNewValPair.append(val)
+        if val in selectedValuesList:
+            oldValNewValPair.append(newIncludedValue)
+        elif val in excludedValuesList:
+            oldValNewValPair.append(newExcludedValue)
+        else:
+            oldValNewValPair.append(newOtherValue)
+            
+        reclassPairs.append(oldValNewValPair)
+            
+    return reclassPairs

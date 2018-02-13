@@ -5,7 +5,6 @@ import os
 import arcpy
 import errors
 import setupAndRestore
-import string
 from pylet import lcc
 from pylet.arcpyutil import polygons
 from pylet.arcpyutil import fields
@@ -136,7 +135,8 @@ class metricCalc:
         self._calculateMetrics()
         
         # ensure cleanup occurs.
-        del self.tabAreaTable
+        if self.tabAreaTable <> None:
+            del self.tabAreaTable
 
 
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -172,7 +172,9 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         # append the slope threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
-        #Perform clip, buffered with the edge width, for the input raster data and set inLandCoverGrid to be the new clipped data        
+        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+        #patch metrics) extend the clip envelope an adequate distance.       
         from pylet import arcpyutil
         from arcpy import env        
         _tempEnvironment1 = env.workspace
@@ -180,11 +182,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 
         if clipLCGrid == "true":
             timer = DateTimer()
-            AddMsg(timer.start() + " Clipping input land cover grid...")
+            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
             namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
-            AddMsg(timer.split() + " Clipping complete")
+            AddMsg(timer.split() + " Reduction complete")
 
         
         # Create new subclass of metric calculation
@@ -214,12 +216,160 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 
         # Run Calculation
         lcspCalc.run()
+        
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName) 
 
     except Exception, e:
         errors.standardErrorHandling(e)
 
     finally:
         setupAndRestore.standardRestore()
+        env.workspace = _tempEnvironment1
+
+
+def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+                          inPatchSize, inMaxSeparation, outTable, mdcpYN, inSearchRadius, processingCellSize, snapRaster, 
+                          optionalFieldGroups, clipLCGrid):
+    """ Interface for script executing Patch Metrics """
+
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+    try:
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+        
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.pmConstants()
+        
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+                                                                                os.path.dirname(outTable),
+                                                                                [metricsToRun,optionalFieldGroups] )
+        if globalConstants.intermediateName in optionalGroupsList:
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
+        utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        
+        # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
+        ignoreHighest = False
+        
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest)
+     
+        #Create the output table outside of metricCalc so that result can be added for multiple metrics
+        AddMsg(timer.split() + " Creating output table")
+        newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
+                                                                                  metricConst, lccObj, outIdField, 
+                                                                                  metricConst.additionalFields)
+        
+        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+        #patch metrics) extend the clip envelope an adequate distance.       
+        from pylet import arcpyutil
+        from arcpy import env        
+        _tempEnvironment1 = env.workspace
+        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+
+        if clipLCGrid == "true":
+            AddMsg(timer.split() + "Reducing input Land cover grid to smallest recommended size...")
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
+            inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inMaxSeparation)
+            AddMsg(timer.split() + " Reduction complete")
+        
+            
+        # Run metric calculate for each metric in list
+        for m in metricsBaseNameList:
+            # Subclass that overrides specific functions for the MDCP calculation
+            class metricCalcPM(metricCalc):
+
+                def _replaceLCGrid(self):
+                    # replace the inLandCoverGrid
+                    AddMsg(self.timer.split() + " Creating Patch Grid for Class:"+m)
+                    self.inLandCoverGrid = utils.raster.createPatchRasterNew(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
+                                                                          os.path.dirname(outTable), self.maxSeparation,
+                                                                          self.minPatchSize, processingCellSize, timer)
+                    
+#                     if self.saveIntermediates:
+#                         self.namePrefix = self.metricConst.shortName+"_Patch_"+m
+#                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+#                         self.inLandCoverGrid.save(self.scratchName)
+                        
+                #skip over make out table since it has already been made
+                def _makeAttilaOutTable(self):
+                    pass
+
+                #set the tabAreaTable attribute for the metric class to "None" since this metric does not require it
+                def _makeTabAreaTable(self):
+                    self.tabAreaTable = None
+                
+                #Update housekeeping so it doesn't check for lcc codes
+                def _housekeeping(self):
+                    # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
+                    # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
+                    # alert user if the land cover grid cells are not square (default to size along x axis)
+                    utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
+                    # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+                    self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
+                
+                    # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+                    self.zoneAreaDict = None
+                    if globalConstants.qaCheckName in self.optionalGroupsList:
+                        # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
+                        # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
+                        # area of the reporting unit's polygon features to store in the zoneAreaDict
+                        self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
+                        self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+                        
+                # Update calculateMetrics to populate Patch Metrics and MDCP
+                def _calculateMetrics(self):
+                    self.newTable = newtable
+                    self.metricsFieldnameDict = metricsFieldnameDict
+
+                    # calculate Patch metrics
+                    AddMsg(timer.split() + " Patch analysis has been run for Class:" + m)
+                    
+                    if self.saveIntermediates:
+                        self.namePrefix = self.metricConst.shortName+"_Patch_"+m
+                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+                        self.inLandCoverGrid.save(self.scratchName)
+                        #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
+                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+
+            # Create new instance of metricCalc class to contain parameters
+            pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                      m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+            
+            pmCalc.maxSeparation = inMaxSeparation
+            pmCalc.minPatchSize = inPatchSize
+            
+            #Run Calculation
+            pmCalc.run()
+            
+            pmCalc.metricsBaseNameList = metricsBaseNameList
+
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName)     
+    
+    except Exception, e:
+        errors.standardErrorHandling(e)
+
+    finally:
+        setupAndRestore.standardRestore()
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        env.workspace = _tempEnvironment1
 
 
 def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
@@ -259,7 +409,9 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   metricConst.additionalFields)
  
-        #Perform clip, buffered with the edge width, for the input raster data and set inLandCoverGrid to be the new clipped data        
+        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+        #patch metrics) extend the clip envelope an adequate distance.       
         from pylet import arcpyutil
         from arcpy import env        
         _tempEnvironment1 = env.workspace
@@ -267,11 +419,11 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
 
         if clipLCGrid == "true":
             timer = DateTimer()
-            AddMsg(timer.start() + " Buffering Reporting unit features and clipping input land cover grid...")
+            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
             namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inEdgeWidth)
-            AddMsg(timer.split() + " Buffering and clip complete")
+            AddMsg(timer.split() + " Reduction complete")
         
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -280,20 +432,14 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
-                    AddMsg(self.timer.split() + " Generating core and edge grid for Class: " + m)
+                    AddMsg(self.timer.split() + " Generating core and edge grid for Class: " + m.upper())
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, os.path.dirname(outTable), 
                                                                         globalConstants.scratchGDBFilename, processingCellSize,
                                                                         self.timer)
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
-                    if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
-                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-                        self.inLandCoverGrid.save(self.scratchName)
-                        #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
-                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
-
+                    #Moved the save intermediate grid to the calcMetrics function so it would be one of the last steps to be performed
 
                 #skip over make out table since it has already been made
                 def _makeAttilaOutTable(self):
@@ -311,8 +457,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                                 self._tableName = arcpy.CreateScratchName(self._tableName+m+inEdgeWidth, "", self._datasetType)
                             else:
                                 self._tableName = arcpy.CreateScratchName(self._tempTableName+m+inEdgeWidth, "", self._datasetType)
-            
-        
+
                             arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
                                  self._value, self._tableName)
                             
@@ -354,6 +499,12 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     utils.calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m)
                     AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
+                    
+                    if self.saveIntermediates:
+                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
+                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+                        self.inLandCoverGrid.save(self.scratchName)
+                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
 
             # Create new instance of metricCalc class to contain parameters
             caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -374,6 +525,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
 
     finally:
         setupAndRestore.standardRestore()
+        env.workspace = _tempEnvironment1
         
 
 def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -1015,15 +1167,15 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         AddMsg(timer.split() + " Calculating population density")
         # Create an index value to keep track of intermediate outputs and fieldnames.
         index = ""
-        #if popChangeYN:
-        if string.upper(str(popChangeYN)) == "TRUE":
+        #if popChangeYN is checked:
+        if popChangeYN:
             index = "1"
         # Perform population density calculation for first (only?) population feature class
         utils.calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
                                       env.workspace,outTable,metricConst,cleanupList,index)
 
-        #if popChangeYN:
-        if string.upper(str(popChangeYN)) == "TRUE":
+        #if popChangeYN is checked:
+        if popChangeYN:
             index = "2"
             AddMsg(timer.split() + " Calculating population density for second feature class")
             # Perform population density calculation for second population feature class
@@ -1090,7 +1242,9 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                       metricConst, lccObj, outIdField)
         
-        #Perform clip, buffered with the edge width, for the input raster data and set inLandCoverGrid to be the new clipped data        
+        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+        #patch metrics) extend the clip envelope an adequate distance.      
         from pylet import arcpyutil
         from arcpy import env        
         _tempEnvironment1 = env.workspace
@@ -1098,11 +1252,11 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
 
         if clipLCGrid == "true":
             timer = DateTimer()
-            AddMsg(timer.start() + " Buffering Reporting unit features and clipping input land cover grid...")
+            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
             namePrefix = "%s_%s" % (metricConst.shortName,os.path.basename(inLandCoverGrid))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, maxSeparation)
-            AddMsg(timer.split() + " Buffering and clip complete")
+            AddMsg(timer.split() + " Reduction complete")
         
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -1182,6 +1336,10 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
             
             mdcpCalc.metricsBaseNameList = metricsBaseNameList
             AddMsg(timer.split() + " MDCP analysis has been run for landuse " + m)
+            
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName) 
+            
     except Exception, e:
         errors.standardErrorHandling(e)
 
@@ -1191,3 +1349,4 @@ def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        env.workspace = _tempEnvironment1
