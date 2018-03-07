@@ -282,3 +282,6 @@ class pmConstants(baseMetricConstants):
     lrgField = ["", lrgSuffix, gc.defaultDecimalFieldType, 6, 1]
     mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [numField, avgField, densField, lrgField]
+    classValue = 3
+    excludedValue = -9999
+    otherValue = 0

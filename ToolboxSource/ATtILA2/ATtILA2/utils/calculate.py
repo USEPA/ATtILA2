@@ -665,6 +665,192 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict,metricConst, m)
             except:
                 pass
     
+def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldnameDict, zoneAreaDict, metricConst, m, 
+                    inReportingUnitFeature, inLandCoverGrid, processingCellSize, conversionFactor):
+    from pylet import arcpyutil
+    resultsDict={}
+    
+    try:
+        # create list to identify EXCLUDED and OTHER VALUE fields in the tabulate area table
+        ignoreFieldList = ["VALUE__9999", "VALUE_0"]
+        
+        # put the proper field delimiters around the ID field name for SQL expressions
+        delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
+        
+        # Initialize custom progress indicator
+        totalRUs = len(zoneAreaDict)
+        loopProgress = arcpyutil.messages.loopProgress(totalRUs)
+    
+        #For each Reporting Unit run Tabulate Area Analysis and add the results to a dictionary
+        for aZone in zoneAreaDict.keys():
+            if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
+                squery = "%s = %s" % (delimitedField, str(aZone))
+            else: # reporting unit id is a string - enclose it in single quotes for SQL expression
+                squery = "%s = '%s'" % (delimitedField, str(aZone))
+    
+            #Create a feature layer of the single reporting unit
+            arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery,"#")
+    
+            #Tabulate areas of patches within single reporting unit
+            temptable = "temptable"
+            arcpy.sa.TabulateArea("subwatersheds_Layer", reportingUnitIdField, inLandCoverGrid,"Value", temptable, processingCellSize)
+            
+            #Loop through each row in the table and calculate the patch metrics 
+            rows = arcpy.SearchCursor(temptable)
+            row = rows.next()
+    
+            while row:
+                wshedarea = zoneAreaDict[aZone]
+                
+                flds = arcpy.ListFields(temptable)
+                valueFieldsList = [f.name for f in flds if "VALUE" in f.name]
+                    
+                patchAreaList = [row.getValue(fld) for fld in valueFieldsList if fld not in ignoreFieldList]
+                
+                # find the area of the OTHER and EXCLUDED classes if they are found in the reporting unit
+                try:
+                    otherArea = row.getValue("VALUE_0")
+                except:
+                    otherArea = 0
+                try:
+                    excludedArea = row.getValue("VALUE__9999")
+                except:
+                    excludedArea = 0
+                    
+                if patchAreaList: # list is not empty. reporting unit contained patches of selected land cover
+                    numpatch = len(patchAreaList)
+                    patchArea = sum(patchAreaList)
+                    lrgpatch = max(patchAreaList)
+                    avepatch = patchArea/numpatch
+                    proportion = (lrgpatch/patchArea) * 100
+                    
+                    #convert to square kilometers       
+                    wshedareaK = wshedarea* (conversionFactor/1000000)
+                    patchdensity = numpatch/wshedareaK
+                else: # list is empty. no patches of selected land cover were found in reporting unit
+                    numpatch = 0
+                    patchArea = 0
+                    lrgpatch = 0
+                    avepatch = 0
+                    proportion = 0
+                    patchdensity = 0               
+    
+                resultsDict[aZone] = (proportion,numpatch,avepatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,wshedarea)
+    
+                loopProgress.update()
+                row = rows.next()
+
+        # Check to see if newTable has already been set up
+        rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
+        if rowcount == 0:
+            outTableRows = arcpy.InsertCursor(newTable)
+            for k in resultsDict.keys():
+                # initiate a row to add to the metric output table
+                outTableRow = outTableRows.newRow()
+                
+                # set the reporting unit id value in the output row
+                outTableRow.setValue(outIdField.name, k)
+                
+                # commit the row to the output table
+                outTableRows.insertRow(outTableRow)
+            del outTableRows, outTableRow
+            
+        # assemble the names for the patch metric fields 
+        outClassName = metricsFieldnameDict[m][1]
+        numFieldName = metricConst.numField[0]+outClassName+metricConst.numField[1]
+        avgFieldName = metricConst.avgField[0]+outClassName+metricConst.avgField[1]
+        densFieldName = metricConst.densField[0]+outClassName+metricConst.densField[1]
+        lrgFieldName = metricConst.lrgField[0]+outClassName+metricConst.lrgField[1]
+        
+        # check to see if QA fields are included in table
+        fldNames = [f.name for f in arcpy.ListFields(newTable)]
+        QAFields = metricConst.overlapName in fldNames
+   
+        # create the cursor to add data to the output table
+        outTableRows = arcpy.UpdateCursor(newTable)        
+        outTableRow = outTableRows.next()
+        while outTableRow:
+            uid = outTableRow.getValue(outIdField.name)
+            # populate the patch metric fields for the current reporting unit
+            if (uid in resultsDict):
+                outTableRow.setValue(metricsFieldnameDict[m][0], resultsDict[uid][0])
+                outTableRow.setValue(numFieldName, resultsDict[uid][1])
+                outTableRow.setValue(avgFieldName, resultsDict[uid][2])
+                outTableRow.setValue(densFieldName, resultsDict[uid][3])
+                outTableRow.setValue(lrgFieldName, resultsDict[uid][4])
+            else:
+                outTableRow.setValue(metricsFieldnameDict[m][0], 0)
+                outTableRow.setValue(numFieldName, 0)
+                outTableRow.setValue(avgFieldName, 0)
+                outTableRow.setValue(densFieldName, 0)
+                outTableRow.setValue(lrgFieldName, 0)
+            
+            # add QACheck calculations/values to row
+            if QAFields:
+                 
+                qaCheckFlds = metricConst.qaCheckFieldParameters
+                effectiveArea = resultsDict[uid][5] + resultsDict[uid][6]
+                excludedArea = resultsDict[uid][7]
+                wshedArea = resultsDict[uid][8]
+                totalGridArea = effectiveArea + excludedArea
+                overlapCalc = (totalGridArea/ wshedArea) * 100
+                
+                outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+                outTableRow.setValue(qaCheckFlds[1][0], totalGridArea)
+                outTableRow.setValue(qaCheckFlds[2][0], effectiveArea)
+                outTableRow.setValue(qaCheckFlds[3][0], excludedArea)
+            
+            # commit the row to the output table
+            outTableRows.updateRow(outTableRow)
+            outTableRow = outTableRows.next()
+    finally:
+    
+        # delete cursor and row objects to remove locks on the data
+        try:
+            del rows
+            del row
+            del outTableRows
+            del outTableRow
+            arcpy.Delete_management("temptable")
+        except:
+            pass
+        
+#     #Add the results gathered above into the output table
+#     if newTable == "Yes":
+#         #if Results table does not already exists
+#         rows = arcpy.InsertCursor("PatchResults")
+#         row = rows.next()
+#         rownum = len(zoneAreaDict)
+#         for k in resultsdict.keys():
+#             num, lrg, ave, prop, tarea, density = resultsdict[k].split(",")
+#             row = rows.newRow()
+#             row.id = k
+#             row.NumPatches = num
+#             row.LargestPatch = lrg
+#             row.AvePatchSize = ave
+#             row.PLGP = prop
+#             row.TotalPatchArea = tarea
+#             row.PatchDensity = density
+#             rows.insertRow(row)
+#         del row, rows
+#     elif newTable == "No":
+#         #if Results table already exists
+#         for k in resultsdict.keys():
+#             rows = arcpy.UpdateCursor("PatchResults", "ID = '" + k + "'")
+#             row = rows.next()
+#             while row:
+#                 num, lrg, ave, prop, tarea, density = resultsdict[k].split(",")
+# ##                row.id = k
+#                 row.NumPatches = num
+#                 row.LargestPatch = lrg
+#                 row.AvePatchSize = ave
+#                 row.PLGP = prop
+#                 row.TotalPatchArea = tarea
+#                 row.PatchDensity = density
+#                 rows.updateRow(row)
+#                 row = rows.next()
+#             del row, rows
+
             
 def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,tempWorkspace,
                   outTable,metricConst,cleanupList,index=""):

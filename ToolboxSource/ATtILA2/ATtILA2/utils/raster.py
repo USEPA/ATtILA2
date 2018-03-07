@@ -263,7 +263,7 @@ def convertList(inList):
     return outList    
     
     
-def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirectory, maxSeparation, minPatchSize, 
+def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
                          processingCellSize_str, timer):
     # create a list of all the grid values in the selected landcover grid
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
@@ -277,15 +277,15 @@ def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDire
     
     # create class (value = 3) / other (value = 0) / excluded grid (value = -9999) raster
     # define the reclass values
-    classValue = 3
-    excludedValue = -9999
-    otherValue = 0
+    classValue = metricConst.classValue
+    excludedValue = metricConst.excludedValue
+    otherValue = metricConst.otherValue
     newValuesList = [classValue, excludedValue, otherValue]
     
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
-    AddMsg(timer.split() + "Reclassing land cover to Class:"+m+" = "+str(classValue)+", Other = "+str(otherValue)+
+    AddMsg(timer.split() + " Reclassing land cover to Class:"+m+" = "+str(classValue)+", Other = "+str(otherValue)+
            ", and Excluded = "+str(excludedValue)+"...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
      
@@ -299,10 +299,10 @@ def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDire
     
     # Check if Maximum Separation > 0 if it is then skip to regions group analysis otherwise run Euclidean distance
     if intMaxSeparation == 0:
-        AddMsg(timer.split() + "Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
+        AddMsg(timer.split() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
         regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
     else:
-        AddMsg(timer.split() + "Connecting clusters of Class:"+m+" within maximum separation distance...")
+        AddMsg(timer.split() + " Connecting clusters of Class:"+m+" within maximum separation distance...")
         fltProcessingCellSize = float(processingCellSize_str)
         maxSep = intMaxSeparation * float(processingCellSize_str)
         delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
@@ -311,14 +311,14 @@ def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDire
         eucDistanceRaster = EucDistance(classRaster, maxSep, fltProcessingCellSize)
 
         # Run Region Group analysis on UserEuclidPlus, ignores 0/NoData values
-        AddMsg(timer.split() + "Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
+        AddMsg(timer.split() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
         UserEuclidRegionGroup = RegionGroup(eucDistanceRaster >= 0,"EIGHT","CROSS","ADD_LINK","0")
 
         # Maintain the original boundaries of each patch
         regionOther = Con(reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid)
 
     if intMinPatchSize > 1:
-        AddMsg(timer.split() + "Eliminating clusters below threshold size...")
+        AddMsg(timer.split() + " Eliminating clusters below threshold size...")
         delimitedCOUNT = arcpy.AddFieldDelimiters(regionOther,"COUNT")
         whereClause = delimitedCOUNT+" < " + str(intMinPatchSize)
         regionOtherFinal = Con(regionOther, otherValue, regionOther, whereClause)

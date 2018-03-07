@@ -232,12 +232,15 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, inSearchRadius, processingCellSize, snapRaster, 
                           optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Patch Metrics """
+    
+    from ATtILA2.utils import settings
+    from pylet.arcpyutil import conversion
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables")
+        AddMsg(timer.start() + " Setting up initial environment variables")
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pmConstants()
@@ -245,6 +248,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
                                                                                 [metricsToRun,optionalFieldGroups] )
+        
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
@@ -254,36 +258,54 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         # get the dictionary with the LCC CLASSES attributes
         lccClassesDict = lccObj.classes
         
-        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
+        # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
+        # area of the reporting unit's polygon features to store in the zoneAreaDict
+        outputSpatialRef = utils.settings.getOutputSpatialReference(inLandCoverGrid)
+
+        # Compile a dictionary with key:value pair of ZoneId:ZoneArea
+        zoneAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+        
+        # see what linear units are output in any tabulate area calculations
+        outputLinearUnits = settings.getOutputLinearUnits(inLandCoverGrid)        
+
+        # using the output linear units, get the conversion factor to convert area measures to metric appropriate values
+        try:
+            conversionFactor = conversion.getSqMeterConversionFactor(outputLinearUnits)
+        except:
+            raise errors.attilaException(errorConstants.linearUnitConversionError)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
         
-        # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
-        ignoreHighest = False
-        
         # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest)
-     
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+         
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         AddMsg(timer.split() + " Creating output table")
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   metricConst.additionalFields)
-        
+                
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
-        #patch metrics) extend the clip envelope an adequate distance.       
-        from pylet import arcpyutil
-        from arcpy import env        
-        _tempEnvironment1 = env.workspace
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+        #patch metrics) extend the clip envelope an adequate distance.
 
         if clipLCGrid == "true":
             AddMsg(timer.split() + "Reducing input Land cover grid to smallest recommended size...")
+            
+            from pylet import arcpyutil
+            from arcpy import env        
+            _startingWorkSpace= env.workspace
+            env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
             namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inMaxSeparation)
+            env.workspace = _startingWorkSpace
+            
             AddMsg(timer.split() + " Reduction complete")
         
             
@@ -296,14 +318,10 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                     # replace the inLandCoverGrid
                     AddMsg(self.timer.split() + " Creating Patch Grid for Class:"+m)
                     self.inLandCoverGrid = utils.raster.createPatchRasterNew(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
-                                                                          os.path.dirname(outTable), self.maxSeparation,
+                                                                          self.metricConst, self.maxSeparation,
                                                                           self.minPatchSize, processingCellSize, timer)
-                    
-#                     if self.saveIntermediates:
-#                         self.namePrefix = self.metricConst.shortName+"_Patch_"+m
-#                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-#                         self.inLandCoverGrid.save(self.scratchName)
-                        
+                    AddMsg(self.timer.split() + " Patch Grid Completed for Class:"+m)
+
                 #skip over make out table since it has already been made
                 def _makeAttilaOutTable(self):
                     pass
@@ -318,22 +336,15 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                     # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
                     # alert user if the land cover grid cells are not square (default to size along x axis)
                     utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
-                    # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
-                    self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
-                
-                    # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
-                    self.zoneAreaDict = None
-                    if globalConstants.qaCheckName in self.optionalGroupsList:
-                        # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
-                        # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
-                        # area of the reporting unit's polygon features to store in the zoneAreaDict
-                        self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
-                        self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
                         
                 # Update calculateMetrics to populate Patch Metrics and MDCP
                 def _calculateMetrics(self):
-                    self.newTable = newtable
-                    self.metricsFieldnameDict = metricsFieldnameDict
+                    
+                    AddMsg(self.timer.split() + " Calculating Patch Numbers by Reporting Unit for Class:" + m)
+                 
+                    utils.calculate.getPatchNumbers(self.outIdField, self.newTable, self.reportingUnitIdField, self.metricsFieldnameDict,
+                                                      self.zoneAreaDict, self.metricConst, m, self.inReportingUnitFeature, 
+                                                      self.inLandCoverGrid, processingCellSize, conversionFactor)
 
                     # calculate Patch metrics
                     AddMsg(timer.split() + " Patch analysis has been run for Class:" + m)
@@ -342,15 +353,19 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                         self.namePrefix = self.metricConst.shortName+"_Patch_"+m
                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                         self.inLandCoverGrid.save(self.scratchName)
-                        #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
                         AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
 
             # Create new instance of metricCalc class to contain parameters
             pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                       m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
             
+            pmCalc.newTable = newtable
+            pmCalc.metricsFieldnameDict = metricsFieldnameDict
             pmCalc.maxSeparation = inMaxSeparation
             pmCalc.minPatchSize = inPatchSize
+            pmCalc.outIdField = outIdField
+            pmCalc.zoneAreaDict = zoneAreaDict
+            #pmCalc.conversionFactor = conversionFactor
             
             #Run Calculation
             pmCalc.run()
@@ -369,7 +384,6 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
-        env.workspace = _tempEnvironment1
 
 
 def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
@@ -398,11 +412,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
         
-        # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
-        ignoreHighest = False
-        
         # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest)
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
