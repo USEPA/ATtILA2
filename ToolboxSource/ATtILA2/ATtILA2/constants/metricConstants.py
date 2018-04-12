@@ -223,29 +223,29 @@ class pdmConstants(baseMetricConstants):
     intersectOutputName = shortName+"_intersectOutput"
     summaryTableName = shortName+"_summaryTable"
     
-class mdcpConstants(baseMetricConstants):
-    name = "MeanDisttoClosestPatch"
-    shortName = "mdcp"
-    fieldPrefix = ""
-    fieldSuffix = "MDCP"
-    overlapName = "MDCP_OVER"
-    totalAreaName = "MDCP_TOTA"
-    effectiveAreaName = "MDCP_EFFA"
-    excludedAreaName = "MDCP_EXCA"
-    rastertoPoly = [shortName+"_FinalPatchPoly","FeatureClass"]
-    rastertoPoint = [shortName+"_FinalPatchCentroids", "FeatureClass"]
-    polyDissolve = [shortName+"_FinalPatch_poly_diss", "FeatureClass"]
-    clipPolyDissolve =[shortName+"_FinalPatch_poly_diss_clip", "FeatureClass"]
-    nearTable = [shortName+"_NearTable", "Dataset"]
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
-    qaCheckFieldParameters = [
-        [overlapName, gc.defaultIntegerFieldType, 6],
-        [totalAreaName, gc.defaultAreaFieldType, 15],
-        [effectiveAreaName, gc.defaultAreaFieldType, 15],
-        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
-        ]
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+# class mdcpConstants(baseMetricConstants):
+#     name = "MeanDisttoClosestPatch"
+#     shortName = "mdcp"
+#     fieldPrefix = ""
+#     fieldSuffix = "MDCP"
+#     overlapName = "MDCP_OVER"
+#     totalAreaName = "MDCP_TOTA"
+#     effectiveAreaName = "MDCP_EFFA"
+#     excludedAreaName = "MDCP_EXCA"
+#     rastertoPoly = [shortName+"_FinalPatchPoly","FeatureClass"]
+#     rastertoPoint = [shortName+"_FinalPatchCentroids", "FeatureClass"]
+#     polyDissolve = [shortName+"_FinalPatch_poly_diss", "FeatureClass"]
+#     clipPolyDissolve =[shortName+"_FinalPatch_poly_diss_clip", "FeatureClass"]
+#     nearTable = [shortName+"_NearTable", "Dataset"]
+#     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+#     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+#     qaCheckFieldParameters = [
+#         [overlapName, gc.defaultIntegerFieldType, 6],
+#         [totalAreaName, gc.defaultAreaFieldType, 15],
+#         [effectiveAreaName, gc.defaultAreaFieldType, 15],
+#         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
+#         ]
+#     fieldOverrideKey = shortName + gc.fieldOverrideName
 
 class pmConstants(baseMetricConstants):
     name = "PatchMetrics"
@@ -256,11 +256,11 @@ class pmConstants(baseMetricConstants):
     totalAreaName = "PM_TOTA"
     effectiveAreaName = "PM_EFFA"
     excludedAreaName = "PM_EXCA"
-    rastertoPoly = [shortName+"_FinalPatchPoly","FeatureClass"]
-    rastertoPoint = [shortName+"_FinalPatchCentroids", "FeatureClass"]
-    polyDissolve = [shortName+"_FinalPatch_poly_diss", "FeatureClass"]
-    clipPolyDissolve =[shortName+"_FinalPatch_poly_diss_clip", "FeatureClass"]
-    nearTable = [shortName+"_NearTable", "Dataset"]
+    rastertoPoly = "_FinalPatchPoly"
+    rastertoPoint = "_FinalPatchCentroids"
+    polyDissolve = "_FinalPatch_poly_diss"
+    clipPolyDissolve = "_FinalPatch_poly_diss_clip"
+    nearTable = "_NearTable"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -275,13 +275,15 @@ class pmConstants(baseMetricConstants):
     densSuffix = "_DENS"
     lrgSuffix = "_LRG"
     mdcpSuffix = "_MDCP"
-    additionalSuffixes = [numSuffix, avgSuffix, densSuffix, lrgSuffix]
+    additionalSuffixes = [numSuffix, avgSuffix, densSuffix, lrgSuffix, mdcpSuffix]
     numField = ["", numSuffix, gc.defaultDecimalFieldType, 6, 1]
     avgField = ["", avgSuffix, gc.defaultDecimalFieldType, 6, 1]
     densField = ["", densSuffix, gc.defaultDecimalFieldType, 6, 1]
     lrgField = ["", lrgSuffix, gc.defaultDecimalFieldType, 6, 1]
     mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 6, 1]
-    additionalFields = [numField, avgField, densField, lrgField]
+    additionalFields = []
+    mdcpFields = [mdcpField]
+    patchFields = [numField, avgField, densField, lrgField]
     classValue = 3
     excludedValue = -9999
     otherValue = 0

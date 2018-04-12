@@ -13,14 +13,12 @@ class ToolValidator (ATtILA2.ToolValidator.pmToolValidator):
 
     inTableIndex = 0 
     startIndex = 3
-    optionalFieldsIndex = 13 
+    optionalFieldsIndex = 12 
     inRasterIndex = 2
     inDistanceIndex = 6
     inWholeNumIndex = 7
     outTableIndex = 8     
-    processingCellSizeIndex = 11 
-    snapRasterIndex = 12 
+    processingCellSizeIndex = 10 
+    snapRasterIndex = 11 
     srcDirName = srcDirPath
-    checkbox1Index = 9
-    checkboxInParameters = {'checkbox1':[10]}
-    inLinearUnitIndex = 10
+

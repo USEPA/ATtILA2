@@ -5,6 +5,7 @@
 import arcpy, pylet, files
 from pylet.arcpyutil.messages import AddMsg
 from pylet.arcpyutil.fields import valueDelimiter
+from arcpy.sa.Functions import SetNull
 
 def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -459,84 +460,84 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     finally:
         pass
 
-def splitDissolveMerge_old(lines,repUnits,uIDField,mergedLines,lineClass='#'):
-    '''This function performs a split, dissolve, and merge function on a set of line features.
-    **Description:**
-        This function iterates through a set of areal units, clipping line features to each unit, then dissolving those
-        lines (preserving different classes of lines, if that option is chosen, assigning the dissolved line features 
-        the ID of the areal unit, and then merges the multipart dissolved lines back into a single output feature class. 
-        The clipped and dissolved linear features are all stored in-memory, rather than written to disk, to improve 
-        performance.  Only when the features are merged/appended into a final output feature class are they written to 
-        disk.   
-    **Arguments:**
-        * *lines* - the input line feature class
-        * *repUnits* - the input representative areal units feature class that will be used to split the lines
-        * *uIDField* - the ID field of the representative areal units feature class.  Each dissolved line feature will be assigned the respective uID
-        * *lineClass* - optional field containing class values for the line feature class.  these classes are preserved through the split/dissolve/merge process
-        * *mergedLines* - name of the output feature class.
-    **Returns:**
-        * *mergedLines* - name of the output feature class.
-        * *lengthFieldName* - validated name of the field in the output feature class containing length values
-    '''
-    # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
-    # improve performance if we set up the right syntax for the whereclauses ahead of time.
-    repUnitID = arcpy.AddFieldDelimiters(repUnits,uIDField.name)
-    delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,uIDField.name)[0].type)
-    
-    # Get the properties of the unit ID field
-    pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
-
-    # Get a count of the number of reporting units to give an accurate progress estimate.
-    n = int(arcpy.GetCount_management(repUnits).getOutput(0))
-    # Initialize custom progress indicator
-    loopProgress = pylet.arcpyutil.messages.loopProgress(n)
-       
-    i = 0 # Flag used to create the outFeatures the first time through.
-    # Create a Search cursor to iterate through the reporting units.
-    Rows = arcpy.SearchCursor(repUnits,"","",uIDField.name)
-    AddMsg("Clipping and dissolving linear features in each reporting unit...")
-    
-    # For each reporting unit:
-    for row in Rows:            
-        
-        # Get the reporting unit ID
-        rowID = row.getValue(uIDField.name)
-        # Set up the whereclause for the reporting units to select one
-        whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
-
-        # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
-        # definition expression.
-        ruLayer = arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
-        
-        # Clip the features that should be buffered to this reporting unit, and output the result to memory.
-        clipResult = arcpy.Clip_analysis(lines,ruLayer,"in_memory/clip","#").getOutput(0)
-        # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
-        dissolveResult = arcpy.Dissolve_management(clipResult,"in_memory/dissolve",lineClass,"#","MULTI_PART",
-                                                   "DISSOLVE_LINES").getOutput(0)
-        # Add a field to this output shapefile that will contain the reporting unit ID (also the name of the shapefile)
-        # so that when we merge the shapefiles the ID will be preserved
-        arcpy.AddField_management(dissolveResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
-                                  uIDField.length,uIDField.aliasName,uIDField.isNullable,uIDField.required,
-                                  uIDField.domain)
-        arcpy.CalculateField_management(dissolveResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
-       
-        if i == 0: # If it's the first time through
-            # Save the output as the specified output feature class.
-            arcpy.CopyFeatures_management(dissolveResult,mergedLines)
-            i = 1 # Toggle the flag.
-        else: # If it's not the first time through and the output feature class already exists
-            # Append the in-memory result to the output feature class
-            arcpy.Append_management(dissolveResult,mergedLines,"NO_TEST")
-        
-        # Clean up intermediate datasets
-        arcpy.Delete_management(ruLayer)
-        arcpy.Delete_management(clipResult)
-        arcpy.Delete_management(dissolveResult)
-        loopProgress.update()
-    
-    ## Add and calculate a length field for the new shapefile
-    lengthFieldName = addLengthField(mergedLines)
-    return mergedLines, lengthFieldName
+# def splitDissolveMerge_old(lines,repUnits,uIDField,mergedLines,lineClass='#'):
+#     '''This function performs a split, dissolve, and merge function on a set of line features.
+#     **Description:**
+#         This function iterates through a set of areal units, clipping line features to each unit, then dissolving those
+#         lines (preserving different classes of lines, if that option is chosen, assigning the dissolved line features 
+#         the ID of the areal unit, and then merges the multipart dissolved lines back into a single output feature class. 
+#         The clipped and dissolved linear features are all stored in-memory, rather than written to disk, to improve 
+#         performance.  Only when the features are merged/appended into a final output feature class are they written to 
+#         disk.   
+#     **Arguments:**
+#         * *lines* - the input line feature class
+#         * *repUnits* - the input representative areal units feature class that will be used to split the lines
+#         * *uIDField* - the ID field of the representative areal units feature class.  Each dissolved line feature will be assigned the respective uID
+#         * *lineClass* - optional field containing class values for the line feature class.  these classes are preserved through the split/dissolve/merge process
+#         * *mergedLines* - name of the output feature class.
+#     **Returns:**
+#         * *mergedLines* - name of the output feature class.
+#         * *lengthFieldName* - validated name of the field in the output feature class containing length values
+#     '''
+#     # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
+#     # improve performance if we set up the right syntax for the whereclauses ahead of time.
+#     repUnitID = arcpy.AddFieldDelimiters(repUnits,uIDField.name)
+#     delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,uIDField.name)[0].type)
+#     
+#     # Get the properties of the unit ID field
+#     pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
+# 
+#     # Get a count of the number of reporting units to give an accurate progress estimate.
+#     n = int(arcpy.GetCount_management(repUnits).getOutput(0))
+#     # Initialize custom progress indicator
+#     loopProgress = pylet.arcpyutil.messages.loopProgress(n)
+#        
+#     i = 0 # Flag used to create the outFeatures the first time through.
+#     # Create a Search cursor to iterate through the reporting units.
+#     Rows = arcpy.SearchCursor(repUnits,"","",uIDField.name)
+#     AddMsg("Clipping and dissolving linear features in each reporting unit...")
+#     
+#     # For each reporting unit:
+#     for row in Rows:            
+#         
+#         # Get the reporting unit ID
+#         rowID = row.getValue(uIDField.name)
+#         # Set up the whereclause for the reporting units to select one
+#         whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
+# 
+#         # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
+#         # definition expression.
+#         ruLayer = arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
+#         
+#         # Clip the features that should be buffered to this reporting unit, and output the result to memory.
+#         clipResult = arcpy.Clip_analysis(lines,ruLayer,"in_memory/clip","#").getOutput(0)
+#         # Dissolve the lines to get one feature per reporting unit (per line class, if a line class is given)
+#         dissolveResult = arcpy.Dissolve_management(clipResult,"in_memory/dissolve",lineClass,"#","MULTI_PART",
+#                                                    "DISSOLVE_LINES").getOutput(0)
+#         # Add a field to this output shapefile that will contain the reporting unit ID (also the name of the shapefile)
+#         # so that when we merge the shapefiles the ID will be preserved
+#         arcpy.AddField_management(dissolveResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
+#                                   uIDField.length,uIDField.aliasName,uIDField.isNullable,uIDField.required,
+#                                   uIDField.domain)
+#         arcpy.CalculateField_management(dissolveResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
+#        
+#         if i == 0: # If it's the first time through
+#             # Save the output as the specified output feature class.
+#             arcpy.CopyFeatures_management(dissolveResult,mergedLines)
+#             i = 1 # Toggle the flag.
+#         else: # If it's not the first time through and the output feature class already exists
+#             # Append the in-memory result to the output feature class
+#             arcpy.Append_management(dissolveResult,mergedLines,"NO_TEST")
+#         
+#         # Clean up intermediate datasets
+#         arcpy.Delete_management(ruLayer)
+#         arcpy.Delete_management(clipResult)
+#         arcpy.Delete_management(dissolveResult)
+#         loopProgress.update()
+#     
+#     ## Add and calculate a length field for the new shapefile
+#     lengthFieldName = addLengthField(mergedLines)
+#     return mergedLines, lengthFieldName
 
 def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,inLengthField,lineClass=''):
     '''This function performs a intersection and dissolve function on a set of line features.
@@ -705,92 +706,202 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
     return fieldName      
 
-def tabulateMDCP(PatchLURaster, TempOutspace, ReportingUnitFeature, ReportingUnitField, SearchRadius, rastoPoly, rastoPt, 
-                 polyDiss, clipPolyDiss, nearPatchTable):
-    from arcpy import env
+# def tabulateMDCP_old(PatchLURaster, TempOutspace, ReportingUnitFeature, ReportingUnitField, SearchRadius, rastoPoly, rastoPt, 
+#                  polyDiss, clipPolyDiss, nearPatchTable):
+#     from arcpy import env
+#     resultDict = {}
+#     #Convert Final Patch Raster to polygon
+# ##    env.workspace = os.path.dirname(PatchLURaster)
+# #    arcpy.RasterToPolygon_conversion(PatchLURaster, TempOutspace + "\\FinalPatch_polygon", "NO_Simplify", "VALUE")
+#     arcpy.RasterToPolygon_conversion(PatchLURaster, rastoPoly, "NO_Simplify", "VALUE")
+#     #Convert Final Patch Raster to points to get the cell centroids
+#     arcpy.RasterToPoint_conversion(PatchLURaster, rastoPt, "VALUE")
+# 
+#     env.workspace = TempOutspace
+#     
+#     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+#     arcpy.Dissolve_management(rastoPoly, polyDiss,"grid_code","#",
+#                               "MULTI_PART","DISSOLVE_LINES")  
+#     
+#     #Get a list of Reporting Unit Feature ids
+#     idlist = []
+#     rows = arcpy.SearchCursor(ReportingUnitFeature)
+# 
+#     for row in rows:
+#         ruid = row.getValue(ReportingUnitField)
+#         idlist.append(ruid)
+#     del row, rows  
+# #    print idlist
+#     
+#     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
+#     for i in idlist:
+#         AddMsg("Generating Mean Distances for " + i)
+#         squery = ReportingUnitField + "='" + i + "'"
+#         #Create a feature layer of the single reporting unit
+#         arcpy.MakeFeatureLayer_management(ReportingUnitFeature,"subwatersheds_Layer",squery,"#")
+# 
+#         #Create a feature layer of the FinalPatch_poly_diss
+#         arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
+# 
+#         #Create a feature layer of the FinalPatch_centroids
+#         arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+# 
+#         #Select the centroids that are in the "subwatersheds_Layer"
+#         arcpy.SelectLayerByLocation_management("FinalPatch_centroids_Layer","INTERSECT","subwatersheds_Layer")
+#         
+#         #Get a list of centroids within the selected Reporting Unit (this is necessary to match the raster processing
+#         #selection which selects only grid cells whose center is within the reporting unit).
+#         rows = arcpy.SearchCursor("FinalPatch_centroids_Layer")
+#         centroidList = []
+#         for row in rows:
+#             gridid = row.getValue("Grid_Code")
+#             if str(gridid) not in centroidList:
+#                 centroidList.append(str(gridid))
+# 
+#         totalnumPatches = len(centroidList)
+#         del row, rows  
+#           
+#         # Select the patches that have centroids within the "subwatershed_Layer" using the centroid list
+#         values = ",".join(centroidList)
+#         arcpy.SelectLayerByAttribute_management("FinalPatch_diss_Layer", "NEW_SELECTION", "GRID_CODE IN(" + values + ")")
+#         arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
+#         #Calculate Near Distances for each watershed
+# #        arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], "neartable",
+# #                                         SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
+#         arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+#                                          SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")   
+#         #Get total number of patches with neighbors and calculate the mean distance
+#         try:
+#             rows = arcpy.SearchCursor(nearPatchTable)
+#             distlist = []
+#             for row in rows:
+#                 distance = row.getValue("NEAR_DIST")
+#                 distlist.append(distance)
+#             del row, rows
+#             pwnCount = len(distlist)
+#             totalArea = sum(distlist)
+#             averageDist = totalArea/pwnCount
+#             pwonCount = totalnumPatches - pwnCount
+#         except:
+#             #if near table is empty the set values to default -999
+#             rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
+#             if rowcount == 0:
+#                 arcpy.AddWarning("No patches within search radius found for " + i)
+#                 pwnCount = -999
+#                 pwonCount = -999
+#                 averageDist = -999    
+#             else:
+#                 AddMsg("Near Distance failed for some reason other than search distance")
+#         resultDict[i] = str(pwnCount) +  "," + str(pwonCount) +"," + str(averageDist)
+#     return resultDict
+    
+def tabulateMDCP(PatchLURaster, inReportingUnitFeature, reportingUnitIdField, rastoPoly, rastoPt, 
+                 polyDiss, clipPolyDiss, nearPatchTable, zoneAreaDict):
+    from pylet import arcpyutil
     resultDict = {}
+    
+    # put the proper field delimiters around the ID field name for SQL expressions
+    delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
+    
+    # Initialize custom progress indicator
+    totalRUs = len(zoneAreaDict)
+    loopProgress = arcpyutil.messages.loopProgress(totalRUs)
+    
     #Convert Final Patch Raster to polygon
-##    env.workspace = os.path.dirname(PatchLURaster)
-#    arcpy.RasterToPolygon_conversion(PatchLURaster, TempOutspace + "\\FinalPatch_polygon", "NO_Simplify", "VALUE")
-    arcpy.RasterToPolygon_conversion(PatchLURaster, rastoPoly, "NO_Simplify", "VALUE")
+    patchOnlyRaster = SetNull(PatchLURaster, PatchLURaster, "VALUE <= 0")
+    arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPoly, "NO_Simplify", "VALUE")
+    
     #Convert Final Patch Raster to points to get the cell centroids
-    arcpy.RasterToPoint_conversion(PatchLURaster, rastoPt, "VALUE")
-
-    env.workspace = TempOutspace
+    arcpy.RasterToPoint_conversion(patchOnlyRaster, rastoPt, "VALUE")
+    
+    #Create a feature layer of the FinalPatch_centroids
+    arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
     
     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-    arcpy.Dissolve_management(rastoPoly, polyDiss,"grid_code","#",
-                              "MULTI_PART","DISSOLVE_LINES")  
+    arcpy.Dissolve_management(rastoPoly, polyDiss,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
     
-    #Get a list of Reporting Unit Feature ids
-    idlist = []
-    rows = arcpy.SearchCursor(ReportingUnitFeature)
-
-    for row in rows:
-        ruid = row.getValue(ReportingUnitField)
-        idlist.append(ruid)
-    del row, rows  
-#    print idlist
-    
+    #Create a feature layer of the FinalPatch_poly_diss
+    arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
+   
     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
-    for i in idlist:
-        AddMsg("Generating Mean Distances for " + i)
-        squery = ReportingUnitField + "='" + i + "'"
+    for aZone in zoneAreaDict.keys():
+        pwnCount = 0
+        pwonCount = 0
+        averageDist = 0
+            
+        if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
+            squery = "%s = %s" % (delimitedField, str(aZone))
+        else: # reporting unit id is a string - enclose it in single quotes for SQL expression
+            squery = "%s = '%s'" % (delimitedField, str(aZone))
+        
         #Create a feature layer of the single reporting unit
-        arcpy.MakeFeatureLayer_management(ReportingUnitFeature,"subwatersheds_Layer",squery,"#")
-
-        #Create a feature layer of the FinalPatch_poly_diss
-        arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
-
-        #Create a feature layer of the FinalPatch_centroids
-        arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+        arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery,"#")
 
         #Select the centroids that are in the "subwatersheds_Layer"
         arcpy.SelectLayerByLocation_management("FinalPatch_centroids_Layer","INTERSECT","subwatersheds_Layer")
-        
-        #Get a list of centroids within the selected Reporting Unit (this is necessary to match the raster processing
-        #selection which selects only grid cells whose center is within the reporting unit).
-        rows = arcpy.SearchCursor("FinalPatch_centroids_Layer")
-        centroidList = []
-        for row in rows:
-            gridid = row.getValue("Grid_Code")
-            if str(gridid) not in centroidList:
-                centroidList.append(str(gridid))
 
-        totalnumPatches = len(centroidList)
-        del row, rows  
-          
-        # Select the patches that have centroids within the "subwatershed_Layer" using the centroid list
-        values = ",".join(centroidList)
-        arcpy.SelectLayerByAttribute_management("FinalPatch_diss_Layer", "NEW_SELECTION", "GRID_CODE IN(" + values + ")")
-        arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
-        #Calculate Near Distances for each watershed
-#        arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], "neartable",
-#                                         SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
-        arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
-                                         SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")   
-        #Get total number of patches with neighbors and calculate the mean distance
-        try:
-            rows = arcpy.SearchCursor(nearPatchTable)
-            distlist = []
+        rowCount = int(arcpy.GetCount_management("FinalPatch_centroids_Layer").getOutput(0))
+        
+        # Check to see if any patches exist within reporting unit
+        if rowCount == 0:
+            arcpy.AddWarning("No patches found in " + str(aZone))
+        
+        else:
+            #Get a list of centroids within the selected Reporting Unit (this is necessary to match the raster processing
+            #selection which selects only grid cells whose center is within the reporting unit).
+            rows = arcpy.SearchCursor("FinalPatch_centroids_Layer")
+            centroidSet = set()
             for row in rows:
-                distance = row.getValue("NEAR_DIST")
-                distlist.append(distance)
+                gridid = row.getValue("grid_code")
+                centroidSet.add(str(gridid))
+      
             del row, rows
-            pwnCount = len(distlist)
-            totalArea = sum(distlist)
-            averageDist = totalArea/pwnCount
-            pwonCount = totalnumPatches - pwnCount
-        except:
-            #if near table is empty the set values to default -999
-            rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
-            if rowcount == 0:
-                arcpy.AddWarning("No patches within search radius found for " + i)
-                pwnCount = -999
-                pwonCount = -999
-                averageDist = -999    
-            else:
+            totalnumPatches = len(centroidSet)
+              
+            # Select the patches that have centroids within the "subwatershed_Layer" using the centroid list
+            values = ",".join(centroidSet)
+            arcpy.SelectLayerByAttribute_management("FinalPatch_diss_Layer", "NEW_SELECTION", "gridcode IN (" + values + ")")           
+            
+            arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
+            
+            #Calculate Near Distances for each watershed
+            arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+                                             "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+#             arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+#                                              SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
+             
+            #Get total number of patches with neighbors and calculate the mean distance
+            try:
+                # Check to see if any neighboring patches are found
+                rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
+                if rowcount == 0: # none found
+                    # see if search radius is too short to find nearest patch for any patch
+                    if totalnumPatches > 1:
+                        arcpy.AddWarning("No patches within search radius found for " + str(aZone))
+                        pwonCount = totalnumPatches
+                     
+                else: # found neighboring patches
+                    rows = arcpy.SearchCursor(nearPatchTable)
+                    distlist = []
+                    for row in rows:
+                        distance = row.getValue("NEAR_DIST")
+                        distlist.append(distance)
+                    del row, rows
+                    pwnCount = len(distlist)
+                    totalDist = sum(distlist)
+                    averageDist = totalDist/pwnCount
+                    pwonCount = totalnumPatches - pwnCount
+                 
+            except:
                 AddMsg("Near Distance failed for some reason other than search distance")
-        resultDict[i] = str(pwnCount) +  "," + str(pwonCount) +"," + str(averageDist)
+                
+            finally:
+                arcpy.Delete_management(nearPatchTable)
+                arcpy.Delete_management(clipPolyDiss)
+
+                              
+        resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(averageDist)
+        
+        loopProgress.update()
+        
     return resultDict
-    

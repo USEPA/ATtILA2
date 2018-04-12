@@ -229,7 +229,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 
 
 def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
-                          inPatchSize, inMaxSeparation, outTable, mdcpYN, inSearchRadius, processingCellSize, snapRaster, 
+                          inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, 
                           optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Patch Metrics """
     
@@ -244,6 +244,13 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pmConstants()
+        
+        # setup the appropriate metric fields to add to output table depending on if MDCP is selected or not
+        if mdcpYN == "false":
+            metricConst.additionalFields = metricConst.patchFields
+        else:
+            metricConst.additionalFields = metricConst.patchFields + metricConst.mdcpFields
+            
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
@@ -349,6 +356,27 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                     # calculate Patch metrics
                     AddMsg(timer.split() + " Patch analysis has been run for Class:" + m)
                     
+                    if mdcpYN == "true":
+                    
+                        AddMsg(self.timer.split() + " Calculating MDCP for Class:" + m)
+                        
+                        #calculate MDCP value    
+                        
+                        rastoPoly = utils.files.nameIntermediateFile([m + metricConst.rastertoPoly, "FeatureClass"], cleanupList)
+                        rastoPt = utils.files.nameIntermediateFile([m + metricConst.rastertoPoint, "FeatureClass"], cleanupList)
+                        polyDiss = utils.files.nameIntermediateFile([m + metricConst.polyDissolve, "FeatureClass"], cleanupList)
+                        clipPolyDiss = utils.files.nameIntermediateFile([m + metricConst.clipPolyDissolve, "FeatureClass"], cleanupList) 
+                        nearPatchTable = utils.files.nameIntermediateFile([m + metricConst.nearTable, "Dataset"], cleanupList)            
+                        
+                        self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, self.inReportingUnitFeature, 
+                                                                   self.reportingUnitIdField, rastoPoly, rastoPt, polyDiss,
+                                                                   clipPolyDiss, nearPatchTable, self.zoneAreaDict)
+                        # update
+                        utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.metricsFieldnameDict,
+                                                 self.metricConst, m)
+                        
+                        AddMsg(self.timer.split() + " MDCP analysis has been run for Class:" + m)
+                    
                     if self.saveIntermediates:
                         self.namePrefix = self.metricConst.shortName+"_Patch_"+m
                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
@@ -365,6 +393,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             pmCalc.minPatchSize = inPatchSize
             pmCalc.outIdField = outIdField
             pmCalc.zoneAreaDict = zoneAreaDict
+            #pmCalc.inSearchRadius = inSearchRadius
             #pmCalc.conversionFactor = conversionFactor
             
             #Run Calculation
@@ -1219,145 +1248,145 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
                 function(*arguments)
         env.workspace = _tempEnvironment1
         
-def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                   metricsToRun, maxSeparation, minPatchsize, SearchRadius, outTable,processingCellSize, snapRaster,
-                   optionalFieldGroups, clipLCGrid):
-    try:
-        cleanupList = []
-        # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.mdcpConstants()
-        # append the edge width distance value to the field suffix
-        
-        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
-                                                                                 os.path.dirname(outTable),
-                                                                                 [metricsToRun,optionalFieldGroups] )
-                    
-        lccObj = lcc.LandCoverClassification(lccFilePath)
-        outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
-#        from pylet import arcpyutil
-#        from arcpy import env 
-#        _tempEnvironment1 = env.workspace
-#        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-#        # Strip the description from the "additional option" and determine whether intermediates are stored.
-#        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
-#        if globalConstants.intermediateName in processed:
-#            msg = "\nIntermediates are stored in this directory: {0}\n"
-#            arcpy.AddMessage(msg.format(env.workspace))
-#            #AddMsg(msg.format(env.workspace))
-#            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
-#        else:
-#            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
-        
-        #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                      metricConst, lccObj, outIdField)
-        
-        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
-        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
-        #patch metrics) extend the clip envelope an adequate distance.      
-        from pylet import arcpyutil
-        from arcpy import env        
-        _tempEnvironment1 = env.workspace
-        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-
-        if clipLCGrid == "true":
-            timer = DateTimer()
-            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
-            namePrefix = "%s_%s" % (metricConst.shortName,os.path.basename(inLandCoverGrid))
-            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
-            inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, maxSeparation)
-            AddMsg(timer.split() + " Reduction complete")
-        
-        # Run metric calculate for each metric in list
-        for m in metricsBaseNameList:
-            # Subclass that overrides specific functions for the MDCP calculation
-            class metricCalcMDCP(metricCalc):
-
-                def _replaceLCGrid(self):
-                    # replace the inLandCoverGrid
-                    AddMsg(self.timer.split() + " Creating Patches")
-                    self.inLandCoverGrid = utils.raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
-                                                                          os.path.dirname(outTable), self.maxSeparation,
-                                                                          self.minPatchsize, processingCellSize)
-            
-                    if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m
-                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-                        self.inLandCoverGrid.save(self.scratchName)
-                        #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
-                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
-                        
-                #skip over make out table since it has already been made
-                def _makeAttilaOutTable(self):
-                    pass
-
-                #skip over make Tabulate Area Table since this metric does not require it
-                def _makeTabAreaTable(self):
-                    pass
-                
-                #Update housekeeping so it doesn't check for lcc codes
-                def _housekeeping(self):
-                    # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
-                    # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
-                    # alert user if the land cover grid cells are not square (default to size along x axis)
-                    utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
-                    # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
-                    self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
-                
-                    # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
-                    self.zoneAreaDict = None
-                    if globalConstants.qaCheckName in self.optionalGroupsList:
-                        # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
-                        # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
-                        # area of the reporting unit's polygon features to store in the zoneAreaDict
-                        self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
-                        self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
-
-                # Update calculateMetrics to populate Mean Distance to Closest Patch
-                def _calculateMetrics(self):
-                    self.newTable = newtable
-                    self.metricsFieldnameDict = metricsFieldnameDict
-
-                    #calculate MDCP value    
-                    
-                    rastoPoly = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.rastertoPoly,cleanupList)
-                    rastoPt = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.rastertoPoint, cleanupList)
-                    polyDiss = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.polyDissolve, cleanupList)
-                    clipPolyDiss = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.clipPolyDissolve, cleanupList) 
-                    nearPatchTable = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.nearTable, cleanupList)                    
-                    AddMsg(self.timer.split() + " Calculating Mean Distances")
-                    
-                    self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, os.path.dirname(outTable),
-                                                               self.inReportingUnitFeature, self.reportingUnitIdField,
-                                                               SearchRadius, rastoPoly, rastoPt, polyDiss, clipPolyDiss,
-                                                               nearPatchTable)
-                    # update
-                    utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.metricsFieldnameDict,
-                                             self.metricConst, m)
-            # Create new instance of metricCalc class to contain parameters
-            mdcpCalc = metricCalcMDCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-            
-            mdcpCalc.maxSeparation = maxSeparation
-            mdcpCalc.minPatchsize = minPatchsize
-            
-            #Run Calculation
-            mdcpCalc.run()
-            
-            mdcpCalc.metricsBaseNameList = metricsBaseNameList
-            AddMsg(timer.split() + " MDCP analysis has been run for landuse " + m)
-            
-        if clipLCGrid == "true":
-            arcpy.Delete_management(scratchName) 
-            
-    except Exception, e:
-        errors.standardErrorHandling(e)
-
-    finally:
-        setupAndRestore.standardRestore()
-        if not cleanupList[0] == "KeepIntermediates":
-            for (function,arguments) in cleanupList:
-                # Flexibly executes any functions added to cleanup array.
-                function(*arguments)
-        env.workspace = _tempEnvironment1
+# def runMDCPMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+#                    metricsToRun, maxSeparation, minPatchsize, SearchRadius, outTable,processingCellSize, snapRaster,
+#                    optionalFieldGroups, clipLCGrid):
+#     try:
+#         cleanupList = []
+#         # retrieve the attribute constants associated with this metric
+#         metricConst = metricConstants.mdcpConstants()
+#         # append the edge width distance value to the field suffix
+#         
+#         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+#                                                                                  os.path.dirname(outTable),
+#                                                                                  [metricsToRun,optionalFieldGroups] )
+#                     
+#         lccObj = lcc.LandCoverClassification(lccFilePath)
+#         outIdField = utils.settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+#         
+# #        from pylet import arcpyutil
+# #        from arcpy import env 
+# #        _tempEnvironment1 = env.workspace
+# #        env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+# #        # Strip the description from the "additional option" and determine whether intermediates are stored.
+# #        processed = arcpyutil.parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+# #        if globalConstants.intermediateName in processed:
+# #            msg = "\nIntermediates are stored in this directory: {0}\n"
+# #            arcpy.AddMessage(msg.format(env.workspace))
+# #            #AddMsg(msg.format(env.workspace))
+# #            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+# #        else:
+# #            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+#         
+#         #Create the output table outside of metricCalc so that result can be added for multiple metrics
+#         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
+#                                                                                       metricConst, lccObj, outIdField)
+#         
+#         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+#         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+#         #patch metrics) extend the clip envelope an adequate distance.      
+#         from pylet import arcpyutil
+#         from arcpy import env        
+#         _tempEnvironment1 = env.workspace
+#         env.workspace = arcpyutil.environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+# 
+#         if clipLCGrid == "true":
+#             timer = DateTimer()
+#             AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
+#             namePrefix = "%s_%s" % (metricConst.shortName,os.path.basename(inLandCoverGrid))
+#             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
+#             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, maxSeparation)
+#             AddMsg(timer.split() + " Reduction complete")
+#         
+#         # Run metric calculate for each metric in list
+#         for m in metricsBaseNameList:
+#             # Subclass that overrides specific functions for the MDCP calculation
+#             class metricCalcMDCP(metricCalc):
+# 
+#                 def _replaceLCGrid(self):
+#                     # replace the inLandCoverGrid
+#                     AddMsg(self.timer.split() + " Creating Patches")
+#                     self.inLandCoverGrid = utils.raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
+#                                                                           os.path.dirname(outTable), self.maxSeparation,
+#                                                                           self.minPatchsize, processingCellSize)
+#             
+#                     if self.saveIntermediates:
+#                         self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m
+#                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+#                         self.inLandCoverGrid.save(self.scratchName)
+#                         #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
+#                         AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+#                         
+#                 #skip over make out table since it has already been made
+#                 def _makeAttilaOutTable(self):
+#                     pass
+# 
+#                 #skip over make Tabulate Area Table since this metric does not require it
+#                 def _makeTabAreaTable(self):
+#                     pass
+#                 
+#                 #Update housekeeping so it doesn't check for lcc codes
+#                 def _housekeeping(self):
+#                     # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
+#                     # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
+#                     # alert user if the land cover grid cells are not square (default to size along x axis)
+#                     utils.settings.checkGridCellDimensions(self.inLandCoverGrid)
+#                     # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+#                     self.outIdField = utils.settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
+#                 
+#                     # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
+#                     self.zoneAreaDict = None
+#                     if globalConstants.qaCheckName in self.optionalGroupsList:
+#                         # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
+#                         # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
+#                         # area of the reporting unit's polygon features to store in the zoneAreaDict
+#                         self.outputSpatialRef = utils.settings.getOutputSpatialReference(self.inLandCoverGrid)
+#                         self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+# 
+#                 # Update calculateMetrics to populate Mean Distance to Closest Patch
+#                 def _calculateMetrics(self):
+#                     self.newTable = newtable
+#                     self.metricsFieldnameDict = metricsFieldnameDict
+# 
+#                     #calculate MDCP value    
+#                     
+#                     rastoPoly = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.rastertoPoly,cleanupList)
+#                     rastoPt = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.rastertoPoint, cleanupList)
+#                     polyDiss = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.polyDissolve, cleanupList)
+#                     clipPolyDiss = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.clipPolyDissolve, cleanupList) 
+#                     nearPatchTable = utils.files.nameIntermediateFile(metricConst.shortName+"_"+metricConst.nearTable, cleanupList)                    
+#                     AddMsg(self.timer.split() + " Calculating Mean Distances")
+#                     
+#                     self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, os.path.dirname(outTable),
+#                                                                self.inReportingUnitFeature, self.reportingUnitIdField,
+#                                                                SearchRadius, rastoPoly, rastoPt, polyDiss, clipPolyDiss,
+#                                                                nearPatchTable)
+#                     # update
+#                     utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.metricsFieldnameDict,
+#                                              self.metricConst, m)
+#             # Create new instance of metricCalc class to contain parameters
+#             mdcpCalc = metricCalcMDCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+#                       m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+#             
+#             mdcpCalc.maxSeparation = maxSeparation
+#             mdcpCalc.minPatchsize = minPatchsize
+#             
+#             #Run Calculation
+#             mdcpCalc.run()
+#             
+#             mdcpCalc.metricsBaseNameList = metricsBaseNameList
+#             AddMsg(timer.split() + " MDCP analysis has been run for landuse " + m)
+#             
+#         if clipLCGrid == "true":
+#             arcpy.Delete_management(scratchName) 
+#             
+#     except Exception, e:
+#         errors.standardErrorHandling(e)
+# 
+#     finally:
+#         setupAndRestore.standardRestore()
+#         if not cleanupList[0] == "KeepIntermediates":
+#             for (function,arguments) in cleanupList:
+#                 # Flexibly executes any functions added to cleanup array.
+#                 function(*arguments)
+#         env.workspace = _tempEnvironment1
