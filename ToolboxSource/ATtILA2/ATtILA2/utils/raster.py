@@ -2,10 +2,9 @@
 
 """
 import arcpy
-from arcpy.sa import Con,EucDistance,ExtractByAttributes,Plus,Raster,Reclassify,RegionGroup,RemapRange,RemapValue,SetNull
+from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull
 from pylet import arcpyutil
 from pylet.arcpyutil.messages import AddMsg
-from arcpy import env
 
 
 def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDistance=None):
@@ -71,8 +70,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, fallBackDirectory, scratchGDBFilename, 
-                    processingCellSize_str, timer):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
@@ -135,135 +133,10 @@ def updateCoreEdgeCategoryLabels(Raster):
         elif v == 1:
             row.CATEGORY = "Excluded"
         rows.updateRow(row)
-        row = rows.next()
-
-
-# def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, fallBackDirectory, MaxSeperation, MinPatchSize, processingCellSize_str):
-# 
-#     import os
-# 
-#     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
-#     lccValuesDict = lccObj.values
-#     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
-#     
-#     # get the grid codes for this specified metric
-#     UserValueList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
-#     
-#     # Generate the edge/core/other/excluded grid
-#     LCGrid = inLandCoverGrid
-#     
-#     #Extract User Categories from Land use grid
-#     env.workspace = os.path.dirname(LCGrid)
-#     inputLC = os.path.basename(LCGrid)
-#     
-#     #Extract User
-#     ExtractUserCat = ExtractLU(UserValueList, inputLC)
-#     
-#     #reset workspace to user defined output space (this is necessary because ArcGIS looks for the input landcover in
-#     #the workspace even if another path is called).
-# 
-# 
-#     TempOutspace =  fallBackDirectory
-#     env.workspace = TempOutspace
-#     
-#     #Create new User Grid with a single value for the user category(intermediate layer)
-#     intUserValueList = []
-#     
-#     #Convert Forest Value List into a list of integers
-#     intUserValueList = convertList(UserValueList)
-#     if len(intUserValueList) != 0:
-#         UserRemapRange = RemapRange([[min(intUserValueList), max(intUserValueList), 1]])
-#         UserSingle = Reclassify(ExtractUserCat, "Value", UserRemapRange)
-#     else:
-#         UserSingle = ExtractUserCat
-#     
-#     #Check to see if Maximum Separation > 0 if it is then skip to regions group analysis otherwise run
-#     #Euclidean distance
-#     if MaxSeperation == 0:
-#         #Run Regions group then run TabArea_FeatureLayer
-#         UserSingleRegionGroup = RegionGroup(UserSingle,"EIGHT","CROSS","ADD_LINK","")
-#         if MinPatchSize > 1:
-#             FinalPatchRas = ExtractByAttributes(UserSingleRegionGroup, "COUNT >" + str(MinPatchSize -1))
-#             FinalPatchRas.save("FinalPatches")
-#             return FinalPatchRas
-#         else:
-#             UserSingleRegionGroup.save("FinalPatches")
-#             return UserSingleRegionGroup
-# 
-# 
-# #        if "PatchMetrics" in AnalysisList:
-# #            tabulatePatchMetrics("FinalPatches")
-# #        if "MDCP" in AnalysisList:
-# #            tabulateMDCP("FinalPatches")
-#     else:
-#         #Calclulate Euclidean Distance based on max separation value
-#         gridcellsize_int = int(processingCellSize_str)
-#         maxSep = MaxSeperation * gridcellsize_int
-#         outEucDistance = EucDistance(UserSingle, maxSep, str(gridcellsize_int))
-# 
-#         #Extract only the max seperation value from the Euclidean distance
-#         EucDistanceExtract = ExtractByAttributes(outEucDistance, "VALUE = " + str(maxSep))
-#         EucDistanceExtract.save("EucDistance_MaxSep")
-# 
-#         #Reclassify Euclid distance so that NoData = 0
-#         EucDistReMapRange = RemapRange([[maxSep, maxSep, maxSep],["noData", "noData", 0]])
-#         EucDistReClass = Reclassify("EucDistance_MaxSep", "VALUE", EucDistReMapRange)
-# 
-#         #Reclassify  Single User Category Grid so that NoData = 0
-#         UserReMapRange = RemapRange([[1,1,1], ["noData", "noData", 0]])
-#         UserReClass = Reclassify(UserSingle, "VALUE", UserReMapRange)
-# 
-#         #Add (sum) UserReclass and EucDistanceReclass
-#         UserEuclidPlus = Plus(UserReClass, EucDistReClass)
-# 
-#         #Run Region Group analysis on UserEuclidPlus, ignores 0/NoData values
-#         UserEuclidRegionGroup = RegionGroup(UserEuclidPlus,"EIGHT","CROSS","ADD_LINK","0")
-# 
-#         #Reclass Euclid Reclass to -99999
-#         EucRcReMapRange = RemapRange([[maxSep, maxSep, -99999],[0, 0, 0]])
-#         EucReClass999 =Reclassify(EucDistReClass,"VALUE", EucRcReMapRange)
-# 
-#         #Add (sum) regions result to EucReClass999 result
-#         RegionEucPlus = Plus(UserEuclidRegionGroup,EucReClass999)    
-# 
-#         #Extract by Attribute Values greater than one to maintain the original boundaries of each patch
-#         RegionPatches = ExtractByAttributes(RegionEucPlus, "VALUE > 0")
-#         if MinPatchSize > 1:
-#             FinalPatchRas = ExtractByAttributes(RegionPatches, "COUNT >" + str(MinPatchSize -1))
-#             FinalPatchRas.save("FinalPatches")
-#             return FinalPatchRas
-#         else:
-#             RegionPatches.save("FinalPatches")
-#             return RegionPatches
-# 
-# 
-# #        if "PatchMetrics" in AnalysisList:
-# #            tabulatePatchMetrics("FinalPatches")
-# #        if "MDCP" in AnalysisList:
-# #            tabulateMDCP("FinalPatches", TempOutspace, ReportingUnitFeature, ReportingUnitField, SearchRadius)
-# 
-# # Extracts land use values so that they can be temporary.
-# def ExtractLU(ValueList, inputLandcover):
-#     #Set up the values for the sql expression
-#     StrValuesList = convertList(ValueList)
-#     values = ",".join(StrValuesList)
-#     #Extract the  selected categories from the Landuse grid
-#     if values == "":
-#         values = "null"    
-#     attExtract = ExtractByAttributes(inputLandcover, "VALUE IN (" + values + ")")
-#     return attExtract
-#    
-# def convertList(inList):
-#     outList = []
-#     for l in inList:
-#         if type(l) is not int:
-#             outList.append(int(l))
-#         elif type(l) is int:
-#             outList.append(str(l))  
-#     return outList    
+        row = rows.next()  
     
     
-def createPatchRasterNew(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
+def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
                          processingCellSize_str, timer):
     # create a list of all the grid values in the selected landcover grid
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)

@@ -223,30 +223,6 @@ class pdmConstants(baseMetricConstants):
     intersectOutputName = shortName+"_intersectOutput"
     summaryTableName = shortName+"_summaryTable"
     
-# class mdcpConstants(baseMetricConstants):
-#     name = "MeanDisttoClosestPatch"
-#     shortName = "mdcp"
-#     fieldPrefix = ""
-#     fieldSuffix = "MDCP"
-#     overlapName = "MDCP_OVER"
-#     totalAreaName = "MDCP_TOTA"
-#     effectiveAreaName = "MDCP_EFFA"
-#     excludedAreaName = "MDCP_EXCA"
-#     rastertoPoly = [shortName+"_FinalPatchPoly","FeatureClass"]
-#     rastertoPoint = [shortName+"_FinalPatchCentroids", "FeatureClass"]
-#     polyDissolve = [shortName+"_FinalPatch_poly_diss", "FeatureClass"]
-#     clipPolyDissolve =[shortName+"_FinalPatch_poly_diss_clip", "FeatureClass"]
-#     nearTable = [shortName+"_NearTable", "Dataset"]
-#     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
-#     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
-#     qaCheckFieldParameters = [
-#         [overlapName, gc.defaultIntegerFieldType, 6],
-#         [totalAreaName, gc.defaultAreaFieldType, 15],
-#         [effectiveAreaName, gc.defaultAreaFieldType, 15],
-#         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
-#         ]
-#     fieldOverrideKey = shortName + gc.fieldOverrideName
-
 class pmConstants(baseMetricConstants):
     name = "PatchMetrics"
     shortName = "pm"

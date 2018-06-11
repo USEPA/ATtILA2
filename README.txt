@@ -77,6 +77,7 @@ INSTALLATION:
         -Land Cover Diversity
         -Land Cover on Slope Proportions
 		-Land Cover Proportions
+		-Patch Metrics
     -Riparian Characteristics
         -Riparian Land Cover Proportions
         -Sample Point Land Cover Proportions
