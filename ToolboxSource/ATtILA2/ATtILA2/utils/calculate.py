@@ -4,6 +4,7 @@
 from ATtILA2.constants import globalConstants
 
 import arcpy
+from ATtILA2.setupAndRestore import _tempEnvironment3
 
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum, excludedValues):
@@ -610,7 +611,7 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
             pass
   
 
-def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict, metricConst, m):
+def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, metricConst, m):
     try:
         # Check to see if newTable has already been set up
         rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
@@ -626,13 +627,12 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict, metricConst, m
                 # commit the row to the output table
                 outTableRows.insertRow(outTableRow)
             del outTableRows, outTableRow
-        # Add new fields for the lu for pwon and pwn
-        arcpy.AddField_management(newTable, m+"_PWN", "Double")
-        arcpy.AddField_management(newTable, m+"_PWON", "Double")
+        # If QA fields are selected, add fields for pwn (patches w/ neighbors) and pwon (patches w/o) for the class
+        if globalConstants.qaCheckName in optionalGroupsList:
+            arcpy.AddField_management(newTable, m+"_PWN", "Double")
+            arcpy.AddField_management(newTable, m+"_PWON", "Double")
         
         mdcpFieldName = m+metricConst.mdcpSuffix
-        
-        warningCount = 0
 
         # create the cursor to add data to the output table
         outTableRows = arcpy.UpdateCursor(newTable)        
@@ -641,19 +641,16 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict, metricConst, m
             uid = outTableRow.getValue(outIdField.name)
             # populate the mean distance to edge patch for the current reporting unit
             outTableRow.setValue(mdcpFieldName, mdcpDict[uid].split(",")[2])
-            outTableRow.setValue(m+"_PWN", mdcpDict[uid].split(",")[0])
-            outTableRow.setValue(m+"_PWON", mdcpDict[uid].split(",")[1])
+            
+            # If QA fields are selected, populate the pwon and pwn fields
+            if globalConstants.qaCheckName in optionalGroupsList:
+                outTableRow.setValue(m+"_PWN", mdcpDict[uid].split(",")[0])
+                outTableRow.setValue(m+"_PWON", mdcpDict[uid].split(",")[1])
             
             # commit the row to the output table
             outTableRows.updateRow(outTableRow)
             outTableRow = outTableRows.next()
             
-            if int(mdcpDict[uid].split(",")[1]) > 0:
-                warningCount += 1
-            
-        if warningCount > 0:
-            arcpy.AddWarning("Search radius too low to find nearest patch for each patch in %s reporting unit(s) - Class:%s."
-                              % (str(warningCount), m))
     finally:
         
         # delete cursor and row objects to remove locks on the data
@@ -861,6 +858,7 @@ def getMDCP(outIdField, newTable, mdcpDict, metricsFieldnameDict, metricConst, m
 def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldnameDict, zoneAreaDict, metricConst, m, 
                     inReportingUnitFeature, inLandCoverGrid, processingCellSize, conversionFactor):
     from pylet import arcpyutil
+    from arcpy import env
     resultsDict={}
     
     try:
@@ -876,6 +874,16 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
     
         #For each Reporting Unit run Tabulate Area Analysis and add the results to a dictionary
         for aZone in zoneAreaDict.keys():
+            # set initial metric values
+            numpatch = 0
+            patchArea = 0
+            otherArea = 0
+            excludedArea = 0
+            lrgpatch = 0
+            avepatch = 0
+            proportion = 0
+            patchdensity = 0
+            
             if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
                 squery = "%s = %s" % (delimitedField, str(aZone))
             else: # reporting unit id is a string - enclose it in single quotes for SQL expression
@@ -883,6 +891,13 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
     
             #Create a feature layer of the single reporting unit
             arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery,"#")
+            
+            #Set the geoprocessing extent to just the extent of the selected reporting unit
+            arcpy.CopyFeatures_management("subwatersheds_Layer", "in_memory/selectedRU")
+            desc = arcpy.Describe("in_memory/selectedRU")
+            newExtent = desc.extent
+            env.extent = newExtent 
+            arcpy.Delete_management("in_memory")
     
             #Tabulate areas of patches within single reporting unit
             tabareaTable = "temptable"
@@ -890,15 +905,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             
             rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
             if rowcount == 0:
-                arcpy.AddWarning("No patches found in " + str(aZone))
-                numpatch = 0
-                patchArea = 0
-                otherArea = 0
-                excludedArea = 0
-                lrgpatch = 0
-                avepatch = 0
-                proportion = 0
-                patchdensity = 0
+                arcpy.AddWarning("No land cover grid data found in " + str(aZone))
             
             else:
                 #Loop through each row in the table and calculate the patch metrics 
@@ -916,27 +923,35 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                         otherArea = row.getValue("VALUE_0")
                     except:
                         otherArea = 0
+                        
                     try:
                         excludedArea = row.getValue("VALUE__9999")
                     except:
                         excludedArea = 0
-                        
-                    numpatch = len(patchAreaList)
-                    patchArea = sum(patchAreaList)
-                    lrgpatch = max(patchAreaList)
-                    avepatch = patchArea/numpatch
-                    proportion = (lrgpatch/patchArea) * 100
                     
-                    #convert to square kilometers
-                    rasterRUArea = otherArea + patchArea
-                    rasterRUAreaKM = rasterRUArea* (conversionFactor/1000000)
-                    patchdensity = numpatch/rasterRUAreaKM         
+                    if len(patchAreaList) == 0:
+                        arcpy.AddWarning("No patches found in " + str(aZone))
+                        
+                    else: 
+                        numpatch = len(patchAreaList)
+                        patchArea = sum(patchAreaList)
+                        lrgpatch = max(patchAreaList)
+                        avepatch = patchArea/numpatch
+                        proportion = (lrgpatch/patchArea) * 100
+                        
+                        #convert to square kilometers
+                        rasterRUArea = otherArea + patchArea
+                        rasterRUAreaKM = rasterRUArea* (conversionFactor/1000000)
+                        patchdensity = numpatch/rasterRUAreaKM         
         
                     row = rows.next()
                 
             resultsDict[aZone] = (proportion,numpatch,avepatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
             
             loopProgress.update()
+            
+        # Restore the original enviroment extent
+        env.extent = _tempEnvironment3
 
         # Check to see if newTable has already been set up
         rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
@@ -1012,6 +1027,8 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             arcpy.Delete_management(tabareaTable)
         except:
             pass
+        
+    return resultsDict
 
             
 def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,tempWorkspace,

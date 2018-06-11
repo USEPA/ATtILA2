@@ -90,6 +90,7 @@ class pmToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for Patch Metrics """
     
     filterList = pmConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributePmField
     fieldPrefix = pmConstants.fieldPrefix
     fieldSuffix = pmConstants.fieldSuffix
     metricShortName = pmConstants.shortName

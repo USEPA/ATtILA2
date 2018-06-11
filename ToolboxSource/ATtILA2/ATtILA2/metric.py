@@ -246,10 +246,10 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         metricConst = metricConstants.pmConstants()
         
         # setup the appropriate metric fields to add to output table depending on if MDCP is selected or not
-        if mdcpYN == "false":
-            metricConst.additionalFields = metricConst.patchFields
-        else:
+        if mdcpYN:
             metricConst.additionalFields = metricConst.patchFields + metricConst.mdcpFields
+        else:
+            metricConst.additionalFields = metricConst.patchFields
             
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
@@ -348,37 +348,38 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                 def _calculateMetrics(self):
                     
                     AddMsg(self.timer.split() + " Calculating Patch Numbers by Reporting Unit for Class:" + m)
-                 
-                    utils.calculate.getPatchNumbers(self.outIdField, self.newTable, self.reportingUnitIdField, self.metricsFieldnameDict,
+                     
+                    # calculate Patch metrics
+                    self.pmResultsDict = utils.calculate.getPatchNumbers(self.outIdField, self.newTable, self.reportingUnitIdField, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m, self.inReportingUnitFeature, 
                                                       self.inLandCoverGrid, processingCellSize, conversionFactor)
-
-                    # calculate Patch metrics
+ 
                     AddMsg(timer.split() + " Patch analysis has been run for Class:" + m)
                     
                     if mdcpYN == "true":
                     
                         AddMsg(self.timer.split() + " Calculating MDCP for Class:" + m)
                         
-                        #calculate MDCP value    
-                        
-                        rastoPoly = utils.files.nameIntermediateFile([m + metricConst.rastertoPoly, "FeatureClass"], cleanupList)
-                        rastoPt = utils.files.nameIntermediateFile([m + metricConst.rastertoPoint, "FeatureClass"], cleanupList)
-                        polyDiss = utils.files.nameIntermediateFile([m + metricConst.polyDissolve, "FeatureClass"], cleanupList)
-                        clipPolyDiss = utils.files.nameIntermediateFile([m + metricConst.clipPolyDissolve, "FeatureClass"], cleanupList) 
+                        #calculate MDCP value
+                        rastoPolyFeatureName = ("%s_%s_%s" % (metricConst.shortName, m, metricConst.rastertoPoly))
+                        rastoPolyFeature = utils.files.nameIntermediateFile([rastoPolyFeatureName, "FeatureClass"], cleanupList)
+                        rasterCentroidFeatureName = ("%s_%s_%s" % (metricConst.shortName, m, metricConst.rastertoPoint))
+                        rasterCentroidFeature = utils.files.nameIntermediateFile([rasterCentroidFeatureName, "FeatureClass"], cleanupList)
+                        polyDissolvedPatchFeatureName = ("%s_%s_%s" % (metricConst.shortName, m, metricConst.polyDissolve))
+                        polyDissolvedFeature = utils.files.nameIntermediateFile([polyDissolvedPatchFeatureName, "FeatureClass"], cleanupList)
                         nearPatchTable = utils.files.nameIntermediateFile([m + metricConst.nearTable, "Dataset"], cleanupList)            
                         
                         self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, self.inReportingUnitFeature, 
-                                                                   self.reportingUnitIdField, rastoPoly, rastoPt, polyDiss,
-                                                                   clipPolyDiss, nearPatchTable, self.zoneAreaDict)
+                                                                   self.reportingUnitIdField, rastoPolyFeature, rasterCentroidFeature, polyDissolvedFeature,
+                                                                   nearPatchTable, self.zoneAreaDict, timer, self.pmResultsDict)
                         # update
-                        utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.metricsFieldnameDict,
+                        utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.optionalGroupsList,
                                                  self.metricConst, m)
                         
                         AddMsg(self.timer.split() + " MDCP analysis has been run for Class:" + m)
                     
                     if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_Patch_"+m
+                        self.namePrefix = self.metricConst.shortName+"_"+m+"_PatchRast"
                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                         self.inLandCoverGrid.save(self.scratchName)
                         AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))

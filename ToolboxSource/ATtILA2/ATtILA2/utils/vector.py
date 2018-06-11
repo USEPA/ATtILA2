@@ -7,6 +7,7 @@ from pylet.arcpyutil.messages import AddMsg
 from pylet.arcpyutil.fields import valueDelimiter
 from arcpy.sa.Functions import SetNull
 
+
 def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
         distance of a layer - the buffered features may be any geometry
@@ -103,191 +104,191 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         except:
             pass
 
-def bufferFeaturesByIntersect_old(inFeatures, repUnits, outFeatures, bufferDist, unitID):
-    """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
-        distance of a layer - the buffered features may be any geometry
-    **Description:**
-        This tool intersects reporting units with buffered features that fall within the reporting unit. The buffer size (in map 
-        units) is determined by the user. A new feature class is created that can be used as a reporting unit theme to 
-        calculate metrics with the buffered areas. It is useful for generating metrics near streams that fall within the
-        reporting unit.
-        
-        This tool makes the assumption that there is no attribute that links the features to be buffered with the 
-        reporting units.  Because of this, it cannot buffer all the features at once - it must iterate through each
-        reporting unit, first clipping features to the reporting unit boundaries, then buffering only those features
-        and then finally clipping the buffers again to the reporting unit.  If the features can be linked to reporting
-        units via an attribute, it should be faster to use the bufferFeaturesByID tool instead.
-    **Arguments:**
-        * *inFeatures* - one or more feature class that will be buffered
-        * *repUnits* - reporting units that will be used for the clip
-        * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
-        * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
-        * *unitID* - a field that exists in repUnits that contains a unique identifier for the reporting units.  
-        
-    **Returns:**
-        * *outFeatures* - output feature class 
-    """
-    try:
-        
-        # Get a unique name with full path for the output features - will default to current workspace:
-        outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
-        
-        inFeaturesList = inFeatures.split(";")
-        inFeatGeomDict = {}
-        for inFC in inFeaturesList:
-            inFeatGeomDict[inFC] = arcpy.Describe(inFC).shapeType
-        
-        # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
-        # improve performance if we set up the right syntax for the whereclauses ahead of time.
-        repUnitID = arcpy.AddFieldDelimiters(repUnits,unitID)
-        delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,unitID)[0].type)
-        
-        # Get the properties of the unit ID field
-        uIDField = arcpy.ListFields(repUnits,unitID)[0]
-        pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
-        
-        # Get a count of the number of reporting units to give an accurate progress estimate.
-        n = int(arcpy.GetCount_management(repUnits).getOutput(0))
-        # Initialize custom progress indicator
-        loopProgress = pylet.arcpyutil.messages.loopProgress(n)
-        
-        i = 0 # Flag used to create the outFeatures the first time through.
-        # Create a Search cursor to iterate through the reporting units.
-        Rows = arcpy.SearchCursor(repUnits,"","",unitID)
-        
-        AddMsg("Buffering riparian features in each reporting unit")
-        # For each reporting unit:
-        for row in Rows:            
-            
-            # Get the reporting unit ID
-            rowID = row.getValue(unitID)
-            # Set up the whereclause for the reporting units to select one
-            whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
-            
-            # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
-            # definition expression.
-            arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
-            
-            # Initialize list of buffered features to merge
-            bufferList = []
-            # Initialize list of polygon features for erase
-            eraseList = []
-            # Initialize a counter to help with naming intermediate results
-            j = 1
-            
-            # For each input Feature Class:
-            for inFC in inFeaturesList:
-                jStr = str(j) #string version of the counter
-                # Clip the features that should be buffered to this reporting unit, and output the result to memory.
-                clipResult = arcpy.Clip_analysis(inFC,"ru_lyr","in_memory/clip" + jStr,"#")
-                
-                if inFeatGeomDict[inFC] == "Polygon":
-                    eraseList.append(clipResult)
-                
-                # Buffer these in-memory selected features and merge the output into a single multipart feature
-                bufferResult = arcpy.Buffer_analysis(clipResult,"in_memory/clip_buffer" + jStr,bufferDist,"FULL","ROUND","ALL","#")
-                
-                # Add this result to the list of buffered features
-                bufferList.append(bufferResult)               
-                
-                j += 1 # increment counter
-               
-            if len(inFeaturesList) > 1:
-                try:
-                    # Union all of the buffered features
-                    unionBuffer = arcpy.Union_analysis(bufferList,"in_memory/union_buffer","ONLY_FID")
-                except:
-                    badList = []
-                    for aResult in bufferList:
-                        badBuffer = arcpy.FeatureClassToFeatureClass_conversion(aResult,"%scratchworkspace%","badBuffer")
-                        # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
-                        arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
-                        badList.append(badBuffer)
-                        unionBuffer = arcpy.Union_analysis(badList,"in_memory/union_buffer","ONLY_FID")
-                
-                    arcpy.Delete_management(badBuffer)
-                    
-                # Dissolve the union layer
-                bufferResult = arcpy.Dissolve_management(unionBuffer,"in_memory/dissolve_union")
-            else:
-                bufferResult = bufferList[0]
-
-            # If the input features are polygons, we need to remove the interior polygons from the buffer areas.
-            # Investigate alternate approach (with license check) of "OUTSIDE_ONLY" option in Buffer_analysis
-            try:
-                for eraseFeatures in eraseList:
-                    newBufferResult = arcpy.Erase_analysis(bufferResult,eraseFeatures,"in_memory/erase_buffer")
-                    arcpy.Delete_management(bufferResult)
-                    bufferResult = newBufferResult
-            except:
-                for eraseFeatures in eraseList:
-                    badEraseFeatures = arcpy.FeatureClassToFeatureClass_conversion(eraseFeatures,"%scratchworkspace%","badEraseFeatures")
-                    badBuffer = arcpy.FeatureClassToFeatureClass_conversion(bufferResult,"%scratchworkspace%","badBuffer")
-                    # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
-                    arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
-                    arcpy.RepairGeometry_management(badEraseFeatures,"DELETE_NULL")
-                    
-                    newBufferResult = arcpy.Erase_analysis(badBuffer,badEraseFeatures,"in_memory/erase_buffer")
-                    arcpy.Delete_management(bufferResult)
-                    bufferResult = newBufferResult
-                    
-                    arcpy.Delete_management(badBuffer)
-                    arcpy.Delete_management(badEraseFeatures)
-                                  
-            
-                
-            # Add a field to this output that will contain the reporting unit ID so that when we merge the buffers
-            # the reporting unit IDs will be maintained.  
-            arcpy.AddField_management(bufferResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
-                                      uIDField.length,uIDField.aliasName,uIDField.isNullable,uIDField.required,
-                                      uIDField.domain)
-            arcpy.CalculateField_management(bufferResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
-            
-            # Because of the potential for invalid geometries in the buffered features, embed the clip in a try 
-            # statement to catch and handle errors.
-            try:
-                if i == 0: # If it's the first time through
-                    # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
-                    # feature class.
-                    arcpy.Clip_analysis(bufferResult,"ru_lyr",outFeatures,"#")
-                    i = 1 # Toggle the flag.
-                else: # If it's not the first time through and the output feature class already exists
-                    # Perform the clip, but output the result to memory rather than writing to disk
-                    clipResult2 = arcpy.Clip_analysis(bufferResult,"ru_lyr","in_memory/finalclip","#")
-                    # Append the in-memory result to the output feature class
-                    arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
-                    # Delete the in-memory result to conserve system resources
-                    arcpy.Delete_management(clipResult2)
-            except:
-                badBuffer = arcpy.FeatureClassToFeatureClass_conversion(bufferResult,"%scratchworkspace%","badbuffer")
-                # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
-                arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
-                if i == 0: # If it's the first time through
-                    # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
-                    # feature class.
-                    arcpy.Clip_analysis(badBuffer,"ru_lyr",outFeatures,"#")
-                    i = 1 # Toggle the flag.
-                else: # If it's not the first time through and the output feature class already exists
-                    # Perform the clip, but output the result to memory rather than writing to disk
-                    clipResult2 = arcpy.Clip_analysis(badBuffer,"ru_lyr","in_memory/finalclip","#")
-                    # Append the in-memory result to the output feature class
-                    arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
-                    # Delete the in-memory result to conserve system resources
-                    arcpy.Delete_management(clipResult2)
-                arcpy.Delete_management(badBuffer)
-
-            arcpy.Delete_management("in_memory") # Clean up all in-memory data created for this reporting unit
-            arcpy.Delete_management("ru_lyr")
-            loopProgress.update()
-    
-        return outFeatures
-    
-    finally:
-        try:
-            # Clean up the search cursor object
-            del Rows
-        except:
-            pass 
+# def bufferFeaturesByIntersect_old(inFeatures, repUnits, outFeatures, bufferDist, unitID):
+#     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
+#         distance of a layer - the buffered features may be any geometry
+#     **Description:**
+#         This tool intersects reporting units with buffered features that fall within the reporting unit. The buffer size (in map 
+#         units) is determined by the user. A new feature class is created that can be used as a reporting unit theme to 
+#         calculate metrics with the buffered areas. It is useful for generating metrics near streams that fall within the
+#         reporting unit.
+#         
+#         This tool makes the assumption that there is no attribute that links the features to be buffered with the 
+#         reporting units.  Because of this, it cannot buffer all the features at once - it must iterate through each
+#         reporting unit, first clipping features to the reporting unit boundaries, then buffering only those features
+#         and then finally clipping the buffers again to the reporting unit.  If the features can be linked to reporting
+#         units via an attribute, it should be faster to use the bufferFeaturesByID tool instead.
+#     **Arguments:**
+#         * *inFeatures* - one or more feature class that will be buffered
+#         * *repUnits* - reporting units that will be used for the clip
+#         * *outFeatures* - a feature class (without full path) that will be created as the output of this tool
+#         * *bufferDist* - distance in the units of the spatial reference of the input data to buffer
+#         * *unitID* - a field that exists in repUnits that contains a unique identifier for the reporting units.  
+#         
+#     **Returns:**
+#         * *outFeatures* - output feature class 
+#     """
+#     try:
+#         
+#         # Get a unique name with full path for the output features - will default to current workspace:
+#         outFeatures = arcpy.CreateScratchName(outFeatures,"","FeatureClass")
+#         
+#         inFeaturesList = inFeatures.split(";")
+#         inFeatGeomDict = {}
+#         for inFC in inFeaturesList:
+#             inFeatGeomDict[inFC] = arcpy.Describe(inFC).shapeType
+#         
+#         # The script will be iterating through reporting units and using a whereclause to select each feature, so it will 
+#         # improve performance if we set up the right syntax for the whereclauses ahead of time.
+#         repUnitID = arcpy.AddFieldDelimiters(repUnits,unitID)
+#         delimitRUValues = valueDelimiter(arcpy.ListFields(repUnits,unitID)[0].type)
+#         
+#         # Get the properties of the unit ID field
+#         uIDField = arcpy.ListFields(repUnits,unitID)[0]
+#         pylet.arcpyutil.fields.convertFieldTypeKeyword(uIDField)
+#         
+#         # Get a count of the number of reporting units to give an accurate progress estimate.
+#         n = int(arcpy.GetCount_management(repUnits).getOutput(0))
+#         # Initialize custom progress indicator
+#         loopProgress = pylet.arcpyutil.messages.loopProgress(n)
+#         
+#         i = 0 # Flag used to create the outFeatures the first time through.
+#         # Create a Search cursor to iterate through the reporting units.
+#         Rows = arcpy.SearchCursor(repUnits,"","",unitID)
+#         
+#         AddMsg("Buffering riparian features in each reporting unit")
+#         # For each reporting unit:
+#         for row in Rows:            
+#             
+#             # Get the reporting unit ID
+#             rowID = row.getValue(unitID)
+#             # Set up the whereclause for the reporting units to select one
+#             whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
+#             
+#             # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
+#             # definition expression.
+#             arcpy.MakeFeatureLayer_management(repUnits,"ru_lyr",whereClausePolys)
+#             
+#             # Initialize list of buffered features to merge
+#             bufferList = []
+#             # Initialize list of polygon features for erase
+#             eraseList = []
+#             # Initialize a counter to help with naming intermediate results
+#             j = 1
+#             
+#             # For each input Feature Class:
+#             for inFC in inFeaturesList:
+#                 jStr = str(j) #string version of the counter
+#                 # Clip the features that should be buffered to this reporting unit, and output the result to memory.
+#                 clipResult = arcpy.Clip_analysis(inFC,"ru_lyr","in_memory/clip" + jStr,"#")
+#                 
+#                 if inFeatGeomDict[inFC] == "Polygon":
+#                     eraseList.append(clipResult)
+#                 
+#                 # Buffer these in-memory selected features and merge the output into a single multipart feature
+#                 bufferResult = arcpy.Buffer_analysis(clipResult,"in_memory/clip_buffer" + jStr,bufferDist,"FULL","ROUND","ALL","#")
+#                 
+#                 # Add this result to the list of buffered features
+#                 bufferList.append(bufferResult)               
+#                 
+#                 j += 1 # increment counter
+#                
+#             if len(inFeaturesList) > 1:
+#                 try:
+#                     # Union all of the buffered features
+#                     unionBuffer = arcpy.Union_analysis(bufferList,"in_memory/union_buffer","ONLY_FID")
+#                 except:
+#                     badList = []
+#                     for aResult in bufferList:
+#                         badBuffer = arcpy.FeatureClassToFeatureClass_conversion(aResult,"%scratchworkspace%","badBuffer")
+#                         # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+#                         arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+#                         badList.append(badBuffer)
+#                         unionBuffer = arcpy.Union_analysis(badList,"in_memory/union_buffer","ONLY_FID")
+#                 
+#                     arcpy.Delete_management(badBuffer)
+#                     
+#                 # Dissolve the union layer
+#                 bufferResult = arcpy.Dissolve_management(unionBuffer,"in_memory/dissolve_union")
+#             else:
+#                 bufferResult = bufferList[0]
+# 
+#             # If the input features are polygons, we need to remove the interior polygons from the buffer areas.
+#             # Investigate alternate approach (with license check) of "OUTSIDE_ONLY" option in Buffer_analysis
+#             try:
+#                 for eraseFeatures in eraseList:
+#                     newBufferResult = arcpy.Erase_analysis(bufferResult,eraseFeatures,"in_memory/erase_buffer")
+#                     arcpy.Delete_management(bufferResult)
+#                     bufferResult = newBufferResult
+#             except:
+#                 for eraseFeatures in eraseList:
+#                     badEraseFeatures = arcpy.FeatureClassToFeatureClass_conversion(eraseFeatures,"%scratchworkspace%","badEraseFeatures")
+#                     badBuffer = arcpy.FeatureClassToFeatureClass_conversion(bufferResult,"%scratchworkspace%","badBuffer")
+#                     # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+#                     arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+#                     arcpy.RepairGeometry_management(badEraseFeatures,"DELETE_NULL")
+#                     
+#                     newBufferResult = arcpy.Erase_analysis(badBuffer,badEraseFeatures,"in_memory/erase_buffer")
+#                     arcpy.Delete_management(bufferResult)
+#                     bufferResult = newBufferResult
+#                     
+#                     arcpy.Delete_management(badBuffer)
+#                     arcpy.Delete_management(badEraseFeatures)
+#                                   
+#             
+#                 
+#             # Add a field to this output that will contain the reporting unit ID so that when we merge the buffers
+#             # the reporting unit IDs will be maintained.  
+#             arcpy.AddField_management(bufferResult,uIDField.name,uIDField.type,uIDField.precision,uIDField.scale,
+#                                       uIDField.length,uIDField.aliasName,uIDField.isNullable,uIDField.required,
+#                                       uIDField.domain)
+#             arcpy.CalculateField_management(bufferResult, uIDField.name,'"' + str(rowID) + '"',"PYTHON")
+#             
+#             # Because of the potential for invalid geometries in the buffered features, embed the clip in a try 
+#             # statement to catch and handle errors.
+#             try:
+#                 if i == 0: # If it's the first time through
+#                     # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
+#                     # feature class.
+#                     arcpy.Clip_analysis(bufferResult,"ru_lyr",outFeatures,"#")
+#                     i = 1 # Toggle the flag.
+#                 else: # If it's not the first time through and the output feature class already exists
+#                     # Perform the clip, but output the result to memory rather than writing to disk
+#                     clipResult2 = arcpy.Clip_analysis(bufferResult,"ru_lyr","in_memory/finalclip","#")
+#                     # Append the in-memory result to the output feature class
+#                     arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
+#                     # Delete the in-memory result to conserve system resources
+#                     arcpy.Delete_management(clipResult2)
+#             except:
+#                 badBuffer = arcpy.FeatureClassToFeatureClass_conversion(bufferResult,"%scratchworkspace%","badbuffer")
+#                 # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
+#                 arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
+#                 if i == 0: # If it's the first time through
+#                     # Clip the buffered points using the reporting unit boundaries, and save the output as the specified output
+#                     # feature class.
+#                     arcpy.Clip_analysis(badBuffer,"ru_lyr",outFeatures,"#")
+#                     i = 1 # Toggle the flag.
+#                 else: # If it's not the first time through and the output feature class already exists
+#                     # Perform the clip, but output the result to memory rather than writing to disk
+#                     clipResult2 = arcpy.Clip_analysis(badBuffer,"ru_lyr","in_memory/finalclip","#")
+#                     # Append the in-memory result to the output feature class
+#                     arcpy.Append_management(clipResult2,outFeatures,"NO_TEST")
+#                     # Delete the in-memory result to conserve system resources
+#                     arcpy.Delete_management(clipResult2)
+#                 arcpy.Delete_management(badBuffer)
+# 
+#             arcpy.Delete_management("in_memory") # Clean up all in-memory data created for this reporting unit
+#             arcpy.Delete_management("ru_lyr")
+#             loopProgress.update()
+#     
+#         return outFeatures
+#     
+#     finally:
+#         try:
+#             # Clean up the search cursor object
+#             del Rows
+#         except:
+#             pass 
 
 def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID, cleanupList):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -780,7 +781,7 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
 #             del row, rows
 #             pwnCount = len(distlist)
 #             totalArea = sum(distlist)
-#             averageDist = totalArea/pwnCount
+#             meanDist = totalArea/pwnCount
 #             pwonCount = totalnumPatches - pwnCount
 #         except:
 #             #if near table is empty the set values to default -999
@@ -789,45 +790,313 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
 #                 arcpy.AddWarning("No patches within search radius found for " + i)
 #                 pwnCount = -999
 #                 pwonCount = -999
-#                 averageDist = -999    
+#                 meanDist = -999    
 #             else:
 #                 AddMsg("Near Distance failed for some reason other than search distance")
-#         resultDict[i] = str(pwnCount) +  "," + str(pwonCount) +"," + str(averageDist)
+#         resultDict[i] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
 #     return resultDict
     
-def tabulateMDCP(PatchLURaster, inReportingUnitFeature, reportingUnitIdField, rastoPoly, rastoPt, 
-                 polyDiss, clipPolyDiss, nearPatchTable, zoneAreaDict):
+# def tabulateMDCPOperational(PatchLURaster, inReportingUnitFeature, reportingUnitIdField, rastoPoly, rastoPt, 
+#                  polyDiss, clipPolyDiss, nearPatchTable, zoneAreaDict, timer):
+#     from pylet import arcpyutil
+#     resultDict = {}
+#     
+#     # put the proper field delimiters around the ID field name for SQL expressions
+#     delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
+#     
+#     #Convert Final Patch Raster to polygon
+#     AddMsg(timer.split() + " Converting raster patches to polygons...")
+#     patchOnlyRaster = SetNull(PatchLURaster, PatchLURaster, "VALUE <= 0")
+#     arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPoly, "NO_Simplify", "VALUE")
+#     
+#     #Convert Final Patch Raster to points to get the cell centroids
+#     arcpy.RasterToPoint_conversion(patchOnlyRaster, rastoPt, "VALUE")
+#     
+#     #Create a feature layer of the FinalPatch_centroids
+#     arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+#     
+#     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+#     AddMsg(timer.split() + " Dissolving patch polygons by value field...")
+#     arcpy.Dissolve_management(rastoPoly, polyDiss,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+#     
+#     #Create a feature layer of the FinalPatch_poly_diss
+#     arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
+#     
+#     # Initialize custom progress indicator
+#     totalRUs = len(zoneAreaDict)
+#     mdcpLoopProgress = arcpyutil.messages.loopProgress(totalRUs)
+#     
+#    
+#     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
+#     AddMsg(timer.split() + " Analyzing MDCP by reporting unit...")
+#     for aZone in zoneAreaDict.keys():
+#         pwnCount = 0
+#         pwonCount = 0
+#         meanDist = 0
+#             
+#         if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
+#             squery = "%s = %s" % (delimitedField, str(aZone))
+#         else: # reporting unit id is a string - enclose it in single quotes for SQL expression
+#             squery = "%s = '%s'" % (delimitedField, str(aZone))
+#         
+#         #Create a feature layer of the single reporting unit
+#         arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery,"#")
+#         
+#         #Select the centroids that are in the "subwatersheds_Layer"
+#         arcpy.SelectLayerByLocation_management("FinalPatch_centroids_Layer","INTERSECT","subwatersheds_Layer")
+# 
+#         centroidCount = int(arcpy.GetCount_management("FinalPatch_centroids_Layer").getOutput(0))
+#         
+#         # Check to see if any patches exist within reporting unit
+#         if centroidCount == 0:
+#             arcpy.AddWarning("No patches found in " + str(aZone))
+#         
+#         else:
+# #            #Get a list of centroids within the selected Reporting Unit (this is necessary to match the raster processing
+# #            #selection which selects only grid cells whose center is within the reporting unit).
+# #            rows = arcpy.SearchCursor("FinalPatch_centroids_Layer")
+# #            centroidSet = set()
+# #             
+# #             for row in rows:
+# #                 gridid = row.getValue("grid_code")
+# #                 centroidSet.add(str(gridid))
+# #       
+# #             del row, rows
+# #             totalnumPatches = len(centroidSet)
+# #              
+# #            # Select the patches that have centroids within the "subwatershed_Layer" using the centroid list
+# #             values = ",".join(centroidSet)
+# #             arcpy.AddMessage("selecting patches by grid code")
+# #             arcpy.SelectLayerByAttribute_management("FinalPatch_diss_Layer", "NEW_SELECTION", "gridcode IN (" + values + ")")
+# 
+# 
+#             # Select the patches that have selected centroids within them
+#             arcpy.SelectLayerByLocation_management("FinalPatch_diss_Layer", "INTERSECT", "FinalPatch_centroids_Layer")
+#             totalnumPatches = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
+# 
+#             arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
+#             
+#             #Calculate Near Distances for each watershed
+#             arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+#                                              "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+# #             arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+# #                                              SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
+#              
+#             #Get total number of patches with neighbors and calculate the mean distance
+#             try:
+#                 # Check to see if any neighboring patches are found
+#                 rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
+#                 if rowcount == 0: # none found
+#                     # see if search radius is too short to find nearest patch for any patch
+#                     if totalnumPatches > 1:
+#                         arcpy.AddWarning("No patches within search radius found for " + str(aZone))
+#                         pwonCount = totalnumPatches
+#                      
+#                 else: # found neighboring patches
+#                     rows = arcpy.SearchCursor(nearPatchTable)
+#                     distlist = []
+#                     for row in rows:
+#                         distance = row.getValue("NEAR_DIST")
+#                         distlist.append(distance)
+#                     del row, rows
+#                     pwnCount = len(distlist)
+#                     totalDist = sum(distlist)
+#                     meanDist = totalDist/pwnCount
+#                     pwonCount = totalnumPatches - pwnCount
+#                  
+#             except:
+#                 AddMsg("Near Distance failed for some reason other than search distance")
+#                 
+#             finally:
+#                 arcpy.Delete_management(nearPatchTable)
+#                 arcpy.Delete_management(clipPolyDiss)
+# 
+#                               
+#         resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
+#         
+#         mdcpLoopProgress.update() 
+#               
+#     return resultDict
+
+
+# def tabulateMDCPdissolveErrors(PatchLURaster, inReportingUnitFeature, reportingUnitIdField, rastoPoly, rastoPt, 
+#                  polyDiss, clipPolyDiss, nearPatchTable, zoneAreaDict, timer, pmResultsDict):
+#     from pylet import arcpyutil
+#     resultDict = {}
+#     
+#     # put the proper field delimiters around the ID field name for SQL expressions
+#     delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
+#     
+#     #Convert Final Patch Raster to polygon
+#     AddMsg(timer.split() + " Converting raster patches to polygons...")
+#     patchOnlyRaster = SetNull(PatchLURaster, PatchLURaster, "VALUE <= 0")
+#     arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPoly, "NO_Simplify", "VALUE")
+#     
+#     #Make feature layer of the patch polygons
+#     arcpy.MakeFeatureLayer_management(rastoPoly, "Patch_Polygon_Layer")
+#      
+#     #Convert Final Patch Raster to points to get the cell centroids
+#     AddMsg(timer.split() + " Converting raster patch cells to centroid points...")
+#     arcpy.RasterToPoint_conversion(patchOnlyRaster, rastoPt, "VALUE")
+#      
+#     #Create a feature layer of the FinalPatch_centroids
+#     arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+#     
+# #     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+# #     AddMsg(timer.split() + " Dissolving patch polygons by value field...")
+# #     arcpy.Dissolve_management(rastoPoly, polyDiss,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+# #      
+# #     #Create a feature layer of the FinalPatch_poly_diss
+# #     arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
+# #     
+# #     totalPolygonCount = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
+# #     arcpy.AddMessage("Total Polygon Count = "+str(totalPolygonCount)) 
+#     
+#     # Initialize custom progress indicator
+#     totalRUs = len(zoneAreaDict)
+#     mdcpLoopProgress = arcpyutil.messages.loopProgress(totalRUs)
+#     
+#    
+#     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
+#     AddMsg(timer.split() + " Analyzing MDCP by reporting unit...")
+#     for aZone in zoneAreaDict.keys():
+#         pwnCount = 0
+#         pwonCount = 0
+#         meanDist = 0
+#             
+#         if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
+#             squery = "%s = %s" % (delimitedField, str(aZone))
+#         else: # reporting unit id is a string - enclose it in single quotes for SQL expression
+#             squery = "%s = '%s'" % (delimitedField, str(aZone))
+#         
+#         #Create a feature layer of the single reporting unit
+#         arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery,"#")
+#         
+# #         ruPatchRaster = arcpy.sa.ExtractByMask(patchOnlyRaster, "subwatersheds_Layer")
+# #         
+# #         #Convert RU Patch Raster to points to get the cell centroids
+# # #         AddMsg(timer.split() + " Converting raster patch cells to centroid points...")
+# #         arcpy.RasterToPoint_conversion(ruPatchRaster, rastoPt, "VALUE")
+# #      
+# #         #Create a feature layer of the FinalPatch_centroids
+# #         arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+#         
+#         #Select the centroids that are in the "subwatersheds_Layer"
+#         arcpy.SelectLayerByLocation_management("FinalPatch_centroids_Layer","INTERSECT","subwatersheds_Layer")
+# 
+#         centroidCount = int(arcpy.GetCount_management("FinalPatch_centroids_Layer").getOutput(0))
+# #         arcpy.AddMessage("centroidCount = "+str(centroidCount))
+#         
+#         # Check to see if any patches exist within reporting unit
+#         if centroidCount == 0:
+#             arcpy.AddWarning("No patches found in " + str(aZone))
+#         
+#         else:
+#             # clip the patch polygon to the reporting unit boundary
+#             arcpy.Clip_analysis(rastoPoly,"subwatersheds_Layer", "wshed_Polygons")
+#             
+#             #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+# #             arcpy.AddMessage("dissolving polygons")
+#             arcpy.Dissolve_management("wshed_Polygons", "in_memory/wshed_Polygons_Diss","gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+#              
+#             #Create a feature layer of the FinalPatch_poly_diss
+#             arcpy.MakeFeatureLayer_management("in_memory/wshed_Polygons_Diss", "FinalPatch_diss_Layer")
+#             
+#             # Select the patches that have selected centroids within them
+#             arcpy.SelectLayerByLocation_management("FinalPatch_diss_Layer", "INTERSECT", "FinalPatch_centroids_Layer")
+#             totalnumPatches = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
+# #             arcpy.AddMessage("totalnumPatches = "+str(totalnumPatches))
+# 
+# #            arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
+#             
+#             #Calculate Near Distances for each watershed
+#             arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], nearPatchTable,
+#                                              "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+# #             arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+# #                                              "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+# #             arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+# #                                              SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
+#              
+#             #Get total number of patches with neighbors and calculate the mean distance
+#             try:
+#                 # Check to see if any neighboring patches are found
+#                 rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
+# #                 arcpy.AddMessage("NearTable row count = "+str(rowcount))
+#                 if rowcount == 0: # none found
+#                     # see if search radius is too short to find nearest patch for any patch
+#                     if totalnumPatches == 1:
+#                         arcpy.AddWarning("Single patch in %s. MDCP = 0" % (str(aZone)))
+#                         pwonCount = totalnumPatches
+#                      
+#                 else: # found neighboring patches
+#                     rows = arcpy.SearchCursor(nearPatchTable)
+#                     distlist = []
+#                     for row in rows:
+#                         distance = row.getValue("NEAR_DIST")
+#                         distlist.append(distance)
+#                     del row, rows
+#                     pwnCount = len(distlist)
+#                     totalDist = sum(distlist)
+#                     meanDist = totalDist/pwnCount
+#                     pwonCount = totalnumPatches - pwnCount
+#                  
+#             except:
+#                 AddMsg("Near Distance failed for some reason other than search distance")
+#                 
+#             finally:
+#                 pass
+# #                arcpy.Delete_management(nearPatchTable)
+# #                arcpy.Delete_management(clipPolyDiss)
+# 
+#                               
+#         resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
+#         
+#         mdcpLoopProgress.update() 
+#               
+#     return resultDict
+
+
+
+def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, rastoPolyFeature, patchCentroidsFeature, 
+                 patchDissolvedFeature, nearPatchTable, zoneAreaDict, timer, pmResultsDict):
     from pylet import arcpyutil
     resultDict = {}
     
     # put the proper field delimiters around the ID field name for SQL expressions
     delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
     
-    # Initialize custom progress indicator
-    totalRUs = len(zoneAreaDict)
-    loopProgress = arcpyutil.messages.loopProgress(totalRUs)
-    
     #Convert Final Patch Raster to polygon
-    patchOnlyRaster = SetNull(PatchLURaster, PatchLURaster, "VALUE <= 0")
-    arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPoly, "NO_Simplify", "VALUE")
-    
-    #Convert Final Patch Raster to points to get the cell centroids
-    arcpy.RasterToPoint_conversion(patchOnlyRaster, rastoPt, "VALUE")
-    
-    #Create a feature layer of the FinalPatch_centroids
-    arcpy.MakeFeatureLayer_management(rastoPt, "FinalPatch_centroids_Layer")
+    AddMsg(timer.split() + " Converting raster patches to polygons...")
+    patchOnlyRaster = SetNull(inPatchRaster, inPatchRaster, "VALUE <= 0")
+    arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE")
     
     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-    arcpy.Dissolve_management(rastoPoly, polyDiss,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
-    
+    AddMsg(timer.split() + " Dissolving patch polygons by value field...")
+    arcpy.Dissolve_management(rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+      
     #Create a feature layer of the FinalPatch_poly_diss
-    arcpy.MakeFeatureLayer_management(polyDiss, "FinalPatch_diss_Layer")
+    patchDissolvedLayer = arcpy.MakeFeatureLayer_management(patchDissolvedFeature, "patchDissolvedLayer")
+     
+    #Convert Final Patch Raster to points to get the cell centroids
+    AddMsg(timer.split() + " Converting raster patch cells to centroid points...")
+    arcpy.RasterToPoint_conversion(patchOnlyRaster, patchCentroidsFeature, "VALUE")
+     
+    #Create a feature layer of the FinalPatch_centroids
+    patchCentroidsLayer = arcpy.MakeFeatureLayer_management(patchCentroidsFeature, "patchCentroidsLayer")
+    
+    # Initialize custom progress indicator
+    totalRUs = len(zoneAreaDict)
+    mdcpLoopProgress = arcpyutil.messages.loopProgress(totalRUs)
+    
+    noPatches = 0
+    singlePatch = 0
    
     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
+    AddMsg(timer.split() + " Analyzing MDCP by reporting unit...")
     for aZone in zoneAreaDict.keys():
         pwnCount = 0
         pwonCount = 0
-        averageDist = 0
+        meanDist = 0
             
         if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
             squery = "%s = %s" % (delimitedField, str(aZone))
@@ -835,50 +1104,70 @@ def tabulateMDCP(PatchLURaster, inReportingUnitFeature, reportingUnitIdField, ra
             squery = "%s = '%s'" % (delimitedField, str(aZone))
         
         #Create a feature layer of the single reporting unit
-        arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery,"#")
-
+        aReportingUnitLayer = arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"aReportingUnitLayer",squery,"#")
+        
         #Select the centroids that are in the "subwatersheds_Layer"
-        arcpy.SelectLayerByLocation_management("FinalPatch_centroids_Layer","INTERSECT","subwatersheds_Layer")
+        arcpy.SelectLayerByLocation_management(patchCentroidsLayer,"INTERSECT", aReportingUnitLayer)
 
-        rowCount = int(arcpy.GetCount_management("FinalPatch_centroids_Layer").getOutput(0))
+        centroidCount = int(arcpy.GetCount_management(patchCentroidsLayer).getOutput(0))
         
         # Check to see if any patches exist within reporting unit
-        if rowCount == 0:
-            arcpy.AddWarning("No patches found in " + str(aZone))
+        if centroidCount == 0:
+            # arcpy.AddWarning("No patches found in %s. MDCP set to -9999" % (str(aZone)))
+            meanDist = -9999
+            pwnCount = -9999
+            pwonCount = -9999
+            noPatches += 1
         
         else:
-            #Get a list of centroids within the selected Reporting Unit (this is necessary to match the raster processing
-            #selection which selects only grid cells whose center is within the reporting unit).
-            rows = arcpy.SearchCursor("FinalPatch_centroids_Layer")
-            centroidSet = set()
-            for row in rows:
-                gridid = row.getValue("grid_code")
-                centroidSet.add(str(gridid))
-      
-            del row, rows
-            totalnumPatches = len(centroidSet)
-              
-            # Select the patches that have centroids within the "subwatershed_Layer" using the centroid list
-            values = ",".join(centroidSet)
-            arcpy.SelectLayerByAttribute_management("FinalPatch_diss_Layer", "NEW_SELECTION", "gridcode IN (" + values + ")")           
+            # Select the patches that have selected centroids within them
+            arcpy.SelectLayerByLocation_management(patchDissolvedLayer, "INTERSECT", patchCentroidsLayer)
             
-            arcpy.Clip_analysis("FinalPatch_diss_Layer","subwatersheds_Layer", clipPolyDiss)
+            # Clip the selected patches to the reporting unit boundary
+            # clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, clipPolyDiss)
+            clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, "in_memory/clipPolyDiss")
+
+            # Determine the number of patches found in this reporting unit using this script's methodology
+            totalNumPatches = int(arcpy.GetCount_management(clipPolyDissFeature).getOutput(0))
             
-            #Calculate Near Distances for each watershed
-            arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
+            # Get the number of patches found in this reporting unit from the Patch Metric methodology
+            pmPatches = pmResultsDict[aZone][1]
+            
+            if totalNumPatches == pmPatches:
+                #Calculate Near Distances for each watershed
+                arcpy.GenerateNearTable_analysis(clipPolyDissFeature,[clipPolyDissFeature], nearPatchTable,
                                              "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
-#             arcpy.GenerateNearTable_analysis(clipPolyDiss,[clipPolyDiss], nearPatchTable,
-#                                              SearchRadius,"NO_LOCATION","NO_ANGLE","CLOSEST","0")
+            
+            else:
+                # Disagreement in patch numbers possibly caused by imperfect dissolve operation. 
+                # Try to correct with a second dissolve using only the clipped polygons within the reporting unit
+                
+                #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+                arcpy.Dissolve_management(clipPolyDissFeature, "in_memory/wshed_Polygons_Diss","gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+                 
+                #Create a feature layer of the newly dissolved patches
+                arcpy.MakeFeatureLayer_management("in_memory/wshed_Polygons_Diss", "FinalPatch_diss_Layer")
+                
+                # Re-evaluate the number of patches within the reporting unit
+                totalNumPatches = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
+                
+                # Generate the Near Distance table for newly dissolved patches
+                arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], nearPatchTable,
+                                                 "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+                
+                if totalNumPatches <> pmPatches:
+                    # Alert the user that the problem was not corrected
+                    arcpy.AddWarning("Possible error in the number of patches foud in " + str(aZone) +" \n" + \
+                                     "Calculated value for MDCP for this reporting unit is suspect")
              
-            #Get total number of patches with neighbors and calculate the mean distance
+            #Get total number of patches and calculate the mean distance
             try:
-                # Check to see if any neighboring patches are found
-                rowcount = int(arcpy.GetCount_management(nearPatchTable).getOutput(0))
-                if rowcount == 0: # none found
-                    # see if search radius is too short to find nearest patch for any patch
-                    if totalnumPatches > 1:
-                        arcpy.AddWarning("No patches within search radius found for " + str(aZone))
-                        pwonCount = totalnumPatches
+                # see if only one patch exists in reporting unit
+                if totalNumPatches == 1:
+                    # arcpy.AddWarning("Single patch in %s. MDCP = 0" % (str(aZone)))
+                    pwonCount = totalNumPatches
+                    meanDist = 0
+                    singlePatch += 1
                      
                 else: # found neighboring patches
                     rows = arcpy.SearchCursor(nearPatchTable)
@@ -887,21 +1176,32 @@ def tabulateMDCP(PatchLURaster, inReportingUnitFeature, reportingUnitIdField, ra
                         distance = row.getValue("NEAR_DIST")
                         distlist.append(distance)
                     del row, rows
+                    
                     pwnCount = len(distlist)
                     totalDist = sum(distlist)
-                    averageDist = totalDist/pwnCount
-                    pwonCount = totalnumPatches - pwnCount
+                    meanDist = totalDist/pwnCount
+                    pwonCount = totalNumPatches - pwnCount
                  
             except:
-                AddMsg("Near Distance failed for some reason other than search distance")
+                arcpy.AddWarning("Near Distance routine failed in %s" % (str(aZone)))
+                meanDist = -9999
+                pwnCount = -9999
+                pwonCount = -9999
                 
             finally:
                 arcpy.Delete_management(nearPatchTable)
-                arcpy.Delete_management(clipPolyDiss)
 
                               
-        resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(averageDist)
+        resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
         
-        loopProgress.update()
+        mdcpLoopProgress.update()
         
+    if noPatches > 0:
+        arcpy.AddWarning("%s reporting units contained no patches. MDCP was set to -9999 for these units." % (str(noPatches)))
+    
+    if singlePatch > 0:
+        arcpy.AddWarning("%s reporting units contained a single patch. MDCP was set to 0 for these units." % (str(singlePatch)))
+        
+    arcpy.Delete_management(patchCentroidsLayer)
+              
     return resultDict

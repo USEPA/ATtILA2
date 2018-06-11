@@ -256,10 +256,9 @@ class pmConstants(baseMetricConstants):
     totalAreaName = "PM_TOTA"
     effectiveAreaName = "PM_EFFA"
     excludedAreaName = "PM_EXCA"
-    rastertoPoly = "_FinalPatchPoly"
-    rastertoPoint = "_FinalPatchCentroids"
-    polyDissolve = "_FinalPatch_poly_diss"
-    clipPolyDissolve = "_FinalPatch_poly_diss_clip"
+    rastertoPoly = "PatchPoly"
+    rastertoPoint = "PatchCentroids"
+    polyDissolve = "PatchPoly_Diss"
     nearTable = "_NearTable"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
