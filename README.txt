@@ -2,7 +2,11 @@
 Analytical Tools Interface for Landscape Assessments for ArcGIS (ATtILA for ArcGIS) ReadMe
 ===========================================================================================
 
-03-05-2014
+---------------
+version 1.1
+---------------
+
+06-12-2018 
 
 This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see the manual located in \{ATtILA Destination Folder}\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm.
 
