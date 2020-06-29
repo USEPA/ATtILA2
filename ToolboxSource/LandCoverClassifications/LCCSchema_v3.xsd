@@ -163,7 +163,13 @@
           </xs:element>
       </xs:choice>
     </xs:sequence>
-    <xs:attribute type="xs:string" name="Id" use="required"/>
+	<xs:attribute name="Id" use="required">
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:pattern value="([a-zA-Z0-9_])*"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:attribute>
     <xs:attribute type="xs:string" name="Name" use="optional"/>
     <xs:attribute type="xs:string" name="lcpField" use="optional"/>
     <xs:attribute type="xs:string" name="rlcpField" use="optional"/>
