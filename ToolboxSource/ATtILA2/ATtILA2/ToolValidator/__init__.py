@@ -57,7 +57,7 @@ class caemToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for CoreAndEdgeMetrics """
     
     filterList = caemConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeCaemField
+#    overrideAttributeName = lccConstants.XmlAttributeCaemField
     fieldPrefix = caemConstants.fieldPrefix
     fieldSuffix = caemConstants.fieldSuffix    
     metricShortName = caemConstants.shortName
@@ -90,7 +90,7 @@ class pmToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for Patch Metrics """
     
     filterList = pmConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributePmField
+#    overrideAttributeName = lccConstants.XmlAttributePmField
     fieldPrefix = pmConstants.fieldPrefix
     fieldSuffix = pmConstants.fieldSuffix
     metricShortName = pmConstants.shortName
