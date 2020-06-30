@@ -191,7 +191,7 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
         regionOther = Con(reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid)
 
     if intMinPatchSize > 1:
-        AddMsg(timer.split() + " Eliminating clusters below threshold size...")
+        AddMsg(timer.split() + " Eliminating clusters below minimum patch size...")
         delimitedCOUNT = arcpy.AddFieldDelimiters(regionOther,"COUNT")
         whereClause = delimitedCOUNT+" < " + str(intMinPatchSize)
         regionOtherFinal = Con(regionOther, otherValue, regionOther, whereClause)

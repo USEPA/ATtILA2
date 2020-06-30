@@ -247,9 +247,9 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         
         # setup the appropriate metric fields to add to output table depending on if MDCP is selected or not
         if mdcpYN:
-            metricConst.additionalFields = metricConst.patchFields + metricConst.mdcpFields
+            metricConst.additionalFields = metricConst.additionalFields + metricConst.mdcpFields
         else:
-            metricConst.additionalFields = metricConst.patchFields
+            metricConst.additionalFields = metricConst.additionalFields
             
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
@@ -356,30 +356,34 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
  
                     AddMsg(timer.split() + " Patch analysis has been run for Class:" + m)
                     
-                    if mdcpYN == "true":
+                    if mdcpYN == "true": #calculate MDCP value
                     
                         AddMsg(self.timer.split() + " Calculating MDCP for Class:" + m)
                         
-                        #calculate MDCP value
-                        rastoPolyFeatureName = ("%s_%s_%s" % (metricConst.shortName, m, metricConst.rastertoPoly))
-                        rastoPolyFeature = utils.files.nameIntermediateFile([rastoPolyFeatureName, "FeatureClass"], cleanupList)
-                        rasterCentroidFeatureName = ("%s_%s_%s" % (metricConst.shortName, m, metricConst.rastertoPoint))
-                        rasterCentroidFeature = utils.files.nameIntermediateFile([rasterCentroidFeatureName, "FeatureClass"], cleanupList)
-                        polyDissolvedPatchFeatureName = ("%s_%s_%s" % (metricConst.shortName, m, metricConst.polyDissolve))
-                        polyDissolvedFeature = utils.files.nameIntermediateFile([polyDissolvedPatchFeatureName, "FeatureClass"], cleanupList)
-                        nearPatchTable = utils.files.nameIntermediateFile([m + metricConst.nearTable, "Dataset"], cleanupList)            
+                        # get class name (may have been modified from LCC XML input by ATtILA)
+                        outClassName = metricsFieldnameDict[m][1]
                         
+                        # create and name intermediate data layers
+                        rastoPolyFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.rastertoPoly))
+                        rastoPolyFeature = utils.files.nameIntermediateFile([rastoPolyFeatureName, "FeatureClass"], cleanupList)
+                        rasterCentroidFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.rastertoPoint))
+                        rasterCentroidFeature = utils.files.nameIntermediateFile([rasterCentroidFeatureName, "FeatureClass"], cleanupList)
+                        polyDissolvedPatchFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.polyDissolve))
+                        polyDissolvedFeature = utils.files.nameIntermediateFile([polyDissolvedPatchFeatureName, "FeatureClass"], cleanupList)
+                        nearPatchTable = utils.files.nameIntermediateFile([outClassName + metricConst.nearTable, "Dataset"], cleanupList)            
+                        
+                        # run the calculation script. get the results back as a dictionary keyed to RU id values
                         self.mdcpDict =  utils.vector.tabulateMDCP(self.inLandCoverGrid, self.inReportingUnitFeature, 
                                                                    self.reportingUnitIdField, rastoPolyFeature, rasterCentroidFeature, polyDissolvedFeature,
                                                                    nearPatchTable, self.zoneAreaDict, timer, self.pmResultsDict)
-                        # update
+                        # place the results into the output table
                         utils.calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.optionalGroupsList,
-                                                 self.metricConst, m)
+                                                 outClassName)
                         
                         AddMsg(self.timer.split() + " MDCP analysis has been run for Class:" + m)
                     
                     if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_"+m+"_PatchRast"
+                        self.namePrefix = self.metricConst.shortName+"_"+outClassName+"_PatchRast"
                         self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                         self.inLandCoverGrid.save(self.scratchName)
                         AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))

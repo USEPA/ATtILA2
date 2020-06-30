@@ -146,13 +146,56 @@ class caemConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    # This metric is comprised of several output fields. Fieldname override option 
+    # is not available to the user
+    fieldOverrideKey = ""
     coreSuffix = "_COR"
     edgeSuffix = "_EDG"
     additionalSuffixes = [coreSuffix, edgeSuffix]
     coreField = ["", coreSuffix, gc.defaultDecimalFieldType, 6, 1]
     edgeField = ["", edgeSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [coreField, edgeField]
+    
+class pmConstants(baseMetricConstants):
+    name = "PatchMetrics"
+    shortName = "pm"
+    fieldPrefix = ""
+    fieldSuffix = "_PLGP"
+    overlapName = "PM_OVER"
+    totalAreaName = "PM_TOTA"
+    effectiveAreaName = "PM_EFFA"
+    excludedAreaName = "PM_EXCA"
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
+        ]
+    # This metric is comprised of several output fields. Fieldname override option 
+    # is not available to the user
+    fieldOverrideKey = ""
+    numSuffix = "_NUM"
+    avgSuffix = "_AVG"
+    densSuffix = "_DENS"
+    lrgSuffix = "_LRG"
+    mdcpSuffix = "_MDCP"
+    additionalSuffixes = [numSuffix, avgSuffix, densSuffix, lrgSuffix, mdcpSuffix]
+    numField = ["", numSuffix, gc.defaultDecimalFieldType, 6, 1]
+    avgField = ["", avgSuffix, gc.defaultDecimalFieldType, 6, 1]
+    densField = ["", densSuffix, gc.defaultDecimalFieldType, 6, 1]
+    lrgField = ["", lrgSuffix, gc.defaultDecimalFieldType, 6, 1]
+    mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 6, 1]
+    additionalFields = [numField, avgField, densField, lrgField]
+    mdcpFields = [mdcpField]
+    rastertoPoly = "PatchPoly"
+    rastertoPoint = "PatchCentroids"
+    polyDissolve = "PatchPoly_Diss"
+    nearTable = "_NearTable"
+    classValue = 3
+    excludedValue = -9999
+    otherValue = 0
     
 class rdmConstants(baseMetricConstants):
     name = "RoadDensityMetrics"
@@ -223,42 +266,3 @@ class pdmConstants(baseMetricConstants):
     intersectOutputName = shortName+"_intersectOutput"
     summaryTableName = shortName+"_summaryTable"
     
-class pmConstants(baseMetricConstants):
-    name = "PatchMetrics"
-    shortName = "pm"
-    fieldPrefix = ""
-    fieldSuffix = "_PLGP"
-    overlapName = "PM_OVER"
-    totalAreaName = "PM_TOTA"
-    effectiveAreaName = "PM_EFFA"
-    excludedAreaName = "PM_EXCA"
-    rastertoPoly = "PatchPoly"
-    rastertoPoint = "PatchCentroids"
-    polyDissolve = "PatchPoly_Diss"
-    nearTable = "_NearTable"
-    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
-    qaCheckFieldParameters = [
-        [overlapName, gc.defaultIntegerFieldType, 6],
-        [totalAreaName, gc.defaultAreaFieldType, 15],
-        [effectiveAreaName, gc.defaultAreaFieldType, 15],
-        [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
-        ]
-    fieldOverrideKey = shortName + gc.fieldOverrideName
-    numSuffix = "_NUM"
-    avgSuffix = "_AVG"
-    densSuffix = "_DENS"
-    lrgSuffix = "_LRG"
-    mdcpSuffix = "_MDCP"
-    additionalSuffixes = [numSuffix, avgSuffix, densSuffix, lrgSuffix, mdcpSuffix]
-    numField = ["", numSuffix, gc.defaultDecimalFieldType, 6, 1]
-    avgField = ["", avgSuffix, gc.defaultDecimalFieldType, 6, 1]
-    densField = ["", densSuffix, gc.defaultDecimalFieldType, 6, 1]
-    lrgField = ["", lrgSuffix, gc.defaultDecimalFieldType, 6, 1]
-    mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 6, 1]
-    additionalFields = []
-    mdcpFields = [mdcpField]
-    patchFields = [numField, avgField, densField, lrgField]
-    classValue = 3
-    excludedValue = -9999
-    otherValue = 0

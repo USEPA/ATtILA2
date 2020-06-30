@@ -605,7 +605,7 @@ def getCoreEdgeRatio(outIdField, newTable, tabAreaTable, metricsFieldnameDict, z
             pass
   
 
-def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, metricConst, m):
+def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, outClassName):
     try:
         # Check to see if newTable has already been set up
         rowcount = int(arcpy.GetCount_management(newTable).getOutput(0))
@@ -623,10 +623,10 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, metricConst, m):
             del outTableRows, outTableRow
         # If QA fields are selected, add fields for pwn (patches w/ neighbors) and pwon (patches w/o) for the class
         if globalConstants.qaCheckName in optionalGroupsList:
-            arcpy.AddField_management(newTable, m+"_PWN", "Double")
-            arcpy.AddField_management(newTable, m+"_PWON", "Double")
+            arcpy.AddField_management(newTable, outClassName+"_PWN", "Double")
+            arcpy.AddField_management(newTable, outClassName+"_PWON", "Double")
         
-        mdcpFieldName = m+metricConst.mdcpSuffix
+        mdcpFieldName = outClassName+"_MDCP"
 
         # create the cursor to add data to the output table
         outTableRows = arcpy.UpdateCursor(newTable)        
@@ -638,8 +638,8 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, metricConst, m):
             
             # If QA fields are selected, populate the pwon and pwn fields
             if globalConstants.qaCheckName in optionalGroupsList:
-                outTableRow.setValue(m+"_PWN", mdcpDict[uid].split(",")[0])
-                outTableRow.setValue(m+"_PWON", mdcpDict[uid].split(",")[1])
+                outTableRow.setValue(outClassName+"_PWN", mdcpDict[uid].split(",")[0])
+                outTableRow.setValue(outClassName+"_PWON", mdcpDict[uid].split(",")[1])
             
             # commit the row to the output table
             outTableRows.updateRow(outTableRow)
@@ -651,7 +651,7 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, metricConst, m):
         try:
             del outTableRows
             del outTableRow
-            arcpy.AddMessage("MDCP calculations are complete for class: " + m)
+            
         except:
             pass
     
