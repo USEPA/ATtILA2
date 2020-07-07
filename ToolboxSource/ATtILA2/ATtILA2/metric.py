@@ -356,12 +356,12 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
  
                     AddMsg(timer.split() + " Patch analysis has been run for Class:" + m)
                     
+                    # get class name (may have been modified from LCC XML input by ATtILA)
+                    outClassName = metricsFieldnameDict[m][1]
+                    
                     if mdcpYN == "true": #calculate MDCP value
                     
                         AddMsg(self.timer.split() + " Calculating MDCP for Class:" + m)
-                        
-                        # get class name (may have been modified from LCC XML input by ATtILA)
-                        outClassName = metricsFieldnameDict[m][1]
                         
                         # create and name intermediate data layers
                         rastoPolyFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.rastertoPoly))
@@ -480,7 +480,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     AddMsg(self.timer.split() + " Generating core and edge grid for Class: " + m.upper())
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, processingCellSize,
-                                                                        self.timer)
+                                                                        self.timer, metricConst.shortName)
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
                     #Moved the save intermediate grid to the calcMetrics function so it would be one of the last steps to be performed
@@ -543,12 +543,13 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     utils.calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m)
                     AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
-                    
-                    if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
-                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-                        self.inLandCoverGrid.save(self.scratchName)
-                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+
+# The following block should be rewritten to remove the intermediate raster if save intermediates option is not chosen                    
+#                    if self.saveIntermediates:
+#                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
+#                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+#                        self.inLandCoverGrid.save(self.scratchName)
+#                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
 
             # Create new instance of metricCalc class to contain parameters
             caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,

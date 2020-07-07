@@ -70,7 +70,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
@@ -107,13 +107,21 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     distGrid = EucDistance(otherGrid)
     
     AddMsg(timer.split() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
-    edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str))
+    edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str)) 
+
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
-    arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite") 
+    
+    # it appears that ArcGIS cannot process the BuildRasterAttributeTable request without first saving the raster.
+    # This step wasn't the case earlier. Either ESRI changed things, or I altered something in ATtILA that unwittingly caused this. -DE
+    namePrefix = shortName+"_"+"Raster"+m+PatchEdgeWidth_str
+    scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+    zonesGrid.save(scratchName)
+            
+    arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite")  
 
     arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
     updateCoreEdgeCategoryLabels(zonesGrid)
-    
+            
     return zonesGrid
 
 def updateCoreEdgeCategoryLabels(Raster):
