@@ -7,7 +7,6 @@
 
 import sys
 from ATtILA2 import metric
-#from pylet.utils import parameters
 from ..ATtILA2.utils import parameters
 
 

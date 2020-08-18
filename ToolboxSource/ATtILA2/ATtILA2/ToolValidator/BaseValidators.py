@@ -702,11 +702,13 @@ class NoLccFileValidator(object):
         # if checkboxes are provided, use the indexes specified in the tool's validation script to identify the 
         # parameter locations of any additional needed inputs for that checkbox and enable those parameters
         if self.checkbox1Index:
-            cboxListeners = self.checkboxInParameters.values()[0]
+            #cboxListeners = self.checkboxInParameters.values()[0]
+            cboxListeners = list(self.checkboxInParameters.values())[0]
             self.updateCheckboxParameters(self.checkbox1Parameter, cboxListeners)
 
         if self.checkbox2Index:
-            cboxListeners = self.checkboxInParameters.values()[1]
+            #cboxListeners = self.checkboxInParameters.values()[1]
+            cboxListeners = list(self.checkboxInParameters.values())[1]
             self.updateCheckboxParameters(self.checkbox2Parameter, cboxListeners)
 
     def updateCheckboxParameters(self, checkboxParameter, cboxListeners):
