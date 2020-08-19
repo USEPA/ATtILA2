@@ -14,7 +14,7 @@ def getErrorComments(e):
     """"""
     errorMsg = str(e)
     
-    for lookup, response in errorConstants.errorLookup.iteritems():
+    for lookup, response in errorConstants.errorLookup.items():
         if lookup in errorMsg:
             return response
 
