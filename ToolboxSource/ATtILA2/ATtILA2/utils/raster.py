@@ -148,7 +148,8 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
 def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
-    landCoverValues = raster.getRasterValues(inLandCoverGrid)
+    #landCoverValues = raster.getRasterValues(inLandCoverGrid)
+    landCoverValues = getRasterValues(inLandCoverGrid)
     
     # get the grid codes for this specified metric
     ClassValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
@@ -222,7 +223,8 @@ def updateCoreEdgeCategoryLabels(Raster):
 def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
                          processingCellSize_str, timer):
     # create a list of all the grid values in the selected landcover grid
-    landCoverValues = raster.getRasterValues(inLandCoverGrid)
+    #landCoverValues = raster.getRasterValues(inLandCoverGrid)
+    landCoverValues = getRasterValues(inLandCoverGrid)
     
     # for the selected land cover class, get the class codes found in the input landcover grid
     lccValuesDict = lccObj.values
