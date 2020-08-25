@@ -145,7 +145,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName, scratchNameReference):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     #landCoverValues = raster.getRasterValues(inLandCoverGrid)
@@ -191,6 +191,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     # This step wasn't the case earlier. Either ESRI changed things, or I altered something in ATtILA that unwittingly caused this. -DE
     namePrefix = shortName+"_"+"Raster"+m+PatchEdgeWidth_str
     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+    scratchNameReference[0] = scratchName
     zonesGrid.save(scratchName)
             
     arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite")  

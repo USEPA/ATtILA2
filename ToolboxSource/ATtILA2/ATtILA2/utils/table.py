@@ -448,7 +448,8 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
             # For each class value in the class values list
             for classValue in classValues:
                 # if the dictionary doesn't already have an element with this value as the key 
-                if not transferClassFields.has_key(classValue):
+                #if not transferClassFields.has_key(classValue):
+                if classValue not in transferClassFields:
                     # Add a new empty list to the dictionary with this classValue as key
                     transferClassFields[classValue] = []
                 # Obtain a valid output fieldname that combines the desired output fieldname with this class value

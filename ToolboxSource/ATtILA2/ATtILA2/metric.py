@@ -71,6 +71,7 @@ class metricCalc:
         self.metricConst = metricConst
         self.inLandCoverGrid = inLandCoverGrid
         self.ignoreHighest = ignoreHighest
+        self.scratchNameToBeDeleted =  ""
 
     def _replaceLCGrid(self):
         # Placeholder for internal function to replace the landcover grid.  Several metric Calculations require this step, but others skip it.
@@ -548,6 +549,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
 
+
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
@@ -564,9 +566,11 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
                     AddMsg(self.timer.split() + " Generating core and edge grid for Class: " + m.upper())
+                    scratchNameReference =  [""];
                     self.inLandCoverGrid = raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, processingCellSize,
-                                                                        self.timer, metricConst.shortName)
+                                                                        self.timer, metricConst.shortName, scratchNameReference)
+                    self.scratchNameToBeDeleted = scratchNameReference[0]
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
                     #Moved the save intermediate grid to the calcMetrics function so it would be one of the last steps to be performed
@@ -630,6 +634,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                                                       self.zoneAreaDict, self.metricConst, m)
                     AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
 
+
+ 
 # The following block should be rewritten to remove the intermediate raster if save intermediates option is not chosen                    
 #                    if self.saveIntermediates:
 #                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
@@ -647,6 +653,15 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             caemCalc.run()
             
             caemCalc.metricsBaseNameList = metricsBaseNameList
+
+            #delet the intermediate raster if save intermediates option is not chosen 
+            if caemCalc.saveIntermediates:
+                pass
+            else:
+                directory = env.workspace
+                path = os.path.join(directory, caemCalc.scratchNameToBeDeleted)
+                arcpy.Delete_management(path)
+
             
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)
