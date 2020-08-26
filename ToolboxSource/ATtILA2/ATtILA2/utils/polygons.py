@@ -161,7 +161,8 @@ def findNonOverlapGroups(overlapDict):
     while len(overlapDict) != 0:
         alist = []
         #get the first OID in the overlap Dictionary
-        k = overlapDict.keys()[0]
+        #k = overlapDict.keys()[0]
+        k = list(overlapDict.keys())[0]
         # loop through the dictionary to check which polygons the first oid overlaps
         for z in overlapDict.keys():
             #if OID is not in the overlapDict value for a key then add that key to a list - this means these oids don't overlap the first OID
