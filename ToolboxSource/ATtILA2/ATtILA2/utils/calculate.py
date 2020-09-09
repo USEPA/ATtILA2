@@ -741,9 +741,12 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                     else: 
                         numpatch = len(patchAreaList)
                         patchArea = sum(patchAreaList)
-                        lrgpatch = max(patchAreaList)
-                        avepatch = patchArea/numpatch
-                        proportion = (lrgpatch/patchArea) * 100
+                        if patchArea == 0:
+                            arcpy.AddWarning("patchArea is zero in " + str(aZone))
+                        else:
+                            lrgpatch = max(patchAreaList)
+                            avepatch = patchArea/numpatch
+                            proportion = (lrgpatch/patchArea) * 100
                         
                         #convert to square kilometers
                         rasterRUArea = otherArea + patchArea
