@@ -635,14 +635,6 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
 
 
- 
-# The following block should be rewritten to remove the intermediate raster if save intermediates option is not chosen                    
-#                    if self.saveIntermediates:
-#                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
-#                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-#                        self.inLandCoverGrid.save(self.scratchName)
-#                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
-
             # Create new instance of metricCalc class to contain parameters
             caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                           m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
@@ -675,7 +667,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         
 
 def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                            metricsToRun, inStreamFeatures, inBufferDistance, outTable, processingCellSize, snapRaster,
+                            metricsToRun, inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster,
                             optionalFieldGroups):
     """ Interface for script executing Riparian Land Cover Proportion Metrics """
     try:
@@ -718,6 +710,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         # Assign class attributes unique to this module.
         rlcpCalc.inStreamFeatures = inStreamFeatures
         rlcpCalc.inBufferDistance = inBufferDistance
+        rlcpCalc.enforceBoundary = enforceBoundary
 
         rlcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
@@ -735,7 +728,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         setupAndRestore.standardRestore()
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                            metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, outTable, processingCellSize, 
+                            metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, 
                             snapRaster, optionalFieldGroups):
     """ Interface for script executing Sample Point Land Cover Proportion Metrics """
 
@@ -778,6 +771,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         splcpCalc.inPointFeatures = inPointFeatures
         splcpCalc.inBufferDistance = inBufferDistance
         splcpCalc.ruLinkField = ruLinkField
+        splcpCalc.enforceBoundary = enforceBoundary
 
         # Run Calculation
         splcpCalc.run()

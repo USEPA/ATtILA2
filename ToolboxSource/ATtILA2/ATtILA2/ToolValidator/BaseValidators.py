@@ -67,6 +67,7 @@ class ProportionsValidator(object):
     inMultiFeatureIndex = 0
     inVector2Index = 0
     inGeodataset1Index = 0
+    inPerCapFieldIndex = 0
     inDistanceIndex = 0
     inWholeNumIndex = 0
     inLinearUnitIndex = 0
@@ -159,6 +160,9 @@ class ProportionsValidator(object):
             
         if self.inGeodataset1Index:
             self.inGeodataset1Parameter = self.parameters[self.inGeodataset1Index]
+            
+        if self.inPerCapFieldIndex:
+            self.inPerCapFieldParameter = self.parameters[self.inPerCapFieldIndex]
 
                
         # Additional local variables
@@ -478,7 +482,7 @@ class ProportionsValidator(object):
         if self.inVector2Index:
             # if provided, check if input vector2 is defined
             if self.inVector2Parameter.value:
-                # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
+                # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
                 if hasattr(self.inVector2Parameter.value, "dataSource"):
                     if arcpy.Describe(self.inVector2Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
                         self.inVector2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
@@ -490,7 +494,7 @@ class ProportionsValidator(object):
         if self.inGeodataset1Index:
             # if provided, check if input geodataset1 is defined
             if self.inGeodataset1Parameter.value:
-                # query for a dataSource attribue, if one exists, it is a lyr file. Get the lyr's data source to do a Decribe
+                # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
                 if hasattr(self.inGeodataset1Parameter.value, "dataSource"):
                     desc = arcpy.Describe(self.inGeodataset1Parameter.value.dataSource)
                     dataSrc = self.inGeodataset1Parameter.value.dataSource
@@ -504,7 +508,8 @@ class ProportionsValidator(object):
                 if desc.datasetType == "RasterDataset":
                     # Check if input raster is an integer grid
                     inRaster = arcpy.Raster(str(self.inGeodataset1Parameter.value))
-#                    if not inRaster.isInteger:
+                    if not inRaster.isInteger:
+                        self.inPerCapFieldParameter.value = ""
 #                        self.inGeodataset1Parameter.setErrorMessage(self.integerGridOrPolgonMessage)
                 elif desc.shapeType.lower() != "polygon":
                         self.inGeodataset1Parameter.setErrorMessage(self.polygonOrIntegerGridMessage) 
