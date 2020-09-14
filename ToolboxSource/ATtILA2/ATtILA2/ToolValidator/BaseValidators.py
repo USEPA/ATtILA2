@@ -460,19 +460,19 @@ class ProportionsValidator(object):
                     if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
                         self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
                 
-#        # Check if a secondary multiple input feature is indicated            
-#        if self.inMultiFeatureIndex:
-#            # if provided, get the valueTable and process each entry
-#            if self.inMultiFeatureParameter.value:
-#                multiFeatures = self.inMultiFeatureParameter.value
-#                rowCount = multiFeatures.rowCount
-#                for row in range(0, rowCount):
-#                    value = multiFeatures.getValue(row, 0)
-#                    if value:
-#                        # check to see if it has a spatial reference
-#                        d = arcpy.Describe(value)
-#                        if d.spatialReference.name.lower() == "unknown":
-#                            self.inMultiFeatureParameter.setErrorMessage(self.noSpatialReferenceMessageMulti)
+        # Check if a secondary multiple input feature is indicated            
+        if self.inMultiFeatureIndex:
+            # if provided, get the valueTable and process each entry
+            if self.inMultiFeatureParameter.value:
+                multiFeatures = self.inMultiFeatureParameter.value
+                rowCount = multiFeatures.rowCount
+                for row in range(0, rowCount):
+                    value = multiFeatures.getValue(row, 0)
+                    if value:
+                        # check to see if it has a spatial reference
+                        d = arcpy.Describe(value)
+                        if d.spatialReference.name.lower() == "unknown":
+                            self.inMultiFeatureParameter.setErrorMessage(self.noSpatialReferenceMessageMulti)
                             
         # Check if a secondary vector input feature is indicated
         if self.inVector2Index:
