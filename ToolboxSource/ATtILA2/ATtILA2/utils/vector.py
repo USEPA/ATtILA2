@@ -206,7 +206,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 # "OUTSIDE_ONLY" option in the buffer tool, but that is only available with an advanced license.  Check for
                 # the right license level, revert to buffer/erase option if it's not available.
                 licenseLevel = arcpy.CheckProduct("ArcInfo")
-                if licenseLevel in ["AlreadyInitalized ","Available"]:
+                if licenseLevel in ["AlreadyInitialized","Available"]:
                     bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID])
                     AddMsg("Repairing buffer areas for input areal features...")
                     arcpy.RepairGeometry_management (bufferResult)
@@ -375,7 +375,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
                 # "OUTSIDE_ONLY" option in the buffer tool, but that is only available with an advanced license.  Check for
                 # the right license level, revert to buffer/erase option if it's not available.
                 licenseLevel = arcpy.CheckProduct("ArcInfo")
-                if licenseLevel in ["AlreadyInitalized ","Available"]:
+                if licenseLevel in ["AlreadyInitialized","Available"]:
                     bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID])
                     AddMsg("Repairing buffer areas for input areal features...")
                     arcpy.RepairGeometry_management (bufferResult)
