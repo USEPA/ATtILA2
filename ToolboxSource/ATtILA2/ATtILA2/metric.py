@@ -267,7 +267,8 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            pathRoot = os.path.splitext(inLandCoverGrid)[0]
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
             AddMsg(timer.split() + " Reduction complete")
@@ -394,7 +395,8 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             from arcpy import env        
             _startingWorkSpace= env.workspace
             env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            pathRoot = os.path.splitext(inLandCoverGrid)[0]
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inMaxSeparation)
             env.workspace = _startingWorkSpace
@@ -553,7 +555,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            pathRoot = os.path.splitext(inLandCoverGrid)[0]
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inEdgeWidth)
             AddMsg(timer.split() + " Reduction complete")

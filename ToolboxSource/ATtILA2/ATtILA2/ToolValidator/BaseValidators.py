@@ -497,10 +497,8 @@ class ProportionsValidator(object):
                 # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
                 if hasattr(self.inGeodataset1Parameter.value, "dataSource"):
                     desc = arcpy.Describe(self.inGeodataset1Parameter.value.dataSource)
-                    dataSrc = self.inGeodataset1Parameter.value.dataSource
                 else:
                     desc = arcpy.Describe(self.inGeodataset1Parameter.value)
-                    dataSrc = self.inGeodataset1Parameter.value
 
                 if desc.spatialReference.name.lower() == "unknown":
                     self.inGeodataset1Parameter.setErrorMessage(self.noSpatialReferenceMessage) 
@@ -508,9 +506,12 @@ class ProportionsValidator(object):
                 if desc.datasetType == "RasterDataset":
                     # Check if input raster is an integer grid
                     inRaster = arcpy.Raster(str(self.inGeodataset1Parameter.value))
-                    if not inRaster.isInteger:
-                        self.inPerCapFieldParameter.value = ""
-#                        self.inGeodataset1Parameter.setErrorMessage(self.integerGridOrPolgonMessage)
+                    if inRaster.isInteger:
+                        self.inPerCapFieldParameter.clearMessage()
+                        self.inPerCapFieldParameter.value = "Value"
+                        #self.inGeodataset1Parameter.setErrorMessage(self.integerGridOrPolgonMessage)
+                    else:
+                        self.inPerCapFieldParameter.value = ''
                 elif desc.shapeType.lower() != "polygon":
                         self.inGeodataset1Parameter.setErrorMessage(self.polygonOrIntegerGridMessage) 
                         
