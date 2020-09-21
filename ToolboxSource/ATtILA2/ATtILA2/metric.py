@@ -697,7 +697,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                 # Generate a default filename for the buffer feature class
                 self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
                 # Generate the buffer area to use in the metric calculation
-                if enforceBoundary:
+                if enforceBoundary == "true":
                     self.inReportingUnitFeature, self.cleanupList = vector.bufferFeaturesByIntersect(self.inStreamFeatures,
                                                                                      self.inReportingUnitFeature,
                                                                                      self.bufferName, self.inBufferDistance,
