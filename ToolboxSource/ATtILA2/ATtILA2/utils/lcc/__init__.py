@@ -111,7 +111,7 @@ class LandCoverBaseClass(object):
     childValueIds = None
     
     #: A 'dict'_ of overwriteFields used for any class will contain 
-        #: 'caemField, lcpField, lcpField, rlcpField and splcpField'
+        #: 'flcpField, lcospField, lcpField, rlcpField and splcpField'
     classoverwriteFields = None
     
     _excludeEmptyClasses = None

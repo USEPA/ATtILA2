@@ -311,6 +311,238 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
     finally:
         setupAndRestore.standardRestore()
         env.workspace = _tempEnvironment1
+        
+        
+def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                                   metricsToRun, inFloodplainGeodataset, outTable, processingCellSize, snapRaster, 
+                                   optionalFieldGroups, clipLCGrid):
+    """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
+        
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.flcpConstants()
+          
+        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+        #patch metrics) extend the clip envelope an adequate distance.       
+        #from pylet import utils
+        from . import utils
+          
+        from arcpy import env        
+        _tempEnvironment1 = env.workspace
+        env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+  
+        if clipLCGrid == "true":
+            timer = DateTimer()
+            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
+            pathRoot = os.path.splitext(inLandCoverGrid)[0]
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
+            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
+            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
+            AddMsg(timer.split() + " Reduction complete")
+  
+          
+        # Create new subclass of metric calculation
+        class metricCalcFLCPRaster(metricCalc):
+            # Subclass that overrides specific functions for the FloodplainLandCoverProportions calculation
+            def _replaceLCGrid(self):
+                # Initiate our flexible cleanuplist
+                if flcpCalc.saveIntermediates:
+                    flcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                # replace the inLandCoverGrid and get a list of values to override the standard excludedValues frozenset.
+                self.inLandCoverGrid, self.excludedValues = raster.getNullSubstituteGrid(self.lccObj, self.inLandCoverGrid, self.inFloodplainGeodataset,
+                                                                    self.nullValuesList, self.cleanupList, self.timer)
+
+                if self.saveIntermediates:
+                    self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]
+                    self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+                    self.inLandCoverGrid.save(self.scratchName)
+                    AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+
+            def _makeTabAreaTable(self):
+                AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
+                # Alter routine to override the standard excludedValues frozenset generated from the lccObj with a different list of Values. 
+                class categoryTabAreaTable(TabulateAreaTable):
+                    def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName=None, lccObj=None):
+                      
+                        self._inReportingUnitFeature = inReportingUnitFeature
+                        self._reportingUnitIdField = reportingUnitIdField
+                        self._inLandCoverGrid = inLandCoverGrid
+                        self._tableName = tableName
+                        
+                        self._excludedValues = flcpCalc.excludedValues
+                        
+                        self._createNewTable()
+                         
+                
+                self.tabAreaTable = categoryTabAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
+                                          self.inLandCoverGrid, self.tableName, self.lccObj)                    
+                     
+        class metricCalcFLCPPolygon(metricCalc):
+            # Subclass that overrides specific functions for the FloodplainLandCoverProportions calculation
+            def _replaceRUFeatures(self):
+                # Initiate our flexible cleanuplist
+                if flcpCalc.saveIntermediates:
+                    flcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                     
+                # Generate a default filename for the output feature class
+                self.zonesName = self.metricConst.shortName + "_Zone"
+                 
+                # replace the inReportingUnitFeature
+                self.inReportingUnitFeature, self.cleanupList = vector.getIntersectOfPolygons(self.inReportingUnitFeature, 
+                                                                                              self.reportingUnitIdField, 
+                                                                                              self.inFloodplainGeodataset,
+                                                                                              self.zonesName, 
+                                                                                              self.cleanupList, self.timer)
+ 
+  
+        # Do a Describe on the floodplain input to determine if it is a raster or polygon feature
+        desc = arcpy.Describe(inFloodplainGeodataset)
+         
+        if desc.datasetType == "RasterDataset":
+            # Set toogle to ignore highest value marker in new land cover grid when checking for undefined values.
+            # This value does not exist in the original land cover grid.
+            ignoreHighest = True
+            # Create new instance of metricCalc class to contain parameters
+            flcpCalc = metricCalcFLCPRaster(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, ignoreHighest)
+        else:
+            # Create new instance of metricCalc class to contain parameters
+            flcpCalc = metricCalcFLCPPolygon(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+         
+        # Assign class attributes unique to this module.
+        flcpCalc.inFloodplainGeodataset = inFloodplainGeodataset
+        flcpCalc.nullValuesList = [0] # List of values in the binary floodplain grid to set to null
+        flcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        
+        # Run Calculation
+        flcpCalc.run()
+          
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName) 
+ 
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        if not flcpCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in flcpCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        setupAndRestore.standardRestore()
+        env.workspace = _tempEnvironment1
+
+def runFloodplainLandCoverProportionsOld(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                                   metricsToRun, inFloodplainGeodataset, outTable, processingCellSize, snapRaster, 
+                                   optionalFieldGroups, clipLCGrid):
+    """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
+        
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.flcpConstants()
+          
+        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
+        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
+        #patch metrics) extend the clip envelope an adequate distance.       
+        #from pylet import utils
+        from . import utils
+          
+        from arcpy import env        
+        _tempEnvironment1 = env.workspace
+        env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+  
+        if clipLCGrid == "true":
+            timer = DateTimer()
+            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
+            pathRoot = os.path.splitext(inLandCoverGrid)[0]
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
+            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
+            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
+            AddMsg(timer.split() + " Reduction complete")
+  
+          
+        # Create new subclass of metric calculation
+        class metricCalcFLCPRaster(metricCalc):
+            # Subclass that overrides specific functions for the FloodplainLandCoverProportions calculation
+            def _replaceLCGrid(self):
+                # Initiate our flexible cleanuplist
+                if flcpCalc.saveIntermediates:
+                    flcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                # replace the inLandCoverGrid
+                self.inLandCoverGrid, self.excludedValues = raster.getNullSubstituteGrid(self.lccObj, self.inLandCoverGrid, self.inFloodplainGeodataset,
+                                                                    self.nullValuesList, self.cleanupList, self.timer)
+
+                if self.saveIntermediates:
+                    self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]
+                    self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
+                    self.inLandCoverGrid.save(self.scratchName)
+                    AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+                    
+                
+                
+                     
+        class metricCalcFLCPPolygon(metricCalc):
+            # Subclass that overrides specific functions for the FloodplainLandCoverProportions calculation
+            def _replaceRUFeatures(self):
+                # Initiate our flexible cleanuplist
+                if flcpCalc.saveIntermediates:
+                    flcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                     
+                # Generate a default filename for the output feature class
+                self.zonesName = self.metricConst.shortName + "_Zone"
+                 
+                # replace the inReportingUnitFeature
+                self.inReportingUnitFeature, self.cleanupList = vector.getIntersectOfPolygons(self.inReportingUnitFeature, 
+                                                                                              self.reportingUnitIdField, 
+                                                                                              self.inFloodplainGeodataset,
+                                                                                              self.zonesName, 
+                                                                                              self.cleanupList, self.timer)
+ 
+  
+        # Do a Describe on the floodplain input to determine if it is a raster or polygon feature
+        desc = arcpy.Describe(inFloodplainGeodataset)
+         
+        if desc.datasetType == "RasterDataset":
+            # Create new instance of metricCalc class to contain parameters
+            flcpCalc = metricCalcFLCPRaster(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        else:
+            # Create new instance of metricCalc class to contain parameters
+            flcpCalc = metricCalcFLCPPolygon(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+         
+        # Assign class attributes unique to this module.
+        flcpCalc.inFloodplainGeodataset = inFloodplainGeodataset
+        flcpCalc.nullValuesList = [0] # List of values in the binary floodplain grid to set to null
+        flcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+ 
+         
+        # Run Calculation
+        flcpCalc.run()
+          
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName) 
+ 
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        if not flcpCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in flcpCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        setupAndRestore.standardRestore()
+        env.workspace = _tempEnvironment1
+
 
 
 def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,

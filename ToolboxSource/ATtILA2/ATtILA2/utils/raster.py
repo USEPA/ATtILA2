@@ -144,6 +144,66 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     
     return SLPxLCGrid
 
+def getNullSubstituteGrid(lccObj, inLandCoverGrid, inSubstituteGrid, nullValuesList, cleanupList, timer):
+    # Set areas in the inSubstituteGrid to NODATA using the nullValuesList. For areas not in the nullValuesList, substitute
+    # the grid values with those from the inLandCoverGrid
+    LCGrid = Raster(inLandCoverGrid)
+    subGrid = Raster(inSubstituteGrid)
+    
+    # find the highest value found in LCC XML file or land cover grid  
+    lccValuesDict = lccObj.values
+    maxValue = LCGrid.maximum
+    xmlValues = lccObj.getUniqueValueIdsWithExcludes()
+    for v in xmlValues:
+        if v > maxValue:
+            maxValue = v
+    
+    # Add 1 to the highest value and then add it to the list of values to exclude during metric calculations       
+    valueToExclude = int(maxValue + 1)
+    excludedValuesFrozen = lccValuesDict.getExcludedValueIds()
+    excludedValues = [item for item in excludedValuesFrozen]
+    excludedValues.append(valueToExclude)
+    
+    # build whereClause string (e.g. "VALUE" <> 11 or "VALUE" <> 12") to identify areas to substitute the valueToExclude
+    delimitedVALUE = arcpy.AddFieldDelimiters(subGrid,"VALUE")
+    stringStart = delimitedVALUE+" <> "
+    stringSep = " or "+delimitedVALUE+" <> "
+    whereClause = stringStart + stringSep.join([str(item) for item in nullValuesList])
+    AddMsg(timer.split() + " Generating land cover in floodplain grid...") 
+    nullSubstituteGrid = Con(subGrid, LCGrid, valueToExclude, whereClause)
+    
+    return nullSubstituteGrid, excludedValues
+
+def getNullSubstituteGridOld(lccObj, inLandCoverGrid, inSubstituteGrid, nullValuesList, cleanupList, timer):
+    # Set areas in the inSubstituteGrid to NODATA using the nullValuesList. For areas not in the nullValuesList, substitute
+    # the grid values with those from the inLandCoverGrid
+    LCGrid = Raster(inLandCoverGrid)
+    subGrid = Raster(inSubstituteGrid)
+    
+    # find the highest value found in LCC XML file or land cover grid  
+    lccValuesDict = lccObj.values
+    maxValue = LCGrid.maximum
+    xmlValues = lccObj.getUniqueValueIdsWithExcludes()
+    for v in xmlValues:
+        if v > maxValue:
+            maxValue = v
+    
+    # Add 1 to the highest value and add it to the list of values to exclude during metric calculations       
+    valueToExclude = int(maxValue + 1)
+    excludedValuesFrozen = lccValuesDict.getExcludedValueIds()
+    excludedValues = [item for item in excludedValuesFrozen]
+    excludedValues.append(valueToExclude)
+    AddMsg("new excluded values = "+str(excludedValues))
+    
+    # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where NODATA areas on the output grid should be
+    delimitedVALUE = arcpy.AddFieldDelimiters(subGrid,"VALUE")
+    stringStart = delimitedVALUE+" = "
+    stringSep = " or "+delimitedVALUE+" = "
+    whereClause = stringStart + stringSep.join([str(item) for item in nullValuesList])
+    AddMsg(timer.split() + " Generating land cover in floodplain grid...") 
+    nullSubstituteGrid = SetNull(subGrid, LCGrid, whereClause)
+    
+    return nullSubstituteGrid
 
 def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName, scratchNameReference):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    

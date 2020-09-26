@@ -95,6 +95,25 @@ class lcospConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    
+class flcpConstants(baseMetricConstants):
+    name = "FloodplainLandCoverProportions"
+    shortName = "flcp"
+    fieldSuffix = ""
+    fieldPrefix = "f"
+    overlapName = "FLCP_OVER"
+    totalAreaName = "FLCP_TOTA"
+    effectiveAreaName = "FLCP_EFFA"
+    excludedAreaName = "FLCP_EXCA"
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName
 
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"

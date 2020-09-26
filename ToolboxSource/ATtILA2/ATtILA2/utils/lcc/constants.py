@@ -14,7 +14,7 @@ PredefinedFileDirName = "LandCoverClassifications"
 UserDefinedOptionDescription = "User Defined"
 AutoSaveFileName = "autoSave.xml"
 TimeInterval = 5000     # 1 sec = 1000 millseconds
-overwriteFieldList = ['caemField', 'lcospField', 'lcpField', 'rlcpField', 'splcpField']
+overwriteFieldList = ['flcpField', 'lcospField', 'lcpField', 'rlcpField', 'splcpField']
 
 
 # XML Elements
@@ -34,18 +34,18 @@ XmlAttributeId = "Id"
 XmlAttributeName = "Name"
 XmlAttributeDescription = "description"
 XmlAttributeNodata = "excluded"
+XmlAttributeFlcpField = "flcpField"
+XmlAttributeLcospField = "lcospField"
 XmlAttributeLcpField = "lcpField"
 XmlAttributeRlcpField = "rlcpField"
-XmlAttributeLcospField = "lcospField"
 XmlAttributeSplcpField = "splcpField"
-XmlAttributeCaemField = "caemField"
 XmlAttributeFilter = "filter"
 XmlAttributeValue = "value"
 XmlAttributeFieldName = "fieldName"
 XmlAttributeCalcMethod = "method"
 
 # XML Validation Attributes
-XsdFilename = 'LCCSchema_v2.xsd'
+XsdFilename = 'LCCSchema.xsd'
 XmlAttilaNamespace = 'lcc'
 XmlSchemaNamespace = 'http://www.w3.org/2001/XMLSchema-instance'
 ItemsRootAttribute1 = {'xmlns:xsi': XmlSchemaNamespace}

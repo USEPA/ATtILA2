@@ -454,6 +454,40 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
         pass
 
 
+def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupList, timer):
+    '''This function performs an intersection and dissolve function on a set of polygon features.
+    **Description:**
+        This function intersects the representative units with a second polygon feature, splitting the second polygon at unit 
+        boundaries and giving unit attributes to the split polygons.  The split polygons are then dissolved by the unit IDs.
+    **Arguments:**
+        * *repUnits* - the input representative areal units feature class that will be used to split the lines
+        * *uIDField* - the ID field of the representative areal units feature class.  Each dissolved line feature will be assigned the respective uID
+        * *secondPoly* - the second polygon feature class
+        * *outFeatures* - name of the output feature class.
+    **Returns:**
+        * *outFeatures* - name of the output feature class.
+    '''
+     
+    # Get a unique name with full path for the output features - will default to current workspace:
+    toolShortName = outFeatures[:outFeatures.find("_")]
+    
+    # Intersect the reporting unit features with the floodplain features
+    AddMsg(timer.split() + "Intersecting reporting unit features with floodplain features...") 
+    intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
+    intersection = arcpy.Intersect_analysis([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT")
+     
+    # Dissolve the intersected lines on the unit ID fields.
+    outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
+    #dissolveFields = uIDField.name
+    dissolveFields = uIDField
+    AddMsg(timer.split() + "Dissolving floodplain zone features...")  
+    arcpy.Dissolve_management(intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
+    
+    # Delete following intermediate datasets in order to reduce clutter if Intermediates are to be saved
+    #arcpy.Delete_management(intersection)
+ 
+    return outFeatures, cleanupList
+
 def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,inLengthField,lineClass=''):
     '''This function performs a intersection and dissolve function on a set of line features.
     **Description:**

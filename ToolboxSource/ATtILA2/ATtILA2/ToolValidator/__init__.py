@@ -17,7 +17,15 @@ class lcospToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = lcospConstants.fieldPrefix
     fieldSuffix = lcospConstants.fieldSuffix
     metricShortName = lcospConstants.shortName
-    
+
+class flcpToolValidator(BaseValidators.ProportionsValidator):
+    """Tool Validator for FloodplainLandCoverProportion"""
+      
+    filterList = flcpConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeLcpField
+    fieldPrefix = flcpConstants.fieldPrefix
+    fieldSuffix = flcpConstants.fieldSuffix
+    metricShortName = flcpConstants.shortName
     
 class lcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
