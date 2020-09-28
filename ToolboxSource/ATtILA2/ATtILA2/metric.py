@@ -174,73 +174,113 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
                                      metricsToRun, outTable, perCapitaYN, inCensusFeature, inPopField, processingCellSize, 
                                      snapRaster, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
-    from arcpy import env
-    #from pylet import utils
-    from . import utils
     
-    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
-        ### Initialization
-        # Start the timer
-        timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables")
-
         # retrieve the attribute constants associated with this metric
-        #metricConst = metricConstants.lcppcConstants()
-        metricConst = metricConstants.pdmConstants()
-
-        # Set the output workspace
-        _tempEnvironment1 = env.workspace
-        env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-        # Strip the description from the "additional option" and determine whether intermediates are stored.
-        processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
-        if globalConstants.intermediateName in processed:
-            msg = "\nIntermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace))
-            #AddMsg(msg.format(env.workspace))
-            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
-        else:
-            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        metricConst = metricConstants.lcppcConstants()
         
-        # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-        # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
-        # values and will also keep only the OID, shape, and reportingUnitIdField fields
-        desc = arcpy.Describe(inReportingUnitFeature)
-        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
-        tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
-                                                           reportingUnitIdField,"","MULTI_PART")
-
-        # Add and populate the area field (or just recalculate if it already exists
-        ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        # Create new subclass of metric calculation
+        class metricCalcLCPPC(metricCalc):        
         
-        # Build the final output table.
-        AddMsg(timer.split() + " Creating output table")
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+            def _makeAttilaOutTable(self):
+                AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
+                # Internal function to construct the ATtILA metric output table
+                if perCapitaYN == "true":     
+                    self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable, 
+                                                                                        self.metricsBaseNameList,
+                                                                                        self.optionalGroupsList, 
+                                                                                        self.metricConst, 
+                                                                                        self.lccObj, 
+                                                                                        self.outIdField, 
+                                                                                        self.metricConst.additionalFields)
+                else:
+                    self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
+                                                                                        self.metricsBaseNameList,
+                                                                                        self.optionalGroupsList,
+                                                                                        self.metricConst, 
+                                                                                        self.lccObj,
+                                                                                        self.outIdField)     
         
-        AddMsg(timer.split() + " Calculating population density")
         
-        # Create an index value to keep track of intermediate outputs and fieldnames.
-        index = ""
-        
-        #if perCapitaYN is checked:
-        if perCapitaYN:
-            index = "1"
-            # Perform population density calculation for first (only?) population feature class
-            calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
-                                      env.workspace,outTable,metricConst,cleanupList,index)   
-
-        AddMsg(timer.split() + " Calculation complete")
+        # Create new instance of metricCalc class to contain parameters
+        lcppcCalc = metricCalcLCPPC(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                             metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        # Run Calculation
+        lcppcCalc.run()
     except Exception as e:
         errors.standardErrorHandling(e)
 
     finally:
-        if not cleanupList[0] == "KeepIntermediates":
-            for (function,arguments) in cleanupList:
-                # Flexibly executes any functions added to cleanup array.
-                function(*arguments)
-        env.workspace = _tempEnvironment1        
+        setupAndRestore.standardRestore()
+        
+            
+#     from arcpy import env
+#     #from pylet import utils
+#     from . import utils
+#     
+#     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+#     try:
+#         ### Initialization
+#         # Start the timer
+#         timer = DateTimer()
+#         AddMsg(timer.start() + " Setting up environment variables")
+# 
+#         # retrieve the attribute constants associated with this metric
+#         #metricConst = metricConstants.lcppcConstants()
+#         metricConst = metricConstants.pdmConstants()
+# 
+#         # Set the output workspace
+#         _tempEnvironment1 = env.workspace
+#         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+#         # Strip the description from the "additional option" and determine whether intermediates are stored.
+#         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+#         if globalConstants.intermediateName in processed:
+#             msg = "\nIntermediates are stored in this directory: {0}\n"
+#             arcpy.AddMessage(msg.format(env.workspace))
+#             #AddMsg(msg.format(env.workspace))
+#             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+#         else:
+#             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+#         
+#         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
+#         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
+#         # values and will also keep only the OID, shape, and reportingUnitIdField fields
+#         desc = arcpy.Describe(inReportingUnitFeature)
+#         tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+#         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+#         AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
+#         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
+#                                                            reportingUnitIdField,"","MULTI_PART")
+# 
+#         # Add and populate the area field (or just recalculate if it already exists
+#         ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+#         
+#         # Build the final output table.
+#         AddMsg(timer.split() + " Creating output table")
+#         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+#         
+#         AddMsg(timer.split() + " Calculating population density")
+#         
+#         # Create an index value to keep track of intermediate outputs and fieldnames.
+#         index = ""
+#         
+#         #if perCapitaYN is checked:
+#         if perCapitaYN:
+#             index = "1"
+#             # Perform population density calculation for first (only?) population feature class
+#             calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
+#                                       env.workspace,outTable,metricConst,cleanupList,index)   
+# 
+#         AddMsg(timer.split() + " Calculation complete")
+#     except Exception as e:
+#         errors.standardErrorHandling(e)
+# 
+#     finally:
+#         if not cleanupList[0] == "KeepIntermediates":
+#             for (function,arguments) in cleanupList:
+#                 # Flexibly executes any functions added to cleanup array.
+#                 function(*arguments)
+#         env.workspace = _tempEnvironment1        
 
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -436,113 +476,6 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                 function(*arguments)
         setupAndRestore.standardRestore()
         env.workspace = _tempEnvironment1
-
-def runFloodplainLandCoverProportionsOld(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                                   metricsToRun, inFloodplainGeodataset, outTable, processingCellSize, snapRaster, 
-                                   optionalFieldGroups, clipLCGrid):
-    """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
-        
-    try:
-        # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.flcpConstants()
-          
-        #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
-        #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
-        #patch metrics) extend the clip envelope an adequate distance.       
-        #from pylet import utils
-        from . import utils
-          
-        from arcpy import env        
-        _tempEnvironment1 = env.workspace
-        env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-  
-        if clipLCGrid == "true":
-            timer = DateTimer()
-            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
-            pathRoot = os.path.splitext(inLandCoverGrid)[0]
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
-            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
-            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
-            AddMsg(timer.split() + " Reduction complete")
-  
-          
-        # Create new subclass of metric calculation
-        class metricCalcFLCPRaster(metricCalc):
-            # Subclass that overrides specific functions for the FloodplainLandCoverProportions calculation
-            def _replaceLCGrid(self):
-                # Initiate our flexible cleanuplist
-                if flcpCalc.saveIntermediates:
-                    flcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
-                else:
-                    flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
-                # replace the inLandCoverGrid
-                self.inLandCoverGrid, self.excludedValues = raster.getNullSubstituteGrid(self.lccObj, self.inLandCoverGrid, self.inFloodplainGeodataset,
-                                                                    self.nullValuesList, self.cleanupList, self.timer)
-
-                if self.saveIntermediates:
-                    self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]
-                    self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-                    self.inLandCoverGrid.save(self.scratchName)
-                    AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
-                    
-                
-                
-                     
-        class metricCalcFLCPPolygon(metricCalc):
-            # Subclass that overrides specific functions for the FloodplainLandCoverProportions calculation
-            def _replaceRUFeatures(self):
-                # Initiate our flexible cleanuplist
-                if flcpCalc.saveIntermediates:
-                    flcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
-                else:
-                    flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
-                     
-                # Generate a default filename for the output feature class
-                self.zonesName = self.metricConst.shortName + "_Zone"
-                 
-                # replace the inReportingUnitFeature
-                self.inReportingUnitFeature, self.cleanupList = vector.getIntersectOfPolygons(self.inReportingUnitFeature, 
-                                                                                              self.reportingUnitIdField, 
-                                                                                              self.inFloodplainGeodataset,
-                                                                                              self.zonesName, 
-                                                                                              self.cleanupList, self.timer)
- 
-  
-        # Do a Describe on the floodplain input to determine if it is a raster or polygon feature
-        desc = arcpy.Describe(inFloodplainGeodataset)
-         
-        if desc.datasetType == "RasterDataset":
-            # Create new instance of metricCalc class to contain parameters
-            flcpCalc = metricCalcFLCPRaster(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-        else:
-            # Create new instance of metricCalc class to contain parameters
-            flcpCalc = metricCalcFLCPPolygon(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
-         
-        # Assign class attributes unique to this module.
-        flcpCalc.inFloodplainGeodataset = inFloodplainGeodataset
-        flcpCalc.nullValuesList = [0] # List of values in the binary floodplain grid to set to null
-        flcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
- 
-         
-        # Run Calculation
-        flcpCalc.run()
-          
-        if clipLCGrid == "true":
-            arcpy.Delete_management(scratchName) 
- 
-    except Exception as e:
-        errors.standardErrorHandling(e)
- 
-    finally:
-        if not flcpCalc.cleanupList[0] == "KeepIntermediates":
-            for (function,arguments) in flcpCalc.cleanupList:
-                # Flexibly executes any functions added to cleanup array.
-                function(*arguments)
-        setupAndRestore.standardRestore()
-        env.workspace = _tempEnvironment1
-
 
 
 def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,

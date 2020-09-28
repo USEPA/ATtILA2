@@ -73,7 +73,7 @@ class lcppcConstants(baseMetricConstants):
     perCapitaSuffix = "_PC"
     meterSquaredSuffix = "_M2"
     additionalSuffixes = [perCapitaSuffix, meterSquaredSuffix]
-    perCapitaField = ["", perCapitaSuffix, "LONG", 10]
+    perCapitaField = ["", perCapitaSuffix, "LONG", 10, 0]
     meterSquaredField = ["", meterSquaredSuffix, gc.defaultAreaFieldType, 15, 0]
     additionalFields = [perCapitaField, meterSquaredField]
     
