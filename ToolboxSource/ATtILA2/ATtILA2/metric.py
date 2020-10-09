@@ -1503,7 +1503,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             
             AddMsg(timer.split() + " Calculating population change")
             # Set up a calculation expression for population change
-            calcExpression = "getPopChange(!popCount_1!,!popCount_2!)"
+            calcExpression = "getPopChange(!popCount_T1!,!popCount_T2!)"
             codeBlock = """def getPopChange(pop1,pop2):
     if pop1 == 0:
         if pop2 == 0:
@@ -1527,3 +1527,184 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
                 function(*arguments)
         env.workspace = _tempEnvironment1
         
+
+def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, inZoneRasterOrPoly, 
+                                     outTable, processingCellSize, snapRaster, optionalFieldGroups):
+    """ Interface for script executing Population Density Metrics """
+    from arcpy import env
+
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+    try:
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.pifmConstants()
+
+        # Set the output workspace
+        _tempEnvironment1 = env.workspace
+        env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+        # Strip the description from the "additional option" and determine whether intermediates are stored.
+        processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
+        if globalConstants.intermediateName in processed:
+            msg = "\nIntermediates are stored in this directory: {0}\n"
+            arcpy.AddMessage(msg.format(env.workspace))
+
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
+        # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
+        # values and will also keep only the OID, shape, and reportingUnitIdField fields
+        desc = arcpy.Describe(inReportingUnitFeature)
+        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
+        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
+                                                           reportingUnitIdField,"","MULTI_PART")
+
+        # Add and populate the area field (or just recalculate if it already exists
+        ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        
+        # Build the final output table.
+        AddMsg(timer.split() + " Creating output table")
+        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        
+        AddMsg(timer.split() + " Calculating population count within reporting unit")
+        
+        # Create an index value to keep track of intermediate outputs and fieldnames.
+        index = 0
+
+        # Perform population count calculation for the reporting unit
+
+        # Do a Describe on the population input to determine if it is a raster or polygon feature
+        descCensus = arcpy.Describe(inCensusFeature)
+        # Do a Describe on the population input to determine if it is a raster or polygon feature
+        descZone = arcpy.Describe(inZoneRasterOrPoly)
+         
+        if descCensus.datasetType == "RasterDataset":
+            pass 
+            # calculate the population for the reporting unit using zonal stats
+            #
+            # index = 1
+            #
+            # if the floodplain input is a raster:
+            #     calculate floodplain population using raster method
+            # else:
+            #     do the floodplain population counts using vector methods
+        
+        else:
+            calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
+                                      env.workspace,outTable,metricConst,cleanupList,index)
+            
+            index = 1
+            
+            if descZone.datasetType == "RasterDataset":
+                pass
+            else: # inZoneRasterOrPoly is a polygon feature
+                # Perform population count calculation for flood plain area
+                
+                # intersect the flood plain polygons with the reporting unit polygons
+                desc = arcpy.Describe(inZoneRasterOrPoly)
+                tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+                tempIntersectFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+                intersectedPolygons, cleanupList = vector.getIntersectOfPolygons(inReportingUnitFeature, reportingUnitIdField, inZoneRasterOrPoly, tempIntersectFeature, cleanupList, timer)
+        
+                # Add and populate the area field (or just recalculate if it already exists
+                ruArea = vector.addAreaField(intersectedPolygons,metricConst.areaFieldname)
+                #AddMsg(timer.split() + " Calculating population count for %s" % (desc.baseName))
+                AddMsg(timer.split() + " Calculating population count within floodplain")
+                # Perform population count calculation for second feature class area
+                calculate.getPolygonPopCount(intersectedPolygons,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
+                                              env.workspace,outTable,metricConst,cleanupList,index)
+                
+                AddMsg(timer.split() + " Calculating percent population within floodplain")
+                # Set up a calculation expression for population change
+                calcExpression = "getPopPercent(!RU_POP_C!,!FP_POP_C!)"
+                codeBlock = """def getPopPercent(pop1,pop2):
+                                    if pop1 == 0:
+                                        if pop2 == 0:
+                                            return 0
+                                        else:
+                                            return 1
+                                    else:
+                                        return (pop2/pop1)*100"""
+                    
+                # Calculate the population density
+                vector.addCalculateField(outTable,metricConst.populationProportionFieldName,calcExpression,codeBlock)   
+
+        AddMsg(timer.split() + " Calculation complete")
+    except Exception as e:
+        errors.standardErrorHandling(e)
+
+    finally:
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        env.workspace = _tempEnvironment1
+        
+
+def GetProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+                          inNeighborhoodSize, outPolyFeature, processingCellSize, snapRaster, optionalFieldGroups):
+    """ Interface for script executing Core/Edge Metrics """
+
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.gppConstants()
+        
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+        
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+                                                                                os.path.dirname(outPolyFeature),
+                                                                                [metricsToRun,optionalFieldGroups] )
+
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        
+        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+
+        # alert user if the land cover grid cells are not square (default to size along x axis)
+        settings.checkGridCellDimensions(inLandCoverGrid)
+
+     
+   
+        # Run metric calculate for each metric in list
+        for m in metricsBaseNameList:
+        
+
+            # replace the inLandCoverGrid
+            AddMsg(timer.split() + " Generating proximity grid for Class: " + m.upper())
+            
+            proximityGrid = raster.getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, 
+                                                                inNeighborhoodSize, processingCellSize,
+                                                                timer, metricConst.shortName)
+
+            AddMsg(timer.split() + " Proximity grid complete")
+
+
+            # delete the intermediate raster if save intermediates option is not chosen 
+            saveIntermediates = globalConstants.intermediateName in optionalGroupsList
+            if saveIntermediates:
+                namePrefix = "ProximityRaster" + m.upper()
+                scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+                proximityGrid.save(scratchName)
+                AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+
+    finally:
+        setupAndRestore.standardRestore()

@@ -471,8 +471,11 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     # Get a unique name with full path for the output features - will default to current workspace:
     toolShortName = outFeatures[:outFeatures.find("_")]
     
+    desc1 = arcpy.Describe(repUnits)
+    desc2 = arcpy.Describe(secondPoly)
+    
     # Intersect the reporting unit features with the floodplain features
-    AddMsg(timer.split() + "Intersecting reporting unit features with floodplain features...") 
+    AddMsg(timer.split() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename)) 
     intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
     intersection = arcpy.Intersect_analysis([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT")
      
@@ -480,7 +483,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
     #dissolveFields = uIDField.name
     dissolveFields = uIDField
-    AddMsg(timer.split() + "Dissolving floodplain zone features...")  
+    AddMsg(timer.split() + " Dissolving %s zone features..." % (desc2.basename))  
     arcpy.Dissolve_management(intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
     
     # Delete following intermediate datasets in order to reduce clutter if Intermediates are to be saved

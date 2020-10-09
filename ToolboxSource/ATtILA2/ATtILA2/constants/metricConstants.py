@@ -309,3 +309,35 @@ class pdmConstants(baseMetricConstants):
     intersectOutputName = shortName+"_intersectOutput"
     summaryTableName = shortName+"_summaryTable"
     
+class pifmConstants(baseMetricConstants):
+    name = "PopulationInFloodplainMetrics"
+    shortName = "pifm"
+    fieldPrefix = ["RU_", "FP_"]
+    fieldSuffix = ["_RU", "_FP"]
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = ["", "", gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = []
+    fieldOverrideKey = ""
+    areaFieldname = "AREAKM2"
+    populationDensityFieldName = "POPDENS"
+    populationProportionFieldName = "FP_POP_P"
+    populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
+    intersectOutputName = shortName+"_intersectOutput"
+    summaryTableName = shortName+"_summaryTable"
+
+class gppConstants(baseMetricConstants):
+    name = "GetProximityPolygon"
+    shortName = "gpp"
+    fieldPrefix = ""
+    fieldSuffix = ""
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldOverrideKey = ""    

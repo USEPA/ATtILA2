@@ -97,7 +97,15 @@ class lcdToolValidator(BaseValidators.NoLccFileValidator):
     metricShortName = lcdConstants.shortName
     
 class pdmToolValidator(BaseValidators.NoLccFileValidator):
-    """ ToolValidator for PopulatonDensity Metrics """
+    """ ToolValidator for PopulationDensityMetrics """
+    
+    filterList = pdmConstants.optionalFilter
+    fieldPrefix = pdmConstants.fieldPrefix
+    fieldSuffix = pdmConstants.fieldSuffix
+    metricShortName = pdmConstants.shortName
+    
+class pifmToolValidator(BaseValidators.NoLccFileValidator):
+    """ ToolValidator for PopulationInFloodplainMetrics """
     
     filterList = pdmConstants.optionalFilter
     fieldPrefix = pdmConstants.fieldPrefix
@@ -105,10 +113,21 @@ class pdmToolValidator(BaseValidators.NoLccFileValidator):
     metricShortName = pdmConstants.shortName
     
 class pmToolValidator(BaseValidators.ProportionsValidator):
-    """ ToolValidator for Patch Metrics """
+    """ ToolValidator for PatchMetrics """
     
     filterList = pmConstants.optionalFilter
 #    overrideAttributeName = lccConstants.XmlAttributePmField
     fieldPrefix = pmConstants.fieldPrefix
     fieldSuffix = pmConstants.fieldSuffix
     metricShortName = pmConstants.shortName
+
+class gppToolValidator(BaseValidators.NoReportingUnitValidator):
+    """ ToolValidator for GenerateProximityPolygon Utility """
+    
+    filterList = gppConstants.optionalFilter
+#    overrideAttributeName = lccConstants.XmlAttributePmField
+#    fieldPrefix = pmConstants.fieldPrefix
+#    fieldSuffix = pmConstants.fieldSuffix
+    metricShortName = gppConstants.shortName
+
+
