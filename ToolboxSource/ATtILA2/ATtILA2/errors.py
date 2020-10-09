@@ -27,7 +27,7 @@ def standardErrorHandling(exception):
     
     if isinstance(exception, attilaException):
         
-        arcpy.AddError()
+        arcpy.AddError('')
         errorComments = str(exception) 
     else:
         errorComments = getErrorComments(exception)
