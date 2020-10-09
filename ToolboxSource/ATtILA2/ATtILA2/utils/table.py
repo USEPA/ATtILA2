@@ -518,8 +518,11 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
         # Get the properties of the from field for transfer
         fromField = arcpy.ListFields(fromTable,fromField)[0]
         # Add the new field with the new name
+#         arcpy.AddField_management(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
+#                               fromField.length,fromField.aliasName,fromField.isNullable,fromField.required,
+#                               fromField.domain)
         arcpy.AddField_management(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
-                              fromField.length,fromField.aliasName,fromField.isNullable,fromField.required,
+                              fromField.length,"",fromField.isNullable,fromField.required,
                               fromField.domain)        
         # Calculate the field
         arcpy.CalculateField_management(fromTable,toField,'!'+ fromField.name +'!',"PYTHON")
