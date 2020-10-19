@@ -459,9 +459,11 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
                 # Get the properties of the source field
                 fromFieldObj = arcpy.ListFields(fromTable,fromField)[0]
                 # Add the new field to the output table with the appropriate properties and the valid name
+#                 arcpy.AddField_management(toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
+#                           fromFieldObj.length,fromFieldObj.aliasName,fromFieldObj.isNullable,fromFieldObj.required,
+#                           fromFieldObj.domain) 
                 arcpy.AddField_management(toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
-                          fromFieldObj.length,fromFieldObj.aliasName,fromFieldObj.isNullable,fromFieldObj.required,
-                          fromFieldObj.domain) 
+                          fromFieldObj.length,"",fromFieldObj.isNullable,fromFieldObj.required,fromFieldObj.domain)
         # In preparation for the upcoming whereclause, add the appropriate delimiters to the join field
         joinFieldDelim = arcpy.AddFieldDelimiters(fromTable,joinField)
         # In preparation for the upcoming whereclause, set up the appropriate delimiter function for the join value
