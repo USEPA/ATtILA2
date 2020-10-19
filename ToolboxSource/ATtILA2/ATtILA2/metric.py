@@ -1621,20 +1621,20 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
                 calculate.getPolygonPopCount(intersectedPolygons,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
                                               env.workspace,outTable,metricConst,cleanupList,index)
                 
-                AddMsg(timer.split() + " Calculating percent population within floodplain")
-                # Set up a calculation expression for population change
-                calcExpression = "getPopPercent(!RU_POP_C!,!FP_POP_C!)"
-                codeBlock = """def getPopPercent(pop1,pop2):
-                                    if pop1 == 0:
-                                        if pop2 == 0:
-                                            return 0
-                                        else:
-                                            return 1
-                                    else:
-                                        return (pop2/pop1)*100"""
-                    
-                # Calculate the population density
-                vector.addCalculateField(outTable,metricConst.populationProportionFieldName,calcExpression,codeBlock)   
+        AddMsg(timer.split() + " Calculating percent population within floodplain")
+        # Set up a calculation expression for population change
+        calcExpression = "getPopPercent(!RU_POP_C!,!FP_POP_C!)"
+        codeBlock = """def getPopPercent(pop1,pop2):
+                            if pop1 == 0:
+                                if pop2 == 0:
+                                    return 0
+                                else:
+                                    return 1
+                            else:
+                                return (pop2/pop1)*100"""
+            
+        # Calculate the population density
+        vector.addCalculateField(outTable,metricConst.populationProportionFieldName,calcExpression,codeBlock)   
 
         AddMsg(timer.split() + " Calculation complete")
     except Exception as e:
