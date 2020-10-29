@@ -395,9 +395,12 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
                     AddMsg(self.timer.split() + " Creating Patch Grid for Class:"+m)
+                    scratchNameReference = [""]
                     self.inLandCoverGrid = utils.raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
                                                                           self.metricConst, self.maxSeparation,
-                                                                          self.minPatchSize, processingCellSize, timer)
+                                                                          self.minPatchSize, processingCellSize, timer,
+                                                                          scratchNameReference)
+                    self.scratchNameToBeDeleted = scratchNameReference[0]
                     AddMsg(self.timer.split() + " Patch Grid Completed for Class:"+m)
 
                 #skip over make out table since it has already been made
@@ -454,10 +457,9 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                         AddMsg(self.timer.split() + " MDCP analysis has been run for Class:" + m)
                     
                     if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_"+outClassName+"_PatchRast"
-                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-                        self.inLandCoverGrid.save(self.scratchName)
-                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+                        pass
+                    else:
+                        arcpy.Delete_management(pmCalc.scratchNameToBeDeleted)
 
             # Create new instance of metricCalc class to contain parameters
             pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
