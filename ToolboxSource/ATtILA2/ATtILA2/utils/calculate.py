@@ -662,8 +662,7 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, outClassName):
 
 def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldnameDict, zoneAreaDict, metricConst, m, 
                     inReportingUnitFeature, inLandCoverGrid, processingCellSize, conversionFactor):
-    #from pylet import utils
-    from . import calculate, conversion, environment, fields, files, messages, parameters, polygons, raster, settings, tabarea, table, vector
+    # from . import calculate, conversion, environment, fields, files, messages, parameters, polygons, raster, settings, tabarea, table, vector
     from arcpy import env
     resultsDict={}
     
@@ -677,9 +676,6 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
         # Initialize custom progress indicator
         totalRUs = len(zoneAreaDict)
         loopProgress = messages.loopProgress(totalRUs)
-
-        tabareaTable = "temptable"
-        arcpy.sa.TabulateArea(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
     
         #For each Reporting Unit run Tabulate Area Analysis and add the results to a dictionary
         for aZone in zoneAreaDict.keys():
@@ -697,7 +693,19 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                 squery = "%s = %s" % (delimitedField, str(aZone))
             else: # reporting unit id is a string - enclose it in single quotes for SQL expression
                 squery = "%s = '%s'" % (delimitedField, str(aZone))
+            
+            #Create a feature layer of the single reporting unit
+            arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery)
+            
+            #Set the geoprocessing extent to just the extent of the selected reporting unit
+            selectedRUName = "selectedRU_"+str(aZone)
+            arcpy.CopyFeatures_management("subwatersheds_Layer", selectedRUName)
     
+            #Tabulate areas of patches within single reporting unit
+            tabareaTable = "temptable"
+            arcpy.sa.TabulateArea(selectedRUName, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
+            
+            arcpy.Delete_management(selectedRUName)
             
             rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
             if rowcount == 0:
@@ -705,8 +713,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             
             else:
                 #Loop through each row in the table and calculate the patch metrics 
-                #rows = arcpy.SearchCursor(tabareaTable)
-                rows = arcpy.SearchCursor(tabareaTable, where_clause=squery)
+                rows = arcpy.SearchCursor(tabareaTable)
                 row = rows.next()
         
                 while row:
@@ -725,33 +732,26 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                         excludedArea = row.getValue("VALUE__9999")
                     except:
                         excludedArea = 0
-                    numpatch = 0
-                    for eachPatch in patchAreaList:
-                        if eachPatch != 0:
-                            numpatch = numpatch + 1
-
-                    if numpatch == 0:
-                        arcpy.AddWarning("No patches found in " + str(aZone))                        
-                    else: 
-                        #numpatch = len(patchAreaList)
-                        patchArea = sum(patchAreaList)
-                        if patchArea == 0:
-                            arcpy.AddWarning("patchArea is zero in " + str(aZone))
-                        else:
-                            lrgpatch = max(patchAreaList)
-                            avepatch = patchArea/numpatch
-                            proportion = (lrgpatch/patchArea) * 100
+                    
+                    if len(patchAreaList) == 0:
+                        arcpy.AddWarning("No patches found in " + str(aZone))
                         
-                            #added dent
-                            #convert to square kilometers
-                            rasterRUArea = otherArea + patchArea
-                            rasterRUAreaKM = rasterRUArea* (conversionFactor/1000000)
-                            patchdensity = numpatch/rasterRUAreaKM         
+                    else: 
+                        numpatch = len(patchAreaList)
+                        patchArea = sum(patchAreaList)
+                        lrgpatch = max(patchAreaList)
+                        avepatch = patchArea/numpatch
+                        proportion = (lrgpatch/patchArea) * 100
+                        
+                        #convert to square kilometers
+                        rasterRUArea = otherArea + patchArea
+                        rasterRUAreaKM = rasterRUArea* (conversionFactor/1000000)
+                        patchdensity = numpatch/rasterRUAreaKM         
         
                     row = rows.next()
                 
             resultsDict[aZone] = (proportion,numpatch,avepatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
-            
+
             loopProgress.update()
             
         # Restore the original enviroment extent

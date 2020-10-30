@@ -483,8 +483,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                           optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Patch Metrics """
     
-    from .utils import settings
-    #from pylet.utils import conversion
+    #from .utils import settings
     from .utils import conversion
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
@@ -492,6 +491,12 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         # Start the timer
         timer = DateTimer()
         AddMsg(timer.start() + " Setting up initial environment variables")
+        
+        # index the reportingUnitIdField to speed query results
+        ruIdIndex = "ruIdIndex_ATtILA"
+        indexNames = [indx.name for indx in arcpy.ListIndexes(inReportingUnitFeature)]
+        if ruIdIndex not in indexNames:
+            arcpy.AddIndex_management(inReportingUnitFeature, reportingUnitIdField, ruIdIndex)
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pmConstants()
@@ -555,8 +560,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         if clipLCGrid == "true":
             AddMsg(timer.split() + "Reducing input Land cover grid to smallest recommended size...")
             
-            #from pylet import utils
-            from . import utils
+            # from . import utils
             from arcpy import env        
             _startingWorkSpace= env.workspace
             env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -577,9 +581,12 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
                     AddMsg(self.timer.split() + " Creating Patch Grid for Class:"+m)
+                    scratchNameReference = [""]
                     self.inLandCoverGrid = raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
                                                                           self.metricConst, self.maxSeparation,
-                                                                          self.minPatchSize, processingCellSize, timer)
+                                                                          self.minPatchSize, processingCellSize, timer,
+                                                                          scratchNameReference)
+                    self.scratchNameToBeDeleted = scratchNameReference[0]
                     AddMsg(self.timer.split() + " Patch Grid Completed for Class:"+m)
 
                 #skip over make out table since it has already been made
@@ -636,10 +643,9 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                         AddMsg(self.timer.split() + " MDCP analysis has been run for Class:" + m)
                     
                     if self.saveIntermediates:
-                        self.namePrefix = self.metricConst.shortName+"_"+outClassName+"_PatchRast"
-                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-                        self.inLandCoverGrid.save(self.scratchName)
-                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+                        pass
+                    else:
+                        arcpy.Delete_management(pmCalc.scratchNameToBeDeleted)
 
             # Create new instance of metricCalc class to contain parameters
             pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -651,8 +657,6 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             pmCalc.minPatchSize = inPatchSize
             pmCalc.outIdField = outIdField
             pmCalc.zoneAreaDict = zoneAreaDict
-            #pmCalc.inSearchRadius = inSearchRadius
-            #pmCalc.conversionFactor = conversionFactor
             
             #Run Calculation
             pmCalc.run()
@@ -671,6 +675,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        arcpy.RemoveIndex_management(inReportingUnitFeature, ruIdIndex)
 
 
 def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,

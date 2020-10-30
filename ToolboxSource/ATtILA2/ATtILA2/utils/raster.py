@@ -252,7 +252,7 @@ def updateCoreEdgeCategoryLabels(Raster):
     
     
 def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
-                         processingCellSize_str, timer):
+                         processingCellSize_str, timer, scratchNameReference):
     # create a list of all the grid values in the selected landcover grid
     #landCoverValues = raster.getRasterValues(inLandCoverGrid)
     landCoverValues = getRasterValues(inLandCoverGrid)
@@ -320,6 +320,14 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
     else:
         regionOtherExcluded = regionOtherFinal
 
+    # The Patch Metrics tool appears to have trouble calculating its metrics when the raster area is large and the
+    # regionOtherExcluded grid is treated as a raster object in memory and not saved as a raster on disk
+    namePrefix = metricConst.shortName+"_"+m+"_PatchRast"
+    scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+    regionOtherExcluded.save(scratchName)
+    desc = arcpy.Describe(regionOtherExcluded)
+    scratchNameReference[0] = desc.catalogPath
+    
     return regionOtherExcluded
 
     

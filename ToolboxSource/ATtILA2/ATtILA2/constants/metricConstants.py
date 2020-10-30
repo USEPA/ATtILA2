@@ -225,11 +225,11 @@ class pmConstants(baseMetricConstants):
     lrgSuffix = "_LRG"
     mdcpSuffix = "_MDCP"
     additionalSuffixes = [numSuffix, avgSuffix, densSuffix, lrgSuffix, mdcpSuffix]
-    numField = ["", numSuffix, gc.defaultDecimalFieldType, 6, 1]
-    avgField = ["", avgSuffix, gc.defaultDecimalFieldType, 6, 1]
-    densField = ["", densSuffix, gc.defaultDecimalFieldType, 6, 1]
-    lrgField = ["", lrgSuffix, gc.defaultDecimalFieldType, 6, 1]
-    mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 6, 1]
+    numField = ["", numSuffix, gc.defaultIntegerFieldType, 6, 0]
+    avgField = ["", avgSuffix, gc.defaultAreaFieldType, 15, 1]
+    densField = ["", densSuffix, gc.defaultDecimalFieldType, 10, 1]
+    lrgField = ["", lrgSuffix, gc.defaultAreaFieldType, 15, 1]
+    mdcpField = ["", mdcpSuffix, gc.defaultDecimalFieldType, 10, 1]
     additionalFields = [numField, avgField, densField, lrgField]
     mdcpFields = [mdcpField]
     rastertoPoly = "PatchPoly"

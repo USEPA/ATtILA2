@@ -37,7 +37,7 @@ class loopProgress:
     def update(self):
         self.count += 1
         if (self.count % self.increment) == 0:
-            pctComplete = str(100 * self.count / self.total)
+            pctComplete = str(round(100 * self.count / self.total, 2))
             elapsed = datetime.datetime.now() - self.startTime
             estRemaining = self.timeToStr(elapsed.seconds * self.total / self.count - elapsed.seconds)
             avgLoop = self.timeToStr(elapsed.seconds / self.count)
