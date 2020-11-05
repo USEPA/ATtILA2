@@ -322,12 +322,10 @@ class pifmConstants(baseMetricConstants):
     fieldParameters = ["", "", gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
-    areaFieldname = "AREAKM2"
-    populationDensityFieldName = "POPDENS"
     populationProportionFieldName = "FP_POP_P"
     populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
-    intersectOutputName = shortName+"_intersectOutput"
-    summaryTableName = shortName+"_summaryTable"
+    popCntTableName = shortName+"_populationCnt"
+
 
 class gppConstants(baseMetricConstants):
     name = "GetProximityPolygon"
