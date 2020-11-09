@@ -7,8 +7,7 @@
 import os
 
 import arcpy
-#from pylet import utils
-from .. import utils
+#from .. import utils
 
 from . import fields
 from ATtILA2.constants import globalConstants
@@ -79,6 +78,125 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     
         
     return newTable
+
+def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDataset,inValueField,
+                  outTable,metricConst,index,cleanupList):
+    """Transfer a value count from an specified geodataset to input polygon features, using simple areal weighting.
+    
+    **Description:**
+
+        This function uses Tabulate Intersection to construct a table with a field containing the area weighted
+        value count (e.g., POPULATION) for each input polygon unit. The value field is renamed from the metric 
+        constants entry.
+        
+        Returns the created output table and the generated output value count field name.
+        
+    **Arguments:**
+
+        * *inPolygonFeature* - input Polygon feature class with full path.
+        * *inPolygonIdField* - the name of the field in the reporting unit feature class containing a unique identifier
+        * *inValueDataset* - input value feature class or raster with full path
+        * *inValueField* - the name of the field in the value feature class containing count values. Will be empty if 
+                           the inValueDataset is a raster
+        * *outTable* -  the output table that will contain calculated population values
+        * *metricConst* - an ATtILA2 object containing constant values to match documentation
+        * *index* - if this function is going to be run multiple times, this index is used to keep track of intermediate
+                    outputs and field names.
+        * *cleanupList* - object containing commands and parameters to perform at cleanup time.
+        
+    **Returns:**
+
+        * table (type unknown - string representation?)
+        * string - the generated output value count field name
+        
+    """
+    from arcpy import env
+    from .. import errors
+    from . import files
+    tempEnvironment0 = env.snapRaster
+    tempEnvironment1 = env.cellSize
+    
+    try:
+        desc = arcpy.Describe(inValueDataset)
+        
+        if desc.datasetType == "RasterDataset":
+            # set the raster environments so the raster operations align with the census grid cell boundaries
+            env.snapRaster = inValueDataset
+            env.cellSize = desc.meanCellWidth
+
+            # calculate the population for the polygon features using zonal statistics as table
+            arcpy.sa.ZonalStatisticsAsTable(inPolygonFeature, inPolygonIdField, inValueDataset, outTable, "DATA", "SUM")
+
+            # Rename the population count field.
+            outValueField = metricConst.valueCountFieldNames[index]
+            arcpy.AlterField_management(outTable, "SUM", outValueField, outValueField)
+        
+        else: # census features are polygons
+            # Create a copy of the census feature class that we can add new fields to for calculations.
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inValueDataset)
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inValueField]
+            tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+            tempCensusFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
+            inValueDataset = arcpy.FeatureClassToFeatureClass_conversion(inValueDataset,env.workspace,
+                                                                                 os.path.basename(tempCensusFeature),"",
+                                                                                 fieldMappings)
+
+            # Add a dummy field to the copied census feature class and calculate it to a value of 1.
+            classField = "tmpClass"
+            arcpy.AddField_management(inValueDataset,classField,"SHORT")
+            arcpy.CalculateField_management(inValueDataset,classField,1)
+            
+            # Construct a table with a field containing the area weighted value count for each input polygon unit
+            arcpy.TabulateIntersection_analysis(inPolygonFeature,[inPolygonIdField],inValueDataset,outTable,[classField],[inValueField])
+            
+            # Rename the population count field.
+            outValueField = metricConst.valueCountFieldNames[index]
+            arcpy.AlterField_management(outTable, inValueField, outValueField, outValueField)
+            
+        return outTable, outValueField
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+
+    finally:
+        env.snapRaster = tempEnvironment0
+        env.cellSize = tempEnvironment1
+        
+        
+def getIdValueDict(inTable, keyField, valueField):
+    """ Generates a dictionary with values from a specified field in a table keyed to the table's ID field entry.
+
+        **Description:**
+        
+        Generates a dictionary with values from a specified field in a table keyed to the table's ID field entry.  No 
+        check is made for duplicate keys. The value for the last key encountered will be present in the dictionary.
+        
+        
+        **Arguments:**
+        
+        * *inTable* - Table containing an ID field and a Value field. Assumes one record per ID.
+        * *keyField* - Unique ID field
+        * *valueField* - Field containing the desired values
+        
+        
+        **Returns:** 
+        
+        * dict - The item from keyField is the key and the value field entry is the value
+
+        
+    """    
+
+    zoneValueDict = {}
+    
+    rows = arcpy.SearchCursor(inTable)
+    for row in rows:
+        key = row.getValue(keyField)
+        value = row.getValue(valueField)
+        zoneValueDict[key] = (value)
+
+    return zoneValueDict
+        
 
 def fullNameTruncation(outputFldName, maxFieldNameSize, outputFieldNames):
     """ Truncates the metric field name from the xxxxField class attribute to fit field name size restrictions

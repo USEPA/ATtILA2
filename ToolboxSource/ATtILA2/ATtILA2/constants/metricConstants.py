@@ -57,10 +57,10 @@ class lcppcConstants(baseMetricConstants):
     shortName = "lcppc"
     fieldPrefix = "p"
     fieldSuffix = ""
-    overlapName = "LCPPC_OVER"
-    totalAreaName = "LCPPC_TOTA"
-    effectiveAreaName = "LCPPC_EFFA"
-    excludedAreaName = "LCPPC_EXCA"
+    overlapName = shortName+"_OVER"
+    totalAreaName = shortName+"_TOTA"
+    effectiveAreaName = shortName+"_EFFA"
+    excludedAreaName = shortName+"_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -69,13 +69,16 @@ class lcppcConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]   
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    fieldOverrideKey = "lcp" + gc.fieldOverrideName #use the same field name override as the LCP tool
+    #fieldOverrideKey = shortName + gc.fieldOverrideName
     perCapitaSuffix = "_PC"
     meterSquaredSuffix = "_M2"
     additionalSuffixes = [perCapitaSuffix, meterSquaredSuffix]
     perCapitaField = ["", perCapitaSuffix, "LONG", 10, 0]
     meterSquaredField = ["", meterSquaredSuffix, gc.defaultAreaFieldType, 15, 0]
     additionalFields = [perCapitaField, meterSquaredField]
+    valueCountFieldNames =["RU_POP_C"]
+    valueCountTableName = shortName+"_populationCnt"
     
 class lcospConstants(baseMetricConstants):
     name = "LandCoverOnSlopeProportions"

@@ -56,7 +56,7 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
-                         tabAreaTable, metricsFieldnameDict, zoneAreaDict):
+                         tabAreaTable, metricsFieldnameDict, zoneAreaDict, zoneValueDict=False):
     """ Creates *outTable* populated with land cover proportions metrics
     
     **Description:**
@@ -80,6 +80,8 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                         (e.g., "forest":("fore0_E2A7","fore0")
         * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
                         Used in grid overlap calculations.
+        * *zoneValueDict* - dictionary with a value for an input polygon feature keyed to the polygon's ID value.
+                        Used in lcc class area per value calculations (e.g. square meters of forest per person).
         
     **Returns:**
 
@@ -116,6 +118,13 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                     areaSuffix = globalConstants.areaFieldParameters[0]
                     outTableRow.setValue(metricsFieldnameDict[mBaseName][0]+areaSuffix, metricPercentageAndArea[1])
 
+                # add per value (e.g., capita) calculations to row
+                if zoneValueDict:
+                    zoneValue = zoneValueDict[tabAreaTableRow.zoneIdValue]
+                    perValueCalc = metricPercentageAndArea[1] / zoneValue
+                    perValueSuffix = metricConst.perCapitaSuffix
+                    outTableRow.setValue(metricsFieldnameDict[mBaseName][1]+perValueSuffix, perValueCalc)
+
             # add QACheck calculations/values to row
             if zoneAreaDict:
                 zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
@@ -140,6 +149,93 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
             del tabAreaTableRow
         except:
             pass
+
+
+# def landCoverProportionsOLD(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
+#                          tabAreaTable, metricsFieldnameDict, zoneAreaDict):
+#     """ Creates *outTable* populated with land cover proportions metrics
+#     
+#     **Description:**
+# 
+#         Creates *outTable* populated with land cover proportions metrics...
+#         
+#     **Arguments:**
+# 
+#         * *lccClassesDict* - dictionary of metric class values 
+#                         (e.g., classValuesDict['for'].uniqueValueIds = (41, 42, 43))
+#         * *metricsBaseNameList* - a list of metric BaseNames parsed from the 'Metrics to run' input 
+#                         (e.g., [for, agt, shrb, devt] or [NITROGEN, IMPERVIOUS])
+#         * *optionalGroupsList* - list of the selected options parsed from the 'Select options' input
+#                         (e.g., ["QAFIELDS", "AREAFIELDS", "INTERMEDIATES"])
+#         * *metricConst* - an object with constants specific to the metric being run (lcp vs lcosp)
+#         * *outIdField* - a copy of the reportingUnitIdField except where the IdField type = OID
+#         * *newTable* - the ATtILA created output table 
+#         * *tabAreaTable* - tabulateArea request output from ArcGIS
+#         * *metricsFieldnameDict* - a dictionary keyed to the lcc class with the ATtILA generated fieldname tuple as value
+#                         The tuple consists of the output fieldname and the class name as modified
+#                         (e.g., "forest":("fore0_E2A7","fore0")
+#         * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
+#                         Used in grid overlap calculations.
+#         
+#     **Returns:**
+# 
+#         * None
+#         
+#     """
+#     
+#     try:      
+#         # create the cursor to add data to the output table
+#         outTableRows = arcpy.InsertCursor(newTable)        
+#         
+#         for tabAreaTableRow in tabAreaTable:
+#             tabAreaDict = tabAreaTableRow.tabAreaDict
+#             effectiveArea = tabAreaTableRow.effectiveArea
+#             excludedValues = tabAreaTableRow._excludedValues
+#             
+#             # initiate a row to add to the metric output table
+#             outTableRow = outTableRows.newRow()
+#             
+#             # set the reporting unit id value in the output row
+#             outTableRow.setValue(outIdField.name, tabAreaTableRow.zoneIdValue)
+#             
+#             # sum the areas for the selected metric's grid codes   
+#             for mBaseName in metricsBaseNameList: 
+#                 # get the grid codes for this specified metric
+#                 metricGridCodesList = lccClassesDict[mBaseName].uniqueValueIds
+#                 # get the class percentage area and it's actual area from the tabulate area table
+#                 metricPercentageAndArea = getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveArea, excludedValues)
+#                 
+#                 # add the calculation to the output row
+#                 outTableRow.setValue(metricsFieldnameDict[mBaseName][0], metricPercentageAndArea[0])
+#                 
+#                 if globalConstants.metricAddName in optionalGroupsList:
+#                     areaSuffix = globalConstants.areaFieldParameters[0]
+#                     outTableRow.setValue(metricsFieldnameDict[mBaseName][0]+areaSuffix, metricPercentageAndArea[1])
+# 
+#             # add QACheck calculations/values to row
+#             if zoneAreaDict:
+#                 zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+#                 overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
+#                 
+#                 qaCheckFlds = metricConst.qaCheckFieldParameters
+#                 outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
+#                 outTableRow.setValue(qaCheckFlds[1][0], tabAreaTableRow.totalArea)
+#                 outTableRow.setValue(qaCheckFlds[2][0], tabAreaTableRow.effectiveArea)
+#                 outTableRow.setValue(qaCheckFlds[3][0], tabAreaTableRow.excludedArea)
+#             
+#             # commit the row to the output table
+#             outTableRows.insertRow(outTableRow)
+#                 
+#     finally:
+#         
+#         # delete cursor and row objects to remove locks on the data
+#         try:
+#             del outTableRows
+#             del outTableRow
+#             del tabAreaTable
+#             del tabAreaTableRow
+#         except:
+#             pass
                
 
 def getCoefficientPerUnitArea(tabAreaDict, lccValuesDict, coeffId, conversionFactor):

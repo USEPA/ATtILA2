@@ -171,7 +171,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
 
 
 def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                                     metricsToRun, outTable, perCapitaYN, inCensusFeature, inPopField, processingCellSize, 
+                                     metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
                                      snapRaster, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
     
@@ -201,87 +201,67 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
                                                                                         self.lccObj,
                                                                                         self.outIdField)     
         
+            def _calculateMetrics(self):
+                # Initiate our flexible cleanuplist
+                if lcppcCalc.saveIntermediates:
+                    lcppcCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    lcppcCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                    
+                self.zonePopulationDict = None
+                if perCapitaYN == "true":
+                    self.index = 0
+                    
+                    # Generate name for reporting unit population count table.
+                    self.popTable = files.nameIntermediateFile([metricConst.valueCountTableName,'Dataset'],self.cleanupList)
+
+                    # Generate table with population counts by reporting unit
+                    AddMsg(self.timer.split() + " Calculating population within each reporting unit") 
+                    self.populationTable, self.populationField = table.createPolygonValueCountTable(self.inReportingUnitFeature,
+                                                                         self.reportingUnitIdField,
+                                                                         self.inCensusDataset,
+                                                                         self.inPopField,
+                                                                         self.popTable,
+                                                                         self.metricConst,
+                                                                         self.index,
+                                                                         self.cleanupList)
+                    
+                    self.zonePopulationDict = table.getIdValueDict(self.populationTable, 
+                                                                   self.reportingUnitIdField, 
+                                                                   self.populationField)
+
+                
+                AddMsg(self.timer.split() + " Processing the tabulate area table and computing metric values")
+                # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+                # Default calculation is land cover proportions.  this may be overridden by some metrics.
+                calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList,
+                                               self.metricConst, self.outIdField, self.newTable, self.tabAreaTable,
+                                               self.metricsFieldnameDict, self.zoneAreaDict, self.zonePopulationDict)
+
         
         # Create new instance of metricCalc class to contain parameters
         lcppcCalc = metricCalcLCPPC(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        # Assign class attributes unique to this module.
+        lcppcCalc.perCapitaYN = perCapitaYN
+        lcppcCalc.inCensusDataset = inCensusDataset
+        lcppcCalc.inPopField = inPopField
+        lcppcCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        
+        
         # Run Calculation
         lcppcCalc.run()
     except Exception as e:
         errors.standardErrorHandling(e)
 
     finally:
+        if not lcppcCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in lcppcCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
         setupAndRestore.standardRestore()
         
-            
-#     from arcpy import env
-#     #from pylet import utils
-#     from . import utils
-#     
-#     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
-#     try:
-#         ### Initialization
-#         # Start the timer
-#         timer = DateTimer()
-#         AddMsg(timer.start() + " Setting up environment variables")
-# 
-#         # retrieve the attribute constants associated with this metric
-#         #metricConst = metricConstants.lcppcConstants()
-#         metricConst = metricConstants.pdmConstants()
-# 
-#         # Set the output workspace
-#         _tempEnvironment1 = env.workspace
-#         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-#         # Strip the description from the "additional option" and determine whether intermediates are stored.
-#         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
-#         if globalConstants.intermediateName in processed:
-#             msg = "\nIntermediates are stored in this directory: {0}\n"
-#             arcpy.AddMessage(msg.format(env.workspace))
-#             #AddMsg(msg.format(env.workspace))
-#             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
-#         else:
-#             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
-#         
-#         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
-#         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
-#         # values and will also keep only the OID, shape, and reportingUnitIdField fields
-#         desc = arcpy.Describe(inReportingUnitFeature)
-#         tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
-#         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-#         AddMsg(timer.split() + " Creating temporary copy of " + desc.name)
-#         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
-#                                                            reportingUnitIdField,"","MULTI_PART")
-# 
-#         # Add and populate the area field (or just recalculate if it already exists
-#         ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
-#         
-#         # Build the final output table.
-#         AddMsg(timer.split() + " Creating output table")
-#         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
-#         
-#         AddMsg(timer.split() + " Calculating population density")
-#         
-#         # Create an index value to keep track of intermediate outputs and fieldnames.
-#         index = ""
-#         
-#         #if perCapitaYN is checked:
-#         if perCapitaYN:
-#             index = "1"
-#             # Perform population density calculation for first (only?) population feature class
-#             calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
-#                                       env.workspace,outTable,metricConst,cleanupList,index)   
-# 
-#         AddMsg(timer.split() + " Calculation complete")
-#     except Exception as e:
-#         errors.standardErrorHandling(e)
-# 
-#     finally:
-#         if not cleanupList[0] == "KeepIntermediates":
-#             for (function,arguments) in cleanupList:
-#                 # Flexibly executes any functions added to cleanup array.
-#                 function(*arguments)
-#         env.workspace = _tempEnvironment1        
-
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize,
