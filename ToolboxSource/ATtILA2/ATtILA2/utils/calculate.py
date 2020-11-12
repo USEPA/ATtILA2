@@ -56,7 +56,8 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
-                         tabAreaTable, metricsFieldnameDict, zoneAreaDict, zoneValueDict=False):
+                         tabAreaTable, metricsFieldnameDict, zoneAreaDict, zoneValueDict=False,
+                         conversionFactor=None):
     """ Creates *outTable* populated with land cover proportions metrics
     
     **Description:**
@@ -121,9 +122,13 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                 # add per value (e.g., capita) calculations to row
                 if zoneValueDict:
                     zoneValue = zoneValueDict[tabAreaTableRow.zoneIdValue]
-                    perValueCalc = metricPercentageAndArea[1] / zoneValue
+                    classSqM = metricPercentageAndArea[1] * conversionFactor
+                    perValueCalc = classSqM / zoneValue
+                    #perValueCalc = metricPercentageAndArea[1] / zoneValue
                     perValueSuffix = metricConst.perCapitaSuffix
+                    meterSquaredSuffix = metricConst.meterSquaredSuffix
                     outTableRow.setValue(metricsFieldnameDict[mBaseName][1]+perValueSuffix, perValueCalc)
+                    outTableRow.setValue(metricsFieldnameDict[mBaseName][1]+meterSquaredSuffix, classSqM)
 
             # add QACheck calculations/values to row
             if zoneAreaDict:

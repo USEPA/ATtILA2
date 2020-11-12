@@ -176,6 +176,8 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
     """ Interface for script executing Population Density Metrics """
     
     try:
+        from .utils import conversion
+        
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcppcConstants()
         
@@ -226,6 +228,7 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
                                                                          self.index,
                                                                          self.cleanupList)
                     
+                    # Assemble dictionary with the reporting unit's ID as key, and the area-weighted population as the value
                     self.zonePopulationDict = table.getIdValueDict(self.populationTable, 
                                                                    self.reportingUnitIdField, 
                                                                    self.populationField)
@@ -236,7 +239,8 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
                 # Default calculation is land cover proportions.  this may be overridden by some metrics.
                 calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList,
                                                self.metricConst, self.outIdField, self.newTable, self.tabAreaTable,
-                                               self.metricsFieldnameDict, self.zoneAreaDict, self.zonePopulationDict)
+                                               self.metricsFieldnameDict, self.zoneAreaDict, self.zonePopulationDict,
+                                               self.conversionFactor)
 
         
         # Create new instance of metricCalc class to contain parameters
@@ -248,7 +252,18 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
         lcppcCalc.inCensusDataset = inCensusDataset
         lcppcCalc.inPopField = inPopField
         lcppcCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
-        
+
+        # see what linear units are used in the tabulate area table
+        outputLinearUnits = settings.getOutputLinearUnits(inLandCoverGrid)
+
+        # using the output linear units, get the conversion factor to convert the tabulateArea area measures to square meters
+        try:
+            conversionFactor = conversion.getSqMeterConversionFactor(outputLinearUnits)
+        except:
+            raise errors.attilaException(errorConstants.linearUnitConversionError)
+
+        # Set the conversion factor as a class attribute
+        lcppcCalc.conversionFactor = conversionFactor        
         
         # Run Calculation
         lcppcCalc.run()
@@ -420,7 +435,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                                                                                               self.cleanupList, self.timer)
  
   
-        # Do a Describe on the floodplain input to determine if it is a raster or polygon feature
+        # Do a Describe on the flood plain input to determine if it is a raster or polygon feature
         desc = arcpy.Describe(inFloodplainGeodataset)
          
         if desc.datasetType == "RasterDataset":
@@ -437,7 +452,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
          
         # Assign class attributes unique to this module.
         flcpCalc.inFloodplainGeodataset = inFloodplainGeodataset
-        flcpCalc.nullValuesList = [0] # List of values in the binary floodplain grid to set to null
+        flcpCalc.nullValuesList = [0] # List of values in the binary flood plain grid to set to null
         flcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
         
         # Run Calculation
