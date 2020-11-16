@@ -267,19 +267,23 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
 
 
     try:
-        #For each layer in flist add them to ArcMap
+        ##For each layer in flist add them to ArcMap
         for f in flist:
-            mxd = arcpy.mapping.MapDocument("Current")
+            p = arcpy.mp.ArcGISProject("CURRENT")
+            m = p.listMaps()[0]
+            m.addDataFromPath(outputLoc + "\\"+f)
+
+        #    mxd = arcpy.mapping.MapDocument("Current")
     
-            #check to see if there is a datafame named "Layers" if yes add the layers to that frame otherwise
-            #add it to the top dataframe
-            framelist = [frm.name for frm in arcpy.mapping.ListDataFrames(mxd)]
-            if "Layers" in framelist:
-                df = arcpy.mapping.ListDataFrames(mxd, "Layers") [0]
-            else:
-                df = arcpy.mapping.ListDataFrames(mxd)[0]
-            addlayer = arcpy.mapping.Layer(outputLoc + "//"+f)
-            arcpy.mapping.AddLayer(df, addlayer, "AUTO_ARRANGE")
+        #    #check to see if there is a datafame named "Layers" if yes add the layers to that frame otherwise
+        #    #add it to the top dataframe
+        #    framelist = [frm.name for frm in arcpy.mapping.ListDataFrames(mxd)]
+        #    if "Layers" in framelist:
+        #        df = arcpy.mapping.ListDataFrames(mxd, "Layers") [0]
+        #    else:
+        #        df = arcpy.mapping.ListDataFrames(mxd)[0]
+        #    addlayer = arcpy.mapping.Layer(outputLoc + "//"+f)
+        #    arcpy.mapping.AddLayer(df, addlayer, "AUTO_ARRANGE")
         arcpy.AddMessage("Adding non overlapping polygon layer(s) to view")
         arcpy.AddMessage("The overlap files have been saved to " + outputLoc)
     except:
