@@ -194,7 +194,7 @@ def findNonOverlapGroups(overlapDict):
     return nonoverlapGroupDict
 
 def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, outputLoc, ext):
-    """ Create a series of nonoverlapping polygon layers
+    """ Create a series of nonoveAppend_managementrlapping polygon layers
         *** Description: ****
         A series of "temporary" data layers are created that have
         no overlaps.  The smallest number of polygon layers possible
@@ -218,6 +218,32 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         outname = fdsc.name.split(".")[0]
     else:
         outname = fdsc.name
+
+    #define fieldMapping
+    fieldmappings=arcpy.FieldMappings()
+
+    fieldmappings.addTable(inputLayer)
+    if (fieldmappings.findFieldMapIndex("OBJECTID")>=0):
+        fieldmappings.removeFieldMap(fieldmappings.findFieldMapIndex("OBJECTID"))
+    if (fieldmappings.findFieldMapIndex("OID")>=0):
+        fieldmappings.removeFieldMap(fieldmappings.findFieldMapIndex("OID"))
+    if (fieldmappings.findFieldMapIndex("FID")>=0):
+        fieldmappings.removeFieldMap(fieldmappings.findFieldMapIndex("FID"))
+
+    flds=fieldmappings.fieldMappings
+    i=0
+    # loop over fields
+    for fld in flds:
+
+        if (".gdb" not in outputLoc):
+            if (len(fld.outputField.name) > 10):
+                of=fld.outputField
+                of.name=fld.outputField.name[:10]
+                fld.outputField=of
+                fieldmappings.replaceFieldMap (i, fld)
+
+        i=i+1
+
     #Create a feature layer of the polygons with no overlaps
     for o in overlapList:
         strlist.append(str(o))
@@ -227,7 +253,8 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
     if int(str(arcpy.GetCount_management("No Polygons Overlap"))) != 0:
 #        arcpy.AddMessage("There are no polygons that do not overlap")
 #    else:
-        arcpy.FeatureClassToFeatureClass_conversion("No Polygons Overlap", outputLoc, outname + "_0" + ext)
+        #arcpy.FeatureClassToFeatureClass_conversion("No Polygons Overlap", outputLoc, outname + "_0" + ext)
+        arcpy.FeatureClassToFeatureClass_conversion("No Polygons Overlap", outputLoc, outname + "_0" + ext, field_mapping=fieldmappings)
         flist.append(outname + "_0" + ext)
 
     # Find the group that has the most polygons
@@ -244,10 +271,12 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
     values = ",".join(hlist)
     arcpy.MakeFeatureLayer_management(inputLayer,  "NoOverlap"+ str(h), OID + " IN (" + values + ")")
     if int(str(arcpy.GetCount_management("No Polygons Overlap"))) == 0:
-        arcpy.FeatureClassToFeatureClass_conversion("NoOverlap"+ str(h), outputLoc, outname + "_0" + ext)
+        #arcpy.FeatureClassToFeatureClass_conversion("NoOverlap"+ str(h), outputLoc, outname + "_0" + ext)
+        arcpy.FeatureClassToFeatureClass_conversion("NoOverlap"+ str(h), outputLoc, outname + "_0" + ext, field_mapping=fieldmappings)
         flist.append(outname + "_0" +ext)
     else:
-        arcpy.Append_management("NoOverlap" + str(h), outputLoc + "//" + outname + "_0" + ext)
+        #arcpy.Append_management("NoOverlap" + str(h), outputLoc + "//" + outname + "_0" + ext)
+        arcpy.Append_management("NoOverlap" + str(h), outputLoc + "//" + outname + "_0" + ext, field_mapping=fieldmappings, schema_type = "NO_TEST")
 
     #remove key with most polygons from nonoverlapGroupDict
     nonoverlapGroupDict.pop(hiGroup, "None")
@@ -260,7 +289,8 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
             olist.append(str(o))
         values = ",".join(olist)
         arcpy.MakeFeatureLayer_management(inputLayer, "NoOverlap" + str(k), OID + " IN (" + values + ")")
-        arcpy.FeatureClassToFeatureClass_conversion("NoOverlap" + str(k), outputLoc, outname + "_" + str(num) + ext)
+        #arcpy.FeatureClassToFeatureClass_conversion("NoOverlap" + str(k), outputLoc, outname + "_" + str(num) + ext)
+        arcpy.FeatureClassToFeatureClass_conversion("NoOverlap" + str(k), outputLoc, outname + "_" + str(num) + ext, field_mapping=fieldmappings)
         flist.append(outname + "_" +str(num) +ext)
         num = num + 1
     print(flist)
