@@ -355,3 +355,71 @@ def getInOutOtherReclassPairs(allRasterValues, selectedValuesList, excludedValue
         reclassPairs.append(oldValNewValPair)
             
     return reclassPairs
+
+def getRemapBinsByPercentStep(maxValue, pctStep):
+    # Generate a reclass list to use in a RemapRange operation
+    # The reclass list is comprised of a collection of three item lists (the bin)
+    # The three items include:
+    #    1) the start value of the reclass range,
+    #    2) the end value of the reclass range, 
+    #    3) and the new reclass value
+    # The number of bins produced equals the maxValue divided by the pctStep
+    # The pctStep should be a value between 1 and 100
+
+    breakPnts = [i*(maxValue/100) for i in range(0, 100, pctStep)]
+    reclassBins = []
+    newValue = pctStep
+
+    i = 1
+    for n in range(len(breakPnts)):
+        valuesStartStopNew = []
+        # start of range
+        valuesStartStopNew.append(breakPnts[n]) 
+        if n+1 < len(breakPnts):
+            # end of range
+            valuesStartStopNew.append(breakPnts[n+1])
+            # new grid value for values in range
+            valuesStartStopNew.append(newValue*i)
+        else:
+            # end of last bin
+            valuesStartStopNew.append(maxValue)
+            valuesStartStopNew.append(100)
+            
+        reclassBins.append(valuesStartStopNew)
+
+        i += 1
+    
+    return reclassBins
+
+def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGrid,landCoverValues,neighborhoodSize_str,
+                     burnIn,burnInGrid,timer,rngRemap):
+
+    # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
+    # define the reclass values
+    classValue = 1
+    excludedValue = 0
+    otherValue = 0
+    newValuesList = [classValue, excludedValue, otherValue]
+    
+    # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
+      
+    AddMsg(("{0} Reclassing land cover to Class to 1. All other values = 0...").format(timer.split()))
+    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    
+    AddMsg(("{0} Performing focal statistics using {1} x {1} cell neighborhood...").format(timer.split(), neighborhoodSize_str))
+    neighborhood = arcpy.sa.NbrRectangle(int(neighborhoodSize_str), int(neighborhoodSize_str), "CELL")
+    focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
+    
+    AddMsg(("{0} Reclassify Moving Window into 20% Breaks...").format(timer.split()))
+    proximityGrid = Reclassify(focalGrid, "VALUE", rngRemap)
+
+    if burnIn == "true":
+        AddMsg(("{0} Burning excluded areas into proximity grid...").format(timer.split()))
+        delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
+        whereClause = delimitedVALUE+" = 0"
+        proximityGrid = Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
+           
+    return proximityGrid
+
+

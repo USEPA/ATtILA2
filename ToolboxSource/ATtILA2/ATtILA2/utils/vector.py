@@ -3,10 +3,10 @@
 """
 
 import arcpy
-from .. import utils
+#from .. import utils
 from . import files
 from . import messages
-from . import fields
+#from . import fields
 from .messages import AddMsg
 from .fields import valueDelimiter
 from arcpy.sa.Functions import SetNull
@@ -662,7 +662,7 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
 def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, rastoPolyFeature, patchCentroidsFeature, 
                  patchDissolvedFeature, nearPatchTable, zoneAreaDict, timer, pmResultsDict):
     #from pylet import utils
-    from . import calculate, conversion, environment, fields, files, messages, parameters, polygons, raster, settings, tabarea, table, vector
+    #from . import calculate, conversion, environment, fields, files, messages, parameters, polygons, raster, settings, tabarea, table, vector
     resultDict = {}
     
     # put the proper field delimiters around the ID field name for SQL expressions

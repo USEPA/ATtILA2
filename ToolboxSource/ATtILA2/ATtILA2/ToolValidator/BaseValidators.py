@@ -1066,7 +1066,7 @@ class NoReportingUnitValidator(object):
     processingCellSizeIndex = 0
     outTableIndex = 0 
     snapRasterIndex = 0 
-    optionalFieldsIndex = 0 
+    optionalFieldsIndex = 0
     
     # Indexes of secondary input parameters
     inRaster2Index = 0
@@ -1082,6 +1082,7 @@ class NoReportingUnitValidator(object):
     checkbox1Index = 0
     checkbox2Index = 0
     checkboxInParameters = {}
+    outWorkspaceIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -1177,6 +1178,9 @@ class NoReportingUnitValidator(object):
             
         if self.inputFields2Index:
             self.inputFields2Parameter = self.parameters[self.inputFields2Index]
+            
+        if self.outWorkspaceIndex:
+            self.outWorkspaceParameter = self.parameters[self.outWorkspaceIndex]
 
                
         # Additional local variables
@@ -1602,3 +1606,4 @@ class NoReportingUnitValidator(object):
                 strLinearUnit = str(linearUnitValue).split()[0]
                 if float(strLinearUnit) <= 0.0:
                     self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+
