@@ -99,11 +99,11 @@
         * OPTIONAL ATTRIBUTES
         * Name - text, word or phrase describing class
         * filter - text, a string of one or more tool name abbreviations separated by a ";"
-        *        - possible abbreviations are: lcp, rlcp, lcosp, splcp, caem, and pm
+        *        - possible abbreviations are: caem, flcp, lcosp, lcp, pm, rlcp, and splcp
         *        - used to exclude the class from the selectable classes in the tool's GUI
         * xxxxField - text, overrides ATtILA-generated field name for output
         *           - where xxxx equals a tool name abbreviation
-        *           - possible abbreviations are: lcp, rlcp, lcosp, and splcp
+        *           - possible abbreviations are: flcp, lcosp, lcp, rlcp, and splcp
         *           - a separate xxxxField attribute can exist for each tool
         *           - must conform to the field naming conventions dictated by the output database system
 
@@ -122,7 +122,7 @@
                 </class>
             </class>
             <class Id="veg" Name="Natural Vegetation" filter="">
-                <class Id="for" Name="Trees and Forest" filter="">
+                <class Id="for" Name="Trees/Forest, and Woody Wetlands" filter="">
                     <value Id="40" />
                     <value Id="91" />
                 </class>
