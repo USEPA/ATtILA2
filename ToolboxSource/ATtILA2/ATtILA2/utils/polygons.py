@@ -98,8 +98,7 @@ def findOverlaps(polyFc):
          **Returns:** 
          * set - A set of OID field values, a dictionary of overlaps, and OID field name
 """ 
-    #from pylet import utils
-    from . import calculate, conversion, environment, fields, files, messages, parameters, raster, settings, tabarea, table, vector
+#    from . import calculate, conversion, environment, fields, files, messages, parameters, raster, settings, tabarea, table, vector
     overlapSet = set()
     overlapDict = {}
     
@@ -138,9 +137,6 @@ def findOverlaps(polyFc):
                     
         loopProgress.update()
 
-                
-##    print overlapDict
-
     return overlapSet, oidField.name, overlapDict
 
 def findNonOverlapGroups(overlapDict):
@@ -161,7 +157,6 @@ def findNonOverlapGroups(overlapDict):
     while len(overlapDict) != 0:
         alist = []
         #get the first OID in the overlap Dictionary
-        #k = overlapDict.keys()[0]
         k = list(overlapDict.keys())[0]
         # loop through the dictionary to check which polygons the first oid overlaps
         for z in overlapDict.keys():
@@ -194,7 +189,7 @@ def findNonOverlapGroups(overlapDict):
     return nonoverlapGroupDict
 
 def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, outputLoc, ext):
-    """ Create a series of nonoveAppend_managementrlapping polygon layers
+    """ Create a series of nonoverlapping polygon layers
         *** Description: ****
         A series of "temporary" data layers are created that have
         no overlaps.  The smallest number of polygon layers possible
@@ -264,7 +259,7 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         if len(nonoverlapGroupDict[k]) > mostpolys:
             mostpolys = len(nonoverlapGroupDict[k])
             hiGroup = k
-    #Append the group with the most polygs to the No Polygons Overlap layer
+    #Append the group with the most polygons to the No Polygons Overlap layer
     hlist = []
     for h in nonoverlapGroupDict[hiGroup]:
         hlist.append(str(h))
@@ -297,23 +292,12 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
 
 
     try:
-        ##For each layer in flist add them to ArcMap
+        #For each layer in flist add them to ArcMap
         for f in flist:
             p = arcpy.mp.ArcGISProject("CURRENT")
             m = p.listMaps()[0]
             m.addDataFromPath(outputLoc + "\\"+f)
 
-        #    mxd = arcpy.mapping.MapDocument("Current")
-    
-        #    #check to see if there is a datafame named "Layers" if yes add the layers to that frame otherwise
-        #    #add it to the top dataframe
-        #    framelist = [frm.name for frm in arcpy.mapping.ListDataFrames(mxd)]
-        #    if "Layers" in framelist:
-        #        df = arcpy.mapping.ListDataFrames(mxd, "Layers") [0]
-        #    else:
-        #        df = arcpy.mapping.ListDataFrames(mxd)[0]
-        #    addlayer = arcpy.mapping.Layer(outputLoc + "//"+f)
-        #    arcpy.mapping.AddLayer(df, addlayer, "AUTO_ARRANGE")
         arcpy.AddMessage("Adding non overlapping polygon layer(s) to view")
         arcpy.AddMessage("The overlap files have been saved to " + outputLoc)
     except:
