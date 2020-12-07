@@ -404,14 +404,14 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
-    AddMsg(("{0} Reclassing land cover to Class to 1. All other values = 0...").format(timer.split()))
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     
-    AddMsg(("{0} Performing focal statistics using {1} x {1} cell neighborhood...").format(timer.split(), neighborhoodSize_str))
+    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.split(), neighborhoodSize_str))
     neighborhood = arcpy.sa.NbrRectangle(int(neighborhoodSize_str), int(neighborhoodSize_str), "CELL")
     focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
     
-    AddMsg(("{0} Reclassify Moving Window into 20% Breaks...").format(timer.split()))
+    AddMsg(("{0} Reclassifying focal SUM results into 20% breaks...").format(timer.split()))
     proximityGrid = Reclassify(focalGrid, "VALUE", rngRemap)
 
     if burnIn == "true":

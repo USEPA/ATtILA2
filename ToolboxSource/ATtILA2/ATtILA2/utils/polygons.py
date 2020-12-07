@@ -295,7 +295,8 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         #For each layer in flist add them to ArcMap
         for f in flist:
             p = arcpy.mp.ArcGISProject("CURRENT")
-            m = p.listMaps()[0]
+            # m = p.listMaps()[0]
+            m = p.activeMap
             m.addDataFromPath(outputLoc + "\\"+f)
 
         arcpy.AddMessage("Adding non overlapping polygon layer(s) to view")

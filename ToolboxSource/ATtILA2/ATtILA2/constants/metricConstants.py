@@ -334,11 +334,14 @@ class gppConstants(baseMetricConstants):
     name = "GetProximityPolygon"
     shortName = "gpp"
     fieldPrefix = ""
-    fieldSuffix = ""
+    fieldSuffix = "ProxP"
     overlapName = ""
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
-    fieldOverrideKey = ""    
+    fieldOverrideKey = ""
+    burnInGridName = shortName+"_BurnIn"
+    proxPolygonOutputName = "_Prox"
+    

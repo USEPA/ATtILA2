@@ -26,6 +26,7 @@ from .constants import globalConstants
 from .constants import errorConstants
 from . import utils
 from .utils.tabarea import TabulateAreaTable
+#from sympy.logic.boolalg import false
 
 class metricCalc:
     """ This class contains the basic steps to perform a land cover metric calculation.
@@ -1745,6 +1746,7 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
     """ Interface for script executing Generate Proximity Polygons utility """
     
     from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
+
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.gppConstants()
@@ -1757,6 +1759,8 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
                                                                                 [metricsToRun,optionalFieldGroups] )
+        workDir = arcpy.env.workspace
+        
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
@@ -1777,8 +1781,23 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
         
         # Determine if the user wants to save the intermediate products
         saveIntermediates = globalConstants.intermediateName in optionalGroupsList
+        
+        # determine the active map to add the output raster/features    
+        currentProject = arcpy.mp.ArcGISProject("CURRENT")
+        actvMap = currentProject.activeMap
 
         ### Computations
+        
+        # Check if the input land cover raster is too large to produce the output polygon feature without splitting it first
+        splitRaster = True
+        columns = arcpy.GetRasterProperties_management(inLandCoverGrid, 'COLUMNCOUNT').getOutput(0)
+        xsplit = int(float(columns) / 40000) + 1
+        rows = arcpy.GetRasterProperties_management(inLandCoverGrid, 'ROWCOUNT').getOutput(0)
+        ysplit = int (float(rows) / 40000) + 1
+        
+        if xsplit*ysplit == 1:
+            splitRaster = False
+                
         # Determine the maximum sum for the neighborhood
         Sum100 = pow(int(inNeighborhoodSize), 2)
         
@@ -1815,16 +1834,14 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                 AddMsg(("{0} Assigning {1} to patches >= minimum size threshold...").format(timer.split(), burnInValue))
                 delimitedCOUNT = arcpy.AddFieldDelimiters(regionGrid,"COUNT")
                 whereClause = delimitedCOUNT+" >= " + minPatchSize + " AND LINK = 1"
-                #burnInGrid = Con(regionGrid, int(burnInValue), excludedBinary, whereClause)
                 burnInGrid = Con(regionGrid, int(burnInValue), 0, whereClause)
                 
                 # save the intermediate raster if save intermediates option has been chosen
                 if saveIntermediates: 
-                    namePrefix = metricConst.shortName+"_BurnIn"
+                    namePrefix = metricConst.burnInGridName
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     burnInGrid.save(scratchName)
                     AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-
    
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -1837,38 +1854,64 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
             proximityGrid = raster.getProximityWithBurnInGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, 
                                                     inNeighborhoodSize, burnIn, burnInGrid, timer, rngRemap)
 
-            
-            # convert proximity raster to polygon
-            AddMsg(timer.split() + " Converting proximity raster to a polygon feature")
-#             # get output name
-#             namePrefix = m.upper()+"_Prox"
-#             scratchName = arcpy.CreateScratchName(namePrefix, "", "FeatureDataset")
-            
-            # This may fail if a polgyon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
-            maxVertices = 250000
-            try:
-                polygonFeature = arcpy.RasterToPolygon_conversion(proximityGrid,"tempPoly","NO_SIMPLIFY","VALUE","",maxVertices)
-            except:
-                arcpy.AddMessage("Converting raster to polygon with reduced maximum vertices")
-                maxVertices = maxVertices / 2
-                polygonFeature = arcpy.RasterToPolygon_conversion(proximityGrid,"tempPoly","NO_SIMPLIFY","VALUE","",maxVertices)
-
-            # get output name for dissolve
-            namePrefix = m.upper()+"_Prox"
-            scratchName = arcpy.CreateScratchName(namePrefix, "", "FeatureDataset")
-            arcpy.Dissolve_management(polygonFeature,scratchName,"gridcode")
-            
-            classFieldName = m.capitalize()+"ProxP"
-            arcpy.AlterField_management(scratchName,"gridcode", classFieldName, classFieldName)
-            
-            arcpy.Delete_management("tempPoly")
-
             # save the intermediate raster if save intermediates option has been chosen 
             if saveIntermediates:
                 namePrefix = m.upper()+"_ProxRaster"
                 scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                 proximityGrid.save(scratchName)
                 AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+                            
+            # convert proximity raster to polygon
+            AddMsg(timer.split() + " Converting proximity raster to a polygon feature")
+            
+            # Split the Raster As Needs, Process Each Piece
+            if splitRaster == False:
+                AddMsg(("xsplit = {0} and ysplit = {1}").format(xsplit, ysplit))
+                #polygonFeature = arcpy.conversion.RasterToPolygon(proximityGrid, r"D:\trash\MyProject1\attilaScratchWorkspace.gdb\tempPoly", "NO_SIMPLIFY", "Value", "SINGLE_OUTER_PART", None)
+                arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+            else:
+                xy = (xsplit * ysplit)
+
+                AddMsg(timer.split() + " Spliting the raster into pieces of no more than 40,000x40,000 pixels")
+                arcpy.SplitRaster_management(proximityGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
+    
+                """ For each raster: """
+                for Chunk in range(0,xy):
+                    try:
+                        result = float(arcpy.GetRasterProperties_management(workDir + '/prox_' + str(Chunk), 'MEAN').getOutput(0))
+                        # If the raster piece has data:
+                        if (result != 0):
+                            """ Convert Raster to Polygon """
+                            arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
+
+                            """ Dissolve the polygons """
+                            arcpy.Dissolve_management('prox_' + str(Chunk), 'proxD1_' + str(Chunk), 'gridcode')
+                            AddMsg(timer.split() + " Processed Chunk " + str(Chunk) + " / " + str(xy))
+                        else:
+                            pass
+                    except:
+                        pass
+      
+                """ Merge the polygons back together """
+                fcList = arcpy.ListFeatureClasses('proxD1*')
+                #polygonFeature = arcpy.Merge_management(fcList, 'proxDiss')
+                arcpy.Merge_management(fcList,"tempPoly")
+        
+            # get output name for dissolve
+            namePrefix = m.upper()+metricConst.proxPolygonOutputName
+            proxPolygonName = arcpy.CreateScratchName(namePrefix, "", "FeatureDataset")
+            #arcpy.Dissolve_management(polygonFeature,proxPolygonName,"gridcode")
+            arcpy.Dissolve_management("tempPoly",proxPolygonName,"gridcode")
+            
+            classFieldName = m.capitalize()+metricConst.fieldSuffix
+            arcpy.AlterField_management(proxPolygonName,"gridcode", classFieldName, classFieldName)
+            
+            arcpy.Delete_management("tempPoly")
+            
+            # add the dissolved proximity polygon to the active map
+            if actvMap != None:
+                actvMap.addDataFromPath(proxPolygonName)
+                AddMsg(("Adding {0} to {1} view").format(os.path.basename(proxPolygonName), actvMap.name))
 
 
     except Exception as e:
