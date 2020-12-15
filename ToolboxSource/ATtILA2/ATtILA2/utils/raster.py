@@ -82,6 +82,35 @@ def getRasterValues(inRaster):
 ## end of the code copied from pylet-master\pylet\arcpyutil\raster.py
 
 
+def splitRasterYN(inRaster, maxSide):
+    """Check if the raster is too large to perform a polygon conversion without first tiling the raster.
+    
+    ** Description: **
+    
+    **Arguments:**
+    
+        * *inRaster* - any raster dataset
+        * *maxSide* - integer value
+        
+    **Returns:**
+    
+        * *boolean* - True, if the raster is too large
+        * *list* - binary values indicating if number of raster columns and the number of raster rows exceed the specified maximum side 
+    
+    """
+    splitYN = True
+    columns = arcpy.GetRasterProperties_management(inRaster, 'COLUMNCOUNT').getOutput(0)
+    xsplit = int(float(columns) / maxSide) + 1
+    rows = arcpy.GetRasterProperties_management(inRaster, 'ROWCOUNT').getOutput(0)
+    ysplit = int (float(rows) / maxSide) + 1
+    xySplits = [xsplit, ysplit]
+     
+    if xsplit*ysplit == 1:
+        splitYN = False
+        
+    return splitYN, xySplits
+
+
 def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDistance=None):
     if arcpy.Exists(outName):
         arcpy.Delete_management(outName)
@@ -421,5 +450,32 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
         proximityGrid = Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
            
     return proximityGrid
+
+def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, timer):
+    # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
+    # define the reclass values
+    classValue = 1
+    excludedValue = 0
+    otherValue = 0
+    newValuesList = [classValue, excludedValue, otherValue]
+    
+    # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
+      
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    
+    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} cell radius neighborhood...").format(timer.split(), viewRadius))
+    neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
+    focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
+    
+    AddMsg(("{0} Reclassifying focal SUM results into view = 0 and no-view = 1 binary raster...").format(timer.split()))
+#    delimitedVALUE = arcpy.AddFieldDelimiters(focalGrid,"VALUE")
+#    whereClause = delimitedVALUE+" = 0"
+#    viewGrid = Con(focalGrid, 1, 0, whereClause)
+    whereValue = conValues[0]
+    trueValue = conValues[1]
+    viewGrid = Con(Raster(focalGrid) == whereValue, trueValue)
+    return viewGrid
 
 

@@ -1,22 +1,28 @@
 """ The ToolValidator classes is for ArcToolbox script tool dialog validation.
+
+        1) ProportionsValidator Tools
+        2) CoefficientValidator Tools
+        3) NoLccFileValidator Tools
+        4) NoReportingUnitValidator Tools       
     
 """
 
 from . import BaseValidators
 from ATtILA2.constants import metricConstants
-#import pylet.lcc.constants as lccConstants
 from  ATtILA2.utils.lcc import constants as lccConstants
-#from  .utils.lcc import constants as lccConstants
 from ATtILA2.constants.metricConstants import *
 
-class lcospToolValidator(BaseValidators.ProportionsValidator):
-    """Tool Validator for LandCoverSlopeOverlap"""
+
+'''ProportionsValidator Tools'''
+
+class caemToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for CoreAndEdgeMetrics """
     
-    filterList = lcospConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeLcospField
-    fieldPrefix = lcospConstants.fieldPrefix
-    fieldSuffix = lcospConstants.fieldSuffix
-    metricShortName = lcospConstants.shortName
+    filterList = caemConstants.optionalFilter
+#    overrideAttributeName = lccConstants.XmlAttributeCaemField
+    fieldPrefix = caemConstants.fieldPrefix
+    fieldSuffix = caemConstants.fieldSuffix    
+    metricShortName = caemConstants.shortName
 
 class flcpToolValidator(BaseValidators.ProportionsValidator):
     """Tool Validator for FloodplainLandCoverProportion"""
@@ -25,7 +31,16 @@ class flcpToolValidator(BaseValidators.ProportionsValidator):
     overrideAttributeName = lccConstants.XmlAttributeLcpField
     fieldPrefix = flcpConstants.fieldPrefix
     fieldSuffix = flcpConstants.fieldSuffix
-    metricShortName = flcpConstants.shortName
+    metricShortName = flcpConstants.shortName 
+    
+class lcospToolValidator(BaseValidators.ProportionsValidator):
+    """Tool Validator for LandCoverSlopeOverlap"""
+    
+    filterList = lcospConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeLcospField
+    fieldPrefix = lcospConstants.fieldPrefix
+    fieldSuffix = lcospConstants.fieldSuffix
+    metricShortName = lcospConstants.shortName
     
 class lcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
@@ -45,14 +60,29 @@ class lcppcToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = lcppcConstants.fieldSuffix    
     metricShortName = lcppcConstants.shortName 
 
-class lcccToolValidator(BaseValidators.CoefficientValidator):
-    """ ToolValidator for Coefficient Calculations """
-    filterList = lcccConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeLcpField
-    fieldPrefix = lcccConstants.fieldPrefix
-    fieldSuffix = lcccConstants.fieldSuffix    
-    metricShortName = lcccConstants.shortName 
+class pmToolValidator(BaseValidators.ProportionsValidator):
+    """ ToolValidator for PatchMetrics """
     
+    filterList = pmConstants.optionalFilter
+#    overrideAttributeName = lccConstants.XmlAttributePmField
+    fieldPrefix = pmConstants.fieldPrefix
+    fieldSuffix = pmConstants.fieldSuffix
+    metricShortName = pmConstants.shortName
+    
+class pwmvToolValidator(BaseValidators.ProportionsValidator):
+    filterList = pwmvConstants.optionalFilter
+#    overrideAttributeName = pwmvConstants.XmlAttributePwmvField
+    fieldPrefix = pwmvConstants.fieldPrefix
+    fieldSuffix = pwmvConstants.fieldSuffix    
+    metricShortName = pwmvConstants.shortName
+    
+class pwpvToolValidator(BaseValidators.ProportionsValidator):
+    filterList = pwpvConstants.optionalFilter
+#    overrideAttributeName = pwpvConstants.XmlAttributePwpvField
+    fieldPrefix = pwpvConstants.fieldPrefix
+    fieldSuffix = pwpvConstants.fieldSuffix    
+    metricShortName = pwpvConstants.shortName
+
 class rlcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for RiparianLandCoverProportions"""
     
@@ -70,23 +100,22 @@ class splcpToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = splcpConstants.fieldPrefix
     fieldSuffix = splcpConstants.fieldSuffix
     metricShortName = splcpConstants.shortName
+
+
+
+'''CoefficientValidator Tools'''
+        
+class lcccToolValidator(BaseValidators.CoefficientValidator):
+    """ ToolValidator for Coefficient Calculations """
+    filterList = lcccConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeLcpField
+    fieldPrefix = lcccConstants.fieldPrefix
+    fieldSuffix = lcccConstants.fieldSuffix    
+    metricShortName = lcccConstants.shortName  
+
     
-class caemToolValidator(BaseValidators.ProportionsValidator):
-    """ ToolValidator for CoreAndEdgeMetrics """
-    
-    filterList = caemConstants.optionalFilter
-#    overrideAttributeName = lccConstants.XmlAttributeCaemField
-    fieldPrefix = caemConstants.fieldPrefix
-    fieldSuffix = caemConstants.fieldSuffix    
-    metricShortName = caemConstants.shortName
-    
-class rdmToolValidator(BaseValidators.NoLccFileValidator):
-    """ ToolValidator for RoadDensityMetrics """
-    
-    filterList = rdmConstants.optionalFilter
-    fieldPrefix = rdmConstants.fieldPrefix
-    fieldSuffix = rdmConstants.fieldSuffix    
-    metricShortName = rdmConstants.shortName
+
+'''NoLccFileValidator Tools'''
     
 class lcdToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for LandCoverDiversity """
@@ -95,6 +124,7 @@ class lcdToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = lcdConstants.fieldPrefix
     fieldSuffix = lcdConstants.fieldSuffix
     metricShortName = lcdConstants.shortName
+   
     
 class pdmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for PopulationDensityMetrics """
@@ -112,14 +142,17 @@ class pifmToolValidator(BaseValidators.NoLccFileValidator):
     fieldSuffix = pdmConstants.fieldSuffix
     metricShortName = pdmConstants.shortName
     
-class pmToolValidator(BaseValidators.ProportionsValidator):
-    """ ToolValidator for PatchMetrics """
+class rdmToolValidator(BaseValidators.NoLccFileValidator):
+    """ ToolValidator for RoadDensityMetrics """
     
-    filterList = pmConstants.optionalFilter
-#    overrideAttributeName = lccConstants.XmlAttributePmField
-    fieldPrefix = pmConstants.fieldPrefix
-    fieldSuffix = pmConstants.fieldSuffix
-    metricShortName = pmConstants.shortName
+    filterList = rdmConstants.optionalFilter
+    fieldPrefix = rdmConstants.fieldPrefix
+    fieldSuffix = rdmConstants.fieldSuffix    
+    metricShortName = rdmConstants.shortName 
+
+
+
+'''NoReportingUnitValidator Tools'''    
 
 class gppToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for GenerateProximityPolygon Utility """
@@ -129,5 +162,7 @@ class gppToolValidator(BaseValidators.NoReportingUnitValidator):
 #    fieldPrefix = pmConstants.fieldPrefix
 #    fieldSuffix = pmConstants.fieldSuffix
     metricShortName = gppConstants.shortName
+    
+
 
 

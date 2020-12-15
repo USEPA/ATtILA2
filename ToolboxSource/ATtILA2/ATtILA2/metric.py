@@ -26,6 +26,7 @@ from .constants import globalConstants
 from .constants import errorConstants
 from . import utils
 from .utils.tabarea import TabulateAreaTable
+from arcpy.sa.Functions import ZonalStatisticsAsTable
 #from sympy.logic.boolalg import false
 
 class metricCalc:
@@ -1530,7 +1531,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         
 
 def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
-                                     outTable, processingCellSize, snapRaster, optionalFieldGroups):
+                                     outTable, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
     from arcpy import env
 
@@ -1919,3 +1920,241 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
 
     finally:
         setupAndRestore.standardRestore()
+
+
+def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                                  metricsToRun, viewRadius, inCensusRaster, outTable, processingCellSize, snapRaster, 
+                                  optionalFieldGroups):
+    """ Interface for script executing Population With Minimal Views Metrics """
+     
+    try:
+       
+        ''' Initialization Steps '''
+        from arcpy import env
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+         
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+                                                                                os.path.dirname(outTable),
+                                                                                [metricsToRun,optionalFieldGroups] )
+ 
+        # XML Land Cover Coding file loaded into memory
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
+        lccValuesDict = lccObj.values
+        # create a list of all the grid values in the selected land cover grid
+        landCoverValues = raster.getRasterValues(inLandCoverGrid)
+        # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
+        excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+         
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.pwmvConstants()
+         
+         
+        ''' Housekeeping Steps ''' 
+        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        # alert user if the land cover grid cells are not square (default to size along x axis)
+        settings.checkGridCellDimensions(inLandCoverGrid)
+        # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
+        outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+         
+        # Determine if the user wants to save the intermediate products
+        saveIntermediates = globalConstants.intermediateName in optionalGroupsList
+ 
+        # Initiate our flexible cleanuplist
+        cleanupList = []
+        if saveIntermediates:
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+             
+        # Check if the input land cover raster is too large to produce the output polygon feature without splitting it first
+        maxSide = 40000
+        splitYN, xySplits = raster.splitRasterYN(inLandCoverGrid, maxSide)
+ 
+ 
+        ''' Make ATtILA Output Table '''
+        #Create the output table outside of metricCalc so that result can be added for multiple metrics
+        newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
+                                                                                  metricConst, lccObj, outIdField, 
+                                                                                  metricConst.additionalFields)
+  
+         
+        ''' Metric Computations '''
+ 
+        # Generate table with population counts by reporting unit
+        AddMsg(timer.split() + " Calculating population within each reporting unit") 
+        index = 0
+
+        populationTable, populationField = table.createPolygonValueCountTable(inReportingUnitFeature,
+                                                                              reportingUnitIdField,
+                                                                              inCensusRaster,
+                                                                              "",
+                                                                              newtable,
+                                                                              metricConst,
+                                                                              index,
+                                                                              cleanupList)
+        
+        # Eliminate unnecessary fields from the population table
+        fields.deleteFields(populationTable, ["ZONE_CODE", "COUNT", "AREA"])
+        
+        # Set up list for the viewGrid Con operation. First value is the where clause value, the second is the true constant 
+        conValues = [0,1]
+        
+        # Determine if the land cover and census rasters use the same projection. 
+        # If not, obtain the transformMethod if needed for projections.
+        descLC = arcpy.Describe(inLandCoverGrid)
+        spatialLC = descLC.spatialReference
+        descCensus = arcpy.Describe(inCensusRaster)
+        spatialCensus = descCensus.spatialReference
+        if spatialLC.exportToString() == spatialCensus.exportToString():
+            #AddMsg("spatial references are equal")
+            transformMethod = ""
+        else:
+            #AddMsg("spatial references are not equal")
+            transformMethod = arcpy.ListTransformations(spatialLC, spatialCensus, descCensus.extent)[0] 
+ 
+        # Run metric calculate for each metric in list
+        for m in metricsBaseNameList:
+            # get the grid codes for this specified metric
+            classValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
+            
+            # process the inLandCoverGrid for the selected class
+            AddMsg(("Determining population with minimal views of {} class...").format(m.upper()))  
+            viewGrid = raster.getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, 
+                                          viewRadius, conValues, timer)
+  
+            # save the intermediate raster if save intermediates option has been chosen 
+            if saveIntermediates:
+                namePrefix = m.upper()+metricConst.viewRasterOutputName
+                scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+                viewGrid.save(scratchName)
+                AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+                             
+            # convert proximity raster to polygon
+            AddMsg(timer.split() + " Converting view raster to a polygon feature")
+            # get output name for projected viewPolygon
+            namePrefix = m.upper()+metricConst.viewPolygonOutputName
+            viewPolygonFeature = files.nameIntermediateFile([namePrefix + "","FeatureClass"],cleanupList)
+            
+            # Split the Raster As Needs, Process Each Piece
+            if splitYN == False:
+                if transformMethod != "":
+                    arcpy.conversion.RasterToPolygon(viewGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+                    arcpy.Project_management("tempPoly",viewPolygonFeature,spatialCensus,transformMethod)
+                    arcpy.Delete_management("tempPoly")
+                else:
+                    arcpy.conversion.RasterToPolygon(viewGrid,viewPolygonFeature,"NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+            else:
+                xsplit = xySplits[0]
+                ysplit = xySplits[1]
+                xy = (xsplit * ysplit)
+                workDir = arcpy.env.workspace
+                AddMsg(("{0} Splitting the raster into pieces of no more than {1} x {1} pixels").format(timer.split(),maxSide))
+                arcpy.SplitRaster_management(viewGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
+     
+                """ For each raster: """
+                for Chunk in range(0,xy):
+                    try:
+                        result = float(arcpy.GetRasterProperties_management(workDir + '/prox_' + str(Chunk), 'MEAN').getOutput(0))
+                        # If the raster piece has data:
+                        if (result != 0):
+                            """ Convert Raster to Polygon """
+                            arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
+ 
+                            """ Dissolve the polygons """
+                            arcpy.Dissolve_management('prox_' + str(Chunk), 'proxD1_' + str(Chunk), 'gridcode')
+                            AddMsg(timer.split() + " Processed Chunk " + str(Chunk) + " / " + str(xy))
+                        else:
+                            pass
+                    except:
+                        pass
+       
+                """ Merge the polygons back together """
+                fcList = arcpy.ListFeatureClasses('proxD1*')
+                
+
+                # If viewPolygon is the same projection as the census raster, if not project it
+                if transformMethod != "":
+                    arcpy.Merge_management(fcList,"tempPoly")
+                    arcpy.Project_management("tempPoly",viewPolygonFeature,spatialCensus,transformMethod)
+                    arcpy.Delete_management("tempPoly")
+                else:
+                    arcpy.Merge_management(fcList, viewPolygonFeature)
+
+            # Extract Census pixels which are in the non-view area
+            AddMsg(("{} Extracting population pixels within the minimal view area...").format(timer.split())) 
+            
+            # Save the current environment settings, then set to match the census raster 
+            tempEnvironment0 = env.snapRaster
+            tempEnvironment1 = env.cellSize            
+            env.snapRaster = inCensusRaster
+            env.cellSize = descCensus.meanCellWidth
+            
+            viewPopGrid = arcpy.sa.ExtractByMask(inCensusRaster, viewPolygonFeature)
+            
+            # save the intermediate raster if save intermediates option has been chosen 
+            if saveIntermediates:
+                namePrefix = m.upper()+metricConst.areaPopRasterOutputName
+                scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+                viewPopGrid.save(scratchName)
+                AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+                
+            # Calculate the extracted population for each reporting unit
+            AddMsg(timer.split() + " Calculating population within minimal-view areas for each reporting unit")
+            namePrefix = m.upper()+metricConst.areaValueCountTableName
+            areaPopTable = files.nameIntermediateFile([namePrefix + "","FeatureClass"],cleanupList)
+            arcpy.sa.ZonalStatisticsAsTable(inReportingUnitFeature,reportingUnitIdField,viewPopGrid,areaPopTable,"DATA","SUM")
+            
+            # reset the environments
+            env.snapRaster = tempEnvironment0
+            env.cellSize = tempEnvironment1
+            
+            # get the field that will be transferred from the view population table into the output table
+            fromField = "SUM"
+            toField = metricsFieldnameDict[m][0] #generated metric field name for the current land cover class
+            
+            # Transfer the fromField values to the output table
+            table.addJoinCalculateField(areaPopTable, populationTable, fromField, toField, reportingUnitIdField)
+
+            # Set up a calculate percentage expression 
+            calcExpression = "getPopPercent(!"+populationField+"!,!"+toField+"!)"
+            codeBlock = """def getPopPercent(pop1,pop2):
+                                if pop1 == 0:
+                                    if pop2 == 0:
+                                        return 0
+                                    else:
+                                        return 1
+                                else:
+                                    return (pop2/pop1)*100"""
+                 
+            # Calculate the percent population within view area
+            x = -1 * len(metricConst.fieldSuffix)
+            calcField = ("{0}{1}").format(toField[:x], metricConst.pctSuffix)
+            vector.addCalculateField(populationTable, calcField, calcExpression, codeBlock)  
+    
+            AddMsg(timer.split() + " Calculation complete")
+           
+ 
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        setupAndRestore.standardRestore()
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+
+
+def runPopulationWithPotentialViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                                  metricsToRun, viewRadius, minPatchSize="#", inCensusRaster, outTable, processingCellSize, 
+                                  snapRaster, optionalFieldGroups):
+    """ Interface for script executing Population With Minimal Views Metrics """
+    
+    pass
