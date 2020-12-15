@@ -1,4 +1,4 @@
-""" Road Density Metrics
+""" Population Density Metrics
 
     This script is associated with an ArcToolbox script tool.
     

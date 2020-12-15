@@ -1,4 +1,4 @@
-""" Land Cover Proportion Metrics
+""" Population In Floodplain Metrics
 
     This script is associated with an ArcToolbox script tool.
     

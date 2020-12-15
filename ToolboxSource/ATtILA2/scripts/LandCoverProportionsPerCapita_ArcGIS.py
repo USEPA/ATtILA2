@@ -1,4 +1,4 @@
-""" Land Cover Proportion Metrics
+""" Land Cover Proportion Per Capita Metrics
 
     This script is associated with an ArcToolbox script tool.
     

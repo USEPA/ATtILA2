@@ -1,4 +1,4 @@
-""" Land Cover Proportion Metrics
+""" Land Cover Coefficient Calculator
 
     This script is associated with an ArcToolbox script tool.
     
