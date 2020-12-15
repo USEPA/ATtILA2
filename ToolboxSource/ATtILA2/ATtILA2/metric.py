@@ -2152,9 +2152,7 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
                 function(*arguments)
 
 
-def runPopulationWithPotentialViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                                  metricsToRun, viewRadius, minPatchSize="#", inCensusRaster, outTable, processingCellSize, 
-                                  snapRaster, optionalFieldGroups):
-    """ Interface for script executing Population With Minimal Views Metrics """
-    
-    pass
+# def runPopulationWithPotentialViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+#                                   metricsToRun, viewRadius, minPatchSize="#", inCensusRaster, outTable, processingCellSize, 
+#                                   snapRaster, optionalFieldGroups):
+#     """ Interface for script executing Population With Minimal Views Metrics """
