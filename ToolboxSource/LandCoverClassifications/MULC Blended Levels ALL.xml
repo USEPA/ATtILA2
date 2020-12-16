@@ -2,7 +2,7 @@
 <lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LCCSchema.xsd">
     <metadata>
         <name>EnviroAtlas Meter-Scale Urban Land Cover LAND</name>
-        <description>The EnviroAtlas One Meter-scale Urban Land Cover (MULC) Data were generated individually for each EnviroAtlas community. Source imagery varies by community. Land cover classes mapped also vary by community and include the following: water, impervious surfaces, soil and barren land, trees, shrub, grass and herbaceous, agriculture, orchards, woody wetlands, and emergent wetlands. Water-related raster values are tagged as EXCLUDED. Excluded values are ignored when calculating the effective area of a reporting unit. Percentage metrics are based on the effective area of a reporting unit, not its total area.</description>
+        <description>The EnviroAtlas One Meter-scale Urban Land Cover (MULC) Data were generated individually for each EnviroAtlas community. Source imagery varies by community. Land cover classes mapped also vary by community and include the following: water, impervious surfaces, soil and barren land, trees, shrub, grass and herbaceous, agriculture, orchards, woody wetlands, and emergent wetlands. No raster values except those representing NODATA are excluded from the calculation of reporting unit effective area (i.e., effective area equals the total raster area within a reporting unit). Percentage metrics are based on the effective area of a reporting unit, not necessarily its total area.</description>
     </metadata>
     <!--  
         * The coefficients node contains coefficients to be assigned to values.
@@ -152,6 +152,9 @@
         </class>
         <class Id="imp" Name="Impervious Surface" filter="">
             <value Id="20" />
+        </class>
+        <class Id="wtr" Name="Water" filter="">
+            <value Id="10" />
         </class>
     </classes>
 </lccSchema>

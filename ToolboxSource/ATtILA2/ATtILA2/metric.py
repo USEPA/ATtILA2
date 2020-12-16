@@ -2006,18 +2006,18 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
         # Set up list for the viewGrid Con operation. First value is the where clause value, the second is the true constant 
         conValues = [0,1]
         
-        # Determine if the land cover and census rasters use the same projection. 
-        # If not, obtain the transformMethod if needed for projections.
+        # Determine if a transformation method is needed to project datasets (e.g. different datums are used). 
         descLC = arcpy.Describe(inLandCoverGrid)
-        spatialLC = descLC.spatialReference
         descCensus = arcpy.Describe(inCensusRaster)
+        spatialLC = descLC.spatialReference
         spatialCensus = descCensus.spatialReference
-        if spatialLC.exportToString() == spatialCensus.exportToString():
-            #AddMsg("spatial references are equal")
+        transformList = arcpy.ListTransformations(spatialLC, spatialCensus, descCensus.extent)
+        if len(transformList) == 0:
+            # if no list is returned; no transformation is required
             transformMethod = ""
         else:
-            #AddMsg("spatial references are not equal")
-            transformMethod = arcpy.ListTransformations(spatialLC, spatialCensus, descCensus.extent)[0] 
+            # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+            transformMethod = transformList[0]
  
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -2121,6 +2121,18 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
             
             # Transfer the fromField values to the output table
             table.addJoinCalculateField(areaPopTable, populationTable, fromField, toField, reportingUnitIdField)
+            
+            # Assign 0 to reporting units where no population was calculated in the view/non-view area
+            whereClause = toField+" IS NULL"
+            updateCursor = arcpy.UpdateCursor(populationTable, whereClause, "", toField)
+            for updateRow in updateCursor:
+                updateRow.setValue(toField, 0)
+                # Persist all of the updates for this row.
+                updateCursor.updateRow(updateRow)
+                # Clean up our row element for memory management and to remove locks
+                del updateRow
+            # Clean up our row element for memory management and to remove locks
+            del updateCursor
 
             # Set up a calculate percentage expression 
             calcExpression = "getPopPercent(!"+populationField+"!,!"+toField+"!)"
