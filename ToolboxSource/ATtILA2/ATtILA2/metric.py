@@ -15,10 +15,9 @@ from .utils import settings
 from .utils import files
 from .utils import vector
 from .utils import environment
-from .utils import fields
 from .utils import parameters
 from .utils import raster
-from .utils import calculate
+from .utils import conversion
 from .utils.messages import AddMsg
 from .datetimeutil import DateTimer
 from .constants import metricConstants
@@ -178,8 +177,6 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
     """ Interface for script executing Population Density Metrics """
     
     try:
-        from .utils import conversion
-        
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcppcConstants()
         
@@ -294,8 +291,6 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
         #patch metrics) extend the clip envelope an adequate distance.       
-        #from pylet import utils
-        from . import utils
         
         from arcpy import env        
         _tempEnvironment1 = env.workspace
@@ -362,8 +357,6 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
         #patch metrics) extend the clip envelope an adequate distance.       
-        #from pylet import utils
-        from . import utils
           
         from arcpy import env        
         _tempEnvironment1 = env.workspace
@@ -481,7 +474,6 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
     """ Interface for script executing Patch Metrics """
     
     #from .utils import settings
-    from .utils import conversion
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
@@ -712,8 +704,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
         #patch metrics) extend the clip envelope an adequate distance.       
-        #from pylet import utils
-        from . import utils
+
         from arcpy import env        
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -973,10 +964,6 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
                                       optionalFieldGroups):
     """Interface for script executing Land Cover Coefficient Calculator"""
 
-    from .utils import settings
-    #from pylet.utils import conversion
-    from .utils import conversion
-
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcccConstants()
@@ -1031,8 +1018,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                              optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
-    #from pylet import utils
-    from . import utils
+
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
         # Work on making as generic as possible
@@ -1235,8 +1221,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                                optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
-    #from pylet import utils
-    from . import utils
+
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
         # Work on making as generic as possible
@@ -1443,8 +1428,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
                                    popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
     from arcpy import env
-    #from pylet import utils
-    from . import utils
+
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
         ### Initialization
@@ -1951,6 +1935,12 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
          
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pwmvConstants()
+
+        # append the edge width distance value to the field suffix
+        metricConst.fieldParameters[1] = viewRadius + metricConst.fieldSuffix
+        # for the output fields, add the input view radius to the field suffix
+        for i, fldParams in enumerate(metricConst.additionalFields):
+            fldParams[1] = viewRadius + metricConst.additionalSuffixes[i]
          
          
         ''' Housekeeping Steps ''' 
@@ -2007,17 +1997,9 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
         conValues = [0,1]
         
         # Determine if a transformation method is needed to project datasets (e.g. different datums are used). 
-        descLC = arcpy.Describe(inLandCoverGrid)
+        transformMethod = conversion.getTransformMethod(inLandCoverGrid, inCensusRaster)
         descCensus = arcpy.Describe(inCensusRaster)
-        spatialLC = descLC.spatialReference
         spatialCensus = descCensus.spatialReference
-        transformList = arcpy.ListTransformations(spatialLC, spatialCensus, descCensus.extent)
-        if len(transformList) == 0:
-            # if no list is returned; no transformation is required
-            transformMethod = ""
-        else:
-            # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
-            transformMethod = transformList[0]
  
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -2079,7 +2061,7 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
                 fcList = arcpy.ListFeatureClasses('proxD1*')
                 
 
-                # If viewPolygon is the same projection as the census raster, if not project it
+                # Check if viewPolygon is the same projection as the census raster, if not project it
                 if transformMethod != "":
                     arcpy.Merge_management(fcList,"tempPoly")
                     arcpy.Project_management("tempPoly",viewPolygonFeature,spatialCensus,transformMethod)
@@ -2123,33 +2105,14 @@ def runPopulationWithMinimalViews(inReportingUnitFeature, reportingUnitIdField, 
             table.addJoinCalculateField(areaPopTable, populationTable, fromField, toField, reportingUnitIdField)
             
             # Assign 0 to reporting units where no population was calculated in the view/non-view area
-            whereClause = toField+" IS NULL"
-            updateCursor = arcpy.UpdateCursor(populationTable, whereClause, "", toField)
-            for updateRow in updateCursor:
-                updateRow.setValue(toField, 0)
-                # Persist all of the updates for this row.
-                updateCursor.updateRow(updateRow)
-                # Clean up our row element for memory management and to remove locks
-                del updateRow
-            # Clean up our row element for memory management and to remove locks
-            del updateCursor
+            calculate.replaceNullValues(populationTable, toField, metricConst.valueWhenNULL)
 
-            # Set up a calculate percentage expression 
-            calcExpression = "getPopPercent(!"+populationField+"!,!"+toField+"!)"
-            codeBlock = """def getPopPercent(pop1,pop2):
-                                if pop1 == 0:
-                                    if pop2 == 0:
-                                        return 0
-                                    else:
-                                        return 1
-                                else:
-                                    return (pop2/pop1)*100"""
-                 
-            # Calculate the percent population within view area
+            # Replace the inField name suffix to identify the calcField     
             x = -1 * len(metricConst.fieldSuffix)
             calcField = ("{0}{1}").format(toField[:x], metricConst.pctSuffix)
-            vector.addCalculateField(populationTable, calcField, calcExpression, codeBlock)  
-    
+            
+            # Calculate the percent population within view area
+            calculate.percentageValue(populationTable, toField, populationField, calcField)
             AddMsg(timer.split() + " Calculation complete")
            
  

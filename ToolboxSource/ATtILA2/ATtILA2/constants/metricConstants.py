@@ -280,6 +280,7 @@ class pwmvConstants(baseMetricConstants):
     viewPolygonOutputName = "_MinViewAreaPoly"
     areaPopRasterOutputName = "_MinViewPopRaster"
     areaValueCountTableName = "_MinViewPopulation"
+    valueWhenNULL = 0
     
 class pwpvConstants(baseMetricConstants):
     name = "PopulationWithPotentialViews"
@@ -306,6 +307,7 @@ class pwpvConstants(baseMetricConstants):
     viewPolygonOutputName = "_PotentialViewAreaPoly"
     areaPopRasterOutputName = "_PotentialViewPopRaster"
     areaValueCountTableName = "_PotentialViewPopulation"
+    valueWhenNULL = 0
 
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"

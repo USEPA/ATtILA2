@@ -1072,3 +1072,30 @@ def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopFi
     outPopField = metricConst.populationCountFieldNames[index]
     arcpy.AlterField_management(outTable, inPopField, outPopField, outPopField)
     
+def replaceNullValues(inTable,inField,newValue):
+    # Replace NULL values in a field with the supplied value
+    whereClause = inField+" IS NULL"
+    updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
+    for updateRow in updateCursor:
+        updateRow.setValue(inField, newValue)
+        # Persist all of the updates for this row.
+        updateCursor.updateRow(updateRow)
+        # Clean up our row element for memory management and to remove locks
+        del updateRow
+    # Clean up our row element for memory management and to remove locks
+    del updateCursor
+    
+def percentageValue(inTable, numeratorField, denominatorField, percentField):
+    # Set up a calculate percentage expression 
+    calcExpression = "getValuePercent(!"+numeratorField+"!,!"+denominatorField+"!)"
+    codeBlock = """def getValuePercent(n,d):
+                        if d == 0:
+                            if n == 0:
+                                return 0
+                            else:
+                                return 1
+                        else:
+                            return (n/d)*100"""
+    
+    # Calculate and record the percent population within view area
+    vector.addCalculateField(inTable, percentField, calcExpression, codeBlock)

@@ -233,4 +233,21 @@ def getSqMeterConversionFactor(linearUnitName):
         raise
 
 
+def getTransformMethod(inDataset1,inDataset2):
+    """ Checks to see if a transformation method is needed to project geodatasets. If so, returns the most likely. """
+    
+    import arcpy
+    # Determine if a transformation method is needed to project datasets (e.g. different datums are used). 
+    desc1 = arcpy.Describe(inDataset1)
+    desc2 = arcpy.Describe(inDataset2)
+    spatial1 = desc1.spatialReference
+    spatial2 = desc2.spatialReference
+    transformList = arcpy.ListTransformations(spatial1, spatial2, desc2.extent)
+    if len(transformList) == 0:
+        # if no list is returned; no transformation is required
+        transformMethod = ""
+    else:
+        # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+        transformMethod = transformList[0]
 
+    return transformMethod
