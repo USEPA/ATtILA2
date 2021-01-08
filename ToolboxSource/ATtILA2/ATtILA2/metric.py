@@ -3,6 +3,7 @@
 '''
 import os
 import arcpy
+import time
 from . import errors
 from . import setupAndRestore
 #from pylet import lcc
@@ -1743,8 +1744,11 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
         processingCellSize = Raster(inLandCoverGrid).meanCellWidth
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                                [metricsToRun,optionalFieldGroups] )
+                                                                               [metricsToRun,optionalFieldGroups] )
+
         workDir = arcpy.env.workspace
+        if (workDir[-4:] == ".gdb"):
+            workDir = '\\'.join(workDir.split('\\')[0:-1])
         
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -1776,13 +1780,21 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
         # Check if the input land cover raster is too large to produce the output polygon feature without splitting it first
         splitRaster = True
         columns = arcpy.GetRasterProperties_management(inLandCoverGrid, 'COLUMNCOUNT').getOutput(0)
-        xsplit = int(float(columns) / 40000) + 1
+        xsplit = int(float(columns) / 40000) + 1 #original value is 40000, 500 is to test the very small raster data, 20000 is to test FCA_MULC.tif
         rows = arcpy.GetRasterProperties_management(inLandCoverGrid, 'ROWCOUNT').getOutput(0)
         ysplit = int (float(rows) / 40000) + 1
         
         if xsplit*ysplit == 1:
             splitRaster = False
-                
+        
+        if splitRaster != False:
+            xy = (xsplit * ysplit)
+            for Chunk in range(0,xy):
+                try:
+                    arcpy.Delete_management(workDir + '/prox_' + str(Chunk))
+                except:
+                    pass  
+
         # Determine the maximum sum for the neighborhood
         Sum100 = pow(int(inNeighborhoodSize), 2)
         
@@ -1827,7 +1839,9 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     burnInGrid.save(scratchName)
                     AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-   
+                    AddMsg(timer.split() + " before time delay, burnInGrid.catalogPath:" +  burnInGrid.catalogPath)
+                    time.sleep(10)
+                    AddMsg(timer.split() + " after time delay, burnInGrid.catalogPath:" +  burnInGrid.catalogPath)  
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
             # get the grid codes for this specified metric
@@ -1845,15 +1859,20 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                 scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                 proximityGrid.save(scratchName)
                 AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-                            
+                AddMsg(timer.split() + " before time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)
+                time.sleep(100)
+                AddMsg(timer.split() + " after time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)                              
             # convert proximity raster to polygon
             AddMsg(timer.split() + " Converting proximity raster to a polygon feature")
             
             # Split the Raster As Needs, Process Each Piece
             if splitRaster == False:
                 AddMsg(("xsplit = {0} and ysplit = {1}").format(xsplit, ysplit))
-                #polygonFeature = arcpy.conversion.RasterToPolygon(proximityGrid, r"D:\trash\MyProject1\attilaScratchWorkspace.gdb\tempPoly", "NO_SIMPLIFY", "Value", "SINGLE_OUTER_PART", None)
-                arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+                #arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+                if saveIntermediates:
+                    arcpy.conversion.RasterToPolygon(proximityGrid.catalogPath,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+                else:
+                    arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
             else:
                 xy = (xsplit * ysplit)
 
