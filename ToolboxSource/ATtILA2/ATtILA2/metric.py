@@ -1877,7 +1877,15 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                 xy = (xsplit * ysplit)
 
                 AddMsg(timer.split() + " Spliting the raster into pieces of no more than 40,000x40,000 pixels")
-                arcpy.SplitRaster_management(proximityGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
+
+                AddMsg(timer.split() + " before time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)
+                time.sleep(200)
+                AddMsg(timer.split() + " after time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)
+                if saveIntermediates:
+                    arcpy.SplitRaster_management(proximityGrid.catalogPath, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
+                else:
+                    arcpy.SplitRaster_management(proximityGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
+                AddMsg(timer.split() + " finish Spliting the raster into pieces of no more than 40,000x40,000 pixels")
     
                 """ For each raster: """
                 for Chunk in range(0,xy):
@@ -1885,11 +1893,12 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                         result = float(arcpy.GetRasterProperties_management(workDir + '/prox_' + str(Chunk), 'MEAN').getOutput(0))
                         # If the raster piece has data:
                         if (result != 0):
-                            """ Convert Raster to Polygon """
-                            arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
+                            #""" Convert Raster to Polygon """
+                            #arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
+                            arcpy.RasterToPolygon_conversion(workDir + '/prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
 
-                            """ Dissolve the polygons """
-                            arcpy.Dissolve_management('prox_' + str(Chunk), 'proxD1_' + str(Chunk), 'gridcode')
+                            #""" Dissolve the polygons """
+                            arcpy.Dissolve_management('tempPoly_' + str(Chunk), 'proxD1_' + str(Chunk), 'gridcode')
                             AddMsg(timer.split() + " Processed Chunk " + str(Chunk) + " / " + str(xy))
                         else:
                             pass
@@ -1911,6 +1920,14 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
             arcpy.AlterField_management(proxPolygonName,"gridcode", classFieldName, classFieldName)
             
             arcpy.Delete_management("tempPoly")
+
+            if splitRaster != False:
+                xy = (xsplit * ysplit)
+                for Chunk in range(0,xy):
+                    try:
+                        arcpy.Delete_management(workDir + '/prox_' + str(Chunk))
+                    except:
+                        pass  
             
             # add the dissolved proximity polygon to the active map
             if actvMap != None:
