@@ -308,6 +308,7 @@ class pwpvConstants(baseMetricConstants):
     areaPopRasterOutputName = "_PotentialViewPopRaster"
     areaValueCountTableName = "_PotentialViewPopulation"
     valueWhenNULL = 0
+    burnInGridName = shortName+"_BurnIn"
 
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"

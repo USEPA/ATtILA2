@@ -2,6 +2,7 @@
 
 """
 import arcpy
+import os
 from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull
 from . import *
 from .messages import AddMsg
@@ -476,6 +477,56 @@ def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverV
     whereValue = conValues[0]
     trueValue = conValues[1]
     viewGrid = Con(Raster(focalGrid) == whereValue, trueValue)
+    return viewGrid
+
+def getLargePatchViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, minimumPatchSize, timer, saveIntermediates, metricConst):
+    # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
+    # define the reclass values
+    classValue = 1
+    excludedValue = 0
+    otherValue = 0
+    newValuesList = [classValue, excludedValue, otherValue]
+    
+    # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
+
+
+      
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+ 
+    ##calculate the big patches for LandCover
+                
+    AddMsg(("{0} Calculating size of excluded area patches...").format(timer.split()))
+    regionGrid = RegionGroup(reclassGrid,"EIGHT","WITHIN","ADD_LINK")
+                
+    AddMsg(("{0} Assigning {1} to patches >= minimum size threshold...").format(timer.split(), "1"))
+    delimitedCOUNT = arcpy.AddFieldDelimiters(regionGrid,"COUNT")
+    whereClause = delimitedCOUNT+" >= " + minimumPatchSize + " AND LINK = 1"
+    burnInGrid = Con(regionGrid, classValue, 0, whereClause)
+                
+    # save the intermediate raster if save intermediates option has been chosen
+    if saveIntermediates: 
+        namePrefix = metricConst.burnInGridName
+        scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+        burnInGrid.save(scratchName)
+        AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+
+    ##end of calculating the big patches for LandCover    
+
+
+    AddMsg(("{0} Performing focal SUM on reclassified raster with big patches using {1} cell radius neighborhood...").format(timer.split(), viewRadius))
+    neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
+    #focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
+    focalGrid = arcpy.sa.FocalStatistics(burnInGrid == classValue, neighborhood, "SUM")
+    
+    AddMsg(("{0} Reclassifying focal SUM results into view = 1 and no-view = 0 binary raster...").format(timer.split()))
+#    delimitedVALUE = arcpy.AddFieldDelimiters(focalGrid,"VALUE")
+#    whereClause = delimitedVALUE+" = 0"
+#    viewGrid = Con(focalGrid, 1, 0, whereClause)
+    whereValue = conValues[0]
+    trueValue = conValues[1]
+    viewGrid = Con(Raster(focalGrid) > whereValue, trueValue)
     return viewGrid
 
 
