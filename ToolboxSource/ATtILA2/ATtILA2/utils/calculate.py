@@ -1099,3 +1099,11 @@ def percentageValue(inTable, numeratorField, denominatorField, percentField):
     
     # Calculate and record the percent population within view area
     vector.addCalculateField(inTable, percentField, calcExpression, codeBlock)
+def differenceValue(inTable, totalField, subtratorField, resultField):
+    # Set up a calculate percentage expression 
+    calcExpression = "getValueDifference(!"+totalField+"!,!"+subtratorField+"!)"
+    codeBlock = """def getValueDifference(n,d):
+                        return (n-d)"""
+    
+    # Calculate and record the percent population within view area
+    vector.addCalculateField(inTable, resultField, calcExpression, codeBlock)

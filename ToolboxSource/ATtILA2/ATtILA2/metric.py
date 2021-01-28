@@ -2371,6 +2371,17 @@ def runPopulationWithPotentialViews(inReportingUnitFeature, reportingUnitIdField
             
             # Calculate the percent population within view area
             calculate.percentageValue(populationTable, toField, populationField, calcField)
+
+            # Calculate the population for minimum view
+            mv_prefix = metricConstants.pwmvConstants().fieldPrefix
+            m_index = toField.find(m)
+            calcField_mv_POP = ("{0}{1}").format(mv_prefix, toField[m_index:])
+            calculate.differenceValue(populationTable, populationField, toField, calcField_mv_POP)
+
+            # Calculate the percent population without view area
+            m_index = calcField.find(m)
+            calcField_mv_PCT = ("{0}{1}").format(mv_prefix, calcField[m_index:])
+            calculate.percentageValue(populationTable, calcField_mv_POP, populationField, calcField_mv_PCT)
             AddMsg(timer.split() + " Calculation complete")
            
  
