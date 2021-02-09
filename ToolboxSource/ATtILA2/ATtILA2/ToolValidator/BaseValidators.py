@@ -12,6 +12,7 @@ from ATtILA2.constants import globalConstants
 from ATtILA2.constants import validatorConstants
 from  ..utils.lcc import constants as lccConstants
 from ..utils.lcc import LandCoverClassification, LandCoverCoefficient
+from math import modf
     
 class ProportionsValidator(object):
     """ Class for inheritance by ToolValidator Only
@@ -71,6 +72,7 @@ class ProportionsValidator(object):
     inputFields2Index = 0
     inDistanceIndex = 0
     inWholeNumIndex = 0
+    inPositiveIntegerIndex = 0
     inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
@@ -99,6 +101,7 @@ class ProportionsValidator(object):
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
+        self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         
@@ -152,6 +155,9 @@ class ProportionsValidator(object):
             
         if self.inWholeNumIndex:
             self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
+            
+        if self.inPositiveIntegerIndex:
+            self.inPositiveIntegerParameter = self.parameters[self.inPositiveIntegerIndex]
             
         if self.inLinearUnitIndex:
             self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
@@ -585,7 +591,15 @@ class ProportionsValidator(object):
             if self.inWholeNumParameter.value:
                 wholeNumValue = self.inWholeNumParameter.value
                 if wholeNumValue < 0.0:
-                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    
+        # Check if number input (e.g., number of cells) is a positive integer           
+        if self.inPositiveIntegerIndex:
+            if self.inPositiveIntegerParameter.value:
+                positiveIntValue = self.inPositiveIntegerParameter.value
+                valModulus = modf(positiveIntValue)
+                if valModulus[0] != 0 or valModulus[1] < 1.0:
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:
@@ -654,6 +668,7 @@ class NoLccFileValidator(object):
     inputFields2Index = 0
     inDistanceIndex = 0
     inWholeNumIndex = 0
+    inPositiveIntegerIndex = 0
     inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
@@ -715,6 +730,9 @@ class NoLccFileValidator(object):
 
         if self.inWholeNumIndex:
             self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
+            
+        if self.inPositiveIntegerIndex:
+            self.inPositiveIntegerParameter = self.parameters[self.inPositiveIntegerIndex]
             
         if self.inLinearUnitIndex:
             self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
@@ -1009,6 +1027,14 @@ class NoLccFileValidator(object):
                 wholeNumValue = self.inWholeNumParameter.value
                 if wholeNumValue < 0.0:
                     self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+
+        # Check if number input (e.g., number of cells) is a positive integer           
+        if self.inPositiveIntegerIndex:
+            if self.inPositiveIntegerParameter.value:
+                positiveIntValue = self.inPositiveIntegerParameter.value
+                valModulus = modf(positiveIntValue)
+                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:
@@ -1078,6 +1104,7 @@ class NoReportingUnitValidator(object):
     inputFields2Index = 0
     inDistanceIndex = 0
     inWholeNumIndex = 0
+    inPositiveIntegerIndex = 0
     inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
@@ -1160,6 +1187,9 @@ class NoReportingUnitValidator(object):
             
         if self.inWholeNumIndex:
             self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
+            
+        if self.inPositiveIntegerIndex:
+            self.inPositiveIntegerParameter = self.parameters[self.inPositiveIntegerIndex]
             
         if self.inLinearUnitIndex:
             self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
@@ -1597,6 +1627,14 @@ class NoReportingUnitValidator(object):
                 wholeNumValue = self.inWholeNumParameter.value
                 if wholeNumValue < 0.0:
                     self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+
+        # Check if number input (e.g., number of cells) is a positive integer           
+        if self.inPositiveIntegerIndex:
+            if self.inPositiveIntegerParameter.value:
+                positiveIntValue = self.inPositiveIntegerParameter.value
+                valModulus = modf(positiveIntValue)
+                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:

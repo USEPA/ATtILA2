@@ -52,7 +52,27 @@ class flcpConstants(baseMetricConstants):
     totalAreaName = "FLCP_TOTA"
     effectiveAreaName = "FLCP_EFFA"
     excludedAreaName = "FLCP_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultIntegerFieldType,6]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName
+    
+    
+class flcvConstants(baseMetricConstants):
+    name = "FacilityLandCoverViews"
+    shortName = "flcv"
+    fieldSuffix = "_fLow"
+    fieldPrefix = ""
+    overlapName = "FLCV_OVER"
+    totalAreaName = "FLCV_TOTA"
+    effectiveAreaName = "FLCV_EFFA"
+    excludedAreaName = "FLCV_EXCA"
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -61,6 +81,14 @@ class flcpConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    facilityCountSuffix = "_fCnt"
+    additionalSuffixes = [facilityCountSuffix]
+    facilityCountField = ["", facilityCountSuffix, "LONG", 10, 0]
+    additionalFields = [facilityCountField]
+    thresholdFieldSuffix = "_Below"
+    facilityOutputName = shortName+"_Facility"
+    bufferOutputName = shortName+"_ViewBuffer"
+    lcpTableName = shortName+"_ViewBuffer_LCP"
 
 class gppConstants(baseMetricConstants):
     name = "GetProximityPolygon"

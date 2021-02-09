@@ -25,7 +25,7 @@ class caemToolValidator(BaseValidators.ProportionsValidator):
     metricShortName = caemConstants.shortName
 
 class flcpToolValidator(BaseValidators.ProportionsValidator):
-    """Tool Validator for FloodplainLandCoverProportion"""
+    """ToolValidator for FloodplainLandCoverProportion"""
       
     filterList = flcpConstants.optionalFilter
     overrideAttributeName = lccConstants.XmlAttributeLcpField
@@ -33,8 +33,17 @@ class flcpToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = flcpConstants.fieldSuffix
     metricShortName = flcpConstants.shortName 
     
+class flcvToolValidator(BaseValidators.ProportionsValidator):
+    """ToolValidator for Facility Land Cover Views"""
+      
+    filterList = flcvConstants.optionalFilter
+    overrideAttributeName = lccConstants.XmlAttributeLcpField
+    fieldPrefix = flcvConstants.fieldPrefix
+    fieldSuffix = flcvConstants.fieldSuffix
+    metricShortName = flcvConstants.shortName 
+    
 class lcospToolValidator(BaseValidators.ProportionsValidator):
-    """Tool Validator for LandCoverSlopeOverlap"""
+    """ToolValidator for LandCoverSlopeOverlap"""
     
     filterList = lcospConstants.optionalFilter
     overrideAttributeName = lccConstants.XmlAttributeLcospField

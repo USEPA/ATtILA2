@@ -2394,3 +2394,10 @@ def runPopulationWithPotentialViews(inReportingUnitFeature, reportingUnitIdField
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+                
+
+# def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+#                     metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
+#                     snapRaster="", optionalFieldGroups=""):
+#     """ Interface for script executing Facility Land Cover Views Metrics """
+#     try:
