@@ -78,19 +78,12 @@ class pmToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = pmConstants.fieldSuffix
     metricShortName = pmConstants.shortName
     
-class pwmvToolValidator(BaseValidators.ProportionsValidator):
-    filterList = pwmvConstants.optionalFilter
-#    overrideAttributeName = pwmvConstants.XmlAttributePwmvField
-    fieldPrefix = pwmvConstants.fieldPrefix
-    fieldSuffix = pwmvConstants.fieldSuffix    
-    metricShortName = pwmvConstants.shortName
-    
-class pwpvToolValidator(BaseValidators.ProportionsValidator):
-    filterList = pwpvConstants.optionalFilter
+class plcvToolValidator(BaseValidators.ProportionsValidator):
+    filterList = plcvConstants.optionalFilter
 #    overrideAttributeName = pwpvConstants.XmlAttributePwpvField
-    fieldPrefix = pwpvConstants.fieldPrefix
-    fieldSuffix = pwpvConstants.fieldSuffix    
-    metricShortName = pwpvConstants.shortName
+    fieldPrefix = plcvConstants.fieldPrefix
+    fieldSuffix = plcvConstants.fieldSuffix    
+    metricShortName = plcvConstants.shortName
 
 class rlcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for RiparianLandCoverProportions"""
