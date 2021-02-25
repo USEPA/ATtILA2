@@ -657,7 +657,31 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
     return fieldName      
-
+def addCalculateFieldInteger(inFeatures,fieldName,calcExpression,codeBlock='#'):
+    '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
+    using the given calculation expression
+    **Description:**
+        This function checks for the existence of the specified field and if it does
+        not exist, adds and populates it as appropriate.  The output field is assumed to be of type double.
+    **Arguments:**
+        * *inFeatures* - the input feature class that will receive the field.
+        * *fieldName* - field name string
+        * *calcExpression* - string calculation expression in python 
+        * *codeBlock* - optional python code block expression       
+    **Returns:**
+        * *fieldName* - validated fieldname      
+    '''
+    # Validate the desired field name for the dataset
+    fieldName = arcpy.ValidateFieldName(fieldName, arcpy.Describe(inFeatures).path)
+    
+    # Check for existence of field.
+    fieldList = arcpy.ListFields(inFeatures,fieldName)
+    if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
+        arcpy.AddField_management(inFeatures,fieldName,"SHORT")
+    else: # Otherwise warn the user that the field will be recalculated.
+        AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
+    arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
+    return fieldName      
 
 def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, rastoPolyFeature, patchCentroidsFeature, 
                  patchDissolvedFeature, nearPatchTable, zoneAreaDict, timer, pmResultsDict):

@@ -89,6 +89,10 @@ class flcvConstants(baseMetricConstants):
     facilityOutputName = shortName+"_Facility"
     bufferOutputName = shortName+"_ViewBuffer"
     lcpTableName = shortName+"_ViewBuffer_LCP"
+    lcpTableWithRUID = shortName+"_ViewBuffer_LCP_RUID"
+    lcpPointLayer = shortName+"_tempFacilityPoint"
+    flcvResultTable = shortName+"_result"
+    
 
 class gppConstants(baseMetricConstants):
     name = "GetProximityPolygon"

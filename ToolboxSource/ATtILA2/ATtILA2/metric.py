@@ -2396,8 +2396,81 @@ def runPopulationWithPotentialViews(inReportingUnitFeature, reportingUnitIdField
                 function(*arguments)
                 
 
-# def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-#                     metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
-#                     snapRaster="", optionalFieldGroups=""):
-#     """ Interface for script executing Facility Land Cover Views Metrics """
-#     try:
+def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                     metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
+                     snapRaster="", optionalFieldGroups=""):
+    #""" Interface for script executing Facility Land Cover Views Metrics """
+    try:
+
+        metricConst = metricConstants.flcvConstants()
+
+        intermediateList = []
+
+        #make a temporary facility point layer so that the field of the same name as reportingUnitIdField could be deleted
+        inPointFacilityFeature = arcpy.FeatureClassToFeatureClass_conversion(inFacilityFeature, arcpy.env.workspace, metricConst.lcpPointLayer)
+
+        intermediateList.append(inPointFacilityFeature)
+
+        arcpy.DeleteField_management(inPointFacilityFeature, reportingUnitIdField)
+        intermediateList.append(inPointFacilityFeature)
+
+        intersectResult = arcpy.Intersect_analysis([inPointFacilityFeature,inReportingUnitFeature],metricConst.facilityOutputName,"NO_FID","","POINT")
+        fieldObjList = arcpy.ListFields(intersectResult)
+        intermediateList.append(intersectResult)
+
+        # Create an empty list that will be populated with field names to be deleted      
+        fieldNameList = []
+
+        for field in fieldObjList:
+            currentField = field.name.upper()
+            if ((currentField != "OBJECTID") and (currentField != "SHAPE") and (currentField != reportingUnitIdField.upper())):
+                fieldNameList.append(field.name)
+
+        # Execute DeleteField to delete all fields in the field list. 
+        arcpy.DeleteField_management(intersectResult, fieldNameList)
+
+
+        bufferResult = arcpy.Buffer_analysis(intersectResult,metricConst.bufferOutputName,viewRadius,"","","NONE","", "PLANAR")
+        intermediateList.append(bufferResult)
+        runLandCoverProportions(bufferResult, "ORIG_FID", inLandCoverGrid, _lccName, lccFilePath,
+                            metricsToRun, metricConst.lcpTableName, "30", inLandCoverGrid, 
+                            "AREAFIELDS  -  Add Area Fields for All Land Cover Classes';'QAFIELDS  -  Add Quality Assurance Fields")# 30 if for processing cell size
+        
+        metricsArray = metricsToRun.split("';'")
+    
+        
+        for currentMetrics in metricsArray:
+            metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
+            calculate.belowValue(metricConst.lcpTableName, "p" + metricsShorName, viewThreshold, metricsShorName + metricConst.thresholdFieldSuffix)
+        
+        #table.addJoinCalculateField(metricConst.facilityOutputName, metricConst.lcpTableName, reportingUnitIdField, reportingUnitIdField, reportingUnitIdField)
+        tableWithRUID = arcpy.AddJoin_management(metricConst.lcpTableName, "ORIG_FID", metricConst.facilityOutputName, "OBJECTID", "KEEP_ALL")
+        arcpy.TableToTable_conversion(tableWithRUID, os.path.dirname(outTable), metricConst.lcpTableWithRUID)
+        intermediateList.append(metricConst.lcpTableName)
+        intermediateList.append(tableWithRUID)
+        intermediateList.append(metricConst.lcpTableWithRUID)
+
+        stats = []
+        for currentMetrics in metricsArray:
+            metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
+            stats.append([metricsShorName + metricConst.thresholdFieldSuffix, "Sum"])
+
+        arcpy.Statistics_analysis(metricConst.lcpTableWithRUID, outTable, stats, reportingUnitIdField)
+
+        #Rename the fields in the result table
+        arcpy.AlterField_management(outTable, "FREQUENCY", "fCnt", "fCnt")
+        
+        for currentMetrics in metricsArray:
+            metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
+            oldFieldName = "SUM_" + metricsShorName + metricConst.thresholdFieldSuffix
+            newFieldName = metricsShorName + metricConst.fieldSuffix
+            arcpy.AlterField_management(outTable, oldFieldName, newFieldName, newFieldName)
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        setupAndRestore.standardRestore()
+        if not globalConstants.intermediateName in optionalFieldGroups:
+            for (intermediateResult) in intermediateList:
+                arcpy.Delete_management(intermediateResult)
