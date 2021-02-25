@@ -52,8 +52,8 @@ class flcpConstants(baseMetricConstants):
     totalAreaName = "FLCP_TOTA"
     effectiveAreaName = "FLCP_EFFA"
     excludedAreaName = "FLCP_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultIntegerFieldType,6]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -73,7 +73,7 @@ class flcvConstants(baseMetricConstants):
     effectiveAreaName = "FLCV_EFFA"
     excludedAreaName = "FLCV_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultIntegerFieldType,6]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -287,38 +287,13 @@ class pmConstants(baseMetricConstants):
     excludedValue = -9999
     otherValue = 0
     
-class pwmvConstants(baseMetricConstants):
-    name = "PopulationWithMinimalViews"
-    shortName = "pwmv"
-    fieldPrefix = "mv"
-    fieldSuffix = "_POP"
-    overlapName = ""
-    totalAreaName = ""
-    effectiveAreaName = ""
-    excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
-    qaCheckFieldParameters = []
-    # This metric is comprised of several output fields. Fieldname override option 
-    # is not available to the user   
-    fieldOverrideKey = ""
-    pctSuffix = "_PCT"
-    additionalSuffixes = [pctSuffix]
-    cntField = [fieldPrefix, pctSuffix, "LONG", 10, 0]
-    additionalFields = [cntField]
-    valueCountFieldNames =["RU_POP"]
-    valueCountTableName = shortName+"_populationCnt"
-    viewRasterOutputName = "_MinViewAreaRaster"
-    viewPolygonOutputName = "_MinViewAreaPoly"
-    areaPopRasterOutputName = "_MinViewPopRaster"
-    areaValueCountTableName = "_MinViewPopulation"
-    valueWhenNULL = 0
-    
-class pwpvConstants(baseMetricConstants):
-    name = "PopulationWithPotentialViews"
-    shortName = "pwpv"
-    fieldPrefix = "pv"
-    fieldSuffix = "_POP"
+class plcvConstants(baseMetricConstants):
+    name = "PopulationLandCoverViews"
+    shortName = "plcv"
+    fieldPrefix = ""
+    mvFieldPrefix = ""
+    fieldSuffix = "_WVPOP"
+    wovFieldSuffix = "_WOVPOP"
     overlapName = ""
     totalAreaName = ""
     effectiveAreaName = ""
@@ -329,7 +304,8 @@ class pwpvConstants(baseMetricConstants):
     # This metric is comprised of several output fields. Fieldname override option 
     # is not available to the user  
     fieldOverrideKey = ""
-    pctSuffix = "_PCT"
+    pctSuffix = "_WVPCT"
+    wovPctSuffix = "_WOVPCT"
     additionalSuffixes = [pctSuffix]
     cntField = [fieldPrefix, pctSuffix, "LONG", 10, 0]
     additionalFields = [cntField]
