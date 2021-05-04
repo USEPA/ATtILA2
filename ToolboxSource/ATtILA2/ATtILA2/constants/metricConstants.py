@@ -93,6 +93,22 @@ class flcvConstants(baseMetricConstants):
     lcpPointLayer = shortName+"_tempFacilityPoint"
     flcvResultTable = shortName+"_result"
     
+class gidrConstants(baseMetricConstants):
+    name = "GenerateIntersectionDensityRaster"
+    shortName = "gidr"
+    fieldPrefix = ""
+    fieldSuffix = "IntDen"
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldOverrideKey = ""
+    intersectDensityGridName = shortName+"_IntDen"
+    mergedRoadOutputName = shortName+"_Prepped"
+    unsplitRoadOutputName = shortName+"_UnSplit"
+    roadIntersectOutputName = shortName+"_Intersections"
 
 class gppConstants(baseMetricConstants):
     name = "GetProximityPolygon"

@@ -156,6 +156,15 @@ class rdmToolValidator(BaseValidators.NoLccFileValidator):
 
 '''NoReportingUnitValidator Tools'''    
 
+class gidrToolValidator(BaseValidators.NoReportingUnitValidator):
+    """ ToolValidator for GenerateIntersectionDensityRaster Utility """
+    
+    filterList = gidrConstants.optionalFilter
+#    overrideAttributeName = lccConstants.XmlAttributePmField
+#    fieldPrefix = pmConstants.fieldPrefix
+#    fieldSuffix = pmConstants.fieldSuffix
+    metricShortName = gidrConstants.shortName
+
 class gppToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for GenerateProximityPolygon Utility """
     

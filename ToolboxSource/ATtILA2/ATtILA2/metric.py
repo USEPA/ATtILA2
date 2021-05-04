@@ -2250,3 +2250,8 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
         if not globalConstants.intermediateName in optionalFieldGroups:
             for (intermediateResult) in intermediateList:
                 arcpy.Delete_management(intermediateResult)
+
+
+# def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",
+#                                  cellSize, searchRadius, areaUnits, optionalFieldGroups="#"):
+#     """ Interface for script executing Generate Intersection Density Raster utility """
