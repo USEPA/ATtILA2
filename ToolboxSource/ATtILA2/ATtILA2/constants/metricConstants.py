@@ -105,10 +105,14 @@ class gidrConstants(baseMetricConstants):
     optionalFilter = [gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
     fieldOverrideKey = ""
+    prjRoadLayer = shortName+"_prj"
     intersectDensityGridName = shortName+"_IntDen"
     mergedRoadOutputName = shortName+"_Prepped"
     unsplitRoadOutputName = shortName+"_UnSplit"
     roadIntersectOutputName = shortName+"_Intersections"
+    gidrRoadLayer = shortName+"_Road"
+    gidrRoadSinglePart = shortName+"_SglPrt"
+    dummyFieldName = shortName+"_dummy"
 
 class gppConstants(baseMetricConstants):
     name = "GetProximityPolygon"

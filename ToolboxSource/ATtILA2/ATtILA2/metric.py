@@ -2251,7 +2251,69 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
             for (intermediateResult) in intermediateList:
                 arcpy.Delete_management(intermediateResult)
 
+def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",
+                                  cellSize="#", searchRadius="#", areaUnits="#", optionalFieldGroups="#"):
+    #""" Interface for script executing Generate Intersection Density Raster utility """
+    try:
+        
+        metricConst = metricConstants.gidrConstants()
+        intermediateList = []
 
-# def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",
-#                                  cellSize, searchRadius, areaUnits, optionalFieldGroups="#"):
-#     """ Interface for script executing Generate Intersection Density Raster utility """
+        AddMsg(" project the input road layer to 'USA Contiguous Albers Equal Area Conic': intermediate result is saved as "+ metricConst.prjRoadLayer)
+
+        outCS = arcpy.SpatialReference("USA Contiguous Albers Equal Area Conic") 	
+        arcpy.Project_management(inLineFeature, metricConst.prjRoadLayer, outCS)
+        intermediateList.append(metricConst.prjRoadLayer)
+
+        inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(metricConst.prjRoadLayer, arcpy.env.workspace, metricConst.gidrRoadLayer)
+
+        intermediateList.append(inRoadFeature)
+
+        if mergeLines == "true":
+            if mergeField == "":
+                AddMsg(" add a dummy field and assign value to be 1")
+                classField = metricConst.dummyFieldName
+                arcpy.AddField_management(inRoadFeature,classField,"SHORT")
+                arcpy.CalculateField_management(inRoadFeature,classField,1)
+                AddMsg(" convert Multipart To Singlepart: intermediate result is saved as "+ metricConst.gidrRoadSinglePart)                
+                arcpy.MultipartToSinglepart_management(inRoadFeature, metricConst.gidrRoadSinglePart)
+                intermediateList.append(metricConst.gidrRoadSinglePart)
+                AddMsg(" Merge road: intermediate result is saved as "+ metricConst.mergedRoadOutputName)
+                arcpy.MergeDividedRoads_cartography(metricConst.gidrRoadSinglePart, classField, mergeDistance, metricConst.mergedRoadOutputName)
+                intermediateList.append(metricConst.mergedRoadOutputName)
+
+            else:
+                AddMsg(" convert Multipart To Singlepart: intermediate result is saved as "+ metricConst.gidrRoadSinglePart)
+                arcpy.MultipartToSinglepart_management(inRoadFeature, metricConst.gidrRoadSinglePart)
+                intermediateList.append(metricConst.gidrRoadSinglePart)
+                AddMsg(" Merge road: intermediate result is saved as "+ metricConst.mergedRoadOutputName)
+                arcpy.MergeDividedRoads_cartography(metricConst.gidrRoadSinglePart, mergeField, mergeDistance, metricConst.mergedRoadOutputName)
+                intermediateList.append(metricConst.mergedRoadOutputName)
+            AddMsg(" Unsplit road: intermediate result is saved as "+ metricConst.unsplitRoadOutputName)
+            arcpy.UnsplitLine_management(metricConst.mergedRoadOutputName, metricConst.unsplitRoadOutputName)
+            intermediateList.append(metricConst.unsplitRoadOutputName)
+
+        else:
+            AddMsg(" Unsplit road: intermediate result is saved as "+ metricConst.unsplitRoadOutputName)
+            arcpy.UnsplitLine_management(inRoadFeature, metricConst.unsplitRoadOutputName)
+            intermediateList.append(metricConst.unsplitRoadOutputName)
+        AddMsg(" perform Intersect analysis: intermediate result is saved as "+ metricConst.roadIntersectOutputName)
+        arcpy.Intersect_analysis([metricConst.unsplitRoadOutputName,metricConst.unsplitRoadOutputName], metricConst.roadIntersectOutputName, "ONLY_FID",'',"POINT")
+        intermediateList.append(metricConst.roadIntersectOutputName)
+        AddMsg(" delete identical intersections")
+        arcpy.DeleteIdentical_management(metricConst.roadIntersectOutputName, "Shape")
+
+
+        AddMsg(" perform kernel density: result is saved as "+ metricConst.intersectDensityGridName)
+        den = arcpy.sa.KernelDensity(metricConst.roadIntersectOutputName, "NONE", int(cellSize), int(searchRadius), areaUnits)
+
+        den.save(metricConst.intersectDensityGridName)
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        setupAndRestore.standardRestore()
+        if not globalConstants.intermediateName in optionalFieldGroups:
+            for (intermediateResult) in intermediateList:
+                arcpy.Delete_management(intermediateResult)
