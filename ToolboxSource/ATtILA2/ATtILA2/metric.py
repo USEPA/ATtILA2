@@ -2251,7 +2251,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
             for (intermediateResult) in intermediateList:
                 arcpy.Delete_management(intermediateResult)
 
-def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",
+def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",outPCS="#",
                                   cellSize="#", searchRadius="#", areaUnits="#", optionalFieldGroups="#"):
     #""" Interface for script executing Generate Intersection Density Raster utility """
     try:
@@ -2259,9 +2259,9 @@ def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", merg
         metricConst = metricConstants.gidrConstants()
         intermediateList = []
 
-        AddMsg(" project the input road layer to 'USA Contiguous Albers Equal Area Conic': intermediate result is saved as "+ metricConst.prjRoadLayer)
+        AddMsg(" project the input road layer to '" + outPCS + "': intermediate result is saved as "+ metricConst.prjRoadLayer)
 
-        outCS = arcpy.SpatialReference("USA Contiguous Albers Equal Area Conic") 	
+        outCS = arcpy.SpatialReference(outPCS)
         arcpy.Project_management(inLineFeature, metricConst.prjRoadLayer, outCS)
         intermediateList.append(metricConst.prjRoadLayer)
 
