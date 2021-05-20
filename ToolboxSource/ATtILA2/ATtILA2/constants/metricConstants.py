@@ -337,6 +337,12 @@ class plcvConstants(baseMetricConstants):
     areaValueCountTableName = "_PotentialViewPopulation"
     valueWhenNULL = 0
     burnInGridName = shortName+"_BurnIn"
+    
+class pnfeaConstants(baseMetricConstants):
+    prefix = "NAVTEQ"
+    outNameRoadsWalkable = prefix+"_RdsWalkable"
+    outNameRoadsIntDens = prefix+"_RdsIntDens"
+    outNameRoadsIAC = prefix+"_RdsIAC"
 
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"

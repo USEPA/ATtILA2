@@ -73,7 +73,7 @@ def main(_argv):
     dateStr = d.strftime("%Y%b%d")
     
     outputDir = 'ATtILA_Deployment'
-    toolbox = 'ATtILA2.tbx'
+    toolbox = 'ATtILA v2.tbx'
     readme = 'README.txt'
     tbSource = 'ToolboxSource'
     # pylet = '../pylet'
