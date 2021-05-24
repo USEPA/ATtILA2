@@ -2259,9 +2259,11 @@ def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", merg
         metricConst = metricConstants.gidrConstants()
         intermediateList = []
 
-        AddMsg(" project the input road layer to '" + outPCS + "': intermediate result is saved as "+ metricConst.prjRoadLayer)
 
-        outCS = arcpy.SpatialReference(outPCS)
+        AddMsg(" project the input road layer to user selected projection system: intermediate result is saved as "+ metricConst.prjRoadLayer)
+
+        #outCS = arcpy.SpatialReference(outPCS)
+        outCS = arcpy.SpatialReference(text=outPCS)
         arcpy.Project_management(inLineFeature, metricConst.prjRoadLayer, outCS)
         intermediateList.append(metricConst.prjRoadLayer)
 

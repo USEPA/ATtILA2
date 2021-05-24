@@ -98,6 +98,7 @@ class ProportionsValidator(object):
         self.metricDescription = validatorConstants.metricDescription
         self.noFeaturesMessage = validatorConstants.noFeaturesMessage
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.noProjectionInOutputCS = validatorConstants.noProjectionInOutputCS
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
