@@ -2172,7 +2172,7 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
 
                 
 
-def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runFacilityLandCoverViewsOLD(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                      metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
                      snapRaster="", optionalFieldGroups=""):
     #""" Interface for script executing Facility Land Cover Views Metrics """
@@ -2319,3 +2319,143 @@ def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", merg
         if not globalConstants.intermediateName in optionalFieldGroups:
             for (intermediateResult) in intermediateList:
                 arcpy.Delete_management(intermediateResult)
+                
+
+def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+                     metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
+                     snapRaster="", optionalFieldGroups=""):
+    #""" Interface for script executing Facility Land Cover Views Metrics """
+    try:
+
+        metricConst = metricConstants.flcvConstants()
+        
+        class metricCalcFLCV(metricCalc):
+            """ Subclass that overrides buffering function for the FacilitiesLandCoverViews calculation """
+            def _replaceRUFeatures(self):
+                # check for duplicate ID entries in reporting unit feature. Perform dissolve if found
+                self.duplicateIds = fields.checkForDuplicateValues(self.inReportingUnitFeature, self.reportingUnitIdField)
+                    
+                if self.duplicateIds:
+                    AddMsg("Duplicate ID values found in reporting unit feature. Forming multipart features...")
+                    # Get a unique name with full path for the output features - will default to current workspace:            
+                    self.namePrefix = self.metricConst.shortName + "_FacDissolve"+self.inBufferDistance.split()[0]+"_"
+                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
+                                                                            self.reportingUnitIdField,"","MULTI_PART")
+
+                # Make a temporary facility point layer so that a field of the same name as reportingUnitIdField could be deleted
+                AddMsg("Creating a copy of the Facility feature...")
+                # Get a unique name with full path for the output features - will default to current workspace:
+                self.namePrefix = self.metricConst.facilityCopyName+self.viewRadius.split()[0]+"_"
+                self.inPointFacilityName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.inPointFacilityFeature = arcpy.FeatureClassToFeatureClass_conversion(self.inFacilityFeature, arcpy.env.workspace, os.path.basename(self.inPointFacilityName))
+
+                # Delete all fields from the copied facilities feature
+                AddMsg("Deleting unnecessary fields from copied Facility feature...")
+                self.facilityFields = arcpy.ListFields(self.inPointFacilityFeature)
+                self.deleteFieldList = []
+                for aFld in self.facilityFields:
+                    if aFld.required != True:
+                        self.deleteFieldList.append(aFld.name)
+                utils.fields.deleteFields(self.inPointFacilityFeature, self.deleteFieldList)        
+        
+                # Intersect the point theme with the reporting unit theme to transfer the reporting unit id to the points
+                AddMsg("Assigning reporting unit ID to Facility feature...")
+                # Get a unique name with full path for the output features - will default to current workspace:
+                self.namePrefix = self.metricConst.facilityWithRUIDName+self.viewRadius.split()[0]+"_"
+                self.intersectResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.intersectResult = arcpy.Intersect_analysis([self.inPointFacilityFeature,self.inReportingUnitFeature],self.intersectResultName,"NO_FID","","POINT")
+
+                # Buffer the facility features with the reporting unit IDs to desired distance
+                AddMsg("Generating buffer zones around Facility feature...")
+                # Get a unique name with full path for the output features - will default to current workspace:
+                self.namePrefix = self.metricConst.viewBufferName+self.viewRadius.split()[0]+"_"
+                self.bufferResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.bufferResult = arcpy.Buffer_analysis(self.intersectResult,self.bufferResultName,viewRadius,"","","NONE","", "PLANAR")
+
+                self.inReportingUnitFeature = self.bufferResult
+                
+
+            def _makeAttilaOutTable(self):
+                AddMsg(self.timer.split() + " Constructing facility buffer land cover proportions table")
+                # Internal function to construct the ATtILA metric output table
+                self.facilityIdField = utils.fields.getFieldByName(self.bufferResult, "ORIG_FID")
+                # Get a unique name with full path for the output features - will default to current workspace:
+                self.namePrefix = self.metricConst.lcpTableName+self.viewRadius.split()[0]+"_"
+                self.facilityLCPTable = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                
+                #self.facilityLCPTable = metricConst.lcpTableName
+                self.facilityOptionsList = ["QAFIELDS", "AREAFIELDS"]
+                self.lcpTable, self.metricsFieldnameDict = table.tableWriterByClass(self.facilityLCPTable,
+                                                                                    self.metricsBaseNameList,
+                                                                                    self.facilityOptionsList,
+                                                                                    self.metricConst, self.lccObj,
+                                                                                    self.facilityIdField)
+
+
+            def _makeTabAreaTable(self):
+                AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
+                # Start a unique name with full path for the output table. The TabulateAreaTable routine with make it
+                # unique and handle the Keep Intermediates function:
+                self.namePrefix = self.metricConst.viewTabAreaName+self.viewRadius.split()[0]+"_"
+                # Internal function to generate a zonal tabulate area table
+                self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.facilityIdField.name,
+                                                      self.inLandCoverGrid, self.tableName, self.lccObj)
+
+            
+            def _calculateMetrics(self):
+                AddMsg(self.timer.split() + " Processing the tabulate area table and computing metric values")
+                # Set the outputSpatialRef and zoneAreaDict using the generated facility buffer feature. These objects
+                # are not set in the Housekeeping module as the add QA and Area Fields option is not available in this tool.
+                
+                # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
+                # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
+                # area of the reporting unit's polygon features to store in the zoneAreaDict
+                self.outputSpatialRef = settings.getOutputSpatialReference(self.inLandCoverGrid)
+                # compile a dictionary with key:value pair of ZoneId:ZoneArea
+                self.zoneAreaDict = None
+                self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.facilityIdField.name, self.outputSpatialRef)
+                
+                # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
+                # Default calculation is land cover proportions.  this may be overridden by some metrics.
+                calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.facilityOptionsList,
+                                               self.metricConst, self.facilityIdField, self.facilityLCPTable, self.tabAreaTable,
+                                               self.metricsFieldnameDict, self.zoneAreaDict)
+   
+                
+                
+                calculate.landCoverViews(self.metricsToRun,self.metricConst,self.viewRadius,self.viewThreshold, self.cleanupList, 
+                                         os.path.dirname(self.outTable), self.outTable, self.reportingUnitIdField,
+                                         self.facilityLCPTable, self.intersectResult )
+            
+                    
+        # Create new instance of metricCalc class to contain parameters            
+        flcvCalc = metricCalcFLCV(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+                                  metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+        
+        # Assign class attributes unique to this module.
+        flcvCalc.inFacilityFeature = inFacilityFeature
+        flcvCalc.viewRadius = viewRadius
+        flcvCalc.viewThreshold = viewThreshold
+        flcvCalc.metricsToRun = metricsToRun
+        
+        # Initiate our flexible cleanuplist
+        flcvCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        if flcvCalc.saveIntermediates:
+            flcvCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            flcvCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+
+
+        # Run Calculation
+        flcvCalc.run()
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        if not flcvCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in flcvCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+        setupAndRestore.standardRestore()

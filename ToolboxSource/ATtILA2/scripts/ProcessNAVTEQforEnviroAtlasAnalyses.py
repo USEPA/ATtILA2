@@ -1,4 +1,4 @@
-""" Identify Overlapping Polygons
+""" Process NAVTEQ for EnviroAtlas Analyses
 
     This script is associated with an ArcToolbox script tool.
 """
@@ -6,8 +6,8 @@
 import sys
 import arcpy
 arcpy.env.overwriteOutput = "True"
+from ATtILA2 import errors
 from ATtILA2.utils import parameters
-from ATtILA2.utils import polygons
 from ATtILA2.constants import metricConstants
 overlaplist = []
 flist = []

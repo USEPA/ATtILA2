@@ -1099,6 +1099,7 @@ def percentageValue(inTable, numeratorField, denominatorField, percentField):
     
     # Calculate and record the percent population within view area
     vector.addCalculateField(inTable, percentField, calcExpression, codeBlock)
+    
 def differenceValue(inTable, totalField, subtratorField, resultField):
     # Set up a calculate percentage expression 
     calcExpression = "getValueDifference(!"+totalField+"!,!"+subtratorField+"!)"
@@ -1119,4 +1120,42 @@ def belowValue(inTable, sourceField, threshold, addedField):
     
     # Calculate and record the percent population within view area
     vector.addCalculateFieldInteger(inTable, addedField, calcExpression, codeBlock)
+    
+    
+def landCoverViews(metricsToRun, metricConst, viewRadius, viewThreshold, cleanupList, outPath, outTable,
+                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable):
+    
+    import os 
+    metricsArray = metricsToRun.split("';'")
+    
+    arcpy.AddMessage("Finding facilities with views below threshold limit for selected class(es)...") 
+    for currentMetrics in metricsArray:
+        metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
+        belowValue(facilityLCPTable, "p" + metricsShorName, viewThreshold, metricsShorName + metricConst.thresholdFieldSuffix)
+     
+    tableWithRUID = arcpy.AddJoin_management(facilityLCPTable, "ORIG_FID", facilityRUIDTable, "OBJECTID", "KEEP_ALL")
+    # Get a unique name with full path for the output features - will default to current workspace:
+    namePrefix = metricConst.lcpTableWithRUID+viewRadius.split()[0]+"_"
+    lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"FeatureClass"], cleanupList)
+    lcpTableWithRUIDName = os.path.basename(lcpTableWithRUID)
+    #arcpy.AddMessage("Joining reporting unit IDs to the low threshold table...")
+    arcpy.TableToTable_conversion(tableWithRUID, outPath, lcpTableWithRUIDName)
+ 
+    arcpy.AddMessage("Summarizing facilities with low views by Reporting Unit...")
+    stats = []
+    for currentMetrics in metricsArray:
+        metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
+        stats.append([metricsShorName + metricConst.thresholdFieldSuffix, "Sum"])
+ 
+    arcpy.Statistics_analysis(lcpTableWithRUID, outTable, stats, reportingUnitIdField)
+ 
+    #Rename the fields in the result table
+    arcpy.AlterField_management(outTable, "FREQUENCY", "Count", "Count")
+     
+    for currentMetrics in metricsArray:
+        metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
+        oldFieldName = "SUM_" + metricsShorName + metricConst.thresholdFieldSuffix
+        #newFieldName = metricsShorName + metricConst.flcvFieldSuffix + viewThreshold
+        newFieldName = "%s%s%s" % (metricConst.flcvFieldPrefix, metricsShorName, viewThreshold)
+        arcpy.AlterField_management(outTable, oldFieldName, newFieldName, newFieldName)
 

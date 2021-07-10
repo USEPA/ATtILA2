@@ -66,6 +66,41 @@ class flcpConstants(baseMetricConstants):
 class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
     shortName = "flcv"
+    fieldSuffix = ""
+    fieldPrefix = "p"
+    overlapName = "FLCV_OVER"
+    totalAreaName = "FLCV_TOTA"
+    effectiveAreaName = "FLCV_EFFA"
+    excludedAreaName = "FLCV_EXCA"
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = [
+        [overlapName, gc.defaultIntegerFieldType, 6],
+        [totalAreaName, gc.defaultAreaFieldType, 15],
+        [effectiveAreaName, gc.defaultAreaFieldType, 15],
+        [excludedAreaName, gc.defaultAreaFieldType, 15]
+        ]
+    fieldOverrideKey = shortName + gc.fieldOverrideName
+    flcvFieldSuffix = "_fLow"
+    flcvFieldPrefix = "Low_"
+    flcvFieldParameters = [flcvFieldPrefix, flcvFieldSuffix, gc.defaultIntegerFieldType, 6, 1]
+    facilityCountSuffix = "_fCnt"
+    additionalSuffixes = [facilityCountSuffix]
+    facilityCountField = ["", facilityCountSuffix, "LONG", 10, 0]
+    additionalFields = [facilityCountField]
+    thresholdFieldSuffix = "_Below"
+    facilityCopyName = shortName+"_Facility"
+    facilityWithRUIDName = shortName+"_FacilityRUID"
+    viewBufferName = shortName+"_ViewBuffer"
+    viewTabAreaName = shortName+"_ViewTabArea"
+    lcpTableName = shortName+"_ViewLCP"
+    lcpTableWithRUID = shortName+"_ViewRUID"
+    lcpPointLayer = shortName+"_tempFacilityPoint"
+    #flcvResultTable = shortName+"_result"
+    
+class flcvConstantsOLD(baseMetricConstants):
+    name = "FacilityLandCoverViews"
+    shortName = "flcv"
     fieldSuffix = "_fLow"
     fieldPrefix = ""
     overlapName = "FLCV_OVER"
@@ -73,7 +108,7 @@ class flcvConstants(baseMetricConstants):
     effectiveAreaName = "FLCV_EFFA"
     excludedAreaName = "FLCV_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultIntegerFieldType,6]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultIntegerFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
