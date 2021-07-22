@@ -2127,7 +2127,7 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
             # Calculate the extracted population for each reporting unit
             AddMsg(timer.split() + " Calculating population within minimal-view areas for each reporting unit")
             namePrefix = m.upper()+metricConst.areaValueCountTableName
-            areaPopTable = files.nameIntermediateFile([namePrefix + "","FeatureClass"],cleanupList)
+            areaPopTable = files.nameIntermediateFile([namePrefix + "","Dataset"],cleanupList)
             arcpy.sa.ZonalStatisticsAsTable(inReportingUnitFeature,reportingUnitIdField,viewPopGrid,areaPopTable,"DATA","SUM")
             
             # reset the environments
@@ -2328,6 +2328,8 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
     try:
 
         metricConst = metricConstants.flcvConstants()
+        # append the view threshold value to the field suffix
+        metricConst.fieldParameters[1] = metricConst.fieldSuffix + viewThreshold
         
         class metricCalcFLCV(metricCalc):
             """ Subclass that overrides buffering function for the FacilitiesLandCoverViews calculation """
@@ -2344,14 +2346,14 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                                                                             self.reportingUnitIdField,"","MULTI_PART")
 
                 # Make a temporary facility point layer so that a field of the same name as reportingUnitIdField could be deleted
-                AddMsg("Creating a copy of the Facility feature...")
+                AddMsg(self.timer.split() + " Creating a copy of the Facility feature...")
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityCopyName+self.viewRadius.split()[0]+"_"
                 self.inPointFacilityName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 self.inPointFacilityFeature = arcpy.FeatureClassToFeatureClass_conversion(self.inFacilityFeature, arcpy.env.workspace, os.path.basename(self.inPointFacilityName))
 
                 # Delete all fields from the copied facilities feature
-                AddMsg("Deleting unnecessary fields from copied Facility feature...")
+                AddMsg(self.timer.split() + " Deleting unnecessary fields from copied Facility feature...")
                 self.facilityFields = arcpy.ListFields(self.inPointFacilityFeature)
                 self.deleteFieldList = []
                 for aFld in self.facilityFields:
@@ -2360,14 +2362,14 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                 utils.fields.deleteFields(self.inPointFacilityFeature, self.deleteFieldList)        
         
                 # Intersect the point theme with the reporting unit theme to transfer the reporting unit id to the points
-                AddMsg("Assigning reporting unit ID to Facility feature...")
+                AddMsg(self.timer.split() + " Assigning reporting unit ID to copied Facility feature...")
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityWithRUIDName+self.viewRadius.split()[0]+"_"
                 self.intersectResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 self.intersectResult = arcpy.Intersect_analysis([self.inPointFacilityFeature,self.inReportingUnitFeature],self.intersectResultName,"NO_FID","","POINT")
 
                 # Buffer the facility features with the reporting unit IDs to desired distance
-                AddMsg("Generating buffer zones around Facility feature...")
+                AddMsg(self.timer.split() + " Generating buffer zones around copied Facility features...")
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.viewBufferName+self.viewRadius.split()[0]+"_"
                 self.bufferResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
@@ -2378,55 +2380,75 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
 
             def _makeAttilaOutTable(self):
                 AddMsg(self.timer.split() + " Constructing facility buffer land cover proportions table")
-                # Internal function to construct the ATtILA metric output table
-                self.facilityIdField = utils.fields.getFieldByName(self.bufferResult, "ORIG_FID")
-                # Get a unique name with full path for the output features - will default to current workspace:
-                self.namePrefix = self.metricConst.lcpTableName+self.viewRadius.split()[0]+"_"
-                self.facilityLCPTable = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                # Construct two tables: 
+                # 1) a land cover proportions table for individual facility buffer zones, and
+                # 2) a metric output table
                 
-                #self.facilityLCPTable = metricConst.lcpTableName
-                self.facilityOptionsList = ["QAFIELDS", "AREAFIELDS"]
-                self.lcpTable, self.metricsFieldnameDict = table.tableWriterByClass(self.facilityLCPTable,
+                # Get a unique name with full path for the land cover proportions table - will default to current workspace:
+                self.namePrefix = self.metricConst.lcpTableName+self.viewRadius.split()[0]+"_"
+                self.facilityLCPTable = utils.files.nameIntermediateFile([self.namePrefix,"Dataset"], flcvCalc.cleanupList)
+                
+                # add QA fields and class area fields to the land cover proportions table
+                self.facilityOptionsList = ["QAFIELDS"]
+                
+                # tag the facility ID field for the land cover proportions table
+                self.facilityIdField = utils.fields.getFieldByName(self.bufferResult, "ORIG_FID")
+                
+                # Save the output metric field name parameters and replace them with the land cover proportions field name parameters
+                self.oldFieldParameters = self.metricConst.fieldParameters
+                self.metricConst.fieldParameters = self.metricConst.lcpFieldParameters
+                
+                # Construct the land cover proportions table
+                self.lcpTable, self.lcpMetricsFieldnameDict = table.tableWriterByClass(self.facilityLCPTable,
                                                                                     self.metricsBaseNameList,
                                                                                     self.facilityOptionsList,
                                                                                     self.metricConst, self.lccObj,
                                                                                     self.facilityIdField)
+                # Restore the output metric field name parameters 
+                self.metricConst.fieldParameters = self.oldFieldParameters
+                
+                # Construct the ATtILA metric output table
+                AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
+                # Internal function to construct the ATtILA metric output table
+                self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
+                                                                                  self.metricsBaseNameList,
+                                                                                  self.optionalGroupsList,
+                                                                                  self.metricConst, self.lccObj,
+                                                                                  self.outIdField)
+                
+                # Add an additional field for the facility counts within each reporting unit. Used AddFields so that the 
+                # field properties could be defined and retrieved from the metric constants. 
+                arcpy.management.AddFields(self.newTable, self.metricConst.singleFields)
 
 
             def _makeTabAreaTable(self):
-                AddMsg(self.timer.split() + " Generating a zonal tabulate area table")
-                # Start a unique name with full path for the output table. The TabulateAreaTable routine with make it
-                # unique and handle the Keep Intermediates function:
-                self.namePrefix = self.metricConst.viewTabAreaName+self.viewRadius.split()[0]+"_"
-                # Internal function to generate a zonal tabulate area table
+                AddMsg(self.timer.split() + " Generating a zonal tabulate area table for view buffer areas")
+                # Make a tabulate area table. Use the facility id field as the Zone field to calculate values for each
+                # facility buffer area instead of the reporting unit as a whole. 
                 self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.facilityIdField.name,
                                                       self.inLandCoverGrid, self.tableName, self.lccObj)
 
             
             def _calculateMetrics(self):
                 AddMsg(self.timer.split() + " Processing the tabulate area table and computing metric values")
-                # Set the outputSpatialRef and zoneAreaDict using the generated facility buffer feature. These objects
-                # are not set in the Housekeeping module as the add QA and Area Fields option is not available in this tool.
+                # Perform some preliminary housekeeping steps. These steps will not be performed in the normal Housekeeping
+                # routine as the add QA and Area Fields options which trigger their creation are not available in the 
+                # tool's user dialog box. See the overall metricCalc Class for more detail about Housekeeping.
                 
-                # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
-                # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
-                # area of the reporting unit's polygon features to store in the zoneAreaDict
+                # Set the outputSpatialRef and zoneAreaDict using the generated facility buffer feature.
                 self.outputSpatialRef = settings.getOutputSpatialReference(self.inLandCoverGrid)
-                # compile a dictionary with key:value pair of ZoneId:ZoneArea
                 self.zoneAreaDict = None
                 self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.facilityIdField.name, self.outputSpatialRef)
                 
-                # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-                # Default calculation is land cover proportions.  this may be overridden by some metrics.
+                # Generate a table of land cover proportions within each facility's view area.
                 calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.facilityOptionsList,
                                                self.metricConst, self.facilityIdField, self.facilityLCPTable, self.tabAreaTable,
-                                               self.metricsFieldnameDict, self.zoneAreaDict)
+                                               self.lcpMetricsFieldnameDict, self.zoneAreaDict)
    
-                
-                
-                calculate.landCoverViews(self.metricsToRun,self.metricConst,self.viewRadius,self.viewThreshold, self.cleanupList, 
-                                         os.path.dirname(self.outTable), self.outTable, self.reportingUnitIdField,
-                                         self.facilityLCPTable, self.intersectResult )
+                # Take the land cover proportions table and count the number of facilities that have low views of selected land cover classes.                        
+                calculate.landCoverViews(self.metricsBaseNameList,self.metricConst,self.viewRadius,self.viewThreshold, self.cleanupList, 
+                                         self.outTable, self.newTable, self.reportingUnitIdField,
+                                         self.facilityLCPTable, self.intersectResult, self.metricsFieldnameDict,self.lcpMetricsFieldnameDict)
             
                     
         # Create new instance of metricCalc class to contain parameters            

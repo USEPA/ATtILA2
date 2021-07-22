@@ -67,7 +67,7 @@ class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
     shortName = "flcv"
     fieldSuffix = ""
-    fieldPrefix = "p"
+    fieldPrefix = "Low_"
     overlapName = "FLCV_OVER"
     totalAreaName = "FLCV_TOTA"
     effectiveAreaName = "FLCV_EFFA"
@@ -80,23 +80,21 @@ class flcvConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
-    fieldOverrideKey = shortName + gc.fieldOverrideName
-    flcvFieldSuffix = "_fLow"
-    flcvFieldPrefix = "Low_"
-    flcvFieldParameters = [flcvFieldPrefix, flcvFieldSuffix, gc.defaultIntegerFieldType, 6, 1]
-    facilityCountSuffix = "_fCnt"
-    additionalSuffixes = [facilityCountSuffix]
-    facilityCountField = ["", facilityCountSuffix, "LONG", 10, 0]
-    additionalFields = [facilityCountField]
+    #fieldOverrideKey = shortName + gc.fieldOverrideName
+    lcpFieldSuffix = ""
+    lcpFieldPrefix = "p"
+    lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultIntegerFieldType, 6, 1]
     thresholdFieldSuffix = "_Below"
     facilityCopyName = shortName+"_Facility"
     facilityWithRUIDName = shortName+"_FacilityRUID"
     viewBufferName = shortName+"_ViewBuffer"
-    viewTabAreaName = shortName+"_ViewTabArea"
     lcpTableName = shortName+"_ViewLCP"
-    lcpTableWithRUID = shortName+"_ViewRUID"
-    lcpPointLayer = shortName+"_tempFacilityPoint"
-    #flcvResultTable = shortName+"_result"
+    lcpTableWithRUID = shortName+"_ViewLCP_RUID"
+    statsResultTable = shortName+"_ViewStats"
+    facilityCountFieldName = "FAC_Count"
+    facilityCountField = [facilityCountFieldName,"LONG",None, 10]
+    singleFields = [facilityCountField]
+
     
 class flcvConstantsOLD(baseMetricConstants):
     name = "FacilityLandCoverViews"

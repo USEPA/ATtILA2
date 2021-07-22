@@ -37,7 +37,7 @@ class flcvToolValidator(BaseValidators.ProportionsValidator):
     """ToolValidator for Facility Land Cover Views"""
       
     filterList = flcvConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeLcpField
+    #overrideAttributeName = lccConstants.XmlAttributeFlcvField
     fieldPrefix = flcvConstants.fieldPrefix
     fieldSuffix = flcvConstants.fieldSuffix
     metricShortName = flcvConstants.shortName 

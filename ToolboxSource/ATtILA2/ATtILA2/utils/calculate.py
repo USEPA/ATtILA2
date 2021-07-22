@@ -1120,10 +1120,92 @@ def belowValue(inTable, sourceField, threshold, addedField):
     
     # Calculate and record the percent population within view area
     vector.addCalculateFieldInteger(inTable, addedField, calcExpression, codeBlock)
+        
+
+def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,
+                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict):
     
+    import os 
     
-def landCoverViews(metricsToRun, metricConst, viewRadius, viewThreshold, cleanupList, outPath, outTable,
-                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable):
+    arcpy.AddMessage("Finding facilities with views below threshold limit for selected class(es)...")
+    for mBaseName in metricsBaseNameList:
+        # belowValue(inTable, sourceField, threshold, addedField)
+        belowValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + metricConst.thresholdFieldSuffix)
+
+    # attach the reporting unit id's to the land cover proportions table by use of a join
+    tableWithRUID = arcpy.AddJoin_management(facilityLCPTable, "ORIG_FID", facilityRUIDTable, "OBJECTID", "KEEP_ALL")
+    
+    # Make the join permanent by saving the table to a new file
+    # Get a unique name with full path for the output features - will default to current workspace:
+    namePrefix = metricConst.lcpTableWithRUID+viewRadius.split()[0]+"_"
+    lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
+    arcpy.TableToTable_conversion(tableWithRUID, os.path.dirname(facilityLCPTable), os.path.basename(lcpTableWithRUID))
+ 
+    arcpy.AddMessage("Summarizing facilities with low views by Reporting Unit...")
+    stats = []
+    for mBaseName in metricsBaseNameList:
+        stats.append([mBaseName + metricConst.thresholdFieldSuffix, "Sum"])
+    
+    # Get a unique name with full path for the output features - will default to current workspace:
+    namePrefix = metricConst.statsResultTable+viewRadius.split()[0]+"_"
+    statsResultTable = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
+    
+    arcpy.Statistics_analysis(lcpTableWithRUID, statsResultTable, stats, reportingUnitIdField)
+
+###  This commented out section can be used if INFO tables are not an option for ATtILA metric tables  ###  
+#    #Rename the fields in the result table
+#     cntFldName = metricConst.facilityCountFieldName
+#     arcpy.AlterField_management(statsResultTable, "FREQUENCY", cntFldName, cntFldName)
+#      
+#     for mBaseName in metricsBaseNameList:
+#         oldFieldName = "SUM_" + mBaseName + metricConst.thresholdFieldSuffix
+#         newFieldName = metricsFieldnameDict[mBaseName][0]
+#         arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
+#    
+#     arcpy.TableToTable_conversion(statsResultTable,os.path.dirname(outTable),os.path.basename(outTable))
+
+    # Use the try: finally: section of code when INFO tables are possible as outputs.
+    try:
+        # Create the search cursor to query the contents of the BELOW THRESHOLD statistics table
+        inTableRows = arcpy.SearchCursor(statsResultTable)
+        
+        # create the insert cursor to add data to the output table
+        outTableRows = arcpy.InsertCursor(newTable)        
+        
+        for inRow in inTableRows:
+            # initiate a row to add to the metric output table
+            outTableRow = outTableRows.newRow()
+            
+            # set the reporting unit id value in the output row
+            outTableRow.setValue(reportingUnitIdField, inRow.getValue(reportingUnitIdField))
+   
+            # set the number of facilities in the reporting unit in the output row 
+            outTableRow.setValue(metricConst.facilityCountFieldName, inRow.getValue("FREQUENCY"))
+            
+            # set the number of facilities in the reporting unit with below threshold views in the output row
+            # do this for each selected metric class 
+            for mBaseName in metricsBaseNameList:
+                metricFieldName = metricsFieldnameDict[mBaseName][0]
+                statsFieldName = "SUM_" + mBaseName + metricConst.thresholdFieldSuffix
+                outTableRow.setValue(metricFieldName, inRow.getValue(statsFieldName))
+   
+            # commit the row to the output table
+            outTableRows.insertRow(outTableRow)
+                
+    finally:
+        
+        # delete cursor and row objects to remove locks on the data
+        try:
+            del outTableRows
+            del outTableRow
+            del inRow
+            del inTableRows
+        except:
+            pass
+
+
+def landCoverViewsOLD(metricsToRun, metricConst, viewRadius, viewThreshold, cleanupList, outPath, outTable,
+                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict):
     
     import os 
     metricsArray = metricsToRun.split("';'")
@@ -1131,14 +1213,14 @@ def landCoverViews(metricsToRun, metricConst, viewRadius, viewThreshold, cleanup
     arcpy.AddMessage("Finding facilities with views below threshold limit for selected class(es)...") 
     for currentMetrics in metricsArray:
         metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
-        belowValue(facilityLCPTable, "p" + metricsShorName, viewThreshold, metricsShorName + metricConst.thresholdFieldSuffix)
+        #belowValue(facilityLCPTable, "p" + metricsShorName, viewThreshold, metricsShorName + metricConst.thresholdFieldSuffix)
+        belowValue(facilityLCPTable, metricsFieldnameDict[metricsShorName][0], viewThreshold, metricsShorName + metricConst.thresholdFieldSuffix)
      
     tableWithRUID = arcpy.AddJoin_management(facilityLCPTable, "ORIG_FID", facilityRUIDTable, "OBJECTID", "KEEP_ALL")
     # Get a unique name with full path for the output features - will default to current workspace:
     namePrefix = metricConst.lcpTableWithRUID+viewRadius.split()[0]+"_"
     lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"FeatureClass"], cleanupList)
     lcpTableWithRUIDName = os.path.basename(lcpTableWithRUID)
-    #arcpy.AddMessage("Joining reporting unit IDs to the low threshold table...")
     arcpy.TableToTable_conversion(tableWithRUID, outPath, lcpTableWithRUIDName)
  
     arcpy.AddMessage("Summarizing facilities with low views by Reporting Unit...")
@@ -1156,6 +1238,5 @@ def landCoverViews(metricsToRun, metricConst, viewRadius, viewThreshold, cleanup
         metricsShorName = currentMetrics.split(globalConstants.descriptionDelim)[0]
         oldFieldName = "SUM_" + metricsShorName + metricConst.thresholdFieldSuffix
         #newFieldName = metricsShorName + metricConst.flcvFieldSuffix + viewThreshold
-        newFieldName = "%s%s%s" % (metricConst.flcvFieldPrefix, metricsShorName, viewThreshold)
+        newFieldName = "%s%s%s" % (metricConst.flowFieldPrefix, metricsShorName, viewThreshold)
         arcpy.AlterField_management(outTable, oldFieldName, newFieldName, newFieldName)
-
