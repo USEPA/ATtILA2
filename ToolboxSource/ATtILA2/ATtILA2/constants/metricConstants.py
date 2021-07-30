@@ -186,7 +186,7 @@ class lcospConstants(baseMetricConstants):
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
 
-class lcpConstants(baseMetricConstants):
+class lcpORIGINALConstants(baseMetricConstants):
     name = "LandCoverProportions"
     shortName = "lcp"
     fieldPrefix = "p"
@@ -205,9 +205,9 @@ class lcpConstants(baseMetricConstants):
         ]   
     fieldOverrideKey = shortName + gc.fieldOverrideName
     
-class lcppcConstants(baseMetricConstants):
+class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"
-    shortName = "lcppc"
+    shortName = "lcp"
     fieldPrefix = "p"
     fieldSuffix = ""
     overlapName = shortName+"_OVER"
@@ -222,8 +222,7 @@ class lcppcConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]   
-    fieldOverrideKey = "lcp" + gc.fieldOverrideName #use the same field name override as the LCP tool
-    #fieldOverrideKey = shortName + gc.fieldOverrideName
+    fieldOverrideKey = shortName + gc.fieldOverrideName
     perCapitaSuffix = "_PC"
     meterSquaredSuffix = "_M2"
     additionalSuffixes = [perCapitaSuffix, meterSquaredSuffix]

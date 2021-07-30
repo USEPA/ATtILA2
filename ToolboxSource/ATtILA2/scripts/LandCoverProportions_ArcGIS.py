@@ -11,13 +11,13 @@ from ATtILA2.utils import parameters
 
 
 def main(_argv):
+    
     # Script arguments
-    inputArguments = parameters.getParametersAsText([0, 2])
+    inputArguments = parameters.getParametersAsText([0, 2, 8])
+    
     metric.runLandCoverProportions(*inputArguments)
-
     
     
 if __name__ == "__main__":
-
     main(sys.argv)
     

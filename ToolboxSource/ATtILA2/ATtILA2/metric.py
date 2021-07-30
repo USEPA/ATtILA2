@@ -152,7 +152,7 @@ class metricCalc:
             del self.tabAreaTable
 
 
-def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runLandCoverProportionsORIGINAL(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics """
 
@@ -172,17 +172,17 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         setupAndRestore.standardRestore()
 
 
-def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                                      metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
                                      snapRaster, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
     
     try:
         # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.lcppcConstants()
+        metricConst = metricConstants.lcpConstants()
         
         # Create new subclass of metric calculation
-        class metricCalcLCPPC(metricCalc):        
+        class metricCalcLCP(metricCalc):        
         
             def _makeAttilaOutTable(self):
                 AddMsg(self.timer.split() + " Constructing the ATtILA metric output table")
@@ -205,10 +205,10 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
         
             def _calculateMetrics(self):
                 # Initiate our flexible cleanuplist
-                if lcppcCalc.saveIntermediates:
-                    lcppcCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                if lcpCalc.saveIntermediates:
+                    lcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
                 else:
-                    lcppcCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                    lcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
                     
                 self.zonePopulationDict = None
                 if perCapitaYN == "true":
@@ -244,14 +244,14 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
 
         
         # Create new instance of metricCalc class to contain parameters
-        lcppcCalc = metricCalcLCPPC(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
+        lcpCalc = metricCalcLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
         
         # Assign class attributes unique to this module.
-        lcppcCalc.perCapitaYN = perCapitaYN
-        lcppcCalc.inCensusDataset = inCensusDataset
-        lcppcCalc.inPopField = inPopField
-        lcppcCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        lcpCalc.perCapitaYN = perCapitaYN
+        lcpCalc.inCensusDataset = inCensusDataset
+        lcpCalc.inPopField = inPopField
+        lcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
         # see what linear units are used in the tabulate area table
         outputLinearUnits = settings.getOutputLinearUnits(inLandCoverGrid)
@@ -263,16 +263,16 @@ def runLandCoverProportionsPerCapita(inReportingUnitFeature, reportingUnitIdFiel
             raise errors.attilaException(errorConstants.linearUnitConversionError)
 
         # Set the conversion factor as a class attribute
-        lcppcCalc.conversionFactor = conversionFactor        
+        lcpCalc.conversionFactor = conversionFactor        
         
         # Run Calculation
-        lcppcCalc.run()
+        lcpCalc.run()
     except Exception as e:
         errors.standardErrorHandling(e)
 
     finally:
-        if not lcppcCalc.cleanupList[0] == "KeepIntermediates":
-            for (function,arguments) in lcppcCalc.cleanupList:
+        if not lcpCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in lcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         setupAndRestore.standardRestore()

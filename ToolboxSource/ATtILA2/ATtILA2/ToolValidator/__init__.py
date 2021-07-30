@@ -51,7 +51,7 @@ class lcospToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = lcospConstants.fieldSuffix
     metricShortName = lcospConstants.shortName
     
-class lcpToolValidator(BaseValidators.ProportionsValidator):
+class lcpORIGINALToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
     
     filterList = lcpConstants.optionalFilter
@@ -60,14 +60,14 @@ class lcpToolValidator(BaseValidators.ProportionsValidator):
     fieldSuffix = lcpConstants.fieldSuffix    
     metricShortName = lcpConstants.shortName 
     
-class lcppcToolValidator(BaseValidators.ProportionsValidator):
+class lcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
     
-    filterList = lcppcConstants.optionalFilter
+    filterList = lcpConstants.optionalFilter
     overrideAttributeName = lccConstants.XmlAttributeLcpField
-    fieldPrefix = lcppcConstants.fieldPrefix
-    fieldSuffix = lcppcConstants.fieldSuffix    
-    metricShortName = lcppcConstants.shortName 
+    fieldPrefix = lcpConstants.fieldPrefix
+    fieldSuffix = lcpConstants.fieldSuffix    
+    metricShortName = lcpConstants.shortName 
 
 class pmToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for PatchMetrics """
