@@ -1748,6 +1748,7 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
 
         workDir = arcpy.env.workspace
         if (workDir[-4:] == ".gdb"):
+            # get the folder that contains the geodatabase
             workDir = '\\'.join(workDir.split('\\')[0:-1])
         
         # Process the Land Cover Classification XML
@@ -1779,10 +1780,11 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
         
         # Check if the input land cover raster is too large to produce the output polygon feature without splitting it first
         splitRaster = True
+        maxSplitValue = 40000 #original value is 40000, 500 is to test the very small raster data, 20000 is to test FCA_MULC.tif
         columns = arcpy.GetRasterProperties_management(inLandCoverGrid, 'COLUMNCOUNT').getOutput(0)
-        xsplit = int(float(columns) / 40000) + 1 #original value is 40000, 500 is to test the very small raster data, 20000 is to test FCA_MULC.tif
+        xsplit = int(float(columns) / maxSplitValue) + 1 
         rows = arcpy.GetRasterProperties_management(inLandCoverGrid, 'ROWCOUNT').getOutput(0)
-        ysplit = int (float(rows) / 40000) + 1
+        ysplit = int (float(rows) / maxSplitValue) + 1
         
         if xsplit*ysplit == 1:
             splitRaster = False
@@ -1804,11 +1806,13 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
         
         # If necessary, generate a grid of excluded areas (e.g., water bodies) to be burnt into the proximity grid 
         # This only needs to be done once regardless of the number of requested class proximity outputs  
+        burnInGrid = None
         if burnIn == "true":
             
             if len(excludedValuesList) == 0:
-                AddMsg("No excluded values in selected Land Cover Classification file. No BURN IN areas will be processed.")
+                arcpy.AddWarning("No excluded values in selected Land Cover Classification file. No BURN IN areas will be processed.")
                 burnInGrid = None
+                burnIn = False
             else:
                 AddMsg("Processing BURN IN areas...")
                 # create class (value = 1) / other (value = 3) / excluded grid (value = 2) raster
@@ -1839,9 +1843,7 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     burnInGrid.save(scratchName)
                     AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-                    AddMsg(timer.split() + " before time delay, burnInGrid.catalogPath:" +  burnInGrid.catalogPath)
-                    time.sleep(10)
-                    AddMsg(timer.split() + " after time delay, burnInGrid.catalogPath:" +  burnInGrid.catalogPath)  
+
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
             # get the grid codes for this specified metric
@@ -1849,6 +1851,7 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
 
             # process the inLandCoverGrid for the selected class
             AddMsg(("Processing {0} proximity grid...").format(m.upper()))
+            time.sleep(1) # A small pause is needed here between quick successive timer calls
             
             proximityGrid = raster.getProximityWithBurnInGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, 
                                                     inNeighborhoodSize, burnIn, burnInGrid, timer, rngRemap)
@@ -1859,61 +1862,53 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                 scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                 proximityGrid.save(scratchName)
                 AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-                AddMsg(timer.split() + " before time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)
-                time.sleep(100)
-                AddMsg(timer.split() + " after time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)                              
+
             # convert proximity raster to polygon
+            time.sleep(1) # A small pause is needed here between quick successive timer calls
             AddMsg(timer.split() + " Converting proximity raster to a polygon feature")
-            
+                        
             # Split the Raster As Needs, Process Each Piece
             if splitRaster == False:
-                AddMsg(("xsplit = {0} and ysplit = {1}").format(xsplit, ysplit))
-                #arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
-                if saveIntermediates:
-                    arcpy.conversion.RasterToPolygon(proximityGrid.catalogPath,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
-                else:
-                    arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
+                arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
             else:
                 xy = (xsplit * ysplit)
+                time.sleep(1) # A small pause is needed here between quick successive timer calls
+                AddMsg(("{0} Splitting the raster into pieces of no more than {1} x {1} pixels").format(timer.split(),str(maxSplitValue)))
 
-                AddMsg(timer.split() + " Spliting the raster into pieces of no more than 40,000x40,000 pixels")
-
-                AddMsg(timer.split() + " before time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)
-                time.sleep(200)
-                AddMsg(timer.split() + " after time delay, proximityGrid.catalogPath:" +  proximityGrid.catalogPath)
-                if saveIntermediates:
-                    arcpy.SplitRaster_management(proximityGrid.catalogPath, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
-                else:
-                    arcpy.SplitRaster_management(proximityGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
-                AddMsg(timer.split() + " finish Spliting the raster into pieces of no more than 40,000x40,000 pixels")
-    
+                # Output destination has to be a folder; not a geodatabase
+                arcpy.SplitRaster_management(proximityGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
+                    
                 """ For each raster: """
+                AddMsg(timer.split() + " Converting each raster piece to a polygon feature, and dissolving on the gridcode")
                 for Chunk in range(0,xy):
                     try:
-                        result = float(arcpy.GetRasterProperties_management(workDir + '/prox_' + str(Chunk), 'MEAN').getOutput(0))
+                        #result = float(arcpy.GetRasterProperties_management(workDir + '/prox_' + str(Chunk), 'MEAN').getOutput(0))
+                        result = float(arcpy.GetRasterProperties_management('prox_' + str(Chunk), 'MEAN').getOutput(0))
                         # If the raster piece has data:
                         if (result != 0):
                             #""" Convert Raster to Polygon """
-                            #arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
-                            arcpy.RasterToPolygon_conversion(workDir + '/prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
+                            arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
+                            #arcpy.RasterToPolygon_conversion(workDir + '/prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
 
                             #""" Dissolve the polygons """
                             arcpy.Dissolve_management('tempPoly_' + str(Chunk), 'proxD1_' + str(Chunk), 'gridcode')
-                            AddMsg(timer.split() + " Processed Chunk " + str(Chunk) + " / " + str(xy))
+                            arcpy.Delete_management('tempPoly_'+str(Chunk))
+                            AddMsg(timer.split() + " Processed Chunk " + str(Chunk + 1) + " / " + str(xy))
                         else:
                             pass
                     except:
                         pass
       
                 """ Merge the polygons back together """
+                time.sleep(1) # A small pause is needed here between quick successive timer calls
+                AddMsg(timer.split() + " Merging the processed polygons together...")
                 fcList = arcpy.ListFeatureClasses('proxD1*')
-                #polygonFeature = arcpy.Merge_management(fcList, 'proxDiss')
                 arcpy.Merge_management(fcList,"tempPoly")
         
             # get output name for dissolve
             namePrefix = m.upper()+metricConst.proxPolygonOutputName
-            proxPolygonName = arcpy.CreateScratchName(namePrefix, "", "FeatureDataset")
-            #arcpy.Dissolve_management(polygonFeature,proxPolygonName,"gridcode")
+            proxPolygonName = arcpy.CreateScratchName(namePrefix, "", "FeatureClass")
+            AddMsg(("{0} Dissolving proximity polygon feature: {1}...").format(timer.split(),os.path.basename(proxPolygonName)))
             arcpy.Dissolve_management("tempPoly",proxPolygonName,"gridcode")
             
             classFieldName = m.capitalize()+metricConst.fieldSuffix
@@ -1922,10 +1917,14 @@ def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
             arcpy.Delete_management("tempPoly")
 
             if splitRaster != False:
+                AddMsg(timer.split() + " Removing Chunk files...")
                 xy = (xsplit * ysplit)
                 for Chunk in range(0,xy):
                     try:
+                        arcpy.Delete_management('proxD1_' + str(Chunk))
+
                         arcpy.Delete_management(workDir + '/prox_' + str(Chunk))
+
                     except:
                         pass  
             

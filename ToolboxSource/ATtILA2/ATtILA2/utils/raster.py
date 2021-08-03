@@ -3,7 +3,7 @@
 """
 import arcpy
 import os
-from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull
+from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull
 from . import *
 from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
@@ -449,7 +449,11 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
         delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
         whereClause = delimitedVALUE+" = 0"
         proximityGrid = Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
-           
+    else:
+        # pare back the extent of the proximityGrid to the edges of the input land cover grid
+        AddMsg(("{0} Trimming proximity raster to Land cover grid extent...").format(timer.split()))
+        proximityGrid = SetNull(IsNull(reclassGrid) == 1, proximityGrid)
+    
     return proximityGrid
 
 def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, timer):
