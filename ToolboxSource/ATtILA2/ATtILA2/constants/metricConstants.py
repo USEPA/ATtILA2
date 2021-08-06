@@ -131,6 +131,23 @@ class gppConstants(baseMetricConstants):
     fieldOverrideKey = ""
     burnInGridName = shortName+"_BurnIn"
     proxPolygonOutputName = "_Prox"
+    
+class gpzConstants(baseMetricConstants):
+    name = "GetProximityPolygon"
+    shortName = "gpz"
+    fieldPrefix = ""
+    fieldSuffix = "Prox"
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldOverrideKey = ""
+    burnInGridName = shortName+"_BurnIn"
+    proxPolygonOutputName = "_ProxPoly"
+    proxRasterOutName = "_Proximity"
+    proxFocalSumOutName = "_ProxSum"
 
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"

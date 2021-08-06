@@ -1111,6 +1111,7 @@ class NoReportingUnitValidator(object):
     checkbox2Index = 0
     checkboxInParameters = {}
     outWorkspaceIndex = 0
+    outRasterIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -1137,6 +1138,7 @@ class NoReportingUnitValidator(object):
         self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
+        self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         
         
         # Load global constants
@@ -1212,6 +1214,9 @@ class NoReportingUnitValidator(object):
             
         if self.outWorkspaceIndex:
             self.outWorkspaceParameter = self.parameters[self.outWorkspaceIndex]
+            
+        if self.outRasterIndex:
+            self.outRasterParameter = self.parameters[self.outRasterIndex]
 
                
         # Additional local variables
@@ -1645,4 +1650,17 @@ class NoReportingUnitValidator(object):
                 strLinearUnit = str(linearUnitValue).split()[0]
                 if float(strLinearUnit) <= 0.0:
                     self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    
+        # Check if a secondary raster output is indicated
+        if self.outRasterIndex:
+            # if provided, check if the output raster name is valid in a geodatabase
+            if self.outRasterParameter.value:                 
+                self.outRasterName = self.outRasterParameter.valueAsText
+                self.outWorkspace = os.path.dirname(self.outRasterName)
+                self.outTableName = os.path.basename(self.outRasterName)
+                self.validTableName = arcpy.ValidateTableName(self.outTableName,self.outWorkspace)
+                # if the validated raster name is different than the input raster name, then the
+                # input raster name contains invalid characters or symbols
+                if self.outTableName != self.validTableName:
+                    self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage) 
 

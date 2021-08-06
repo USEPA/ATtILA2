@@ -174,6 +174,15 @@ class gppToolValidator(BaseValidators.NoReportingUnitValidator):
 #    fieldSuffix = pmConstants.fieldSuffix
     metricShortName = gppConstants.shortName
     
+class gpzToolValidator(BaseValidators.NoReportingUnitValidator):
+    """ ToolValidator for GenerateProximityZones Utility """
+    
+    filterList = gpzConstants.optionalFilter
+#    overrideAttributeName = lccConstants.XmlAttributePmField
+#    fieldPrefix = pmConstants.fieldPrefix
+    fieldSuffix = gpzConstants.fieldSuffix
+    metricShortName = gpzConstants.shortName
+    
 
 
 

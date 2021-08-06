@@ -24,3 +24,7 @@ compare your linear units with those found in the ATtILA Help file.'''
 nonOverlappingExtentsError = '''Input features do not overlap. Unable to perform spatial analysis.
 
 Please be sure that the areal extent of the input Reporting unit features overlaps with the areal extent of all other input layers. '''
+
+rasterSizeError = '''Unable to convert raster to polygon feature.
+
+Input grid may be too large for processing. Try splitting the raster into smaller tiles before re-running the tool. '''

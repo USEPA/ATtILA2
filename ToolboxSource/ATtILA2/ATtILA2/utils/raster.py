@@ -422,7 +422,7 @@ def getRemapBinsByPercentStep(maxValue, pctStep):
     return reclassBins
 
 def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGrid,landCoverValues,neighborhoodSize_str,
-                     burnIn,burnInGrid,timer,rngRemap):
+                     burnIn,burnInGrid,timer,rngRemap,zoneBin_str):
 
     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
     # define the reclass values
@@ -441,7 +441,7 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
     neighborhood = arcpy.sa.NbrRectangle(int(neighborhoodSize_str), int(neighborhoodSize_str), "CELL")
     focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
     
-    AddMsg(("{0} Reclassifying focal SUM results into 20% breaks...").format(timer.split()))
+    AddMsg(("{0} Reclassifying focal SUM results into {1}% breaks...").format(timer.split(), zoneBin_str))
     proximityGrid = Reclassify(focalGrid, "VALUE", rngRemap)
 
     if burnIn == "true":
@@ -454,7 +454,7 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
         AddMsg(("{0} Trimming proximity raster to Land cover grid extent...").format(timer.split()))
         proximityGrid = SetNull(IsNull(reclassGrid) == 1, proximityGrid)
     
-    return proximityGrid
+    return proximityGrid, focalGrid
 
 def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, timer):
     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
