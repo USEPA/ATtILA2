@@ -422,7 +422,7 @@ def getRemapBinsByPercentStep(maxValue, pctStep):
     return reclassBins
 
 def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGrid,landCoverValues,neighborhoodSize_str,
-                     burnIn,burnInGrid,timer,rngRemap,zoneBin_str):
+                     burnIn,burnInGrid,timer,rngRemap,zoneBin_str,proximityGridName):
 
     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
     # define the reclass values
@@ -443,7 +443,13 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
     
     AddMsg(("{0} Reclassifying focal SUM results into {1}% breaks...").format(timer.split(), zoneBin_str))
     proximityGrid = Reclassify(focalGrid, "VALUE", rngRemap)
-
+    
+    # Delete output grid if it already exists in the GDB. This prevents errors caused by lingering locks and such
+    try:
+        arcpy.Delete_management(proximityGridName)
+    except:
+        pass
+    
     if burnIn == "true":
         AddMsg(("{0} Burning excluded areas into proximity grid...").format(timer.split()))
         delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
@@ -453,6 +459,8 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
         # pare back the extent of the proximityGrid to the edges of the input land cover grid
         AddMsg(("{0} Trimming proximity raster to Land cover grid extent...").format(timer.split()))
         proximityGrid = SetNull(IsNull(reclassGrid) == 1, proximityGrid)
+    
+    proximityGrid.save(proximityGridName)
     
     return proximityGrid, focalGrid
 

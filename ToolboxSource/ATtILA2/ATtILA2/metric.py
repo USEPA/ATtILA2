@@ -1726,227 +1726,6 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         env.cellSize = _tempEnvironment2
         
 
-def getProximityPolygons(inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
-                          inNeighborhoodSize, burnIn, burnInValue="", minPatchSize="#", 
-                          outWorkspace="#", optionalFieldGroups="#"):
-    """ Interface for script executing Generate Proximity Polygons utility """
-    
-    from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
-
-    try:
-        # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.gppConstants()
-        
-        ### Initialization
-        # Start the timer
-        timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables")
-        processingCellSize = Raster(inLandCoverGrid).meanCellWidth
-        snapRaster = inLandCoverGrid
-        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                               [metricsToRun,optionalFieldGroups] )
-
-        workDir = arcpy.env.workspace
-        if (workDir[-4:] == ".gdb"):
-            # get the folder that contains the geodatabase
-            workDir = '\\'.join(workDir.split('\\')[0:-1])
-        
-        # Process the Land Cover Classification XML
-        lccObj = lcc.LandCoverClassification(lccFilePath)
-        # get the dictionary with the LCC CLASSES attributes
-        lccClassesDict = lccObj.classes
-        # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
-        lccValuesDict = lccObj.values
-        # create a list of all the grid values in the selected land cover grid
-        landCoverValues = raster.getRasterValues(inLandCoverGrid)
-        # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
-        excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
-        
-        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
-        # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
-        # alert user if the land cover grid cells are not square (default to size along x axis)
-        settings.checkGridCellDimensions(inLandCoverGrid)
-        
-        # Determine if the user wants to save the intermediate products
-        saveIntermediates = globalConstants.intermediateName in optionalGroupsList
-        
-        # determine the active map to add the output raster/features    
-        currentProject = arcpy.mp.ArcGISProject("CURRENT")
-        actvMap = currentProject.activeMap
-
-        ### Computations
-        
-#         # Check if the input land cover raster is too large to produce the output polygon feature without splitting it first
-#         splitRaster = True
-#         maxSplitValue = 40000 #original value is 40000, 500 is to test the very small raster data, 20000 is to test FCA_MULC.tif
-#         columns = arcpy.GetRasterProperties_management(inLandCoverGrid, 'COLUMNCOUNT').getOutput(0)
-#         xsplit = int(float(columns) / maxSplitValue) + 1 
-#         rows = arcpy.GetRasterProperties_management(inLandCoverGrid, 'ROWCOUNT').getOutput(0)
-#         ysplit = int (float(rows) / maxSplitValue) + 1
-#         
-#         if xsplit*ysplit == 1:
-#             splitRaster = False
-#         
-#         if splitRaster != False:
-#             xy = (xsplit * ysplit)
-#             for Chunk in range(0,xy):
-#                 try:
-#                     arcpy.Delete_management(workDir + '/prox_' + str(Chunk))
-#                 except:
-#                     pass  
-
-        # Determine the maximum sum for the neighborhood
-        Sum100 = pow(int(inNeighborhoodSize), 2)
-        
-        # Set up break points to reclass proximity grid into 20% classes
-        reclassBins = raster.getRemapBinsByPercentStep(Sum100, 20)
-        rngRemap = RemapRange(reclassBins)
-        
-        # If necessary, generate a grid of excluded areas (e.g., water bodies) to be burnt into the proximity grid 
-        # This only needs to be done once regardless of the number of requested class proximity outputs  
-        burnInGrid = None
-        if burnIn == "true":
-            
-            if len(excludedValuesList) == 0:
-                arcpy.AddWarning("No excluded values in selected Land Cover Classification file. No BURN IN areas will be processed.")
-                burnInGrid = None
-                burnIn = False
-            else:
-                AddMsg("Processing BURN IN areas...")
-                # create class (value = 1) / other (value = 3) / excluded grid (value = 2) raster
-                # define the reclass values
-                classValue = 0
-                excludedValue = 1
-                otherValue = 0
-                newValuesList = [classValue, excludedValue, otherValue]
-                
-                # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
-                classValuesList = []
-                reclassPairs = raster.getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
-        
-                AddMsg(("{0} Reclassing excluded values in land cover to 1. All other values = 0...").format(timer.split()))
-                excludedBinary = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
-                
-                AddMsg(("{0} Calculating size of excluded area patches...").format(timer.split()))
-                regionGrid = RegionGroup(excludedBinary,"EIGHT","WITHIN","ADD_LINK")
-                
-                AddMsg(("{0} Assigning {1} to patches >= minimum size threshold...").format(timer.split(), burnInValue))
-                delimitedCOUNT = arcpy.AddFieldDelimiters(regionGrid,"COUNT")
-                whereClause = delimitedCOUNT+" >= " + minPatchSize + " AND LINK = 1"
-                burnInGrid = Con(regionGrid, int(burnInValue), 0, whereClause)
-                
-                # save the intermediate raster if save intermediates option has been chosen
-                if saveIntermediates: 
-                    namePrefix = metricConst.burnInGridName
-                    scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
-                    burnInGrid.save(scratchName)
-                    AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-
-        # Run metric calculate for each metric in list
-        for m in metricsBaseNameList:
-            # get the grid codes for this specified metric
-            classValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
-
-            # process the inLandCoverGrid for the selected class
-            AddMsg(("Processing {0} proximity grid...").format(m.upper()))
-            time.sleep(1) # A small pause is needed here between quick successive timer calls
-            
-            proximityGrid = raster.getProximityWithBurnInGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, 
-                                                    inNeighborhoodSize, burnIn, burnInGrid, timer, rngRemap)
-
-            # save the intermediate raster if save intermediates option has been chosen 
-            if saveIntermediates:
-                namePrefix = m.upper()+"_ProxRaster"
-                scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
-                proximityGrid.save(scratchName)
-                AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-
-            # convert proximity raster to polygon
-            time.sleep(1) # A small pause is needed here between quick successive timer calls
-            AddMsg(timer.split() + " Converting proximity raster to a polygon feature")
-            
-            # eliminating the split routine. The split command fails on large rasters. Might be because of too much NODATA
-            try:
-                arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)            
-            except:
-                raise errors.attilaException(errorConstants.rasterSizeError)
-                    
-#             # Split the Raster As Needs, Process Each Piece
-#             if splitRaster == False:
-#                 arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)
-#             else:
-#                 xy = (xsplit * ysplit)
-#                 time.sleep(1) # A small pause is needed here between quick successive timer calls
-#                 AddMsg(("{0} Splitting the raster into pieces of no more than {1} x {1} pixels").format(timer.split(),str(maxSplitValue)))
-# 
-#                 # Output destination has to be a folder; not a geodatabase
-#                 arcpy.SplitRaster_management(proximityGrid, workDir, 'prox_', 'NUMBER_OF_TILES', 'GRID', '', str(xsplit) + ' ' + str(ysplit))
-#                     
-#                 """ For each raster: """
-#                 AddMsg(timer.split() + " Converting each raster piece to a polygon feature, and dissolving on the gridcode")
-#                 for Chunk in range(0,xy):
-#                     try:
-#                         #result = float(arcpy.GetRasterProperties_management(workDir + '/prox_' + str(Chunk), 'MEAN').getOutput(0))
-#                         result = float(arcpy.GetRasterProperties_management('prox_' + str(Chunk), 'MEAN').getOutput(0))
-#                         # If the raster piece has data:
-#                         if (result != 0):
-#                             #""" Convert Raster to Polygon """
-#                             arcpy.RasterToPolygon_conversion('prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
-#                             #arcpy.RasterToPolygon_conversion(workDir + '/prox_' + str(Chunk), 'tempPoly_' + str(Chunk), 'NO_SIMPLIFY')
-# 
-#                             #""" Dissolve the polygons """
-#                             arcpy.Dissolve_management('tempPoly_' + str(Chunk), 'proxD1_' + str(Chunk), 'gridcode')
-#                             arcpy.Delete_management('tempPoly_'+str(Chunk))
-#                             AddMsg(timer.split() + " Processed Chunk " + str(Chunk + 1) + " / " + str(xy))
-#                         else:
-#                             pass
-#                     except:
-#                         pass
-#       
-#                 """ Merge the polygons back together """
-#                 time.sleep(1) # A small pause is needed here between quick successive timer calls
-#                 AddMsg(timer.split() + " Merging the processed polygons together...")
-#                 fcList = arcpy.ListFeatureClasses('proxD1*')
-#                 arcpy.Merge_management(fcList,"tempPoly")
-        
-            # get output name for dissolve
-            namePrefix = m.upper()+metricConst.proxPolygonOutputName
-            proxPolygonName = arcpy.CreateScratchName(namePrefix, "", "FeatureClass")
-            AddMsg(("{0} Dissolving proximity polygon feature: {1}...").format(timer.split(),os.path.basename(proxPolygonName)))
-            arcpy.Dissolve_management("tempPoly",proxPolygonName,"gridcode")
-            
-            classFieldName = m.capitalize()+metricConst.fieldSuffix
-            arcpy.AlterField_management(proxPolygonName,"gridcode", classFieldName, classFieldName)
-            
-            arcpy.Delete_management("tempPoly")
-
-#             if splitRaster != False:
-#                 AddMsg(timer.split() + " Removing Chunk files...")
-#                 xy = (xsplit * ysplit)
-#                 for Chunk in range(0,xy):
-#                     try:
-#                         arcpy.Delete_management('proxD1_' + str(Chunk))
-# 
-#                         arcpy.Delete_management(workDir + '/prox_' + str(Chunk))
-# 
-#                     except:
-#                         pass  
-            
-            # add the dissolved proximity polygon to the active map
-            if actvMap != None:
-                actvMap.addDataFromPath(proxPolygonName)
-                AddMsg(("Adding {0} to {1} view").format(os.path.basename(proxPolygonName), actvMap.name))
-
-
-    except Exception as e:
-        errors.standardErrorHandling(e)
-
-    finally:
-        setupAndRestore.standardRestore()
-
-
 def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                     metricsToRun, viewRadius, minPatchSize="", inCensusRaster="", outTable="", processingCellSize="", 
                     snapRaster="", optionalFieldGroups=""):
@@ -2408,7 +2187,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
         setupAndRestore.standardRestore()
 
 
-def getProximityZones(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
+def runGenerateProximityZones(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
                       zoneBin_str, burnIn, burnInValue="", minPatchSize="#", overWrite="", createPoly="",
                       outWorkspace="#", optionalFieldGroups="#"):
     """ Interface for script executing Generate Proximity Polygons utility """
@@ -2516,7 +2295,6 @@ def getProximityZones(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNe
                     namePrefix = metricConst.burnInGridName
                     if overWrite == "true":
                         scratchName = os.path.join(env.workspace, namePrefix)
-                        #scratchName = namePrefix
                     else:
                         scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     burnInGrid.save(scratchName)
@@ -2529,20 +2307,18 @@ def getProximityZones(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNe
 
             # process the inLandCoverGrid for the selected class
             AddMsg(("Processing {0} proximity grid...").format(m.upper()))
-            time.sleep(1) # A small pause is needed here between quick successive timer calls
-            
-            proximityGrid, focalGrid = raster.getProximityWithBurnInGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, 
-                                                    inNeighborhoodSize, burnIn, burnInGrid, timer, rngRemap, zoneBin_str)
-            
+
+            # get output grid name. Add it to the list of features to add to the Contents pane
             namePrefix = m.upper()+metricConst.proxRasterOutName
             if overWrite == "true":
                 scratchName = os.path.join(env.workspace, namePrefix)
-                #scratchName = namePrefix
             else:
-                scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
-                
-            proximityGrid.save(scratchName)
+                scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")    
             addToActiveMap.append(scratchName)
+            
+            proximityGrid, focalGrid = raster.getProximityWithBurnInGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, 
+                                                    inNeighborhoodSize, burnIn, burnInGrid, timer, rngRemap, zoneBin_str, scratchName)
+            
             AddMsg(timer.split() + " Save proximity zone grid complete: "+os.path.basename(scratchName))
                 
             # save the intermediate raster if save intermediates option has been chosen 
@@ -2550,7 +2326,6 @@ def getProximityZones(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNe
                 namePrefix = m.upper()+metricConst.proxFocalSumOutName
                 if overWrite == "true":
                     scratchName = os.path.join(env.workspace, namePrefix)
-                    #scratchName = namePrefix
                 else:
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                 
@@ -2562,17 +2337,15 @@ def getProximityZones(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNe
                 time.sleep(1) # A small pause is needed here between quick successive timer calls
                 AddMsg(timer.split() + " Converting proximity raster to a polygon feature")
                 
-                # eliminated the split routine. The split command fails on large rasters. Might be because of too much NODATA
                 try:
                     arcpy.conversion.RasterToPolygon(proximityGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None)            
                 except:
                     raise errors.attilaException(errorConstants.rasterSizeError)
                         
-                # get output name for dissolve
+                # get output name for dissolved output polygon feature
                 namePrefix = m.upper()+metricConst.proxPolygonOutputName
                 if overWrite == "true":
                     scratchName = os.path.join(env.workspace, namePrefix)
-                    #scratchName = namePrefix
                 else: 
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "FeatureClass")
                 addToActiveMap.append(scratchName)

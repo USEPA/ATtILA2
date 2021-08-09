@@ -165,15 +165,6 @@ class gidrToolValidator(BaseValidators.NoReportingUnitValidator):
 #    fieldSuffix = pmConstants.fieldSuffix
     metricShortName = gidrConstants.shortName
 
-class gppToolValidator(BaseValidators.NoReportingUnitValidator):
-    """ ToolValidator for GenerateProximityPolygon Utility """
-    
-    filterList = gppConstants.optionalFilter
-#    overrideAttributeName = lccConstants.XmlAttributePmField
-#    fieldPrefix = pmConstants.fieldPrefix
-#    fieldSuffix = pmConstants.fieldSuffix
-    metricShortName = gppConstants.shortName
-    
 class gpzToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for GenerateProximityZones Utility """
     

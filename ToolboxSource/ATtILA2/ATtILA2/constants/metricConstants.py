@@ -116,27 +116,12 @@ class gidrConstants(baseMetricConstants):
     gidrRoadLayer = shortName+"_Road"
     gidrRoadSinglePart = shortName+"_SglPrt"
     dummyFieldName = shortName+"_dummy"
-
-class gppConstants(baseMetricConstants):
-    name = "GetProximityPolygon"
-    shortName = "gpp"
-    fieldPrefix = ""
-    fieldSuffix = "ProxP"
-    overlapName = ""
-    totalAreaName = ""
-    effectiveAreaName = ""
-    excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
-    fieldOverrideKey = ""
-    burnInGridName = shortName+"_BurnIn"
-    proxPolygonOutputName = "_Prox"
     
 class gpzConstants(baseMetricConstants):
     name = "GetProximityPolygon"
     shortName = "gpz"
     fieldPrefix = ""
-    fieldSuffix = "Prox"
+    fieldSuffix = "_Prox"
     overlapName = ""
     totalAreaName = ""
     effectiveAreaName = ""
@@ -146,7 +131,7 @@ class gpzConstants(baseMetricConstants):
     fieldOverrideKey = ""
     burnInGridName = shortName+"_BurnIn"
     proxPolygonOutputName = "_ProxPoly"
-    proxRasterOutName = "_Proximity"
+    proxRasterOutName = "_Prox"
     proxFocalSumOutName = "_ProxSum"
 
 class lcccConstants(baseMetricConstants):

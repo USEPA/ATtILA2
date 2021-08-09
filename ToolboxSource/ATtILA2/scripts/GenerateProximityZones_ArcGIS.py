@@ -1,4 +1,4 @@
-""" Generate Proximity Polygons
+""" Generate Proximity Zones
 
     This script is associated with an ArcToolbox script tool.
 """
@@ -13,7 +13,7 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0])
     
-    metric.getProximityPolygons(*inputArguments)
+    metric.runGenerateProximityZones(*inputArguments)
     
     
 if __name__ == "__main__":
