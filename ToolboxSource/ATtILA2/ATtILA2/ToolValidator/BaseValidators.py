@@ -105,7 +105,7 @@ class ProportionsValidator(object):
         self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
-        
+        self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -1106,12 +1106,14 @@ class NoReportingUnitValidator(object):
     inDistanceIndex = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
+    inPositiveInteger2Index = 0
     inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
     checkboxInParameters = {}
     outWorkspaceIndex = 0
     outRasterIndex = 0
+    inValidNumberIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -1133,19 +1135,20 @@ class NoReportingUnitValidator(object):
         self.metricDescription = validatorConstants.metricDescription
         self.noFeaturesMessage = validatorConstants.noFeaturesMessage
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.noProjectionInOutputCS = validatorConstants.noProjectionInOutputCS
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
+        self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
-        
+        self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
 #        self.qaCheckDescription = globalConstants.qaCheckDescription
 
-        
         # Load LCC constants
         self.lccFileDirName = lccConstants.PredefinedFileDirName       
         self.lccFileExtension = lccConstants.XmlFileExtension
@@ -1194,6 +1197,12 @@ class NoReportingUnitValidator(object):
         if self.inPositiveIntegerIndex:
             self.inPositiveIntegerParameter = self.parameters[self.inPositiveIntegerIndex]
             
+        if self.inPositiveInteger2Index:
+            self.inPositiveInteger2Parameter = self.parameters[self.inPositiveInteger2Index]
+
+        if self.validNumberIndex:
+            self.validNumberParameter = self.parameters[self.validNumberIndex]
+        
         if self.inLinearUnitIndex:
             self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
 
@@ -1642,6 +1651,24 @@ class NoReportingUnitValidator(object):
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
                     self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
                 
+        # Check if number input (e.g., number of cells) is a positive integer           
+        if self.inPositiveInteger2Index:
+            if self.inPositiveInteger2Parameter.value:
+                positiveIntValue = self.inPositiveInteger2Parameter.value
+                valModulus = modf(positiveIntValue)
+                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+
+        # Check if number input (e.g., burn in value) is not in the set of invalid numbers (i.e., 0 to 100)
+            if self.validNumberIndex:
+                if self.validNumberParameter.value:
+                    invalidNumbers = set((range(101)))
+                    enteredValue = self.validNumberParameter.value
+                    if enteredValue in invalidNumbers:
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+        
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:
             if self.inLinearUnitParameter.value:

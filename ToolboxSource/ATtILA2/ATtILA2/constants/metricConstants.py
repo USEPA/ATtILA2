@@ -117,9 +117,9 @@ class gidrConstants(baseMetricConstants):
     gidrRoadSinglePart = shortName+"_SglPrt"
     dummyFieldName = shortName+"_dummy"
     
-class gpzConstants(baseMetricConstants):
-    name = "GetProximityPolygon"
-    shortName = "gpz"
+class pnpConstants(baseMetricConstants):
+    name = "ProximityNeighborhoodProportions"
+    shortName = "pnp"
     fieldPrefix = ""
     fieldSuffix = "_Prox"
     overlapName = ""
@@ -131,8 +131,9 @@ class gpzConstants(baseMetricConstants):
     fieldOverrideKey = ""
     burnInGridName = shortName+"_BurnIn"
     proxPolygonOutputName = "_ProxPoly"
+    proxZoneRaserOutName = "_ProxZone"
     proxRasterOutName = "_Prox"
-    proxFocalSumOutName = "_ProxSum"
+    proxFocalSumOutName = "_ProxCnt"
 
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"

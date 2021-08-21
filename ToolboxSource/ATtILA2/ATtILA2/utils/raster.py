@@ -464,6 +464,44 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
     
     return proximityGrid, focalGrid
 
+
+def getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList, excludedValuesList,
+                                   inLandCoverGrid, burnIn, burnInGrid, timer):
+    # Determine the maximum sum for the neighborhood
+    maxCellCount = pow(int(inNeighborhoodSize), 2)
+         
+    # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
+    # define the reclass values
+    classValue = 1
+    excludedValue = 0
+    otherValue = 0
+    newValuesList = [classValue, excludedValue, otherValue]
+    
+    # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
+      
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    
+    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.split(), inNeighborhoodSize))
+    neighborhood = arcpy.sa.NbrRectangle(int(inNeighborhoodSize), int(inNeighborhoodSize), "CELL")
+    #nbrSumGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM", "NODATA")
+    nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid, neighborhood, "SUM", "NODATA")
+        
+    AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.split(), inNeighborhoodSize))
+    proportionsGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / '+str(maxCellCount)+') * 100') )
+
+    if burnIn == "true":
+        AddMsg(("{0} Burning excluded areas into proportions grid...").format(timer.split()))
+        delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
+        whereClause = delimitedVALUE+" = 0"
+        proportionsGrid = Con(burnInGrid, proportionsGrid, burnInGrid, whereClause)
+    
+    proportionsIntGrid = arcpy.sa.Int(proportionsGrid)
+
+    return proportionsIntGrid, nbrCntGrid
+
+
 def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, timer):
     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
     # define the reclass values

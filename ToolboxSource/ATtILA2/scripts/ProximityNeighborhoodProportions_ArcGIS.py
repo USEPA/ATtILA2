@@ -1,4 +1,4 @@
-""" Generate Proximity Zones
+""" Neighborhood Proportions
 
     This script is associated with an ArcToolbox script tool.
 """
@@ -13,7 +13,7 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0])
     
-    metric.runGenerateProximityZones(*inputArguments)
+    metric.runProximityNeighborhoodProportions(*inputArguments)
     
     
 if __name__ == "__main__":
