@@ -1113,7 +1113,7 @@ class NoReportingUnitValidator(object):
     checkboxInParameters = {}
     outWorkspaceIndex = 0
     outRasterIndex = 0
-    inValidNumberIndex = 0
+    validNumberIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -1659,15 +1659,20 @@ class NoReportingUnitValidator(object):
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
                     self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
 
-        # Check if number input (e.g., burn in value) is not in the set of invalid numbers (i.e., 0 to 100)
+        # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
             if self.validNumberIndex:
-                if self.validNumberParameter.value:
-                    invalidNumbers = set((range(101)))
-                    enteredValue = self.validNumberParameter.value
-                    if enteredValue in invalidNumbers:
-                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
-                else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+                # If it is disabled, do not perform the validation step
+                if not self.validNumberParameter.enabled:
+                    self.validNumberParameter.clearMessage()
+                else:
+                    if self.validNumberParameter.value:
+                        invalidNumbers = set((range(101)))
+                        enteredValue = self.validNumberParameter.value
+                        if enteredValue in invalidNumbers:
+                            self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                    else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
         
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:

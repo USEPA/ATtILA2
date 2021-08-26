@@ -165,14 +165,14 @@ class gidrToolValidator(BaseValidators.NoReportingUnitValidator):
 #    fieldSuffix = pmConstants.fieldSuffix
     metricShortName = gidrConstants.shortName
 
-class pnpToolValidator(BaseValidators.NoReportingUnitValidator):
+class npToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for Neighborhood Proportions """
     
-    filterList = pnpConstants.optionalFilter
+    filterList = npConstants.optionalFilter
 #    overrideAttributeName = lccConstants.XmlAttributePmField
 #    fieldPrefix = pmConstants.fieldPrefix
-    fieldSuffix = pnpConstants.fieldSuffix
-    metricShortName = pnpConstants.shortName
+    fieldSuffix = npConstants.fieldSuffix
+    metricShortName = npConstants.shortName
     
 
 

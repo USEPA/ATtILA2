@@ -13,7 +13,7 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0])
     
-    metric.runProximityNeighborhoodProportions(*inputArguments)
+    metric.runNeighborhoodProportions(*inputArguments)
     
     
 if __name__ == "__main__":

@@ -2372,7 +2372,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
 #         env.overwriteOutput = tempEnvironment0
         
         
-def runProximityNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
+def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
                       burnIn, burnInValue="", minPatchSize="#", createZones="", zoneBin_str="", overWrite="",
                       outWorkspace="#", optionalFieldGroups="#"):
     """ Interface for script executing Generate Proximity Polygons utility """
@@ -2382,7 +2382,7 @@ def runProximityNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, 
 
     try:
         # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.pnpConstants()
+        metricConst = metricConstants.npConstants()
         
         ### Initialization
         # Start the timer
@@ -2495,7 +2495,7 @@ def runProximityNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, 
             AddMsg(("Processing {0} neighborhood proportions grid...").format(m.upper()))
  
             # get output grid name. Add it to the list of features to add to the Contents pane
-            namePrefix = m.upper()+"_"+inNeighborhoodSize+metricConst.proxRasterOutName
+            namePrefix = ("{0}_{1}x{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxRasterOutName)
             proximityGridName = files.getRasterName(namePrefix)
             addToActiveMap.append(proximityGridName)
 
@@ -2507,7 +2507,7 @@ def runProximityNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, 
                   
             # save the intermediate raster if save intermediates option has been chosen 
             if saveIntermediates:
-                namePrefix = m.upper()+"_"+inNeighborhoodSize+metricConst.proxFocalSumOutName
+                namePrefix = ("{0}_{1}x{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxFocalSumOutName)
                 scratchName = files.getRasterName(namePrefix)  
                 nbrCntGrid.save(scratchName)
                 AddMsg(timer.split() + " Save intermediate grid complete: "+os.path.basename(scratchName))
@@ -2524,7 +2524,7 @@ def runProximityNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, 
                 time.sleep(1) # A small pause is needed here between quick successive timer calls
                 AddMsg(("{0} Reclassifying proportions grid into {1}% breaks...").format(timer.split(), zoneBin_str))
                 nbrZoneGrid = Reclassify(proximityGrid, "VALUE", rngRemap)
-                namePrefix = m.upper()+"_"+inNeighborhoodSize+metricConst.proxZoneRaserOutName
+                namePrefix = ("{0}_{1}x{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxZoneRaserOutName)
                 scratchName = files.getRasterName(namePrefix)
                 nbrZoneGrid.save(scratchName)
                 addToActiveMap.append(scratchName)

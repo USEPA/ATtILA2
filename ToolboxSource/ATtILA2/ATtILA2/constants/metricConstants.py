@@ -117,9 +117,9 @@ class gidrConstants(baseMetricConstants):
     gidrRoadSinglePart = shortName+"_SglPrt"
     dummyFieldName = shortName+"_dummy"
     
-class pnpConstants(baseMetricConstants):
-    name = "ProximityNeighborhoodProportions"
-    shortName = "pnp"
+class npConstants(baseMetricConstants):
+    name = "NeighborhoodProportions"
+    shortName = "np"
     fieldPrefix = ""
     fieldSuffix = "_Prox"
     overlapName = ""
