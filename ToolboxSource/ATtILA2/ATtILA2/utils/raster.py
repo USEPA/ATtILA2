@@ -243,7 +243,8 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     distGrid = EucDistance(otherGrid)
     
     AddMsg(timer.split() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
-    edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str)) 
+    #edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str)) 
+    edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
 
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     
