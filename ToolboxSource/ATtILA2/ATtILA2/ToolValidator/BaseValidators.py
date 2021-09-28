@@ -73,10 +73,15 @@ class ProportionsValidator(object):
     inDistanceIndex = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
+    inPositiveInteger2Index = 0
     inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
     checkboxInParameters = {}
+    outWorkspaceIndex = 0
+    outRasterIndex = 0
+    validNumberIndex = 0
+    inPositiveNumberIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -106,6 +111,8 @@ class ProportionsValidator(object):
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
+        self.invalidNumberMessage = validatorConstants.invalidNumberMessage
+        self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -160,6 +167,12 @@ class ProportionsValidator(object):
         if self.inPositiveIntegerIndex:
             self.inPositiveIntegerParameter = self.parameters[self.inPositiveIntegerIndex]
             
+        if self.inPositiveInteger2Index:
+            self.inPositiveInteger2Parameter = self.parameters[self.inPositiveInteger2Index]
+            
+        if self.validNumberIndex:
+            self.validNumberParameter = self.parameters[self.validNumberIndex]
+            
         if self.inLinearUnitIndex:
             self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
 
@@ -177,6 +190,15 @@ class ProportionsValidator(object):
             
         if self.inputFields2Index:
             self.inputFields2Parameter = self.parameters[self.inputFields2Index]
+            
+        if self.outWorkspaceIndex:
+            self.outWorkspaceParameter = self.parameters[self.outWorkspaceIndex]
+            
+        if self.outRasterIndex:
+            self.outRasterParameter = self.parameters[self.outRasterIndex]
+            
+        if self.inPositiveNumberIndex:
+            self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
 
                
         # Additional local variables
@@ -600,7 +622,40 @@ class ProportionsValidator(object):
                 positiveIntValue = self.inPositiveIntegerParameter.value
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                    
+        # Check if number input (e.g., number of cells) is a positive integer           
+        if self.inPositiveInteger2Index:
+            if self.inPositiveInteger2Parameter.value:
+                positiveIntValue = self.inPositiveInteger2Parameter.value
+                valModulus = modf(positiveIntValue)
+                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+
+        # Check if number input (e.g., cell size) is a positive number           
+        if self.inPositiveNumberIndex:
+            if self.inPositiveNumberParameter.value:
+                positiveValue = self.inPositiveNumberParameter.value
+                if positiveValue <= 0.0:
+                    self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)  
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)
+
+        
+        # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
+            if self.validNumberIndex:
+                # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+                # If it is disabled, do not perform the validation step
+                if not self.validNumberParameter.enabled:
+                    self.validNumberParameter.clearMessage()
+                else:
+                    if self.validNumberParameter.value:
+                        invalidNumbers = set((range(101)))
+                        enteredValue = self.validNumberParameter.value
+                        if enteredValue in invalidNumbers:
+                            self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                    else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)   
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:
@@ -610,8 +665,52 @@ class ProportionsValidator(object):
                 strLinearUnit = str(linearUnitValue).split()[0]
                 if float(strLinearUnit) <= 0.0:
                     self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
-                                       
+
+        # Check if a secondary raster output is indicated
+        if self.outRasterIndex:
+            # if provided, check if the output raster name is valid in a geodatabase
+            if self.outRasterParameter.value:  
+                self.outRasterName = self.outRasterParameter.valueAsText
             
+                # get the directory path and the filename
+                self.outWorkspace = os.path.split(self.outRasterName)[0]
+                self.rasterFilename = os.path.split(self.outRasterName)[1]
+                
+                # break the filename into its root and extension, if one exists
+                self.fileExt = os.path.splitext(self.rasterFilename)[1]
+                self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+                
+                # check if the workspace is a geodatabase
+                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                
+                if self.workspaceExt and self.fileExt:
+                    # alert user that raster names cannot contain an extension in a GDB
+                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
+                else:
+                
+                    # substitue valid characters into the filename root, if necessary 
+                    self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+        
+                    # get the list of acceptable raster filename extentions
+                    self.rasterExtensions = globalConstants.rasterExtensions
+        
+                    # assemble the new filename with any valid character substitutions
+                    if self.fileExt: # a filename extension was provided
+                        if self.fileExt in self.rasterExtensions:
+                            self.validFilename = self.validFileRoot + self.fileExt
+                            self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
+                        else: 
+                            # drop extension from filename, causing the filename comparison below to fail
+                            self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                    else: # a filename extension was omitted
+                        self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                    
+                    # if the validated raster name is different than the input raster name, then the
+                    # input raster name contains invalid characters or symbols
+                    if self.outRasterName != self.validRasterName:
+                        self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)                                        
+            
+
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
 
@@ -661,6 +760,8 @@ class NoLccFileValidator(object):
     
     # Indexes of secondary input parameters
     inRasterIndex = 0
+    inRaster2Index = 0
+    inIntegerRasterIndex = 0
     inMultiFeatureIndex = 0
     inVector2Index = 0
     inVector3Index = 0
@@ -670,10 +771,15 @@ class NoLccFileValidator(object):
     inDistanceIndex = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
+    inPositiveInteger2Index = 0
     inLinearUnitIndex = 0
     checkbox1Index = 0
     checkbox2Index = 0
     checkboxInParameters = {}
+    outWorkspaceIndex = 0
+    outRasterIndex = 0
+    validNumberIndex = 0
+    inPositiveNumberIndex = 0
     
     # Additional local variables
     srcDirName = ""
@@ -711,6 +817,12 @@ class NoLccFileValidator(object):
         if self.inRasterIndex:
             self.inRasterParameter = self.parameters[self.inRasterIndex]
             
+        if self.inRaster2Index:
+            self.inRaster2Parameter = self.parameters[self.inRaster2Index]
+            
+        if self.inIntegerRasterIndex:
+            self.inIntegerRasterParameter = self.parameters[self.inIntegerRasterIndex]
+            
         if self.processingCellSizeIndex:
             self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
             
@@ -735,6 +847,12 @@ class NoLccFileValidator(object):
         if self.inPositiveIntegerIndex:
             self.inPositiveIntegerParameter = self.parameters[self.inPositiveIntegerIndex]
             
+        if self.inPositiveInteger2Index:
+            self.inPositiveInteger2Parameter = self.parameters[self.inPositiveInteger2Index]
+            
+        if self.validNumberIndex:
+            self.validNumberParameter = self.parameters[self.validNumberIndex]
+        
         if self.inLinearUnitIndex:
             self.inLinearUnitParameter = self.parameters[self.inLinearUnitIndex]
                
@@ -752,8 +870,17 @@ class NoLccFileValidator(object):
             
         if self.inputFields2Index:
             self.inputFields2Parameter = self.parameters[self.inputFields2Index]
+            
+        if self.outWorkspaceIndex:
+            self.outWorkspaceParameter = self.parameters[self.outWorkspaceIndex]
+            
+        if self.outRasterIndex:
+            self.outRasterParameter = self.parameters[self.outRasterIndex]
+            
+        if self.inPositiveNumberIndex:
+            self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
 
-               
+ 
         # Additional local variables
         self.currentFilePath = ""
         self.ruFilePath = ""
@@ -916,6 +1043,34 @@ class NoLccFileValidator(object):
                 if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
                     self.snapRasterParameter.value = str(self.inRasterParameter.value)
                 
+        # Check if a secondary input raster is indicated - use if raster can be either integer or float
+        if self.inRaster2Index:
+            # if provided, check if input raster2 is defined
+            if self.inRaster2Parameter.value:
+                # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
+                if hasattr(self.inRaster2Parameter.value, "dataSource"):
+                    if arcpy.Describe(self.inRaster2Parameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                        self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+                else:
+                    if arcpy.Describe(self.inRaster2Parameter.value).spatialReference.name.lower() == "unknown":
+                        self.inRaster2Parameter.setErrorMessage(self.noSpatialReferenceMessage)
+        
+        # Check if a secondary input integer raster is defined - use if raster has to be an integer type
+        if self.inIntegerRasterIndex:
+            # if provided, check if input integer raster is defined
+            if self.inIntegerRasterParameter.value:
+                # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
+                if hasattr(self.inIntegerRasterParameter.value, "dataSource"):
+                    if arcpy.Describe(self.inIntegerRasterParameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                        self.inIntegerRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
+                else:
+                    if arcpy.Describe(self.inIntegerRasterParameter.value).spatialReference.name.lower() == "unknown":
+                        self.inIntegerRasterParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            
+            # Check if input raster is an integer grid
+            inIntegerRaster = arcpy.Raster(str(self.inIntegerRasterParameter.value))
+            if not inIntegerRaster.isInteger:
+                self.inIntegerRasterParameter.setErrorMessage(self.nonIntegerGridMessage)
         
         # Check if a secondary multiple input feature is indicated            
         if self.inMultiFeatureIndex:
@@ -1008,6 +1163,16 @@ class NoLccFileValidator(object):
                 else:
                     if desc.shapeType.lower() != "polygon":
                         self.inIntRasterOrPolyParameter.setErrorMessage(self.polygonOrIntegerGridMessage)                        
+
+        # Check if processingCellSize is a positive number    
+        if self.processingCellSizeIndex:        
+            if self.processingCellSizeParameter.value:
+                try:
+                    cellSizeValue = arcpy.Raster(str(self.processingCellSizeParameter.value)).meanCellWidth
+                except:
+                    cellSizeValue = self.processingCellSizeParameter.value
+                if float(str(cellSizeValue)) <= 0:
+                    self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
                         
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inDistanceIndex:
@@ -1035,8 +1200,40 @@ class NoLccFileValidator(object):
                 positiveIntValue = self.inPositiveIntegerParameter.value
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                    
+        # Check if number input (e.g., number of cells) is a positive integer           
+        if self.inPositiveInteger2Index:
+            if self.inPositiveInteger2Parameter.value:
+                positiveIntValue = self.inPositiveInteger2Parameter.value
+                valModulus = modf(positiveIntValue)
+                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)    
                 
+        # Check if number input (e.g., cell size) is a positive number           
+        if self.inPositiveNumberIndex:
+            if self.inPositiveNumberParameter.value:
+                positiveValue = self.inPositiveNumberParameter.value
+                if positiveValue <= 0.0:
+                    self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)
+        
+        # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
+            if self.validNumberIndex:
+                # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+                # If it is disabled, do not perform the validation step
+                if not self.validNumberParameter.enabled:
+                    self.validNumberParameter.clearMessage()
+                else:
+                    if self.validNumberParameter.value:
+                        invalidNumbers = set((range(101)))
+                        enteredValue = self.validNumberParameter.value
+                        if enteredValue in invalidNumbers:
+                            self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                    else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
+        
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:
             if self.inLinearUnitParameter.value:
@@ -1045,7 +1242,51 @@ class NoLccFileValidator(object):
                 strLinearUnit = str(linearUnitValue).split()[0]
                 if float(strLinearUnit) <= 0.0:
                     self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+
+        # Check if a secondary raster output is indicated
+        if self.outRasterIndex:
+            # if provided, check if the output raster name is valid in a geodatabase
+            if self.outRasterParameter.value:  
+                self.outRasterName = self.outRasterParameter.valueAsText
+            
+                # get the directory path and the filename
+                self.outWorkspace = os.path.split(self.outRasterName)[0]
+                self.rasterFilename = os.path.split(self.outRasterName)[1]
+                
+                # break the filename into its root and extension, if one exists
+                self.fileExt = os.path.splitext(self.rasterFilename)[1]
+                self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+                
+                # check if the workspace is a geodatabase
+                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                
+                if self.workspaceExt and self.fileExt:
+                    # alert user that raster names cannot contain an extension in a GDB
+                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
+                else:
+                
+                    # substitue valid characters into the filename root, if necessary 
+                    self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+        
+                    # get the list of acceptable raster filename extentions
+                    self.rasterExtensions = globalConstants.rasterExtensions
+        
+                    # assemble the new filename with any valid character substitutions
+                    if self.fileExt: # a filename extension was provided
+                        if self.fileExt in self.rasterExtensions:
+                            self.validFilename = self.validFileRoot + self.fileExt
+                            self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
+                        else: 
+                            # drop extension from filename, causing the filename comparison below to fail
+                            self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                    else: # a filename extension was omitted
+                        self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
                     
+                    # if the validated raster name is different than the input raster name, then the
+                    # input raster name contains invalid characters or symbols
+                    if self.outRasterName != self.validRasterName:
+                        self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage) 
+                                        
                     
 class NoReportingUnitValidator(object):
     """ Class for inheritance by ToolValidator Only
@@ -1114,6 +1355,7 @@ class NoReportingUnitValidator(object):
     outWorkspaceIndex = 0
     outRasterIndex = 0
     validNumberIndex = 0
+    inPositiveNumberIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -1144,6 +1386,7 @@ class NoReportingUnitValidator(object):
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
+        self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -1226,6 +1469,9 @@ class NoReportingUnitValidator(object):
             
         if self.outRasterIndex:
             self.outRasterParameter = self.parameters[self.outRasterIndex]
+            
+        if self.inPositiveNumberIndex:
+            self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
 
                
         # Additional local variables
@@ -1659,6 +1905,15 @@ class NoReportingUnitValidator(object):
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
                     self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
 
+        # Check if number input (e.g., cell size) is a positive number           
+        if self.inPositiveNumberIndex:
+            if self.inPositiveNumberParameter.value:
+                positiveValue = self.inPositiveNumberParameter.value
+                if positiveValue <= 0.0:
+                    self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)
+        
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
             if self.validNumberIndex:
                 # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
@@ -1686,13 +1941,44 @@ class NoReportingUnitValidator(object):
         # Check if a secondary raster output is indicated
         if self.outRasterIndex:
             # if provided, check if the output raster name is valid in a geodatabase
-            if self.outRasterParameter.value:                 
+            if self.outRasterParameter.value:  
                 self.outRasterName = self.outRasterParameter.valueAsText
-                self.outWorkspace = os.path.dirname(self.outRasterName)
-                self.outTableName = os.path.basename(self.outRasterName)
-                self.validTableName = arcpy.ValidateTableName(self.outTableName,self.outWorkspace)
-                # if the validated raster name is different than the input raster name, then the
-                # input raster name contains invalid characters or symbols
-                if self.outTableName != self.validTableName:
-                    self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage) 
-
+            
+                # get the directory path and the filename
+                self.outWorkspace = os.path.split(self.outRasterName)[0]
+                self.rasterFilename = os.path.split(self.outRasterName)[1]
+                
+                # break the filename into its root and extension, if one exists
+                self.fileExt = os.path.splitext(self.rasterFilename)[1]
+                self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+                
+                # check if the workspace is a geodatabase
+                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                
+                if self.workspaceExt and self.fileExt:
+                    # alert user that raster names cannot contain an extension in a GDB
+                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
+                else:
+                
+                    # substitue valid characters into the filename root, if necessary 
+                    self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+        
+                    # get the list of acceptable raster filename extentions
+                    self.rasterExtensions = globalConstants.rasterExtensions
+        
+                    # assemble the new filename with any valid character substitutions
+                    if self.fileExt: # a filename extension was provided
+                        if self.fileExt in self.rasterExtensions:
+                            self.validFilename = self.validFileRoot + self.fileExt
+                            self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
+                        else: 
+                            # drop extension from filename, causing the filename comparison below to fail
+                            self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                    else: # a filename extension was omitted
+                        self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                    
+                    # if the validated raster name is different than the input raster name, then the
+                    # input raster name contains invalid characters or symbols
+                    if self.outRasterName != self.validRasterName:
+                        self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage) 
+        

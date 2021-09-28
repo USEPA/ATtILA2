@@ -24,3 +24,4 @@ invalidTableNameMessage = "Output raster name is invalid. It may contain invalid
  ', <, >, |, and space or has an invalid starting character such as a number."
 invalidNumberMessage = "Input requires that the number entered not be in the range 0 - 100. \
 Please enter a value outside of this range before proceeding."
+invalidExtensionMessage = "Filename extensions are not allowed in geodatabases."

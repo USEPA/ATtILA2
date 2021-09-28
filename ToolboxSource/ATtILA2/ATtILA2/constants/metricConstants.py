@@ -96,9 +96,31 @@ class flcvConstants(baseMetricConstants):
     singleFields = [facilityCountField]
 
     
-class gidrConstants(baseMetricConstants):
-    name = "GenerateIntersectionDensityRaster"
-    shortName = "gidr"
+class idConstants(baseMetricConstants):
+    name = "IntersectionDensity"
+    shortName = "id"
+    fieldPrefix = ""
+    fieldSuffix = "IntDen"
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldOverrideKey = ""
+    prjRoadName = "Prj"
+    intersectDensityGridName = shortName+"_IntDen"
+    mergedRoadName = "Merged"
+    unsplitRoadName = "UnSplit"
+    roadIntersectName = "Intersections"
+    gidrRoadLayer = shortName+"_Road"
+    singlepartRoadName = "SglPrt"
+    dummyFieldName = shortName+"_dummy"
+    
+    
+class idoConstants(baseMetricConstants):
+    name = "IntersectionDensityOld"
+    shortName = "ido"
     fieldPrefix = ""
     fieldSuffix = "IntDen"
     overlapName = ""

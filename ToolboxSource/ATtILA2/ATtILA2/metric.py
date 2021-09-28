@@ -1955,12 +1955,12 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
                 function(*arguments)
 
                 
-def getIntersectionDensityRaster(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",outPCS="#",
+def runIntersectionDensityOld(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",outPCS="#",
                                   cellSize="#", searchRadius="#", areaUnits="#", optionalFieldGroups="#"):
     #""" Interface for script executing Generate Intersection Density Raster utility """
     try:
         
-        metricConst = metricConstants.gidrConstants()
+        metricConst = metricConstants.idoConstants()
         intermediateList = []
 
 
@@ -2542,3 +2542,159 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
     finally:
         setupAndRestore.standardRestore()
         env.overwriteOutput = tempEnvironment0
+
+
+def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outputCS="#", cellSize="#", 
+                           searchRadius="#", areaUnits="#", outRaster="#", optionalFieldGroups="#"):
+    """ Interface for script executing Intersection Density utility """
+    from arcpy import env
+    
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.idConstants()
+        
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+        
+        # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
+        # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
+        # metricsBaseNameList is not used for this tool.
+        metricsToRun = 'item1  -  description1;item2  -  description2'
+        snapRaster = False
+
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSize,os.path.dirname(outRaster),
+                                                                              [metricsToRun,optionalFieldGroups] )  
+
+        if globalConstants.intermediateName in optionalGroupsList:
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # determine the active map to add the output raster/features    
+        currentProject = arcpy.mp.ArcGISProject("CURRENT")
+        actvMap = currentProject.activeMap    
+        
+        # create list of layers to add to the active Map
+        addToActiveMap = []
+        
+        # Do a Describe on the Road feature input and get the file's basename.
+        descInLines = arcpy.Describe(inLineFeature)
+        inBaseName = descInLines.baseName
+        
+        # if no specific geoprocessing environment extent is set, temporarily set it to match the inLineFeature. It will be reset during the standardRestore
+        nonSpecificExtents = ["NONE", "MAXOF", "MINOF"]
+        envExtent = str(env.extent).upper()
+        if envExtent in nonSpecificExtents:
+            AddMsg(("Using {0}'s extent for geoprocessing steps.").format(inBaseName))
+            env.extent = descInLines.extent
+        else:
+            AddMsg("Extent set in Geoprocessing environment used for processing.")
+            
+        ### Computations
+        
+        # Set a variable to create, if necessary, a copy of the road feature class that we can add new fields to for calculations.
+        makeCopy = True
+        
+        # Get the spatial reference for the input line theme
+        spatialRef = descInLines.spatialReference
+        # Strip off ESRI's spatial reference code from the string representation
+        inLineCS = spatialRef.exportToString().split(";")[0]
+        
+        # PROJECT, if necessary
+        # The inLineFeature needs to be in a projected coordinate system for the MergeDividedRoads and the KernelDensity operations 
+        if inLineCS != outputCS:
+            # Project the road feature to the selected output coordinate system.
+            prjPrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.prjRoadName)       
+            prjFeatureName = files.nameIntermediateFile([prjPrefix, "FeatureClass"], cleanupList)
+            outCS = arcpy.SpatialReference(text=outputCS)
+            AddMsg(("{0} Projecting {1} to {2}. Intermediate: {3}").format(timer.split(), inBaseName, outCS.name, os.path.basename(prjFeatureName)))
+            inRoadFeature = arcpy.Project_management(inLineFeature, prjFeatureName, outCS)
+            
+            # No need to make a copy of the inLineFeature to add fields to. Can use the projected Feature instead
+            makeCopy = False
+        else:
+            inRoadFeature = inLineFeature
+
+        # MERGE LINES, if requested
+        if mergeLines == "true":
+            if mergeField == "":
+                if makeCopy: # The inLineFeature was not already copied by the PROJECT operation.
+                    # Create a copy of the road feature class that we can add new fields to for calculations.
+                    namePrefix = "%s_%s_" % (metricConst.shortName, inBaseName)
+                    copyFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+                    AddMsg(("{0} Copying {1} to {2}...").format(timer.split(), inBaseName, os.path.basename(copyFeatureName)))
+                    inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature,env.workspace,
+                                                                                 os.path.basename(copyFeatureName))
+
+                # No merge field was supplied. Add a field to the copied inRoadFeature and populate it with a constant value
+                AddMsg(("{0} Adding a dummy field to {1} and assigning value 1 to all records...").format(timer.split(), arcpy.Describe(inRoadFeature).baseName))
+                mergeField = metricConst.dummyFieldName
+                arcpy.AddField_management(inRoadFeature,mergeField,"SHORT")
+                arcpy.CalculateField_management(inRoadFeature,mergeField,1)
+            
+            # Ensure the road feature class is comprised of singleparts. Multipart features will cause MergeDividedRoads to fail.
+            namePrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.singlepartRoadName)
+            singlepartFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg(("{0} Converting Multipart features to Singlepart. Intermediary output: {1}").format(timer.split(), os.path.basename(singlepartFeatureName)))
+            arcpy.MultipartToSinglepart_management(inRoadFeature, singlepartFeatureName)
+
+            # Generate single-line road features in place of matched pairs of divided road lanes.
+            # Only roads with the same value in the mergeField and within the mergeDistance will be merged. All non-merged roads are retained.
+            # Input features with the Merge Field parameter value equal to zero are locked and will not be merged, even if adjacent features are not locked
+            namePrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.mergedRoadName)
+            mergedFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg(("{0} Merging divided road features. Intermediary output: {1}").format(timer.split(), os.path.basename(mergedFeatureName)))
+            
+            # This is also the final reassignment of the inRoadFeature variable
+            inRoadFeature = arcpy.MergeDividedRoads_cartography(singlepartFeatureName, mergeField, mergeDistance, mergedFeatureName)
+
+        # UNSPLIT LINES
+        # We're only going to use two parameters for the arcpy.UnsplitLine_management tool. 
+        # The original code used a third parameter to focus the unsplit operation on the  "ST_NAME" field. 
+        # However, this will cause an intersection wherever a street name changes regardless if it's an actual intersection. 
+        # Less importantly, it would require the user to identify which field in the "roads" layer is the street name field 
+        # adding more clutter to the tool interface.
+        unsplitPrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.unsplitRoadName) 
+        unsplitFeatureName = files.nameIntermediateFile([unsplitPrefix, "FeatureClass"], cleanupList)
+        AddMsg(("{0} Unsplitting {1}. Intermediate: {2}").format(timer.split(), arcpy.Describe(inRoadFeature).baseName, os.path.basename(unsplitFeatureName)))
+        arcpy.UnsplitLine_management(inRoadFeature, unsplitFeatureName)
+        
+        # INTERSECT LINES WITH THEMSELVES
+        intersectPrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.roadIntersectName) 
+        intersectFeatureName = files.nameIntermediateFile([intersectPrefix, "FeatureClass"], cleanupList) 
+        AddMsg(("{0} Finding intersections. Intermediate: {1}.").format(timer.split(), os.path.basename(intersectFeatureName)))
+        arcpy.Intersect_analysis([unsplitFeatureName, unsplitFeatureName], intersectFeatureName, "ONLY_FID",'',"POINT")
+
+        # DELETE REDUNDANT INTERSECTION POINTS THAT OCCUR AT THE SAME LOCATION
+        AddMsg(("{0} Deleting identical intersections...").format(timer.split()))
+        arcpy.DeleteIdentical_management(intersectFeatureName, "Shape")
+
+        # Calculate a magnitude-per-unit area from the intersection features using a kernel function to fit a smoothly tapered surface to each point. 
+        # The output cell size, search radius, and area units can be altered by the user
+        AddMsg(("{0} Performing kernel density: Result saved as {1}.").format(timer.split(), os.path.basename(outRaster)))
+        den = arcpy.sa.KernelDensity(intersectFeatureName, "NONE", int(cellSize), int(searchRadius), areaUnits)
+
+        # Save the kernel density raster
+        den.save(outRaster)
+        
+        # Add it to the list of features to add to the Contents pane
+        addToActiveMap.append(outRaster)
+        
+        # add outputs to the active map
+        if actvMap != None:
+            for aFeature in addToActiveMap:
+                actvMap.addDataFromPath(aFeature)
+                AddMsg(("Adding {0} to {1} view").format(os.path.basename(aFeature), actvMap.name))
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        setupAndRestore.standardRestore()
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)

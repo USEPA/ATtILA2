@@ -156,21 +156,22 @@ class rdmToolValidator(BaseValidators.NoLccFileValidator):
 
 '''NoReportingUnitValidator Tools'''    
 
-class gidrToolValidator(BaseValidators.NoReportingUnitValidator):
+class idToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for GenerateIntersectionDensityRaster Utility """
     
-    filterList = gidrConstants.optionalFilter
-#    overrideAttributeName = lccConstants.XmlAttributePmField
-#    fieldPrefix = pmConstants.fieldPrefix
-#    fieldSuffix = pmConstants.fieldSuffix
-    metricShortName = gidrConstants.shortName
+    filterList = idConstants.optionalFilter
+    metricShortName = idConstants.shortName
+    
+class idoToolValidator(BaseValidators.NoReportingUnitValidator):
+    """ ToolValidator for GenerateIntersectionDensityRaster Utility """
+    
+    filterList = idConstants.optionalFilter
+    metricShortName = idConstants.shortName
 
 class npToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for Neighborhood Proportions """
     
     filterList = npConstants.optionalFilter
-#    overrideAttributeName = lccConstants.XmlAttributePmField
-#    fieldPrefix = pmConstants.fieldPrefix
     fieldSuffix = npConstants.fieldSuffix
     metricShortName = npConstants.shortName
     

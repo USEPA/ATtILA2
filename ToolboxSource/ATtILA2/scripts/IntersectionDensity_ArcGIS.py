@@ -1,4 +1,4 @@
-""" Generate Intersection Density Raster
+""" Intersection Density
 
     This script is associated with an ArcToolbox script tool.
 """
@@ -13,7 +13,7 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0])
     
-    metric.getIntersectionDensityRaster(*inputArguments)
+    metric.runIntersectionDensity(*inputArguments)
     
     
 if __name__ == "__main__":

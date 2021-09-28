@@ -20,3 +20,14 @@ fieldOverrideName = "Field"
 metricNameTooLong = "Provided metric name too long for output location. Truncated {0} to {1} "
 tabulateAreaTableAbbv = "_TabArea"
 scratchGDBFilename = "attilaScratchWorkspace.gdb"
+rasterExtensions = [".bil",
+                    ".bip",
+                    ".bmp",
+                    ".bsq",
+                    ".dat",
+                    ".gif",
+                    ".img",
+                    ".jpg",
+                    ".jp2",
+                    ".png",
+                    ".tif"]
