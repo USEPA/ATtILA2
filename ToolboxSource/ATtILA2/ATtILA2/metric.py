@@ -519,8 +519,11 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         utils.settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
         
+        # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
+        ignoreHighest = False
+        
         # alert user if the land cover grid has values undefined in the LCC XML file
-        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        utils.settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = utils.table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
@@ -538,7 +541,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         if clipLCGrid == "true":
             timer = DateTimer()
             AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(inLandCoverGrid))
+            pathRoot = os.path.splitext(inLandCoverGrid)[0]
+            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = utils.raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inEdgeWidth)
             AddMsg(timer.split() + " Reduction complete")
@@ -551,9 +555,11 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
                     AddMsg(self.timer.split() + " Generating core and edge grid for Class: " + m.upper())
+                    scratchNameReference =  [""];
                     self.inLandCoverGrid = utils.raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, processingCellSize,
-                                                                        self.timer, metricConst.shortName)
+                                                                        self.timer, metricConst.shortName, scratchNameReference)
+                    self.scratchNameToBeDeleted = scratchNameReference[0]
                     AddMsg(self.timer.split() + " Core and edge grid complete")
                     
                     #Moved the save intermediate grid to the calcMetrics function so it would be one of the last steps to be performed
@@ -617,12 +623,6 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                                                       self.zoneAreaDict, self.metricConst, m)
                     AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
 
-# The following block should be rewritten to remove the intermediate raster if save intermediates option is not chosen                    
-#                    if self.saveIntermediates:
-#                        self.namePrefix = self.metricConst.shortName+"_"+"Raster"+m+inEdgeWidth
-#                        self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
-#                        self.inLandCoverGrid.save(self.scratchName)
-#                        AddMsg(self.timer.split() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
 
             # Create new instance of metricCalc class to contain parameters
             caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -634,6 +634,15 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             caemCalc.run()
             
             caemCalc.metricsBaseNameList = metricsBaseNameList
+            
+            #delet the intermediate raster if save intermediates option is not chosen 
+            if caemCalc.saveIntermediates:
+                pass
+            else:
+                directory = env.workspace
+                path = os.path.join(directory, caemCalc.scratchNameToBeDeleted)
+                arcpy.Delete_management(path)
+
             
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)

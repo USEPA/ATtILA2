@@ -70,7 +70,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName, scratchNameReference):
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
     landCoverValues = arcpyutil.raster.getRasterValues(inLandCoverGrid)
@@ -107,7 +107,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     distGrid = EucDistance(otherGrid)
     
     AddMsg(timer.split() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
-    edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str)) 
+    edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str))
 
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     
@@ -115,16 +115,17 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     # This step wasn't the case earlier. Either ESRI changed things, or I altered something in ATtILA that unwittingly caused this. -DE
     namePrefix = shortName+"_"+"Raster"+m+PatchEdgeWidth_str
     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+    scratchNameReference[0] = scratchName
     zonesGrid.save(scratchName)
             
-    arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite")  
+    arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite") 
 
     arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
-    updateCoreEdgeCategoryLabels(zonesGrid)
-            
+    updateValueCategoryLabels(zonesGrid)
+        
     return zonesGrid
 
-def updateCoreEdgeCategoryLabels(Raster):
+def updateValueCategoryLabels(Raster):
     #Updates the CATEGORY field in the ForestCoreEdge with "Core" and "Edge" values
     rows = arcpy.UpdateCursor(Raster)
     row = rows.next()
