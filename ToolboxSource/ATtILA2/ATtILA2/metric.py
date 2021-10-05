@@ -857,7 +857,9 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
-                self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
+                #self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
+                self.bufferName = "%s_Buffer%s%s" % (self.metricConst.shortName, self.inBufferDistance.split()[0], self.inBufferDistance.split()[1])
+
                 # Generate the buffer area to use in the metric calculation
                 if enforceBoundary == "true":
                     self.inReportingUnitFeature, self.cleanupList = vector.bufferFeaturesByIntersect(self.inStreamFeatures,
@@ -897,8 +899,8 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         setupAndRestore.standardRestore()
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-                            metricsToRun, inPointFeatures, ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, 
-                            snapRaster, optionalFieldGroups):
+                            metricsToRun, inPointFeatures, ruLinkField='', inBufferDistance='#', enforceBoundary='', outTable='', processingCellSize='', 
+                            snapRaster='', optionalFieldGroups=''):
     """ Interface for script executing Sample Point Land Cover Proportion Metrics """
 
     try:
@@ -913,24 +915,39 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                 # check for duplicate ID entries. Perform dissolve if found
                 self.duplicateIds = fields.checkForDuplicateValues(self.inReportingUnitFeature, self.reportingUnitIdField)
                 
+                # Initiate our flexible cleanuplist
+                if splcpCalc.saveIntermediates:
+                    splcpCalc.cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+                else:
+                    splcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+                
                 if self.duplicateIds:
                     AddMsg("Duplicate ID values found in reporting unit feature. Forming multipart features...")
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
-                    self.dissolveName = arcpy.CreateScratchName(self.namePrefix,"","FeatureClass")
+                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
                     self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
-                self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
+                #self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
+                self.bufferName = "%s_Buffer%s%s" % (self.metricConst.shortName, self.inBufferDistance.split()[0], self.inBufferDistance.split()[1])
+                
                 # Buffer the points and use the output as the new reporting units
-                self.inReportingUnitFeature = vector.bufferFeaturesByID(self.inPointFeatures,
-                                                                              self.inReportingUnitFeature,
-                                                                              self.bufferName,self.inBufferDistance,
-                                                                              self.reportingUnitIdField,self.ruLinkField)
-                # Since we are replacing the reporting unit features with the buffered features we also need to replace
-                # the unique identifier field - which is now the ruLinkField.
-                self.reportingUnitIdField = self.ruLinkField
+                if enforceBoundary == "true":
+                    self.inReportingUnitFeature = vector.bufferFeaturesByID(self.inPointFeatures,
+                                                                                  self.inReportingUnitFeature,
+                                                                                  self.bufferName,self.inBufferDistance,
+                                                                                  self.reportingUnitIdField,self.ruLinkField)
+                    # Since we are replacing the reporting unit features with the buffered features we also need to replace
+                    # the unique identifier field - which is now the ruLinkField.
+                    self.reportingUnitIdField = self.ruLinkField
+                else:
+                    self.inReportingUnitFeature, self.cleanupList = vector.bufferFeaturesWithoutBorders(self.inPointFeatures,
+                                                                                     self.inReportingUnitFeature,
+                                                                                     self.bufferName, self.inBufferDistance,
+                                                                                     self.reportingUnitIdField,
+                                                                                     self.cleanupList)
 
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -941,6 +958,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         splcpCalc.inBufferDistance = inBufferDistance
         splcpCalc.ruLinkField = ruLinkField
         splcpCalc.enforceBoundary = enforceBoundary
+        splcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
         # Run Calculation
         splcpCalc.run()
@@ -957,6 +975,10 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         errors.standardErrorHandling(e)
 
     finally:
+        if not splcpCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in splcpCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
         setupAndRestore.standardRestore()
 
 
@@ -1955,74 +1977,74 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
                 function(*arguments)
 
                 
-def runIntersectionDensityOld(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",outPCS="#",
-                                  cellSize="#", searchRadius="#", areaUnits="#", optionalFieldGroups="#"):
-    #""" Interface for script executing Generate Intersection Density Raster utility """
-    try:
-        
-        metricConst = metricConstants.idoConstants()
-        intermediateList = []
-
-
-        AddMsg(" project the input road layer to user selected projection system: intermediate result is saved as "+ metricConst.prjRoadLayer)
-
-        #outCS = arcpy.SpatialReference(outPCS)
-        outCS = arcpy.SpatialReference(text=outPCS)
-        arcpy.Project_management(inLineFeature, metricConst.prjRoadLayer, outCS)
-        intermediateList.append(metricConst.prjRoadLayer)
-
-        inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(metricConst.prjRoadLayer, arcpy.env.workspace, metricConst.gidrRoadLayer)
-
-        intermediateList.append(inRoadFeature)
-
-        if mergeLines == "true":
-            if mergeField == "":
-                AddMsg(" add a dummy field and assign value to be 1")
-                classField = metricConst.dummyFieldName
-                arcpy.AddField_management(inRoadFeature,classField,"SHORT")
-                arcpy.CalculateField_management(inRoadFeature,classField,1)
-                AddMsg(" convert Multipart To Singlepart: intermediate result is saved as "+ metricConst.gidrRoadSinglePart)                
-                arcpy.MultipartToSinglepart_management(inRoadFeature, metricConst.gidrRoadSinglePart)
-                intermediateList.append(metricConst.gidrRoadSinglePart)
-                AddMsg(" Merge road: intermediate result is saved as "+ metricConst.mergedRoadOutputName)
-                arcpy.MergeDividedRoads_cartography(metricConst.gidrRoadSinglePart, classField, mergeDistance, metricConst.mergedRoadOutputName)
-                intermediateList.append(metricConst.mergedRoadOutputName)
-
-            else:
-                AddMsg(" convert Multipart To Singlepart: intermediate result is saved as "+ metricConst.gidrRoadSinglePart)
-                arcpy.MultipartToSinglepart_management(inRoadFeature, metricConst.gidrRoadSinglePart)
-                intermediateList.append(metricConst.gidrRoadSinglePart)
-                AddMsg(" Merge road: intermediate result is saved as "+ metricConst.mergedRoadOutputName)
-                arcpy.MergeDividedRoads_cartography(metricConst.gidrRoadSinglePart, mergeField, mergeDistance, metricConst.mergedRoadOutputName)
-                intermediateList.append(metricConst.mergedRoadOutputName)
-            AddMsg(" Unsplit road: intermediate result is saved as "+ metricConst.unsplitRoadOutputName)
-            arcpy.UnsplitLine_management(metricConst.mergedRoadOutputName, metricConst.unsplitRoadOutputName)
-            intermediateList.append(metricConst.unsplitRoadOutputName)
-
-        else:
-            AddMsg(" Unsplit road: intermediate result is saved as "+ metricConst.unsplitRoadOutputName)
-            arcpy.UnsplitLine_management(inRoadFeature, metricConst.unsplitRoadOutputName)
-            intermediateList.append(metricConst.unsplitRoadOutputName)
-        AddMsg(" perform Intersect analysis: intermediate result is saved as "+ metricConst.roadIntersectOutputName)
-        arcpy.Intersect_analysis([metricConst.unsplitRoadOutputName,metricConst.unsplitRoadOutputName], metricConst.roadIntersectOutputName, "ONLY_FID",'',"POINT")
-        intermediateList.append(metricConst.roadIntersectOutputName)
-        AddMsg(" delete identical intersections")
-        arcpy.DeleteIdentical_management(metricConst.roadIntersectOutputName, "Shape")
-
-
-        AddMsg(" perform kernel density: result is saved as "+ metricConst.intersectDensityGridName)
-        den = arcpy.sa.KernelDensity(metricConst.roadIntersectOutputName, "NONE", int(cellSize), int(searchRadius), areaUnits)
-
-        den.save(metricConst.intersectDensityGridName)
-
-    except Exception as e:
-        errors.standardErrorHandling(e)
- 
-    finally:
-        setupAndRestore.standardRestore()
-        if not globalConstants.intermediateName in optionalFieldGroups:
-            for (intermediateResult) in intermediateList:
-                arcpy.Delete_management(intermediateResult)
+# def runIntersectionDensityOld(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outWorkspace="#",outPCS="#",
+#                                   cellSize="#", searchRadius="#", areaUnits="#", optionalFieldGroups="#"):
+#     #""" Interface for script executing Generate Intersection Density Raster utility """
+#     try:
+#
+#         metricConst = metricConstants.idoConstants()
+#         intermediateList = []
+#
+#
+#         AddMsg(" project the input road layer to user selected projection system: intermediate result is saved as "+ metricConst.prjRoadLayer)
+#
+#         #outCS = arcpy.SpatialReference(outPCS)
+#         outCS = arcpy.SpatialReference(text=outPCS)
+#         arcpy.Project_management(inLineFeature, metricConst.prjRoadLayer, outCS)
+#         intermediateList.append(metricConst.prjRoadLayer)
+#
+#         inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(metricConst.prjRoadLayer, arcpy.env.workspace, metricConst.gidrRoadLayer)
+#
+#         intermediateList.append(inRoadFeature)
+#
+#         if mergeLines == "true":
+#             if mergeField == "":
+#                 AddMsg(" add a dummy field and assign value to be 1")
+#                 classField = metricConst.dummyFieldName
+#                 arcpy.AddField_management(inRoadFeature,classField,"SHORT")
+#                 arcpy.CalculateField_management(inRoadFeature,classField,1)
+#                 AddMsg(" convert Multipart To Singlepart: intermediate result is saved as "+ metricConst.gidrRoadSinglePart)                
+#                 arcpy.MultipartToSinglepart_management(inRoadFeature, metricConst.gidrRoadSinglePart)
+#                 intermediateList.append(metricConst.gidrRoadSinglePart)
+#                 AddMsg(" Merge road: intermediate result is saved as "+ metricConst.mergedRoadOutputName)
+#                 arcpy.MergeDividedRoads_cartography(metricConst.gidrRoadSinglePart, classField, mergeDistance, metricConst.mergedRoadOutputName)
+#                 intermediateList.append(metricConst.mergedRoadOutputName)
+#
+#             else:
+#                 AddMsg(" convert Multipart To Singlepart: intermediate result is saved as "+ metricConst.gidrRoadSinglePart)
+#                 arcpy.MultipartToSinglepart_management(inRoadFeature, metricConst.gidrRoadSinglePart)
+#                 intermediateList.append(metricConst.gidrRoadSinglePart)
+#                 AddMsg(" Merge road: intermediate result is saved as "+ metricConst.mergedRoadOutputName)
+#                 arcpy.MergeDividedRoads_cartography(metricConst.gidrRoadSinglePart, mergeField, mergeDistance, metricConst.mergedRoadOutputName)
+#                 intermediateList.append(metricConst.mergedRoadOutputName)
+#             AddMsg(" Unsplit road: intermediate result is saved as "+ metricConst.unsplitRoadOutputName)
+#             arcpy.UnsplitLine_management(metricConst.mergedRoadOutputName, metricConst.unsplitRoadOutputName)
+#             intermediateList.append(metricConst.unsplitRoadOutputName)
+#
+#         else:
+#             AddMsg(" Unsplit road: intermediate result is saved as "+ metricConst.unsplitRoadOutputName)
+#             arcpy.UnsplitLine_management(inRoadFeature, metricConst.unsplitRoadOutputName)
+#             intermediateList.append(metricConst.unsplitRoadOutputName)
+#         AddMsg(" perform Intersect analysis: intermediate result is saved as "+ metricConst.roadIntersectOutputName)
+#         arcpy.Intersect_analysis([metricConst.unsplitRoadOutputName,metricConst.unsplitRoadOutputName], metricConst.roadIntersectOutputName, "ONLY_FID",'',"POINT")
+#         intermediateList.append(metricConst.roadIntersectOutputName)
+#         AddMsg(" delete identical intersections")
+#         arcpy.DeleteIdentical_management(metricConst.roadIntersectOutputName, "Shape")
+#
+#
+#         AddMsg(" perform kernel density: result is saved as "+ metricConst.intersectDensityGridName)
+#         den = arcpy.sa.KernelDensity(metricConst.roadIntersectOutputName, "NONE", int(cellSize), int(searchRadius), areaUnits)
+#
+#         den.save(metricConst.intersectDensityGridName)
+#
+#     except Exception as e:
+#         errors.standardErrorHandling(e)
+#
+#     finally:
+#         setupAndRestore.standardRestore()
+#         if not globalConstants.intermediateName in optionalFieldGroups:
+#             for (intermediateResult) in intermediateList:
+#                 arcpy.Delete_management(intermediateResult)
                 
 
 def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
