@@ -857,8 +857,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
-                #self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
-                self.bufferName = "%s_Buffer%s%s" % (self.metricConst.shortName, self.inBufferDistance.split()[0], self.inBufferDistance.split()[1])
+                self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
 
                 # Generate the buffer area to use in the metric calculation
                 if enforceBoundary == "true":
@@ -930,8 +929,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
-                #self.bufferName = self.metricConst.shortName + "_Buffer"+self.inBufferDistance.split()[0]
-                self.bufferName = "%s_Buffer%s%s" % (self.metricConst.shortName, self.inBufferDistance.split()[0], self.inBufferDistance.split()[1])
+                self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
                 
                 # Buffer the points and use the output as the new reporting units
                 if enforceBoundary == "true":

@@ -253,14 +253,14 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         # merge and dissolve buffer features from all input feature classes into a single feature class.
         if len(inFeaturesList) > 1:
             AddMsg("Merging buffer zones from all input Stream features")
-            mergeName = files.nameIntermediateFile(["mergeOutput","FeatureClass"],cleanupList)
+            mergeName = files.nameIntermediateFile([toolShortName+"_mergeOutput","FeatureClass"],cleanupList)
             mergeOutput = arcpy.Merge_management(outputList,mergeName)
             finalOutput = arcpy.Dissolve_management(mergeOutput,outFeatures,unitID)
             # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
             AddMsg("Removing interior waterbody areas from buffer result")
             if len(eraseList) > 0:
                 #  Merge all eraseFeatures so we only have to do this once...
-                eraseName = files.nameIntermediateFile(["erasePolygons","FeatureClass"],cleanupList)
+                eraseName = files.nameIntermediateFile([toolShortName+"_erasePolygons","FeatureClass"],cleanupList)
                 eraseFeatureClass = arcpy.Merge_management(eraseList,eraseName)
                 # Rename the old final output so that it becomes an intermediate dataset
                 oldfinalOutputName = files.nameIntermediateFile([outFeatures+"_preErase","FeatureClass"],cleanupList)
