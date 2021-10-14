@@ -366,7 +366,8 @@ class plcvConstants(baseMetricConstants):
     burnInGridName = shortName+"_BurnIn"
     
 class pnfeaConstants(baseMetricConstants):
-    prefix = "NAVTEQ"
+    #prefix = "NAVTEQ"
+    prefix = ""
     outNameRoadsWalkable = prefix+"_RdsWalkable"
     outNameRoadsIntDens = prefix+"_RdsIntDens"
     outNameRoadsIAC = prefix+"_RdsIAC"
