@@ -93,6 +93,10 @@ def main(_argv):
             if chkWalkable == "true":
                 AddMsg(timer.split()+" Processing roads for intersection density analysis...")
                 AddMsg("Continuing with the selected features...")
+                
+            AddMsg("...removing from the selection features where SPEED_CAT = 8")
+            arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
+                                                    "SPEED_CAT IN ('8')")
             
             intDensityFCName = prefix+metricConst.outNameRoadsIntDens+ext
             
@@ -152,20 +156,16 @@ def main(_argv):
             
 
             AddMsg("...removing roads with no street names from the following land use type areas: \n"+
-                   "...    AIRPORT, AMUSEMENT PARK, ANIMAL PARK, BEACH, CEMETERY, HOSPITAL, \n"+
-                   "...    INDUSTRIAL COMPLEX, MILITARY BASE, PARK (CITY/COUNTY/STATE), RAILYARD, \n"+
-                   "...    SHOPPING CENTRE, or GOLF COURSE")
+                   "...    AIRPORT, AMUSEMENT PARK, BEACH, CEMETERY, HOSPITAL, INDUSTRIAL COMPLEX, \n"+
+                   "...    MILITARY BASE, RAILYARD, SHOPPING CENTRE, or GOLF COURSE")
             
             landUseSet = "'AIRPORT',"\
             "'AMUSEMENT PARK',"\
-            "'ANIMAL PARK',"\
             "'BEACH',"\
             "'CEMETERY',"\
             "'HOSPITAL',"\
             "'INDUSTRIAL COMPLEX',"\
             "'MILITARY BASE',"\
-            "'PARK (CITY/COUNTY)',"\
-            "'PARK (STATE)',"\
             "'RAILYARD',"\
             "'SHOPPING CENTRE',"\
             "'GOLF COURSE'"
@@ -223,17 +223,29 @@ def main(_argv):
             AddMsg("...copying remaining selected features to "+iacFCName)
             arcpy.CopyFeatures_management(streetLayer, iacFCName)
             
-            addedFieldLANES = "LANES"
-            arcpy.AddField_management(iacFCName,addedFieldLANES,"DOUBLE")
-            AddMsg("...added field named, LANES, to table. Calculating its value as TO_LANES + FROM_LANES")
+            lanesField = "LANES"
+            arcpy.AddField_management(iacFCName,lanesField,"DOUBLE")
+            AddMsg("...added field, LANES, to "+iacFCName+". Calculating its value as TO_LANES + FROM_LANES")
             calcExpression = "!TO_LANES!+!FROM_LANES!"
-            arcpy.CalculateField_management(iacFCName,addedFieldLANES,calcExpression,"PYTHON",'#')
+            arcpy.CalculateField_management(iacFCName,lanesField,calcExpression,"PYTHON",'#')
 
             #inform the user the total number of features having LANES of value 0
             value0FCName = metricConst.value0_LANES+ext
-            whereClause_0Lanes = addedFieldLANES + " = 0"
+            whereClause_0Lanes = lanesField + " = 0"
             arcpy.Select_analysis(iacFCName, value0FCName, whereClause_0Lanes)
-            AddMsg("Total number of records where the LANES field = 0 is: "+ arcpy.GetCount_management(value0FCName).getOutput(0))
+            zeroCount = arcpy.GetCount_management(value0FCName).getOutput(0)
+            if int(zeroCount) > 0:
+                arcpy.AddWarning("Total number of records where LANES field = 0 in "+iacFCName+" is: "+zeroCount+" \n"+
+                                 "...    replacing LANES field value to 2 for these records \n"+
+                                 "...    The user can locate and change these records with the following query: \n"+
+                                 "...    TO_LANES = 0 And FROM_LANES = 0")
+                
+                #Change the LANES value to 2 where LANES = 0
+                sql4 = "LANES = 0"
+                with arcpy.da.UpdateCursor(iacFCName, [lanesField], sql4) as cursor:
+                    for row in cursor:
+                        row[0] = 2
+                        cursor.updateRow(row)
 
             intermediateList.append(value0FCName)
             
