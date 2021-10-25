@@ -60,8 +60,7 @@ class flcpConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
-    fieldOverrideKey = shortName + gc.fieldOverrideName
-    
+    fieldOverrideKey = shortName + gc.fieldOverrideName    
     
 class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
@@ -94,7 +93,6 @@ class flcvConstants(baseMetricConstants):
     facilityCountFieldName = "FAC_Count"
     facilityCountField = [facilityCountFieldName,"LONG",None, 10]
     singleFields = [facilityCountField]
-
     
 class idConstants(baseMetricConstants):
     name = "IntersectionDensity"
@@ -115,47 +113,7 @@ class idConstants(baseMetricConstants):
     roadIntersectName = "Intersections"
     gidrRoadLayer = shortName+"_Road"
     singlepartRoadName = "SglPrt"
-    dummyFieldName = shortName+"_dummy"
-    
-    
-class idoConstants(baseMetricConstants):
-    name = "IntersectionDensityOld"
-    shortName = "ido"
-    fieldPrefix = ""
-    fieldSuffix = "IntDen"
-    overlapName = ""
-    totalAreaName = ""
-    effectiveAreaName = ""
-    excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
-    fieldOverrideKey = ""
-    prjRoadLayer = shortName+"_prj"
-    intersectDensityGridName = shortName+"_IntDen"
-    mergedRoadOutputName = shortName+"_Prepped"
-    unsplitRoadOutputName = shortName+"_UnSplit"
-    roadIntersectOutputName = shortName+"_Intersections"
-    gidrRoadLayer = shortName+"_Road"
-    gidrRoadSinglePart = shortName+"_SglPrt"
-    dummyFieldName = shortName+"_dummy"
-    
-class npConstants(baseMetricConstants):
-    name = "NeighborhoodProportions"
-    shortName = "np"
-    fieldPrefix = ""
-    fieldSuffix = "_Prox"
-    overlapName = ""
-    totalAreaName = ""
-    effectiveAreaName = ""
-    excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
-    fieldOverrideKey = ""
-    burnInGridName = shortName+"_BurnIn"
-    proxPolygonOutputName = "_ProxPoly"
-    proxZoneRaserOutName = "_ProxZone"
-    proxRasterOutName = "_Prox"
-    proxFocalSumOutName = "_ProxCnt"
+    dummyFieldName = shortName+"_dummy"    
 
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"
@@ -257,6 +215,29 @@ class lcpConstants(baseMetricConstants):
     valueCountFieldNames =["RU_POP_C"]
     valueCountTableName = shortName+"_populationCnt"   
 
+class npConstants(baseMetricConstants):
+    name = "NeighborhoodProportions"
+    shortName = "np"
+    fieldPrefix = ""
+    fieldSuffix = "_Prox"
+    overlapName = ""
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.intermediateDescription]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldOverrideKey = ""
+    burnInGridName = shortName+"_BurnIn"
+    proxPolygonOutputName = "_ProxPoly"
+    proxZoneRaserOutName = "_ProxZone"
+    proxRasterOutName = "_Prox"
+    proxFocalSumOutName = "_ProxCnt"
+    
+class nrlcpConstants(baseMetricConstants):
+    name = "NearRoadLandCoverProportions"
+    shortName = "nrlcp"
+    optionalFilter = [gc.intermediateDescription]    
+    
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
     shortName = "pdm"

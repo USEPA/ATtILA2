@@ -26,6 +26,7 @@ from .constants import globalConstants
 from .constants import errorConstants
 from . import utils
 from .utils.tabarea import TabulateAreaTable
+from arcpy import ListFields, FieldInfo, FieldMap
 
 #from sympy.logic.boolalg import false
 
@@ -175,7 +176,7 @@ def runLandCoverProportionsORIGINAL(inReportingUnitFeature, reportingUnitIdField
 def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                                      metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
                                      snapRaster, optionalFieldGroups):
-    """ Interface for script executing Population Density Metrics """
+    """ Interface for script executing Land Cover Proportion Metrics and Population Density Metrics """
     
     try:
         # retrieve the attribute constants associated with this metric
@@ -2708,6 +2709,110 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
             for aFeature in addToActiveMap:
                 actvMap.addDataFromPath(aFeature)
                 AddMsg(("Adding {0} to {1} view").format(os.path.basename(aFeature), actvMap.name))
+
+    except Exception as e:
+        errors.standardErrorHandling(e)
+ 
+    finally:
+        setupAndRestore.standardRestore()
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+                
+                
+def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
+                      widthLinearUnit="", laneCntFld="#", laneWidth="#", laneDistFld="#", overWrite="", outWorkspace='#', processingCellSize="#", 
+                      snapRaster="#", optionalFieldGroups="#"):
+    """ Interface for script executing Near Road Land Cover Proportions tool """
+    
+    from arcpy import env
+    from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
+
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+    try:
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.nrlcpConstants()
+        
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables")
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
+                                                                               [metricsToRun,optionalFieldGroups] )
+
+        # Process the Land Cover Classification XML
+        lccObj = lcc.LandCoverClassification(lccFilePath)
+        # get the dictionary with the LCC CLASSES attributes
+        lccClassesDict = lccObj.classes
+        # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
+        lccValuesDict = lccObj.values
+        # create a list of all the grid values in the selected land cover grid
+        landCoverValues = raster.getRasterValues(inLandCoverGrid)
+        # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
+        excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+        
+        # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        # alert user if the land cover grid has values undefined in the LCC XML file
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        # alert user if the land cover grid cells are not square (default to size along x axis)
+        settings.checkGridCellDimensions(inLandCoverGrid)
+        
+        # Determine if the user wants to save the intermediate products       
+        if globalConstants.intermediateName in optionalGroupsList:
+            saveIntermediates = True
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            saveIntermediates = False
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # determine the active map to add the output raster/features    
+        currentProject = arcpy.mp.ArcGISProject("CURRENT")
+        actvMap = currentProject.activeMap
+        
+        ### Computations
+        
+        # Create road buffers
+        # Create a copy of the road feature class that we can add new fields to for calculations. 
+        # This is more appropriate than altering the user's input data.
+        desc = arcpy.Describe(inRoadFeature)
+        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempRoadFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        fieldMappings = arcpy.FieldMappings()
+        fieldMappings.addTable(inRoadFeature)
+        
+        if inRoadWidthOption == "Value":
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.required != True]
+            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            
+            halfRoadWidth = float(widthLinearUnit.split()[0]) / 2
+            halfLinearUnit = "'%s %s'" % (str(halfRoadWidth), widthLinearUnit.split()[1]) # put linear unit string in quotes
+
+            arcpy.AddField_management(inRoadFeature, 'HalfWidth', 'TEXT')
+            arcpy.CalculateField_management(inRoadFeature, 'HalfWidth', halfLinearUnit)
+            
+        elif inRoadWidthOption == "Field: Count":
+            AddMsg("Field: Count")
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneCntFld]
+            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            
+            arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
+            calcExpression = "!%s! * %s / 2" % (str(laneCntFld), laneWidth.split()[0])
+            arcpy.CalculateField_management(inRoadFeature, 'HalfValue', calcExpression, 'PYTHON_9.3')
+            
+            arcpy.AddField_management(inRoadFeature, 'HalfWidth', 'TEXT')
+            calcExpression2 = "'!%s! %s'" % ('HalfValue', laneWidth.split()[1]) # put linear unit string in quotes
+            arcpy.CalculateField_management(inRoadFeature, 'HalfWidth', calcExpression2, 'PYTHON_9.3')
+            
+        else:
+            AddMsg("Field: Distance")
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneDistFld]
+            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            
+            inFld = inRoadFeature.findFieldByName(laneDistFld)
+        
+        
 
     except Exception as e:
         errors.standardErrorHandling(e)

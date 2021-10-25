@@ -162,11 +162,11 @@ class idToolValidator(BaseValidators.NoReportingUnitValidator):
     filterList = idConstants.optionalFilter
     metricShortName = idConstants.shortName
     
-class idoToolValidator(BaseValidators.NoReportingUnitValidator):
-    """ ToolValidator for GenerateIntersectionDensityRaster Utility """
-    
-    filterList = idConstants.optionalFilter
-    metricShortName = idConstants.shortName
+# class idoToolValidator(BaseValidators.NoReportingUnitValidator):
+#     """ ToolValidator for GenerateIntersectionDensityRaster Utility """
+#
+#     filterList = idConstants.optionalFilter
+#     metricShortName = idConstants.shortName
 
 class npToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for Neighborhood Proportions """
@@ -175,6 +175,10 @@ class npToolValidator(BaseValidators.NoReportingUnitValidator):
     fieldSuffix = npConstants.fieldSuffix
     metricShortName = npConstants.shortName
     
-
+class nrlcpToolValidator(BaseValidators.NoReportingUnitValidator):
+    """ ToolValidator for Near Road Land Cover Proportions """
+    
+    filterList = nrlcpConstants.optionalFilter
+    metricShortName = nrlcpConstants.shortName
 
 

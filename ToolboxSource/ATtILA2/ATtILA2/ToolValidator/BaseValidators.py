@@ -13,6 +13,7 @@ from ATtILA2.constants import validatorConstants
 from  ..utils.lcc import constants as lccConstants
 from ..utils.lcc import LandCoverClassification, LandCoverCoefficient
 from math import modf
+from future.backports.test.pystone import TRUE, FALSE
     
 class ProportionsValidator(object):
     """ Class for inheritance by ToolValidator Only
@@ -1356,6 +1357,8 @@ class NoReportingUnitValidator(object):
     outRasterIndex = 0
     validNumberIndex = 0
     inPositiveNumberIndex = 0
+    menu1Index = 0
+    menuInParameters = {}
         
     # Additional local variables
     srcDirName = ""
@@ -1472,6 +1475,9 @@ class NoReportingUnitValidator(object):
             
         if self.inPositiveNumberIndex:
             self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
+            
+        if self.menu1Index:
+            self.menu1Parameter = self.parameters[self.menu1Index]
 
                
         # Additional local variables
@@ -1488,6 +1494,12 @@ class NoReportingUnitValidator(object):
             for val in self.checkboxInParameters.values():
                 for indx in val:
                     self.parameters[indx].enabled = False 
+                    
+        if self.menuInParameters:
+            for val in self.menuInParameters.values():
+                for indx in val:
+                    self.parameters[indx].enabled = False 
+            
         
         # Populate predefined LCC dropdown
         self.lccFileDirSearch = os.path.join(self.srcDirName, self.lccFileDirName, "*" + self.lccFileExtension)
@@ -1527,6 +1539,17 @@ class NoReportingUnitValidator(object):
 #        self.updateInputFieldsParameter()
         self.updateOutputTableParameter()
         
+        if self.menu1Index:
+            menuKey = self.menu1Parameter.value
+            
+            for val in self.menuInParameters.values():
+                for indx in val:
+                    if indx in self.menuInParameters[menuKey]:
+                        self.parameters[indx].enabled = True
+                    else:
+                        self.parameters[indx].enabled = False
+
+        
         # if checkboxes are provided, use the indexes specified in the tool's validation script to identify the 
         # parameter locations of any additional needed inputs for that checkbox and enable those parameters
         if self.checkbox1Index:
@@ -1537,8 +1560,8 @@ class NoReportingUnitValidator(object):
             #cboxListeners = self.checkboxInParameters.values()[1]
             cboxListeners = list(self.checkboxInParameters.values())[1]
             self.updateCheckboxParameters(self.checkbox2Parameter, cboxListeners)
-
-
+                
+            
     def updateCheckboxParameters(self, checkboxParameter, cboxListeners):
         if checkboxParameter.value:
             for indx in cboxListeners:
@@ -1756,6 +1779,13 @@ class NoReportingUnitValidator(object):
         # if optional check box is unselected, clear the parameter message area and value area    
         if self.checkboxInParameters:
             for val in self.checkboxInParameters.values():
+                for indx in val:
+                    if not self.parameters[indx].enabled:
+                        self.parameters[indx].clearMessage()
+                        self.parameters[indx].value = ''
+
+        if self.menuInParameters:
+            for val in self.menuInParameters.values():
                 for indx in val:
                     if not self.parameters[indx].enabled:
                         self.parameters[indx].clearMessage()
