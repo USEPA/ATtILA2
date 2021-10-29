@@ -28,3 +28,13 @@ Please be sure that the areal extent of the input Reporting unit features overla
 rasterSizeError = '''Unable to convert raster to polygon feature.
 
 Input grid may be too large for processing. Try splitting the raster into smaller tiles before re-running the tool. '''
+
+linearUnitFormatError = '''One or more records have invalid or missing entries in the selected Linear Unit Field.
+
+Please correct any erroneous field contents accordingly.
+
+A valid entry is in the form of: linearUnit unitOfMeasure (e.g. 10 Meters).
+
+Valid unitOfMeasure keywords: CENTIMETERS | DECIMALDEGREES | DECIMETERS | FEET | INCHES |
+                              KILOMETERS | METERS | MILES | MILLIMETERS | NAUTICALMILES | POINTS |
+                              UNKNOWN | YARDS '''

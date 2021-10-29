@@ -2722,8 +2722,8 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
                 
                 
 def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
-                      widthLinearUnit="", laneCntFld="#", laneWidth="#", laneDistFld="#", overWrite="", outWorkspace='#', processingCellSize="#", 
-                      snapRaster="#", optionalFieldGroups="#"):
+                      widthLinearUnit="", laneCntFld="#", laneWidth="#", laneDistFld="#", bufferDist="#", removeLinesYN="",
+                      cutoffLength="#", overWrite="", outWorkspace='#',  processingCellSize="#", snapRaster="#", optionalFieldGroups="#"):
     """ Interface for script executing Near Road Land Cover Proportions tool """
     
     from arcpy import env
@@ -2782,35 +2782,124 @@ def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lc
         fieldMappings = arcpy.FieldMappings()
         fieldMappings.addTable(inRoadFeature)
         
-        if inRoadWidthOption == "Value":
+        AddMsg("%s Creating a working copy of %s..." % (timer.split(), os.path.basename(inRoadFeature)))
+        
+        if inRoadWidthOption == "Distance":
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.required != True]
             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
             
+            AddMsg("%s Adding field, HalfWidth, and calculating its value... " % (timer.split()))   
             halfRoadWidth = float(widthLinearUnit.split()[0]) / 2
             halfLinearUnit = "'%s %s'" % (str(halfRoadWidth), widthLinearUnit.split()[1]) # put linear unit string in quotes
-
             arcpy.AddField_management(inRoadFeature, 'HalfWidth', 'TEXT')
+            AddMsg("...    HalfWidth = %s" % (halfLinearUnit))
             arcpy.CalculateField_management(inRoadFeature, 'HalfWidth', halfLinearUnit)
             
-        elif inRoadWidthOption == "Field: Count":
-            AddMsg("Field: Count")
+        elif inRoadWidthOption == "Field: Lane Count":
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneCntFld]
             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
             
+            AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.split()))
             arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
             calcExpression = "!%s! * %s / 2" % (str(laneCntFld), laneWidth.split()[0])
+            AddMsg("...    HalfValue = %s" % (calcExpression))
             arcpy.CalculateField_management(inRoadFeature, 'HalfValue', calcExpression, 'PYTHON_9.3')
             
             arcpy.AddField_management(inRoadFeature, 'HalfWidth', 'TEXT')
             calcExpression2 = "'!%s! %s'" % ('HalfValue', laneWidth.split()[1]) # put linear unit string in quotes
+            AddMsg("...    HalfWidth = %s" % (calcExpression2))
             arcpy.CalculateField_management(inRoadFeature, 'HalfWidth', calcExpression2, 'PYTHON_9.3')
             
         else:
-            AddMsg("Field: Distance")
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneDistFld]
             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
             
-            inFld = inRoadFeature.findFieldByName(laneDistFld)
+            
+            # input field should be a linear distance string. Part 0 = distance value. Part 1 = distance units
+            try:
+                AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.split()))
+                
+                arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
+                calcExpression = "float(!%s!.split()[0]) / 2" % (laneDistFld)
+                AddMsg("...    HalfValue = %s" % (calcExpression))
+                arcpy.CalculateField_management(inRoadFeature, 'HalfValue', calcExpression, 'PYTHON_9.3')
+                
+                arcpy.AddField_management(inRoadFeature, 'HalfWidth', 'TEXT')
+                #conjunction = '+" "+'
+                #calcExpression2 = "str(!%s!)%s!%s!.split()[1]" % ('HalfValue', conjunction, laneDistFld)
+                calcExpression2 = "str(!%s!)+' '+!%s!.split()[1]" % ('HalfValue', laneDistFld)
+                AddMsg("...    HalfWidth = %s" % (calcExpression2))
+                arcpy.CalculateField_management(inRoadFeature, 'HalfWidth', calcExpression2, 'PYTHON_9.3')
+                
+            except:
+                raise errors.attilaException(errorConstants.linearUnitFormatError)
+        
+        
+        AddMsg("%s Buffer road feature using the value in HALFWIDTH with options FULL, FLAT, ALL..." % (timer.split()))
+        tempName = "%s_%s" % (metricConst.shortName, '1_RoadEdge')
+        edgeBufferFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.Buffer_analysis(inRoadFeature, edgeBufferFeature, 'HalfWidth', 'FULL', 'FLAT', 'ALL')
+        
+        AddMsg("%s Rebuffer the buffered streets by 11.5 meters with options FULL, FLAT, ALL..." % (timer.split())) 
+        tempName = "%s_%s" % (metricConst.shortName, '2_RoadBuffer')
+        roadBufferFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.Buffer_analysis(edgeBufferFeature, roadBufferFeature, '11.5 Meters', 'FULL', 'FLAT', 'ALL')
+
+        
+        # Convert the buffer into lines
+        AddMsg("%s Converting the resulting polygons into polylines -- referred to as analysis lines.--" % (timer.split()))
+        tempName = "%s_%s" % (metricConst.shortName, '3_RdBuffLine')
+        rdBuffLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.PolygonToLine_management(roadBufferFeature, rdBuffLineFeature)
+
+
+        # Remove interior lines based on cut-off point
+        if removeLinesYN == "true":
+            AddMsg("%s Adding geometry attributes to polyline feature. Calculating LENGTH in METERS..." % (timer.split()))
+            try:
+                arcpy.AddGeometryAttributes_management(rdBuffLineFeature,'LENGTH','METERS')
+                Expression = 'LENGTH <= %s' % cutoffLength
+            except:
+                arcpy.AddGeometryAttributes_management(rdBuffLineFeature,'LENGTH_GEODESIC','METERS')
+                Expression = 'LENGTH_GEO <= %s' % cutoffLength
+            
+            
+            AddMsg("%s Deleting analysis lines that are <= %s meters in length..." % (timer.split(), cutoffLength))
+            #Expression = 'Shape_Length <= 1050'
+            #Expression = 'LENGTH <= %s' % cutoffLength
+         
+            arcpy.MakeFeatureLayer_management(rdBuffLineFeature, 'BuffLine_lyr')
+            arcpy.SelectLayerByAttribute_management('BuffLine_lyr', 'NEW_SELECTION', Expression)
+            arcpy.DeleteFeatures_management('BuffLine_lyr')
+            tempName = "%s_%s" % (metricConst.shortName, '4_BuffLineUse')
+            buffLineUseFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+            arcpy.CopyFeatures_management('BuffLine_lyr', buffLineUseFeature)
+        else:
+            buffLineUseFeature = rdBuffLineFeature
+
+        #Create Road Buffer Areas
+        ### This routine needs to be altered to convert input buffer distance units to meters ###
+        leftValue = float(bufferDist.split()[0]) - 11.5
+        leftUnits = bufferDist.split()[1]
+        leftDist = str(leftValue)+' '+leftUnits
+        AddMsg("%s Buffering the analysis line by %s with options LEFT, FLAT, ALL..." % (timer.split(), leftDist))
+        tempName = "%s_%s_" % (metricConst.shortName, '_Left_'+str(round(leftValue)))
+        leftBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.Buffer_analysis(buffLineUseFeature, leftBuffFeature, leftDist, 'LEFT', 'FLAT', 'ALL')
+        
+        AddMsg("%s Buffering the analysis line by by 11.5 meters with options RIGHT, FLAT, ALL..." % (timer.split()))
+        tempName = "%s_%s_" % (metricConst.shortName, '_Right_11')
+        rightBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.Buffer_analysis(buffLineUseFeature, rightBuffFeature, '11.5 Meters', 'RIGHT', 'FLAT', 'ALL')        
+        
+        AddMsg("%s Merging the two buffers together and dissolving..." % (timer.split()))
+        tempName = "%s_%s" % (metricConst.shortName, '_Buff_LR')
+        mergeBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.Merge_management([leftBuffFeature, rightBuffFeature], mergeBuffFeature)
+        
+        tempName = "%s_%s" % (metricConst.shortName, '_RoadBuffer')
+        finalBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        arcpy.Dissolve_management(mergeBuffFeature, finalBuffFeature)        
         
         
 

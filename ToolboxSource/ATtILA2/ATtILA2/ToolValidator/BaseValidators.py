@@ -13,7 +13,7 @@ from ATtILA2.constants import validatorConstants
 from  ..utils.lcc import constants as lccConstants
 from ..utils.lcc import LandCoverClassification, LandCoverCoefficient
 from math import modf
-from future.backports.test.pystone import TRUE, FALSE
+# from future.backports.test.pystone import TRUE, FALSE
     
 class ProportionsValidator(object):
     """ Class for inheritance by ToolValidator Only
@@ -1301,9 +1301,7 @@ class NoReportingUnitValidator(object):
         Description of ArcToolbox parameters:
         -------------------------------------
         
-        inTableIndex:  Two consecutive parameters
-        1. Table(reporting units)
-        2. Field(dropdown):  Obtained from="<Table>"
+        inTableIndex:  Vector Feature input that occupies parameter 0
            
         inRasterIndex:  One parameter
         1. Raster Layer
@@ -1329,7 +1327,7 @@ class NoReportingUnitValidator(object):
     """
     
     # Indexes of input parameters
-#    inTableIndex = 0 
+    inTableIndex = 0 
     inRasterIndex = 0  
     startIndex = 0  
     processingCellSizeIndex = 0
@@ -1346,6 +1344,7 @@ class NoReportingUnitValidator(object):
     inIntRasterOrPolyIndex = 0
     inputFields2Index = 0
     inDistanceIndex = 0
+    inDistance2Index = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
     inPositiveInteger2Index = 0
@@ -1410,7 +1409,7 @@ class NoReportingUnitValidator(object):
         
         # Assign parameters to local variables
         self.parameters = arcpy.GetParameterInfo()
-#        self.inputTableParameter = self.parameters[self.inTableIndex]
+        self.inputTableParameter = self.parameters[self.inTableIndex]
 #        self.inputFieldsParameter = self.parameters[self.inputFieldsIndex]
         self.lccSchemeParameter =  self.parameters[self.startIndex]
         self.lccFilePathParameter = self.parameters[self.lccFilePathIndex]
@@ -1436,6 +1435,9 @@ class NoReportingUnitValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+            
+        if self.inDistance2Index:
+            self.inDistance2Parameter = self.parameters[self.inDistance2Index]
             
         if self.inWholeNumIndex:
             self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
@@ -1749,21 +1751,17 @@ class NoReportingUnitValidator(object):
             if not self.snapRasterParameter.value and not self.inRasterParameter.hasError():
                 self.snapRasterParameter.value = str(self.inRasterParameter.value)
             
-#         # Check input features
-#         if self.inputTableParameter.value and not self.inputTableParameter.hasError():
-#         
-#         #    # Check for empty input features
-#         #    if not arcpy.SearchCursor(self.inputTableParameter.value).next():
-#         #        self.inputTableParameter.setErrorMessage(self.noFeaturesMessage)
-#             
-#             # Check for if input feature layer has spatial reference
-#             # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
-#             if hasattr(self.inputTableParameter.value, "dataSource"):
-#                 if arcpy.Describe(self.inputTableParameter.value.dataSource).spatialReference.name.lower() == "unknown":
-#                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
-#             else:
-#                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
-#                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+        # Check input features
+        if self.inputTableParameter.value and not self.inputTableParameter.hasError():
+         
+            # Check for if input feature layer has spatial reference
+            # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
+            if hasattr(self.inputTableParameter.value, "dataSource"):
+                if arcpy.Describe(self.inputTableParameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            else:
+                if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
+                    self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
 
         # Check if processingCellSize is a positive number            
         if self.processingCellSizeParameter.value:
@@ -1902,15 +1900,37 @@ class NoReportingUnitValidator(object):
                                                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inDistanceIndex:
-            if self.inDistanceParameter.value:
-                distanceValue = self.inDistanceParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strDistance = str(distanceValue).split()[0]
-                if float(strDistance) <= 0.0:
-                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            # This parameter can be linked to a checkbox or a menu selection. If it is not checked or selected, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inDistanceParameter.enabled:
+                self.inDistanceParameter.clearMessage()
             else:
-                # need the else condition as a 0 value won't trigger the if clause 
-                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                if self.inDistanceParameter.value:
+                    distanceValue = self.inDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strDistance = str(distanceValue).split()[0]
+                    if float(strDistance) <= 0.0:
+                        self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                else:
+                    # need the else condition as a 0 value won't trigger the if clause 
+                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                
+        # Check if second distance input (e.g., buffer width, edge width) is a positive number            
+        if self.inDistance2Index:
+            # This parameter can be linked to a checkbox or a menu selection. If it is not checked or selected, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inDistance2Parameter.enabled:
+                self.inDistance2Parameter.clearMessage()
+            else:
+                if self.inDistance2Parameter.value:
+                    distanceValue = self.inDistance2Parameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strDistance = str(distanceValue).split()[0]
+                    if float(strDistance) <= 0.0:
+                        self.inDistance2Parameter.setErrorMessage(self.nonPositiveNumberMessage)
+                else:
+                    # need the else condition as a 0 value won't trigger the if clause 
+                    self.inDistance2Parameter.setErrorMessage(self.nonPositiveNumberMessage)
                 
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
@@ -1961,12 +1981,17 @@ class NoReportingUnitValidator(object):
         
         # Check if distance input (e.g., buffer width, edge width) is a positive number            
         if self.inLinearUnitIndex:
-            if self.inLinearUnitParameter.value:
-                linearUnitValue = self.inLinearUnitParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strLinearUnit = str(linearUnitValue).split()[0]
-                if float(strLinearUnit) <= 0.0:
-                    self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            # This parameter can be linked to a checkbox or a menu selection. If it is not checked or selected, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.linearUnitParameter.enabled:
+                self.validNumberParameter.clearMessage()
+            else:
+                if self.inLinearUnitParameter.value:
+                    linearUnitValue = self.inLinearUnitParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strLinearUnit = str(linearUnitValue).split()[0]
+                    if float(strLinearUnit) <= 0.0:
+                        self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
                     
         # Check if a secondary raster output is indicated
         if self.outRasterIndex:
