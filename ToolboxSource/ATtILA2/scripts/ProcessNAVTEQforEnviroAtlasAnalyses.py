@@ -60,9 +60,9 @@ def main(_argv):
 
         if chkWalkable == "true" or chkIntDens == "true":
             if chkWalkable == "true":
-                AddMsg(timer.split()+" Processing walkable roads...")
+                AddMsg(timer.start()+" Processing walkable roads...")
             else:
-                AddMsg(timer.split()+" Processing roads for intersection density analysis...")
+                AddMsg(timer.start()+" Processing roads for intersection density analysis...")
                 
             walkableFCName = prefix+metricConst.outNameRoadsWalkable+ext
 
@@ -91,7 +91,7 @@ def main(_argv):
                 
         if chkIntDens == "true":
             if chkWalkable == "true":
-                AddMsg(timer.split()+" Processing roads for intersection density analysis...")
+                AddMsg(timer.start()+" Processing roads for intersection density analysis...")
                 AddMsg("Continuing with the selected features...")
                 
             AddMsg("...removing from the selection features where SPEED_CAT = 8")
@@ -204,7 +204,7 @@ def main(_argv):
             flist.append(intDensityFCName)
 
         if chkIAC == "true":
-            AddMsg(timer.split()+" Processing interstates, arterials, and connectors...")
+            AddMsg(timer.start()+" Processing interstates, arterials, and connectors...")
             
             iacFCName = prefix+metricConst.outNameRoadsIAC+ext
             streetLayer = "streetLayer"

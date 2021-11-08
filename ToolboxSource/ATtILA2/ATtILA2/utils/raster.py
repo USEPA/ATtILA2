@@ -150,7 +150,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
         if v > maxValue:
             maxValue = v
 
-    AddMsg(timer.split() + " Generating land cover above slope threshold grid...")    
+    AddMsg(timer.start() + " Generating land cover above slope threshold grid...")    
     AreaBelowThresholdValue = int(maxValue + 1)
     delimitedVALUE = arcpy.AddFieldDelimiters(SLPGrid,"VALUE")
     whereClause = delimitedVALUE+" >= " + inSlopeThresholdValue
@@ -166,7 +166,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     # In that case, the excluded land cover values are maintained in the low slope areas.
     if excludedValues:
         # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where on the land cover grid excluded values occur
-        AddMsg(timer.split() + " Inserting EXCLUDED values into areas below slope threshold...")
+        AddMsg(timer.start() + " Inserting EXCLUDED values into areas below slope threshold...")
         stringStart = delimitedVALUE+" = "
         stringSep = " or "+delimitedVALUE+" = "
         whereExcludedClause = stringStart + stringSep.join([str(item) for item in excludedValues])
@@ -174,35 +174,100 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     
     return SLPxLCGrid
 
-def getNullSubstituteGrid(lccObj, inLandCoverGrid, inSubstituteGrid, nullValuesList, cleanupList, timer):
-    # Set areas in the inSubstituteGrid to NODATA using the nullValuesList. For areas not in the nullValuesList, substitute
-    # the grid values with those from the inLandCoverGrid
-    LCGrid = Raster(inLandCoverGrid)
-    subGrid = Raster(inSubstituteGrid)
+
+def getSetNullGrid(inConditionalGrid, inReplacementGrid, nullValuesList):
+    # Identify inConditionalGrid grid cells whose values are in the nullValuesList and set them to NODATA. 
+    # Replace the other cell values with values from the inLandCoverGrid.
+    conditionalRaster = Raster(inConditionalGrid)   
     
-    # find the highest value found in LCC XML file or land cover grid  
+    # build whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify areas to substitute the valueToExclude
+    whereClause = buildWhereValueClause(conditionalRaster, nullValuesList)
+
+    replaceRaster = Raster(inReplacementGrid)
+    nullSubstituteGrid = SetNull(conditionalRaster, replaceRaster, whereClause)
+    
+    return nullSubstituteGrid
+
+
+def buildWhereValueClause(inRaster, valueList, exclude=False):
+    # build whereClause string (e.g. "VALUE" <> 11 or "VALUE" <> 12") or 
+    # (e.g. "VALUE" = 11 or "VALUE" = 12") depending on the state of the exclude boolean
+    delimitedVALUE = arcpy.AddFieldDelimiters(inRaster,"VALUE")
+    if exclude:
+        operandStr = " <> "
+    else:
+        operandStr = " = "
+    
+    stringStart = delimitedVALUE+operandStr
+    stringSep = " or "+delimitedVALUE+operandStr
+        
+    whereClause = stringStart + stringSep.join([str(item) for item in valueList])
+    
+    return whereClause
+
+
+def addValuetoExcluded(aValue, lccObj):
+    ''' This function adds a value to the list of values tagged as excluded in an LCC XML file.
+    
+    ** Description: **
+    
+        This function will retrieve the frozen set of values tagged as excluded in the LCC XML file,
+        convert the frozen set to a list, and append the supplied value to that list. The new list
+        of values is returned.
+    
+    **Arguments:**
+    
+        * *number* - an integer or float value
+        * *lccObj* - a class object of the selected land cover classification file 
+        
+    **Returns:**
+    
+        * *list - a python list
+        
+    '''
+    
     lccValuesDict = lccObj.values
-    maxValue = LCGrid.maximum
+    excludedValuesFrozen = lccValuesDict.getExcludedValueIds()
+    excludedValues = [item for item in excludedValuesFrozen]
+    excludedValues.append(aValue)
+    
+    return excludedValues
+
+
+def getMaximumValue(inRaster, lccObj, addOne=False):
+    """Utility for calculating the highest value from a raster's VALUE field or an LCC XML file.
+    
+    ** Description: **
+        
+        This function will determine the highest value between a raster's VALUE field and the VALUES section of
+        an Land Cover Coding Scheme XML file. Once found, that maximum value is returned or it can be increased 
+        by a value of one. The increased value is not found in either the raster or the LCC XML, and can be used
+        to reclass grid cells as 'other' for metric calculations.
+        An integer value is returned
+    
+    **Arguments:**
+    
+        * *raster* - any raster dataset with an attribute table.
+        * *lccObj* - a class object of the selected land cover classification (LCC) XML file 
+        * *boolean* - True, if calculating a value 1 higher than found in either raster or LCC XML 
+   
+    **Returns:**
+    
+        * *integer
+        
+    """
+    # find the highest value found in LCC XML file or land cover grid 
+    maxValue = inRaster.maximum
     xmlValues = lccObj.getUniqueValueIdsWithExcludes()
     for v in xmlValues:
         if v > maxValue:
             maxValue = v
     
-    # Add 1 to the highest value and then add it to the list of values to exclude during metric calculations       
-    valueToExclude = int(maxValue + 1)
-    excludedValuesFrozen = lccValuesDict.getExcludedValueIds()
-    excludedValues = [item for item in excludedValuesFrozen]
-    excludedValues.append(valueToExclude)
+    if addOne:
+        # Add 1 to the highest value      
+        maxValue = int(maxValue + 1)
     
-    # build whereClause string (e.g. "VALUE" <> 11 or "VALUE" <> 12") to identify areas to substitute the valueToExclude
-    delimitedVALUE = arcpy.AddFieldDelimiters(subGrid,"VALUE")
-    stringStart = delimitedVALUE+" <> "
-    stringSep = " or "+delimitedVALUE+" <> "
-    whereClause = stringStart + stringSep.join([str(item) for item in nullValuesList])
-    AddMsg(timer.split() + " Generating land cover in floodplain grid...") 
-    nullSubstituteGrid = Con(subGrid, LCGrid, valueToExclude, whereClause)
-    
-    return nullSubstituteGrid, excludedValues
+    return maxValue
 
 
 def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName, scratchNameReference):
@@ -232,17 +297,17 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
             oldValNewVal.append(2)
             reclassPairs.append(oldValNewVal)
             
-    AddMsg(timer.split() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1...")
+    AddMsg(timer.start() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     
-    AddMsg(timer.split() + " Step 2 of 4: Setting Class areas to Null...")
+    AddMsg(timer.start() + " Step 2 of 4: Setting Class areas to Null...")
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
     otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
     
-    AddMsg(timer.split() + " Step 3 of 4: Finding distance from Other...")
+    AddMsg(timer.start() + " Step 3 of 4: Finding distance from Other...")
     distGrid = EucDistance(otherGrid)
     
-    AddMsg(timer.split() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
+    AddMsg(timer.start() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
     #edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str)) 
     edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
 
@@ -305,7 +370,7 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
-    AddMsg(timer.split() + " Reclassing land cover to Class:"+m+" = "+str(classValue)+", Other = "+str(otherValue)+
+    AddMsg(timer.start() + " Reclassing land cover to Class:"+m+" = "+str(classValue)+", Other = "+str(otherValue)+
            ", and Excluded = "+str(excludedValue)+"...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
      
@@ -319,10 +384,10 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
     
     # Check if Maximum Separation > 0 if it is then skip to regions group analysis otherwise run Euclidean distance
     if intMaxSeparation == 0:
-        AddMsg(timer.split() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
+        AddMsg(timer.start() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
         regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
     else:
-        AddMsg(timer.split() + " Connecting clusters of Class:"+m+" within maximum separation distance...")
+        AddMsg(timer.start() + " Connecting clusters of Class:"+m+" within maximum separation distance...")
         fltProcessingCellSize = float(processingCellSize_str)
         maxSep = intMaxSeparation * float(processingCellSize_str)
         delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
@@ -331,14 +396,14 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
         eucDistanceRaster = EucDistance(classRaster, maxSep, fltProcessingCellSize)
 
         # Run Region Group analysis on UserEuclidPlus, ignores 0/NoData values
-        AddMsg(timer.split() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
+        AddMsg(timer.start() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...")
         UserEuclidRegionGroup = RegionGroup(eucDistanceRaster >= 0,"EIGHT","CROSS","ADD_LINK","0")
 
         # Maintain the original boundaries of each patch
         regionOther = Con(reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid)
 
     if intMinPatchSize > 1:
-        AddMsg(timer.split() + " Eliminating clusters below minimum patch size...")
+        AddMsg(timer.start() + " Eliminating clusters below minimum patch size...")
         delimitedCOUNT = arcpy.AddFieldDelimiters(regionOther,"COUNT")
         whereClause = delimitedCOUNT+" < " + str(intMinPatchSize)
         regionOtherFinal = Con(regionOther, otherValue, regionOther, whereClause)
@@ -435,14 +500,14 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
-    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.start()))
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     
-    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.split(), neighborhoodSize_str))
+    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.start(), neighborhoodSize_str))
     neighborhood = arcpy.sa.NbrRectangle(int(neighborhoodSize_str), int(neighborhoodSize_str), "CELL")
     focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
     
-    AddMsg(("{0} Reclassifying focal SUM results into {1}% breaks...").format(timer.split(), zoneBin_str))
+    AddMsg(("{0} Reclassifying focal SUM results into {1}% breaks...").format(timer.start(), zoneBin_str))
     proximityGrid = Reclassify(focalGrid, "VALUE", rngRemap)
     
     # Delete output grid if it already exists in the GDB. This prevents errors caused by lingering locks and such
@@ -452,13 +517,13 @@ def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGri
         pass
     
     if burnIn == "true":
-        AddMsg(("{0} Burning excluded areas into proximity grid...").format(timer.split()))
+        AddMsg(("{0} Burning excluded areas into proximity grid...").format(timer.start()))
         delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
         whereClause = delimitedVALUE+" = 0"
         proximityGrid = Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
     else:
         # pare back the extent of the proximityGrid to the edges of the input land cover grid
-        AddMsg(("{0} Trimming proximity raster to Land cover grid extent...").format(timer.split()))
+        AddMsg(("{0} Trimming proximity raster to Land cover grid extent...").format(timer.start()))
         proximityGrid = SetNull(IsNull(reclassGrid) == 1, proximityGrid)
     
     proximityGrid.save(proximityGridName)
@@ -481,19 +546,19 @@ def getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
-    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.start()))
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     
-    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.split(), inNeighborhoodSize))
+    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.start(), inNeighborhoodSize))
     neighborhood = arcpy.sa.NbrRectangle(int(inNeighborhoodSize), int(inNeighborhoodSize), "CELL")
     #nbrSumGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM", "NODATA")
     nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid, neighborhood, "SUM", "NODATA")
         
-    AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.split(), inNeighborhoodSize))
+    AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.start(), inNeighborhoodSize))
     proportionsGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / '+str(maxCellCount)+') * 100') )
 
     if burnIn == "true":
-        AddMsg(("{0} Burning excluded areas into proportions grid...").format(timer.split()))
+        AddMsg(("{0} Burning excluded areas into proportions grid...").format(timer.start()))
         delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
         whereClause = delimitedVALUE+" = 0"
         proportionsGrid = Con(burnInGrid, proportionsGrid, burnInGrid, whereClause)
@@ -514,14 +579,14 @@ def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverV
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
-    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.start()))
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     
-    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} cell radius neighborhood...").format(timer.split(), viewRadius))
+    AddMsg(("{0} Performing focal SUM on reclassified raster using {1} cell radius neighborhood...").format(timer.start(), viewRadius))
     neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
     focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
     
-    AddMsg(("{0} Reclassifying focal SUM results into view = 0 and no-view = 1 binary raster...").format(timer.split()))
+    AddMsg(("{0} Reclassifying focal SUM results into view = 0 and no-view = 1 binary raster...").format(timer.start()))
 #    delimitedVALUE = arcpy.AddFieldDelimiters(focalGrid,"VALUE")
 #    whereClause = delimitedVALUE+" = 0"
 #    viewGrid = Con(focalGrid, 1, 0, whereClause)
@@ -543,15 +608,15 @@ def getLargePatchViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, 
 
 
       
-    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.split()))
+    AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.start()))
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
  
     ##calculate the big patches for LandCover
                 
-    AddMsg(("{0} Calculating size of excluded area patches...").format(timer.split()))
+    AddMsg(("{0} Calculating size of excluded area patches...").format(timer.start()))
     regionGrid = RegionGroup(reclassGrid,"EIGHT","WITHIN","ADD_LINK")
                 
-    AddMsg(("{0} Assigning {1} to patches >= minimum size threshold...").format(timer.split(), "1"))
+    AddMsg(("{0} Assigning {1} to patches >= minimum size threshold...").format(timer.start(), "1"))
     delimitedCOUNT = arcpy.AddFieldDelimiters(regionGrid,"COUNT")
     whereClause = delimitedCOUNT+" >= " + minimumPatchSize + " AND LINK = 1"
     burnInGrid = Con(regionGrid, classValue, 0, whereClause)
@@ -571,7 +636,7 @@ def getLargePatchViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, 
     #focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
     focalGrid = arcpy.sa.FocalStatistics(burnInGrid == classValue, neighborhood, "SUM")
     
-    AddMsg(("{0} Reclassifying focal SUM results into view = 1 and no-view = 0 binary raster...").format(timer.split()))
+    AddMsg(("{0} Reclassifying focal SUM results into view = 1 and no-view = 0 binary raster...").format(timer.start()))
 #    delimitedVALUE = arcpy.AddFieldDelimiters(focalGrid,"VALUE")
 #    whereClause = delimitedVALUE+" = 0"
 #    viewGrid = Con(focalGrid, 1, 0, whereClause)

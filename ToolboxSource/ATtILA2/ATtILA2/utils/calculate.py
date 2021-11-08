@@ -56,7 +56,7 @@ def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSu
 
 
 def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, newTable, 
-                         tabAreaTable, metricsFieldnameDict, zoneAreaDict, zoneValueDict=False,
+                         tabAreaTable, metricsFieldnameDict, zoneAreaDict, reportingUnitAreaDict, zoneValueDict=False,
                          conversionFactor=None):
     """ Creates *outTable* populated with land cover proportions metrics
     
@@ -81,6 +81,12 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                         (e.g., "forest":("fore0_E2A7","fore0")
         * *zoneAreaDict* -  dictionary with the area of each input polygon keyed to the polygon's ID value. 
                         Used in grid overlap calculations.
+                        The 'zone' may be the input reporting unit or a polygon that represents an area within 
+                        the reporting unit such as a riparian buffer.
+        * *reportingUnitAreaDict* -  dictionary with the area of the input reporting unit polygons keyed to the polygon's ID value.
+                        Used in buffer area percentage calculations (e.g. riparian buffer areas comprise 9.6% of the reporting unit).
+                        If the reporting unit themes is not replaced in the metric calculations, the reportingUnitAreaDict 
+                        values are equal to those in the zoneAreaDict.
         * *zoneValueDict* - dictionary with a value for an input polygon feature keyed to the polygon's ID value.
                         Used in lcc class area per value calculations (e.g. square meters of forest per person).
         
@@ -92,7 +98,20 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
     
     try:      
         # create the cursor to add data to the output table
-        outTableRows = arcpy.InsertCursor(newTable)        
+        outTableRows = arcpy.InsertCursor(newTable)
+        
+        # find the index positions of any non-standard QA fields. Standard QA fields include: OVER, TOTA, EFFA, EXCA.
+        # non-standard QA fields include: BUFF
+        if zoneAreaDict:
+            calcBuffPct = False
+            qaCheckFlds = metricConst.qaCheckFieldParameters
+            for aFldParams in qaCheckFlds:
+                fldName = aFldParams[0]
+                if fldName.startswith(metricConst.pctBufferName):
+                    buffIndx = qaCheckFlds.index(aFldParams)  
+                    calcBuffPct = True
+                    break
+                # use else or elif here, if additional non-standard QA fields are added
         
         for tabAreaTableRow in tabAreaTable:
             tabAreaDict = tabAreaTableRow.tabAreaDict
@@ -124,7 +143,6 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                     zoneValue = zoneValueDict[tabAreaTableRow.zoneIdValue]
                     classSqM = metricPercentageAndArea[1] * conversionFactor
                     perValueCalc = classSqM / zoneValue
-                    #perValueCalc = metricPercentageAndArea[1] / zoneValue
                     perValueSuffix = metricConst.perCapitaSuffix
                     meterSquaredSuffix = metricConst.meterSquaredSuffix
                     outTableRow.setValue(metricsFieldnameDict[mBaseName][1]+perValueSuffix, perValueCalc)
@@ -135,12 +153,24 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                 zoneArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
                 overlapCalc = ((tabAreaTableRow.totalArea)/zoneArea) * 100
                 
-                qaCheckFlds = metricConst.qaCheckFieldParameters
+                # process standard QA Fields. Standard QA fields include: OVER, TOTA, EFFA, EXCA.
                 outTableRow.setValue(qaCheckFlds[0][0], overlapCalc)
                 outTableRow.setValue(qaCheckFlds[1][0], tabAreaTableRow.totalArea)
                 outTableRow.setValue(qaCheckFlds[2][0], tabAreaTableRow.effectiveArea)
                 outTableRow.setValue(qaCheckFlds[3][0], tabAreaTableRow.excludedArea)
-            
+                
+                # process non-standard QA fields (e.g., BUFF)
+                if len(qaCheckFlds) > 4:
+                    if calcBuffPct:
+                        if reportingUnitAreaDict:
+                            ruArea = reportingUnitAreaDict[tabAreaTableRow.zoneIdValue]
+                        else:
+                            ruArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+                        
+                        percentCalc = (zoneArea/ruArea) * 100
+                        outTableRow.setValue(qaCheckFlds[buffIndx][0], percentCalc)     
+                    # use else or elif here, if additional non-standard QA fields are added
+
             # commit the row to the output table
             outTableRows.insertRow(outTableRow)
                 
@@ -448,7 +478,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
         
     """
     
-    from . import vector
+    # from . import vector
     
     # First perform the split/dissolve/merge on the roads
     outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,inLengthField,lineClass)
@@ -970,7 +1000,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
         * None
         
     """
-    from ATtILA2 import utils
+    #from ATtILA2 import utils
     import os
     # If the user specified an index, add an underscore as prefix.
     if index != "":

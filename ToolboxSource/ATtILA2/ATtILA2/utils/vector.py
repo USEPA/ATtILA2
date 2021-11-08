@@ -564,12 +564,11 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
         intersectName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
         intersectFeatureClass = arcpy.Intersect_analysis([repUnits,mergeOutput],intersectName,"ALL","","INPUT") 
         
-        # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
-        AddMsg("Removing interior waterbody areas from buffer result...")
-        namePrefix = toolShortName+"_Erase"
-        erasedOutputName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-        
         if len(eraseList) > 0:
+            # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
+            AddMsg("Removing interior waterbody areas from buffer result...")
+            namePrefix = toolShortName+"_Erase"
+            erasedOutputName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             
             if len(eraseList) > 1:
                 #  Merge all eraseFeatures so we only have to do this once...
@@ -622,7 +621,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     desc2 = arcpy.Describe(secondPoly)
     
     # Intersect the reporting unit features with the floodplain features
-    AddMsg(timer.split() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename)) 
+    AddMsg(timer.start() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename)) 
     intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
     intersection = arcpy.Intersect_analysis([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT")
      
@@ -630,7 +629,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
     #dissolveFields = uIDField.name
     dissolveFields = uIDField
-    AddMsg(timer.split() + " Dissolving %s zone features..." % (desc2.basename))  
+    AddMsg(timer.start() + " Dissolving %s zone features..." % (desc2.basename))  
     arcpy.Dissolve_management(intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
     
     # Delete following intermediate datasets in order to reduce clutter if Intermediates are to be saved
@@ -840,19 +839,19 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
     
     #Convert Final Patch Raster to polygon
-    AddMsg(timer.split() + " Converting raster patches to polygons...")
+    AddMsg(timer.start() + " Converting raster patches to polygons...")
     patchOnlyRaster = SetNull(inPatchRaster, inPatchRaster, "VALUE <= 0")
     arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE")
     
     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-    AddMsg(timer.split() + " Dissolving patch polygons by value field...")
+    AddMsg(timer.start() + " Dissolving patch polygons by value field...")
     arcpy.Dissolve_management(rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
       
     #Create a feature layer of the FinalPatch_poly_diss
     patchDissolvedLayer = arcpy.MakeFeatureLayer_management(patchDissolvedFeature, "patchDissolvedLayer")
      
     #Convert Final Patch Raster to points to get the cell centroids
-    AddMsg(timer.split() + " Converting raster patch cells to centroid points...")
+    AddMsg(timer.start() + " Converting raster patch cells to centroid points...")
     arcpy.RasterToPoint_conversion(patchOnlyRaster, patchCentroidsFeature, "VALUE")
      
     #Create a feature layer of the FinalPatch_centroids
@@ -866,7 +865,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     singlePatch = 0
    
     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
-    AddMsg(timer.split() + " Analyzing MDCP by reporting unit...")
+    AddMsg(timer.start() + " Analyzing MDCP by reporting unit...")
     for aZone in zoneAreaDict.keys():
         pwnCount = 0
         pwonCount = 0
