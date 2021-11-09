@@ -135,41 +135,30 @@ def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDist
     
     return clippedGrid
     
-def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue, timer):
-            
-    # Generate the slope X land cover grid where areas below the threshold slope are
-    # set to the value 'Maximum Land Cover Class Value + 1'.
+def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue, timer):            
+    # Generate the slope X land cover grid where:
+    #   1) land cover codes are preserved for areas on steep slopes,
+    #   2) areas below the slope threshold are coded with the AreaBelowThresholdValue (Maximum Land Cover Class Value + 1).
+    #   3) cells tagged as excluded are reinserted into the low slope areas.
     LCGrid = Raster(inLandCoverGrid)
     SLPGrid = Raster(inSlopeGrid)
     
-    # find the highest value found in LCC XML file or land cover grid  
-    lccValuesDict = lccObj.values
-    maxValue = LCGrid.maximum
-    xmlValues = lccObj.getUniqueValueIdsWithExcludes()
-    for v in xmlValues:
-        if v > maxValue:
-            maxValue = v
+    # find the highest value found in LCC XML file or land cover grid and add 1 to it
+    addOne = True
+    AreaBelowThresholdValue = getMaximumValue(LCGrid, lccObj, addOne)
 
     AddMsg(timer.start() + " Generating land cover above slope threshold grid...")    
-    AreaBelowThresholdValue = int(maxValue + 1)
     delimitedVALUE = arcpy.AddFieldDelimiters(SLPGrid,"VALUE")
     whereClause = delimitedVALUE+" >= " + inSlopeThresholdValue
     SLPxLCGrid = Con(SLPGrid, LCGrid, AreaBelowThresholdValue, whereClause)
-    
-    # determine if a grid code is to be included in the effective reporting unit area calculation    
+     
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-    excludedValues = lccValuesDict.getExcludedValueIds()
-        
-    # if certain land cover codes are tagged as 'excluded = TRUE', generate grid where land cover codes are 
-    # preserved for areas coincident with steep slopes, areas below the slope threshold are coded with the 
-    # AreaBelowThresholdValue except for where the land cover code is included in the excluded values list.
-    # In that case, the excluded land cover values are maintained in the low slope areas.
+    excludedValues = lccObj.values.getExcludedValueIds()
+
     if excludedValues:
-        # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where on the land cover grid excluded values occur
         AddMsg(timer.start() + " Inserting EXCLUDED values into areas below slope threshold...")
-        stringStart = delimitedVALUE+" = "
-        stringSep = " or "+delimitedVALUE+" = "
-        whereExcludedClause = stringStart + stringSep.join([str(item) for item in excludedValues])
+        # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where excluded values occur on the land cover grid
+        whereExcludedClause = buildWhereValueClause(SLPGrid, excludedValues)
         SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause) 
     
     return SLPxLCGrid
@@ -180,7 +169,7 @@ def getSetNullGrid(inConditionalGrid, inReplacementGrid, nullValuesList):
     # Replace the other cell values with values from the inLandCoverGrid.
     conditionalRaster = Raster(inConditionalGrid)   
     
-    # build whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify areas to substitute the valueToExclude
+    # build whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify areas to set to NODATA
     whereClause = buildWhereValueClause(conditionalRaster, nullValuesList)
 
     replaceRaster = Raster(inReplacementGrid)
@@ -271,31 +260,29 @@ def getMaximumValue(inRaster, lccObj, addOne=False):
 
 
 def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName, scratchNameReference):
+    # create grid where cover type of interest (e.g., forest) is coded 3, excluded values are coded 1, everything else is coded 2
+    
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
     lccValuesDict = lccObj.values
+    
     #landCoverValues = raster.getRasterValues(inLandCoverGrid)
     landCoverValues = getRasterValues(inLandCoverGrid)
-    
+
     # get the grid codes for this specified metric
-    ClassValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
+    classValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
     
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
-    ExcludedValueList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+    excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
 
-    # create grid where cover type of interest (e.g., forest) is coded 3, excluded values are coded 1, everything else is coded 2
-    reclassPairs = []
-    for val in landCoverValues:
-        oldValNewVal = []
-        oldValNewVal.append(val)
-        if val in ClassValuesList:
-            oldValNewVal.append(3)
-            reclassPairs.append(oldValNewVal)
-        elif val in ExcludedValueList:
-            oldValNewVal.append(1)
-            reclassPairs.append(oldValNewVal)
-        else:
-            oldValNewVal.append(2)
-            reclassPairs.append(oldValNewVal)
+    # define the reclass values with the format: newValuesList = [classValue, excludedValue, otherValue]
+    classValue = 3
+    excludedValue = 1
+    otherValue = 2
+    
+    newValuesList = [classValue, excludedValue, otherValue]
+    
+    # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+    reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
     AddMsg(timer.start() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1...")
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
@@ -308,14 +295,13 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     distGrid = EucDistance(otherGrid)
     
     AddMsg(timer.start() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
-    #edgeDist = round(float(PatchEdgeWidth_str) * float(processingCellSize_str)) 
     edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
 
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     
     # it appears that ArcGIS cannot process the BuildRasterAttributeTable request without first saving the raster.
     # This step wasn't the case earlier. Either ESRI changed things, or I altered something in ATtILA that unwittingly caused this. -DE
-    namePrefix = shortName+"_"+"Raster"+m+PatchEdgeWidth_str
+    namePrefix = shortName+"_"+"Raster"+m.upper()+PatchEdgeWidth_str+"_"
     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
     scratchNameReference[0] = scratchName
     zonesGrid.save(scratchName)

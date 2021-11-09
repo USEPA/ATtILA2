@@ -321,7 +321,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
                                                                    self.inSlopeThresholdValue,self.timer)
 
                 if self.saveIntermediates:
-                    self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]
+                    self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]+"_"
                     self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
                     #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
@@ -732,12 +732,12 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
 
         if clipLCGrid == "true":
             timer = DateTimer()
-            AddMsg(timer.start() + " Reducing input Land cover grid to smallest recommended size...")
+            AddMsg("%s Reducing input Land cover grid to smallest recommended size..." % timer.start())
             pathRoot = os.path.splitext(inLandCoverGrid)[0]
             namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
             inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inEdgeWidth)
-            AddMsg(timer.split() + " Reduction complete")
+            AddMsg("%s Reduction complete" % timer.split())
         
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -746,13 +746,13 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
-                    AddMsg(self.timer.start() + " Generating core and edge grid for Class: " + m.upper())
+                    AddMsg("%s Generating core and edge grid for Class: %s" % (self.timer.start(), m.upper()))
                     scratchNameReference =  [""];
                     self.inLandCoverGrid = raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
                                                                         self.inEdgeWidth, processingCellSize,
                                                                         self.timer, metricConst.shortName, scratchNameReference)
                     self.scratchNameToBeDeleted = scratchNameReference[0]
-                    AddMsg(self.timer.split() + " Core and edge grid complete")
+                    AddMsg("%s Core and edge grid complete for Class: %s" % (self.timer.split(), m.upper()))
                     
                     #Moved the save intermediate grid to the calcMetrics function so it would be one of the last steps to be performed
 
@@ -761,7 +761,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     pass  
                 
                 def _makeTabAreaTable(self):
-                    AddMsg(self.timer.start() + " Generating a zonal tabulate area table")
+                    AddMsg("%s Generating a zonal tabulate area table" % self.timer.start())
                     # Internal function to generate a zonal tabulate area table
                     class categoryTabAreaTable(TabulateAreaTable):
                         #Update definition so Tabulate Table is run on the POS field.
@@ -769,9 +769,9 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                             self._value = "CATEGORY"
                             if self._tableName:
                                 self._destroyTable = False
-                                self._tableName = arcpy.CreateScratchName(self._tableName+m+inEdgeWidth, "", self._datasetType)
+                                self._tableName = arcpy.CreateScratchName(self._tableName+m.upper()+inEdgeWidth+"_", "", self._datasetType)
                             else:
-                                self._tableName = arcpy.CreateScratchName(self._tempTableName+m+inEdgeWidth, "", self._datasetType)
+                                self._tableName = arcpy.CreateScratchName(self._tempTableName+m.upper()+inEdgeWidth+"_", "", self._datasetType)
 
                             arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
                                  self._value, self._tableName)
@@ -813,7 +813,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     # calculate Core to Edge ratio
                     calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m)
-                    AddMsg(self.timer.split() + " Core/Edge Ratio calculations are complete for class: " + m)
+                    AddMsg("%s Core/Edge Ratio calculations are complete for class: %s" % (self.timer.split(), m.upper()))
 
 
             # Create new instance of metricCalc class to contain parameters
