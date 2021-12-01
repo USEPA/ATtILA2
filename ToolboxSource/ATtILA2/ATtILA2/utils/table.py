@@ -137,7 +137,7 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             fieldMappings.addTable(inValueDataset)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inValueField]
             tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
-            tempCensusFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
+            tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             inValueDataset = arcpy.FeatureClassToFeatureClass_conversion(inValueDataset,env.workspace,
                                                                                  os.path.basename(tempCensusFeature),"",
                                                                                  fieldMappings)
