@@ -15,6 +15,7 @@ class baseMetricConstants():
     qaCheckFieldParameters = []    
     fieldOverrideKey = ''
     additionalFields = []
+    pctBufferName = ''
 
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
@@ -346,12 +347,12 @@ class plcvConstants(baseMetricConstants):
     additionalFields = [cntField]
     valueCountFieldNames =["RU_POP"]
     valueCountTableName = shortName+"_populationCnt"
-    viewRasterOutputName = "_PotentialViewAreaRaster"
-    viewPolygonOutputName = "_PotentialViewAreaPoly"
-    areaPopRasterOutputName = "_PotentialViewPopRaster"
-    areaValueCountTableName = "_PotentialViewPopulation"
+    viewRasterOutputName = "_ViewArea"
+    viewPolygonOutputName = "_ViewAreaPoly"
+    areaPopRasterOutputName = "_ViewPopulation"
+    areaValueCountTableName = "_ViewPopulationByRU"
     valueWhenNULL = 0
-    burnInGridName = shortName+"_BurnIn"
+    patchGridName = "_ViewPatch"
     
 class pnfeaConstants(baseMetricConstants):
     #prefix = "NAVTEQ"

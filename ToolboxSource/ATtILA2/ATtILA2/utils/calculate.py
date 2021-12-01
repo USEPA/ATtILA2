@@ -107,10 +107,11 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
             qaCheckFlds = metricConst.qaCheckFieldParameters
             for aFldParams in qaCheckFlds:
                 fldName = aFldParams[0]
-                if fldName.startswith(metricConst.pctBufferName):
-                    buffIndx = qaCheckFlds.index(aFldParams)  
-                    calcBuffPct = True
-                    break
+                if metricConst.pctBufferName:
+                    if fldName.startswith(metricConst.pctBufferName):
+                        buffIndx = qaCheckFlds.index(aFldParams)  
+                        calcBuffPct = True
+                        break
                 # use else or elif here, if additional non-standard QA fields are added
         
         for tabAreaTableRow in tabAreaTable:
