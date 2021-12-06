@@ -116,7 +116,7 @@ def getDateStringFromObject(date, delimiter="-"):
 
 
 class DateTimer:
-    ''' Handy timer that reports start time, end time and delta time
+    ''' Handy timer that reports start time, end time, current time and delta time
 
         report:(default=True) If True, prints automatically
 
@@ -131,6 +131,7 @@ class DateTimer:
     FINISH_MSG = "Finished: {0} (Elapsed: {1})"
     START_MSG = "Started: {0}"
     SPLIT_MSG = "Split: {0} (Elapsed: {1})"
+    TIME_MSG = "Time: {0}"
 
     def __init__(self, report=True):
 
@@ -139,6 +140,7 @@ class DateTimer:
         self.endDateTime = None
         self.deltaTime = None
         self.splitTime = None
+        self.currentTime = None
 
     def start(self):
 
@@ -166,6 +168,12 @@ class DateTimer:
         
         if self.report:
             return self.printSplit()
+    
+    def now(self):
+        self.currentTime = datetime.now()
+        
+        if self.report:
+            return self.printTime()
 
     def printStart(self):
         if self.startDateTime:
@@ -182,6 +190,12 @@ class DateTimer:
     def printSplit(self):
         if self.deltaTime:
             return self.SPLIT_MSG.format(self.datetimeToString(self.splitTime), self.deltaToString(self.deltaTime))
+        else:
+            return self.NO_START_MSG
+    
+    def printTime(self):
+        if self.currentTime:
+            return self.TIME_MSG.format(self.datetimeToString(self.currentTime))
         else:
             return self.NO_START_MSG
             

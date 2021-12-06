@@ -621,7 +621,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     desc2 = arcpy.Describe(secondPoly)
     
     # Intersect the reporting unit features with the floodplain features
-    AddMsg(timer.start() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename)) 
+    AddMsg(timer.now() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename)) 
     intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
     intersection = arcpy.Intersect_analysis([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT")
      
@@ -629,7 +629,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
     #dissolveFields = uIDField.name
     dissolveFields = uIDField
-    AddMsg(timer.start() + " Dissolving %s zone features..." % (desc2.basename))  
+    AddMsg(timer.now() + " Dissolving %s zone features..." % (desc2.basename))  
     arcpy.Dissolve_management(intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
     
     # Delete following intermediate datasets in order to reduce clutter if Intermediates are to be saved
@@ -839,19 +839,19 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
     
     #Convert Final Patch Raster to polygon
-    AddMsg(timer.start() + " Converting raster patches to polygons...")
+    AddMsg(timer.now() + " Converting raster patches to polygons...")
     patchOnlyRaster = SetNull(inPatchRaster, inPatchRaster, "VALUE <= 0")
     arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE")
     
     #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-    AddMsg(timer.start() + " Dissolving patch polygons by value field...")
+    AddMsg(timer.now() + " Dissolving patch polygons by value field...")
     arcpy.Dissolve_management(rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
       
     #Create a feature layer of the FinalPatch_poly_diss
     patchDissolvedLayer = arcpy.MakeFeatureLayer_management(patchDissolvedFeature, "patchDissolvedLayer")
      
     #Convert Final Patch Raster to points to get the cell centroids
-    AddMsg(timer.start() + " Converting raster patch cells to centroid points...")
+    AddMsg(timer.now() + " Converting raster patch cells to centroid points...")
     arcpy.RasterToPoint_conversion(patchOnlyRaster, patchCentroidsFeature, "VALUE")
      
     #Create a feature layer of the FinalPatch_centroids
@@ -865,7 +865,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     singlePatch = 0
    
     #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
-    AddMsg(timer.start() + " Analyzing MDCP by reporting unit...")
+    AddMsg(timer.now() + " Analyzing MDCP by reporting unit...")
     for aZone in zoneAreaDict.keys():
         pwnCount = 0
         pwonCount = 0
@@ -1001,13 +1001,13 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #         fieldMappings = arcpy.FieldMappings()
 #         fieldMappings.addTable(inRoadFeature)
 #
-#         AddMsg("%s Creating a working copy of %s..." % (timer.start(), os.path.basename(inRoadFeature)))
+#         AddMsg("%s Creating a working copy of %s..." % (timer.now(), os.path.basename(inRoadFeature)))
 #
 #         if inRoadWidthOption == "Distance":
 #             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.required != True]
 #             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
 #
-#             AddMsg("%s Adding field, HalfWidth, and calculating its value... " % (timer.start()))   
+#             AddMsg("%s Adding field, HalfWidth, and calculating its value... " % (timer.now()))   
 #             halfRoadWidth = float(widthLinearUnit.split()[0]) / 2
 #             halfLinearUnit = "'%s %s'" % (str(halfRoadWidth), widthLinearUnit.split()[1]) # put linear unit string in quotes
 #             arcpy.AddField_management(inRoadFeature, 'HalfWidth', 'TEXT')
@@ -1018,7 +1018,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneCntFld]
 #             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
 #
-#             AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.start()))
+#             AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.now()))
 #             arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
 #             calcExpression = "!%s! * %s / 2" % (str(laneCntFld), laneWidth.split()[0])
 #             AddMsg("...    HalfValue = %s" % (calcExpression))
@@ -1036,7 +1036,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #
 #             # input field should be a linear distance string. Part 0 = distance value. Part 1 = distance units
 #             try:
-#                 AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.start()))
+#                 AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.now()))
 #
 #                 arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
 #                 calcExpression = "float(!%s!.split()[0]) / 2" % (laneDistFld)
@@ -1054,7 +1054,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #                 raise errors.attilaException(errorConstants.linearUnitFormatError)
 #
 #
-#         AddMsg("%s Buffer road feature using the value in HALFWIDTH with options FULL, FLAT, ALL..." % (timer.start()))
+#         AddMsg("%s Buffer road feature using the value in HALFWIDTH with options FULL, FLAT, ALL..." % (timer.now()))
 #         tempName = "%s_%s" % (metricConst.shortName, '1_RoadEdge')
 #         edgeBufferFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
 #         arcpy.Buffer_analysis(inRoadFeature, edgeBufferFeature, 'HalfWidth', 'FULL', 'FLAT', 'ALL')
@@ -1063,14 +1063,14 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #         halfBufferUnits = bufferDist.split()[1]
 #         #halfBufferDist = str(halfBufferValue)+' '+halfBufferUnits
 #         halfBufferDist = "%s %s" % (halfBufferValue, halfBufferUnits)
-#         AddMsg("%s Re-buffer the buffered streets %s with options FULL, FLAT, ALL..." % (timer.start(), halfBufferDist)) 
+#         AddMsg("%s Re-buffer the buffered streets %s with options FULL, FLAT, ALL..." % (timer.now(), halfBufferDist)) 
 #         tempName = "%s_%s" % (metricConst.shortName, '2_RoadBuffer')
 #         roadBufferFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
 #         arcpy.Buffer_analysis(edgeBufferFeature, roadBufferFeature, halfBufferDist, 'FULL', 'FLAT', 'ALL')
 #
 #
 #         # Convert the buffer into lines
-#         AddMsg("%s Converting the resulting polygons into polylines -- referred to as analysis lines.--" % (timer.start()))
+#         AddMsg("%s Converting the resulting polygons into polylines -- referred to as analysis lines.--" % (timer.now()))
 #         tempName = "%s_%s" % (metricConst.shortName, '3_RdBuffLine')
 #         rdBuffLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
 #         arcpy.PolygonToLine_management(roadBufferFeature, rdBuffLineFeature)
@@ -1079,7 +1079,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #
 #         # Remove interior lines based on cut-off point
 #         if removeLinesYN == "true":
-#             AddMsg("%s Adding geometry attributes to polyline feature. Calculating LENGTH in METERS..." % (timer.start()))
+#             AddMsg("%s Adding geometry attributes to polyline feature. Calculating LENGTH in METERS..." % (timer.now()))
 #             try:
 #                 arcpy.AddGeometryAttributes_management(rdBuffLineFeature,'LENGTH','METERS')
 #                 Expression = 'LENGTH <= %s' % cutoffLength
@@ -1088,7 +1088,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #                 Expression = 'LENGTH_GEO <= %s' % cutoffLength
 #
 #
-#             AddMsg("%s Deleting analysis lines that are <= %s meters in length..." % (timer.start(), cutoffLength))
+#             AddMsg("%s Deleting analysis lines that are <= %s meters in length..." % (timer.now(), cutoffLength))
 #             #Expression = 'Shape_Length <= 1050'
 #             #Expression = 'LENGTH <= %s' % cutoffLength
 #
@@ -1106,17 +1106,17 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 #         leftValue = float(bufferDist.split()[0]) - 11.5
 #         leftUnits = bufferDist.split()[1]
 #         leftDist = str(leftValue)+' '+leftUnits
-#         AddMsg("%s Buffering the analysis line by %s with options LEFT, FLAT, ALL..." % (timer.start(), leftDist))
+#         AddMsg("%s Buffering the analysis line by %s with options LEFT, FLAT, ALL..." % (timer.now(), leftDist))
 #         tempName = "%s_%s_" % (metricConst.shortName, '_Left_'+str(round(leftValue)))
 #         leftBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
 #         arcpy.Buffer_analysis(buffLineUseFeature, leftBuffFeature, leftDist, 'LEFT', 'FLAT', 'ALL')
 #
-#         AddMsg("%s Buffering the analysis line by 11.5 meters with options RIGHT, FLAT, ALL..." % (timer.start()))
+#         AddMsg("%s Buffering the analysis line by 11.5 meters with options RIGHT, FLAT, ALL..." % (timer.now()))
 #         tempName = "%s_%s_" % (metricConst.shortName, '_Right_11')
 #         rightBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
 #         arcpy.Buffer_analysis(buffLineUseFeature, rightBuffFeature, '11.5 Meters', 'RIGHT', 'FLAT', 'ALL')        
 #
-#         AddMsg("%s Merging the two buffers together and dissolving..." % (timer.start()))
+#         AddMsg("%s Merging the two buffers together and dissolving..." % (timer.now()))
 #         tempName = "%s_%s" % (metricConst.shortName, '_Buff_LR')
 #         mergeBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
 #         arcpy.Merge_management([leftBuffFeature, rightBuffFeature], mergeBuffFeature)
