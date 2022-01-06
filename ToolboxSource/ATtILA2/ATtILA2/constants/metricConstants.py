@@ -361,6 +361,9 @@ class pnfeaConstants(baseMetricConstants):
     outNameRoadsIntDens = prefix+"_RdsIntDens"
     outNameRoadsIAC = prefix+"_RdsIAC"
     value0_LANES = prefix + "_RdsIAC_0Lanes"
+    
+class pnhd24kConstants(baseMetricConstants):
+    prefix = ""
 
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"

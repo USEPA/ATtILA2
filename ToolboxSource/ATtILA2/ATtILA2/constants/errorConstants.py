@@ -38,3 +38,5 @@ A valid entry is in the form of: linearUnit unitOfMeasure (e.g. 10 Meters).
 Valid unitOfMeasure keywords: CENTIMETERS | DECIMALDEGREES | DECIMETERS | FEET | INCHES |
                               KILOMETERS | METERS | MILES | MILLIMETERS | NAUTICALMILES | POINTS |
                               UNKNOWN | YARDS '''
+
+missingNHDFilesError = '''One or more required files are missing in the selected workspace(s). '''
