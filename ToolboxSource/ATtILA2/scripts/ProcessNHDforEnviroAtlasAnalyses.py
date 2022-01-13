@@ -34,8 +34,10 @@ def processMultiMessage(integer):
     
     stepsMsg = '''
 Create layer for NHDFlowline.
-Select from NHDFlowline layer features with ftypes equal to StreamRiver, Connector, or ArtificialPath.      
-Copy selected features to output feature class. The suffix, "_strmLine", will be appended to the filename.
+Select from NHDFlowline layer features with ftypes equal to StreamRiver or Connector. 
+Copy selected features to output feature class. The suffix, "_strmLineNAP", will be appended to the filename.
+Add NHDFlowline features with ArtificialPath ftype to the selected StreamRiver and Connector features.     
+Copy selected NHDFlowline features to output feature class. The suffix, "_strmLine", will be appended to the filename.
 Find line ends for selected NHDFlowline features.
 Use NEAR to calculate distances between line ends.
 Select nodes where the NEAR_DIST value <> 0. These are the terminal nodes.
@@ -209,6 +211,7 @@ def main(_argv):
             # Output Feature Classes
             outStrmLineFC = wsBaseName+"_strmLine"+ext
             outStrmArealFC = wsBaseName+"_strmAreal"+ext
+            outStrmLineNAPFC = wsBaseName+"strmLineNAP"+ext
             
             # Intermediary Feature Classes
             outStrmEndsFC = wsBaseName+"_strmEnds"+ext
@@ -219,22 +222,35 @@ def main(_argv):
             # Determine if FTYPE field is a text or numeric field type
             ftypeField = fields.getFieldByName(NHDFlowlineFC, "ftype")
             
-            
-            # Process: Make NHDFlowline Feature Layer
+            # Process: Make NHDFlowline Feature Layer Without Artificial Paths
             if totalWS == 1: AddMsg("%s Creating layer for NHDFlowline..." % timer.now())
             arcpy.MakeFeatureLayer_management(NHDFlowlineFC, NHDFlowline_Layer, "", "", "")
             
             # Process: Select Layer By Attribute
-            if totalWS == 1: AddMsg("%s Selecting StreamRiver, Connector, and ArtificialPath features from NHDFlowline..." % timer.now())
+            if totalWS == 1: AddMsg("%s Selecting StreamRiver and Connector features from NHDFlowline..." % timer.now())
             if ftypeField.type == "String":
-                Expression = "\"FTYPE\" = '460' OR \"FTYPE\" = '334' OR \"FTYPE\" = '558' OR \"FTYPE\" = 'StreamRiver' OR \"FTYPE\" = 'Connector' OR \"FTYPE\" = 'ArtificialPath'"
+                Expression = "\"FTYPE\" = '460' OR \"FTYPE\" = '334' OR \"FTYPE\" = 'StreamRiver' OR \"FTYPE\" = 'Connector'"
             else:
-                Expression = "\"FTYPE\" = 460 OR \"FTYPE\" = 334 OR \"FTYPE\" = 558"
+                Expression = "\"FTYPE\" = 460 OR \"FTYPE\" = 334"
                 
             arcpy.SelectLayerByAttribute_management(NHDFlowline_Layer, "NEW_SELECTION", Expression)
                         
             # Process: Copy Features            
-            if totalWS == 1: AddMsg("%s Copying selected features to %s" % (timer.now(), outStrmLineFC))
+            if totalWS == 1: AddMsg("%s Copying selected features to %s" % (timer.now(), outStrmLineNAPFC))
+            arcpy.CopyFeatures_management(NHDFlowline_Layer, outStrmLineNAPFC, "", "0", "0", "0")
+            if totalWS == 1: flist.append(outStrmLineNAPFC)
+            
+            # Process: Select Layer By Attribute
+            if totalWS == 1: AddMsg("%s Adding NHDFlowline features with ArtificialPath ftype to the selected StreamRiver and Connector features..." % timer.now())
+            if ftypeField.type == "String":
+                Expression = "\"FTYPE\" = '558' OR \"FTYPE\" = 'ArtificialPath'"
+            else:
+                Expression = "\"FTYPE\" = 558"
+                
+            arcpy.SelectLayerByAttribute_management(NHDFlowline_Layer, "ADD_TO_SELECTION", Expression)
+                        
+            # Process: Copy Features            
+            if totalWS == 1: AddMsg("%s Copying selected NHDFlowline features to %s" % (timer.now(), outStrmLineFC))
             arcpy.CopyFeatures_management(NHDFlowline_Layer, outStrmLineFC, "", "0", "0", "0")
             if totalWS == 1: flist.append(outStrmLineFC)
             
