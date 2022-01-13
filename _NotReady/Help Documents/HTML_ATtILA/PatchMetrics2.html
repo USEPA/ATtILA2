@@ -1,0 +1,81 @@
+﻿<html>
+	
+<head>
+	<title>Patch Metrics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("PatchMetrics2");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Patch Metrics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="AdditionalOptions.html">Additional Options</a> &rsaquo;&rsaquo; <a href="AddQualityAssuranceFields.html">Add Quality Assurance Fields</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="AddQualityAssuranceFields.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="LandCoverProportions2.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="RiparianLandCoverProportions1.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Fields Added</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts35">PM_OVER</span><span class="rvts19"> - The percent overlap between the Reporting unit feature layer and the Land cover grid for each reporting unit.</span></li>
+<li class="rvps8"><span class="rvts35">PM_TOTA</span><span class="rvts19"> - The total raster zonal area for each reporting unit (zone) after the Reporting unit feature layer has been rasterized. </span></li>
+<li class="rvps8"><span class="rvts35">PM_EFFA</span><span class="rvts19"> - The effective raster area of each reporting unit (zone) after excluded classes have been removed. </span></li>
+<li class="rvps8"><span class="rvts35">PM_EXCA</span><span class="rvts19"> - The raster area of the excluded classes within each reporting unit (zone) based on exclusions in the Land cover classification scheme.</span></li>
+<li class="rvps8"><span class="rvts35">[class]_PWN</span><span class="rvts19">&nbsp;</span><span class="rvts7"> - The number of patches of the selected class </span><span class="rvts28">with</span><span class="rvts7"> a neighboring patch within the reporting unit (e.g. "for_PWN" is the number of patches of the "Forest" class in the NLCD </span><span class="rvts28">with</span><span class="rvts7"> at least one neighboring patch).</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts38">NOTE:</span><span class="rvts14"> This value should equal the number of patches recorded in the [class]_NUM field except for reporting units where the number of patches = 1 or 0. </span><span class="rvts7">Reporting units with only one patch will have a zero value recorded in this field. Those with no patches will have a value of -9999.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts35">[class]_PWON</span><span class="rvts19"> - </span><span class="rvts7">The number of patches of the selected class </span><span class="rvts28">without</span><span class="rvts7"> a neighboring patch within the reporting unit (e.g. "for_PWON" is the number of patches of the "Forest" class in the NLCD </span><span class="rvts28">without</span><span class="rvts7"> a neighboring patch).</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts38">NOTE:</span><span class="rvts14"> This value should be 0 for all reporting units with two or more patches recorded in the [class]_NUM field,1 where only a single patch is reported, and -9999 for reporting units with no patches.</span></li>
+</ul></ul>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

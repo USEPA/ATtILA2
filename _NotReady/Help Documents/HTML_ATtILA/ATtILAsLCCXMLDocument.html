@@ -1,0 +1,129 @@
+﻿<html>
+	
+<head>
+	<title>ATtILA's LCC XML Document</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("ATtILAsLCCXMLDocument");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">ATtILA's LCC XML Document</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="LandCoverClassification.html">Land Cover Classification</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="LandCoverClassification.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="LandCoverClassification.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="XMLDeclaration.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">ATtILA for ArcGIS LCC XML Document</span></p>
+<p class="rvps8"><span class="rvts19">ATtILA for ArcGIS Land Cover Classification (LCC) schema documents require a precise XML structure that consists of the following:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="XMLDeclaration.html">XML declaration statement</a></li>
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="RootElementlccSchema.html">Root element (lccSchema)</a></li>
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="MetadataElement.html">Metadata element</a></li>
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="CoefficientsElement.html">Coefficients element</a></li>
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="ValuesElement.html">Values element</a></li>
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="ClassesElement.html">Classes element</a></li>
+<li class="rvps16" style="margin-left: 0px"><a class="rvts42" href="Commentsoptional.html">Comments</a></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts19">Detailed descriptions, applications, and possible restrictions for each element are provided their respective sections in this document. </span></p>
+<p class="rvps8"><span class="rvts15"><br/></span></p>
+<div class="rvps8"><table width="850" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid;">
+<tr valign="top">
+<td style="border-width : 0px; background-color: #99ccff;"><p class="rvps21"><span class="rvts6">&lt;?xml version='1.0' encoding='utf-8'?&gt;</span></p>
+<p class="rvps21"><span class="rvts6">&lt;lccSchema </span><span class="rvts65">xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="XSD_FILE_PATH"</span><span class="rvts6">&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;metadata&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;name&gt;&lt;/name&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;description&gt;&lt;/description&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/metadata&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;coefficients&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;coefficient Id="" Name="" fieldName="" method="" /&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/coefficients&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;values&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;value Id="" Name="" excluded=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;coefficient Id="" value="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/value&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/values&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;classes&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;class Id="" Name="" filter=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;value Id="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/class&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/classes&gt;</span></p>
+<p class="rvps2"><span class="rvts6">&lt;/lccSchema&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps26"><span class="rvts15">Basic structure of ATtILA's Land Cover Classification schema XML document.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">It is recommended that users create or edit LCC schema XML documents using the </span><a class="rvts43" href="ExternalLCCEditor.html">External LCC Editor</a><span class="rvts19"> that accompanies ATtILA for ArcGIS to reduce the possibility of introducing errors. However, LCC XML documents may also be created or edited using any standard text editor and the syntax guidelines provided in each section.</span></p>
+<p class="rvps8"><span class="rvts19">Regardless of how a user chooses to create their LCC XML documents, it is strongly recommended that they first become acquainted with the details on LCC XML formatting that are provided in this section. This will give the user a better understanding of how ATtILA for ArcGIS interacts with the land cover grid and will provide a background for understanding how ATtILA for ArcGIS may be customized for user-specific needs.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts18">XML Fundamentals, Well-Formed Document</span></p>
+<p class="rvps8"><span class="rvts19">An XML document is composed of text content marked up with tags describing the data. These tags look similar to HTML mark-up tags, but unlike HTML, the tags are customized to define what an item is (i.e., a book, a person, a telephone number, etc.) and particular attributes of each defined item (i.e. the book's title, a person's first and last name, whether the telephone number is for a home, business, or mobile device, etc.). In order for an application to correctly parse an XML document into its various pieces, the XML document must be "well-formed"; in other words, it must follow certain rules.</span></p>
+<p class="rvps8"><span class="rvts19">When using the </span><a class="rvts43" href="ExternalLCCEditor.html">External LCC Editor</a><span class="rvts19"> in ATtILA for ArcGIS to modify or create an LCC XML document, the resulting output document will be well-formed with regard to the ATtILA for ArcGIS application. When editing the LCC XML document with a text editor, these general XML rules must be observed:</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps16" style="margin-left: 0px"><span class="rvts19">Each start-tag must have a matching end-tag. The end-tag can be either a non-empty elemen, (e.g. &nbsp;"</span><span class="rvts35">&lt;tag&gt; &nbsp; &nbsp;&lt;/tag&gt;</span><span class="rvts19">"), or an empty element (e.g. "</span><span class="rvts35">&lt;tag &nbsp; &nbsp;/&gt;</span><span class="rvts19">").</span></li>
+<li class="rvps16" style="margin-left: 0px"><span class="rvts19">Attribute values must be quoted.</span></li>
+<li class="rvps16" style="margin-left: 0px"><span class="rvts19">Attribute names must be unique, and XML is case-sensitive: "</span><span class="rvts35">name</span><span class="rvts19">" is different from "</span><span class="rvts35">Name</span><span class="rvts19">" which is different from "</span><span class="rvts35">NAME</span><span class="rvts19">".</span></li>
+<li class="rvps16" style="margin-left: 0px"><span class="rvts19">Comments and processing commands cannot appear inside tags.</span></li>
+</ul></ul>
+<p class="rvps16"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">When editing an LCC XML document with a text editor, it is important to check the document for formatting errors and, more importantly, for any violations to the rules and restrictions ATtILA for ArcGIS places on document elements and attributes. The </span><a class="rvts42" href="XMLValidation.html">XML Validation</a><span class="rvts19"> section of this document provides instructions for performing these checks.</span></p>
+<p class="rvps8"><span class="rvts19">The </span><a class="rvts48" href="SuppliedLandCoverClassificationS.html">Supplied Land Cover Classification Schemas</a><span class="rvts19"> that accompany ATtILA for ArcGIS may be useful to review while reading through the following sections. What may initially appear to be complex, hard to decipher documents will become easier to interpret with the background information provided herein.</span></p>
+<p class="rvps8"><span class="rvts18"><br/></span></p>
+<p class="rvps8"><span class="rvts18">LCC XML Document Storage</span></p>
+<p class="rvps8"><span class="rvts19">The </span><a class="rvts48" href="SuppliedLandCoverClassificationS.html">Supplied Land Cover Classification Schemas</a><span class="rvts19"> that accompany ATtILA for ArcGIS are stored in the ToolboxSource</span><span class="rvts7"> &gt; LandCoverClassifications folder in the ATtILA for ArcGIS toolbox destination folder (see </span><span class="rvts66">Installing ATtILA</span><span class="rvts7">). LCC XML documents stored here automatically populate the "Land cover classification scheme" dropdown in each ATtILA tool that requires a land cover classification file </span><span class="rvts19">(</span><a class="rvts42" href="CoreandEdgeMetrics.html">Core and Edge Metrics</a><span class="rvts19">, </span><a class="rvts42" href="LandCoveronSlopeProportions.html">Land Cover on Slopes Proportions</a><span class="rvts19">, </span><a class="rvts42" href="LandCoverProportions.html">Land Cover Proportions</a><span class="rvts19">, </span><a class="rvts42" href="RiparianLandCoverProportions.html">Riparian Land Cover Proportions</a><span class="rvts19">, and </span><a class="rvts42" href="SamplePointLandCoverProportions.html">Sample Point Land Cover Proportions</a><span class="rvts19">).</span><span class="rvts7">.</span></p>
+<p class="rvps8"><span class="rvts16">Customized LCC XML documents can exist anywhere on a local or network computer. Each tool that requires an LCC XML document includes a parameter for navigating to the local or network path at which the XML file is stored. However, users may find it more convenient to access their customized LCC XML documents from the </span><span class="rvts7">"Land cover classification scheme" </span><span class="rvts16">dropdown in the ATtILA tools, particularly for frequently-used customized LCC XML documents. To facilitate this, store the customized XML files in the </span><span class="rvts19">ToolboxSource</span><span class="rvts7"> &gt; LandCoverClassifications folder as indicated above.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

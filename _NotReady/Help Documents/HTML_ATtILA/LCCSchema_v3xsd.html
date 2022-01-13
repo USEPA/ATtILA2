@@ -1,0 +1,252 @@
+﻿<html>
+	
+<head>
+	<title>LCCSchema_v3.xsd</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("LCCSchema_v3xsd");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">LCCSchema_v3.xsd</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Appendix.html">Appendix</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="Appendix.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="ConversionFactors.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps2"><span class="rvts99">&lt;?</span><span class="rvts102">xml </span><span class="rvts99">version</span><span class="rvts100">=</span><span class="rvts101">"1.0"</span><span class="rvts102"> </span><span class="rvts99">encoding</span><span class="rvts100">=</span><span class="rvts101">"utf-8"</span><span class="rvts99">?&gt;</span></p>
+<p class="rvps2"><span class="rvts102">&lt;xs:schema </span><span class="rvts99">attributeFormDefault</span><span class="rvts100">=</span><span class="rvts101">"unqualified"</span><span class="rvts102"> </span><span class="rvts99">elementFormDefault</span><span class="rvts100">=</span><span class="rvts101">"qualified"</span><span class="rvts102"> </span><span class="rvts99">xmlns:xs</span><span class="rvts100">=</span><span class="rvts101">"http://www.w3.org/2001/XMLSchema"</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="rvts99">targetNamespace</span><span class="rvts100">=</span><span class="rvts101">"lcc"</span><span class="rvts102"> </span><span class="rvts99">xmlns</span><span class="rvts100">=</span><span class="rvts101">"lcc"</span><span class="rvts102"> </span><span class="rvts99">xmlns:k</span><span class="rvts100">=</span><span class="rvts101">"lcc"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"lccSchema"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts100">name=</span><span class="rvts101">"metadata"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"name"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"description"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"coefficients"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:annotation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:documentation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp;</span><span class="rvts100">* The coefficients node contains coefficients to be assigned to values.</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; </span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* REQUIRED ATTRIBUTES</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Id - text, unique identifier</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Name - text, word or phrase describing coefficient</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* fieldName - text, name of field to be created for output</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; - must conform to the field naming conventions dictated by the output database system</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* method - text, "P" or "A", designates "P"ercentage or per unit "A"rea calculation routine</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:documentation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:annotation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"coefficient"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"unbounded"</span><span class="rvts102"> </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"0"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Id"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:restriction </span><span class="rvts99">base</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:enumeration </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"NITROGEN"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:enumeration </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"PHOSPHORUS"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:enumeration </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"IMPERVIOUS"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:restriction&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:attribute&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Name"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"method"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:restriction </span><span class="rvts99">base</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:enumeration </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"A"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:enumeration </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"P"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:restriction&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:attribute&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"fieldName"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:restriction </span><span class="rvts99">base</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:minLength </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"1"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:restriction&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:attribute&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"values"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts99"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;xs:annotation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:documentation&gt;</span></p>
+<p class="rvps2"><span class="rvts99"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts99"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts99"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts99"> &nbsp;</span><span class="rvts100">* The values node defines the full set of values that can exist in a land cover raster.</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* REQUIRED ATTRIBUTES</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Id - integer, raster code</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;*</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* OPTIONAL ATTRIBUTES</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Name - text, word or phrase describing value</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* excluded - boolean, "true" or "false" or "1" or "0"</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;- used to exclude values from effective area calculations</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;- excluded=false is the default </span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* A value element can optionally contain one or more coefficient elements</span></p>
+<p class="rvps2"><span class="rvts100"><br/></span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* REQUIRED COEFFICIENT ATTRIBUTES</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Id - text, must match an Id attribute from a coefficients node element</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* value - decimal, weighting/calculation factor</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:documentation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:annotation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"value"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"unbounded"</span><span class="rvts102"> </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"0"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"coefficient"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"unbounded"</span><span class="rvts102"> </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"0"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:simpleContent&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:extension </span><span class="rvts99">base</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Id"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:decimal"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"value"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:extension&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:simpleContent&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:int"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Id"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Name"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:boolean"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"excluded"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:unique </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"uniqueCoefficient"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:selector </span><span class="rvts99">xpath</span><span class="rvts100">=</span><span class="rvts101">"coefficient"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:field </span><span class="rvts99">xpath</span><span class="rvts100">=</span><span class="rvts101">"@Id"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:unique&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"classes"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:annotation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:documentation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp;</span><span class="rvts100">* The classes node contains values from a land cover raster grouped into one or more classes.</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* REQUIRED ATTRIBUTES</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Id - text, unique identifier, also used for automated generation of output field name</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; - must conform to the field naming conventions dictated by the output database system</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* OPTIONAL ATTRIBUTES</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Name - text, word or phrase describing class</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* filter - text, a string of one or more tool name abbreviations separated by a ";"</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp;- possible abbreviations are: lcp, rlcp, lcosp, splcp, caem, and pm</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp;- used to exclude the class from the selectable classes in the tool's GUI</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* xxxxField - text, overrides ATtILA-generated field name for output</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; - where xxxx equals a tool name abbreviation</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; - possible abbreviations are: lcp, rlcp, lcosp, and splcp</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; - a separate xxxxField attribute can exist for each tool</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;* &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; - must conform to the field naming conventions dictated by the output database system</span></p>
+<p class="rvps2"><span class="rvts100"><br/></span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* A class can contain either values or classes but not both types.</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Value elements contain only an Id attribute which refers to a value in a raster.</span></p>
+<p class="rvps2"><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts100"> &nbsp;* Values tagged as excluded="true" in the values node should not be included in any class.</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:documentation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:annotation&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"class"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"unbounded"</span><span class="rvts102"> </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"1"</span><span class="rvts102"> </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"classType"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;</span><span class="rvts103">&lt;!--&lt;xs:key name="coefficientKey"&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp; &nbsp;&lt;xs:selector xpath="k:coefficients/k:coefficient"/&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp; &nbsp;&lt;xs:field xpath="@Id"/&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp;&lt;/xs:key&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp;&lt;xs:keyref name="coefficientKeyRef" refer="k:coefficientKey"&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp; &nbsp;&lt;xs:selector xpath="k:values/k:value/k:coefficient"/&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp; &nbsp;&lt;xs:field xpath="@Id"/&gt;</span></p>
+<p class="rvps2"><span class="rvts103"> &nbsp; &nbsp;&lt;/xs:keyref&gt;--&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp;&lt;xs:complexType </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"classType"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp;&lt;xs:choice </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"1"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"1"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"class"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"unbounded"</span><span class="rvts102"> </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"0"</span><span class="rvts102"> </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"classType"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:element </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"value"</span><span class="rvts102"> </span><span class="rvts99">maxOccurs</span><span class="rvts100">=</span><span class="rvts101">"unbounded"</span><span class="rvts102"> </span><span class="rvts99">minOccurs</span><span class="rvts100">=</span><span class="rvts101">"0"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:simpleContent&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:extension </span><span class="rvts99">base</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:int"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Id"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:extension&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:simpleContent&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&lt;/xs:element&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp; &nbsp;&lt;/xs:choice&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;/xs:sequence&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Id"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"required"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"></span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"></span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;xs:restriction </span><span class="rvts99">base</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102">&gt;</span></p>
+<p class="rvps2"><span class="rvts102"></span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;xs:pattern </span><span class="rvts99">value</span><span class="rvts100">=</span><span class="rvts101">"([a-zA-Z0-9_])*"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"></span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;/xs:restriction&gt;</span></p>
+<p class="rvps2"><span class="rvts102"></span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;/xs:simpleType&gt;</span></p>
+<p class="rvps2"><span class="rvts102"></span><span class="rvts102"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts102">&lt;/xs:attribute&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"Name"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"lcpField"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"rlcpField"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"lcospField"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"splcpField"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp; &nbsp;&lt;xs:attribute </span><span class="rvts99">type</span><span class="rvts100">=</span><span class="rvts101">"xs:string"</span><span class="rvts102"> </span><span class="rvts99">name</span><span class="rvts100">=</span><span class="rvts101">"filter"</span><span class="rvts102"> </span><span class="rvts99">use</span><span class="rvts100">=</span><span class="rvts101">"optional"</span><span class="rvts102">/&gt;</span></p>
+<p class="rvps2"><span class="rvts102"> &nbsp;&lt;/xs:complexType&gt;</span></p>
+<p class="rvps2"><span class="rvts102">&lt;/xs:schema&gt;</span></p>
+<p></p>
+</div>
+	
+	<div id="topic_footer">
+
+			<div id="topic_footer_content">
+				ATtILA for ArcGIS v1.1</div>
+		</div>
+	</body>
+	
+</html>
+

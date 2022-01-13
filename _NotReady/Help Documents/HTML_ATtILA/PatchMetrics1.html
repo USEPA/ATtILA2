@@ -1,0 +1,107 @@
+﻿<html>
+	
+<head>
+	<title>Patch Metrics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("PatchMetrics1");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Patch Metrics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="AdditionalOptions.html">Additional Options</a> &rsaquo;&rsaquo; <a href="RetainIntermediateLayersGenerate.html">Retain Intermediate Layers Generated</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="RetainIntermediateLayersGenerate.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="LandCoverProportions1.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="RiparianLandCoverProportions3.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Intermediate Files Retained</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts35">pm_[class name]_PatchRast* raster</span><span class="rvts19"> - Rasters created for each class selected in the </span><span class="rvts35">Report metrics for these classes</span><span class="rvts19"> parameter of the tool, with values corresponding to the following scheme: </span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">-9999 - Excluded</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19"> 0 - Other </span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">1 - n, a unique number assigned to each distinct patch of the selected class </span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts19">The names of the intermediate rasters have the prefix "pm_" followed by the land cover class abbreviation, the suffix "_PatchRast", and another number (e.g. pm_wtl_PatchRast0, pm_wtl_PatchRast1, pm_wtl_PatchRast2, etc.). The final number in the file name is added when the raster is saved in order to give each raster a unique name when the tool is executed more than once with results saved to the same output location.</span></p>
+<p class="rvps11"><span class="rvts19">The processes involved in creating this raster are as follows:</span></p>
+<ol style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: decimal;"><ol style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: decimal;">
+<li class="rvps8"><span class="rvts19">Reclass the input land cover grid so that cells representing the selected class = 3), cells with values marked as excluded = -9999, and all other land cover cells = 0.</span></li>
+<li class="rvps8"><span class="rvts19">If a </span><span class="rvts35">Maximum separation</span><span class="rvts19"> value is NOT provided:</span></li>
+<ol style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: decimal;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Assign unique values to each distinct clump of class cells by use of the regiongroup command. Use the eight neighbor rule to determine connectivity.</span></li>
+</ol>
+<li class="rvps8"><span class="rvts19">If a </span><span class="rvts35">Maximum separation</span><span class="rvts19"> value is provided:</span></li>
+<ol style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: decimal;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Create a single value class raster by setting to NULL cells in the reclassed raster with values less than 3.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Use a euclidean distance operation on the class patch and NULL raster to buffer the classes out by the supplied maximum separation distance.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Assign unique values to each distinct clump of class cells by use of the regiongroup command. Use the eight neighbor rule to determine connectivity.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Trim the buffered regiongroup patches to the original boundaries of the patch clumps by use of the con statement and the reclass grid (if it's a patch in the reclass grid (value = 3) assign it the regiongroup number, else leave the other values (-9999, 0) alone).</span></li>
+</ol>
+<li class="rvps8"><span class="rvts19">If a </span><span class="rvts35">Minimum patch size</span><span class="rvts19"> value is provided:</span></li>
+<ol style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: decimal;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Eliminate all patches below the </span><span class="rvts35">Minimum patch size </span><span class="rvts19">(any regiongroup value with a value in the COUNT field less than the </span><span class="rvts35">Minimum patch size</span><span class="rvts19">, set its value to 0.</span></li>
+</ol>
+<li class="rvps8"><span class="rvts19">Add the excluded class areas back to the raster if any are indicated.</span></li>
+</ol></ol>
+<p class="rvps11"><span class="rvts19">The purpose of this intermediate raster product is to identify individual patches, non-patch areas, and excluded land cover cells for metric calculations.</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts35">pm_[class name]_PatchPoly* vector</span><span class="rvts19"> - A polygon feature class of all patches of [class name] derived from the pm_[class name_PatchRast using the Raster to Polygon conversion operation. The Simplify polygons option was unchecked to force the polygon edges to conform to the cell boundaries of the input raster. The gridcode field contains the unique identifier for each distinct patch. The name of the intermediate feature class has the prefix "pm_" followed by the land cover class abbreviation, the suffix "_PatchPoly", and another number (e.g. pm_wtl_PatchPoly0, pm_wtl_PatchPoly1, pm_wtl_PatchPoly2, etc.). The final number in the file name is added when the feature class is saved in order to give each feature class a unique name when the tool is executed more than once with results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">pm_[class name]_PatchPoly_Diss* vector</span><span class="rvts19"> - A polygon feature class of all patches of [class name] after performing a Dissolve on the pm_[class name_PatchPoly feature class using gridcode as the dissolve field. Gridcode is the unique identifier for each distinct patch. The name of the intermediate feature class has the prefix "pm_" followed by the land cover class abbreviation, the suffix "_PatchPoly_Diss", and another number (e.g. pm_wtl_PatchPoly_Diss0, pm_wtl_PatchPoly_Diss1, pm_wtl_PatchPoly_Diss2, etc.). The final number in the file name is added when the feature class is saved in order to give each feature class a unique name when the tool is executed more than once with results saved to the same output location.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts38">NOTE:</span><span class="rvts14"> Due to the complex pattern of some patches, the dissolve function may not create a single multipart polygon for each distinct patch. A quick check to see if duplicate values are found in the gridcode field by using either the Frequency tool or by the field Summarize... option.</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts35">pm_[class name]_PatchCentroids* vector</span><span class="rvts19"> - A point feature class depicting the cell centroids of cells delimiting patches in the pm_[class name]_PatchRast* raster with the unique patch identifier found in the grid_code field. The name of the intermediate feature class has the prefix "pm_" followed by the land cover class abbreviation, the suffix "_PatchCentroids", and another number (e.g. pm_wtl_PatchCentroids0, pm_wtl_PatchCentroids1, pm_wtl_PatchCentroids2, etc.). The final number in the file name is added when the feature class is saved in order to give each feature class a unique name when the tool is executed more than once with results saved to the same output location.</span></li>
+</ul>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

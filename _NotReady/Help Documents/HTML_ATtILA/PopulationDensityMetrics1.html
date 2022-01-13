@@ -1,0 +1,74 @@
+﻿<html>
+	
+<head>
+	<title>Population Density Metrics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("PopulationDensityMetrics1");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Population Density Metrics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="AdditionalOptions.html">Additional Options</a> &rsaquo;&rsaquo; <a href="RetainIntermediateLayersGenerate.html">Retain Intermediate Layers Generated</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="RetainIntermediateLayersGenerate.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="LandCoverCoefficientCalculator1.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="RoadDensityMetrics1.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Intermediate Files Retained</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts35">pdm_[Reporting unit feature]* vector </span><span class="rvts19">- A polygon feature class containing reporting units with a new area field in km². The name of the intermediate feature class has the prefix "pdm_" followed by a the name of the Reporting unit feature, then followed by a number (e.g. pdm_WI_Counties0, pdm_HUC120, pdm_HUC121, etc.). The number is appended when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">pdm_[Census feature]* vector</span><span class="rvts19"> - A polygon feature class of all census polygons with fields containing population, polygon area, and population density within the census polygons. The name of the intermediate feature class has the prefix "pdm_" followed by the name of the Census feature, then followed by a number (e.g. pdm_AK_2000_tracts0, pdm_census20100, pdm_census 2010_10, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">pdm_intersectOutput* vector</span><span class="rvts19"> - A polygon feature class with Census features intersected with reporting units. The name of the intermediate feature class has the prefix "pdm_intersectOutput" followed by a number (e.g. pdm_intersectOutput0, pdm_intersectOutput_10, pdm_intersectOutput_20, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">pdm_summaryTable* table</span><span class="rvts19"> - A table of the number of intersected Census feature polygons and the sums of the area-weighted population counts within each reporting unit. The name of the intermediate table has the prefix "pdm_summaryTable" followed by a number (e.g. pdm_summaryTable0, pdm_summaryTable_10, pdm_summaryTable_20, etc.). The number suffix is added when the table is saved in order to give each successive table a unique name when the tool is executed more than once and results saved to the same output location.</span></li>
+</ul>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

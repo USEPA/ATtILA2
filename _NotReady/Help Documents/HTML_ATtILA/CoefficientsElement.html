@@ -1,0 +1,159 @@
+﻿<html>
+	
+<head>
+	<title>Coefficients Element</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("CoefficientsElement");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Coefficients Element</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="LandCoverClassification.html">Land Cover Classification</a> &rsaquo;&rsaquo; <a href="ATtILAsLCCXMLDocument.html">ATtILA's LCC XML Document</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="ATtILAsLCCXMLDocument.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="MetadataElement.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="ValuesElement.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Coefficients Element</span></p>
+<div class="rvps8"><table width="850" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid;">
+<tr valign="top">
+<td style="border-width : 0px; background-color: #99ccff;"><p class="rvps21"><span class="rvts6">&lt;?xml version='1.0' encoding='utf-8'?&gt;</span></p>
+<p class="rvps21"><span class="rvts6">&lt;lccSchema </span><span class="rvts65">xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="XSD_FILE_PATH"</span><span class="rvts6">&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;metadata&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;name&gt;&lt;/name&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;description&gt;&lt;/description&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/metadata&gt;</span></p>
+<p class="rvps22"><span class="rvts67">&lt;coefficients&gt;</span></p>
+<p class="rvps24"><span class="rvts67">&lt;coefficient Id="" Name="" fieldName="" method="" /&gt;</span></p>
+<p class="rvps22"><span class="rvts67">&lt;/coefficients&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;values&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;value Id="" Name="" excluded=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;coefficient Id="" value="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/value&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/values&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;classes&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;class Id="" Name="" filter=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;value Id="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/class&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/classes&gt;</span></p>
+<p class="rvps2"><span class="rvts6">&lt;/lccSchema&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps26"><span class="rvts15">Basic structure of ATtILA's Land Cover Classification schema XML document with the Coefficients element highlighted.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">The Coefficients element is used to identify and to parameterize the coefficient-based metrics available in the </span><a class="rvts43" href="LandCoverCoefficientCalculator.html">Land Cover Coefficient Calculator</a><span class="rvts19"> tool. </span><span class="rvts70">T</span><span class="rvts16">his</span><span class="rvts70"> </span><span class="rvts16">element is required by ATtILA for ArcGIS to parse the LCC XML document, but it can be empty (i.e., it does not have to contain any &lt;coefficient&gt; elements).</span></p>
+<p class="rvps8"><span class="rvts51"><br/></span></p>
+<p class="rvps8"><span class="rvts74">NOTE:</span><span class="rvts26"> If no &lt;coefficient&gt; element is in the XML document when the user attempts to use the </span><a class="rvts76" href="LandCoverCoefficientCalculator.html">Land Cover Coefficient Calculator</a><span class="rvts26"> tool, the tool dialog will not populate the "Report metrics for these coefficients" input box when a "Land cover classification scheme" is selected. Despite the missing information, the user is still able to click the OK button to begin the calculation run, but the run will result in an error.</span></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts16">If any &lt;coefficient&gt; element is provided, it needs to contain the following attributes:</span></p>
+<p class="rvps8"><span class="rvts70"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts35">Id</span><span class="rvts19"> - text, unique identifier</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts35">Name</span><span class="rvts19"> - text, description of coefficient metric</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts35">fieldName</span><span class="rvts19"> - text, name of field to be created for output</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts35">method</span><span class="rvts19"> - text, either "P" or "A"</span></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps27"><span class="rvts19">Example Coefficients element with three &lt;coefficient&gt; elements:</span></p>
+<div class="rvps8"><table width="850" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid; background-color: #99ccff;">
+<tr valign="top">
+<td style="border-width : 0px;"><p class="rvps21"><span class="rvts6"> &nbsp; &nbsp;&lt;coefficients&gt;</span></p>
+<p class="rvps21"><span class="rvts6"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;coefficient Id="IMPERVIOUS" Name="Percent Cover Total Impervious Area" fieldName="PCTIA" method="P" /&gt;</span></p>
+<p class="rvps21"><span class="rvts6"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;coefficient Id="NITROGEN" Name="Estimated Nitrogen Loading Based on Land Cover" fieldName="N_Load" method="A" /&gt;</span></p>
+<p class="rvps21"><span class="rvts6"> &nbsp; &nbsp; &nbsp; &nbsp;&lt;coefficient Id="PHOSPHORUS" Name="Estimated Phosphorus Loading Based on Land Cover" fieldName="P_Load" method="A" /&gt;</span></p>
+<p class="rvps21"><span class="rvts6"> &nbsp; &nbsp;&lt;/coefficients&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">Each coefficient represented by a &lt;coefficient&gt; element in the LCC XML document appears in the "Report metrics for these coefficients" parameter in the </span><a class="rvts43" href="LandCoverCoefficientCalculator.html">Land Cover Coefficient Calculator</a><span class="rvts19"> tool dialog and is individually selectable (see below). The element's attributes are listed next to the check box as follows: </span><span class="rvts35">Id </span><span class="rvts19">- [</span><span class="rvts35">fieldName</span><span class="rvts19">] </span><span class="rvts35">Name</span></p>
+<p class="rvps8"><span class="rvts70"> &nbsp; &nbsp; &nbsp; &nbsp;</span><img alt="" style="padding : 1px;" src="lib/ATtILA LCCC Dialog.png"/></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts71">Id Attribute</span></p>
+<p class="rvps8"><span class="rvts32">Id</span><span class="rvts16"> is a text string of any length that supplies the short name for a coefficient. In this version of ATtILA for ArcGIS, the text string is restricted to 'NITROGEN', 'PHOSPHORUS', or 'IMPERVIOUS'. In a future release, the user will be able to use any string for the </span><span class="rvts32">Id</span><span class="rvts16"> attribute. See the </span><span class="rvts32">method</span><span class="rvts16"> attribute discussion below for more details.</span></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts71">Name Attribute</span></p>
+<p class="rvps8"><span class="rvts32">Name</span><span class="rvts16"> is a text string of any length used to supply a more detailed description of the coefficient and/or provide additional details regarding the metrics that result from tool calculations using the coefficient. It can also be an empty string (e.g., Name="").</span></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts71">fieldName Attribute</span></p>
+<p class="rvps8"><span class="rvts35">fieldName</span><span class="rvts19"> is a text string used to customize the name of the coefficient in the output table field. The length of the text string is dependent on the output table type selected in the </span><a class="rvts75" href="LandCoverCoefficientCalculator.html">Land Cover Coefficient Calculator</a><span class="rvts19"> tool as follows:</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">dBase table - field names are restricted to 10 characters in length.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">INFO table - field names are restricted to16 characters in length.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">geodatabase table - field names are restricted to 64 characters in length. </span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">ATtILA for ArcGIS will truncate field names that are longer than those allowed, and check to see if the truncated field name is already in the output table. If the truncated field name already exists, the text string is truncated further to allow a numerical value to be appended to the field name to create a unique field name. When this occurs, a warning message is added to the Geoprocessing &gt; Results window informing the user of the changes to the fieldName's text string in the output table.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">In addition to size limitations, the </span><span class="rvts35">fieldName</span><span class="rvts19"> attribute string must conform to the field naming conventions dictated by the different database systems (dBASE, INFO, or geodatabase). In general, try to restrict field names to just alphanumeric characters and underscores. Use of spaces and special characters should be avoided, as well as beginning a field name with a number or an underscore. Also, avoid using field names that contain words that are considered reserved keywords, such as date, day, month, order, table, text, user, when, where, year, and zone. For more guidelines on the naming of fields, search on "Fundamentals of adding and deleting fields" in the ArcGIS help documentation.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts71">method Attribute</span></p>
+<p class="rvps8"><span class="rvts73">CAUTION:</span><span class="rvts72"> </span><span class="rvts26">In this version of ATtILA for ArcGIS, the </span><span class="rvts27">method</span><span class="rvts26"> attribute is dummy attribute, and exists only as a placeholder.&nbsp;</span><span class="rvts16"> </span></p>
+<p class="rvps8"><span class="rvts16">In future releases, the </span><span class="rvts32">method</span><span class="rvts16"> attribute will be used to pass an appropriate calculation routine for the coefficent to the </span><a class="rvts75" href="LandCoverCoefficientCalculator.html">Land Cover Coefficient Calculator</a><span class="rvts19"> tool</span><span class="rvts16">. When implemented, the method element will be restricted to two choices:</span></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts16">"A" - the tool will use a "Per Unit Area" calculation routine to calculate metrics associated with the coefficient.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts16">"P" - the tool will use a "Percent Area" calculation routine to calculate metrics associated with the coefficient.</span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts16">More information on the different calculation routines can be found on the </span><a class="rvts75" href="LandCoverCoefficientCalculator.html">Land Cover Coefficient Calculator</a><span class="rvts16"> page.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps28"><span class="rvts69">XML Note</span></p>
+<p class="rvps8"><span class="rvts19">XML is case-sensitive and care should be used when editing the LCC XML documents using a text editor. Wherever possible, element and attribute names for the document have been defined using lowercase characters. The only current exceptions are the attributes "</span><span class="rvts35">Id</span><span class="rvts19">" and "</span><span class="rvts35">Name</span><span class="rvts19">" in the Coefficients, Values, and Classes elements. If editing an LCC XML document outside of the </span><a class="rvts42" href="ExternalLCCEditor.html">External LCC Editor</a><span class="rvts19">, these attributes should be capitalized wherever they appear.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">You may notice that in the Metadata element, the &lt;name&gt; element is lowercase. The distinction here is that "name" in the Metadata element pertains to an </span><span class="rvts15">element</span><span class="rvts19">, and that the capitalization rule only applies to an element's </span><span class="rvts15">attributes</span><span class="rvts19">.</span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

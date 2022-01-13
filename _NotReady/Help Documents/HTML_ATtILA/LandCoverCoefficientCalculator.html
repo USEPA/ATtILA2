@@ -1,0 +1,253 @@
+﻿<html>
+	
+<head>
+	<title>Land Cover Coefficient Calculator</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("LandCoverCoefficientCalculator");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Land Cover Coefficient Calculator</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Metrics.html">Metrics</a> &rsaquo;&rsaquo; <a href="HumanStressors.html">Human Stressors</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="HumanStressors.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="HumanStressors.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="PopulationDensityMetrics.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Summary</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts7">Calculates metrics based on coefficient values (multipliers) associated with specific land cover classes within each reporting unit polygon and creates an output table.</span></p>
+<p class="rvps8"><span class="rvts7">Within the reporting unit polygons, the area of each land cover class present is multiplied by its supplied coefficient. The products for each land cover class are summed to produce a value for each coefficient type.</span></p>
+<p class="rvps8"><span class="rvts7">In this version of ATtILA for ArcGIS, this tool produces three metrics: percent impervious area, nitrogen loading (kg/ha/yr), and phosphorus loading (kg/ha/yr).</span></p>
+<p class="rvps8"><span class="rvts44"> </span></p>
+<p class="rvps8"><span class="rvts18">Usage</span></p>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">This tool processes all polygons in the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> regardless of selections set. The ability to limit land cover calculations to only selected reporting unit polygons is not supported in this release.</span></li>
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> To ensure desired results, the </span><span class="rvts35">Land cover grid</span><span class="rvts14"> must be in a projected coordinate system with linear units of measure. </span></li>
+<li class="rvps8"><span class="rvts7">Three coefficients for which metrics are calculated are included in this tool: IMPERVIOUS, NITROGEN, and PHOSPHORUS. Coefficient values are stored in the </span><span class="rvts28">Land cover classification file</span><span class="rvts7">. For more information on how coefficients are coded into the </span><span class="rvts28">Land cover classification file</span><span class="rvts7">, please refer to the </span><a class="rvts39" href="CoefficientsElement.html">Coefficients Element</a><span class="rvts7"> and </span><a class="rvts39" href="ValuesElement.html">Values Element</a><span class="rvts7"> sections of </span><a class="rvts39" href="ATtILAsLCCXMLDocument.html">ATtILA's LCC XML Document</a><span class="rvts7">. To view specific coefficient values associated with supplied land cover schemes, refer to the particular scheme in </span><a class="rvts39" href="SuppliedLandCoverClassificationS.html">Supplied Land Cover Classification Schemas</a><span class="rvts7">. To view and optionally edit coefficient values in a </span><span class="rvts28">Land cover classification file</span><span class="rvts7">, use either the </span><a class="rvts39" href="CreateorModifyLandCoverClassific.html">Create or Modify Land Cover Classification</a><span class="rvts7"> tool or a text editor.</span></li>
+<ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts36">IMPERVIOUS coefficient - Represents an estimate of the percent impervious area for each land cover class. For example, many land cover classification schemes contain multiple "developed" land cover classes based on the intensity of development. Generally, high-intensity developed areas (e.g. city centers) contain a greater proportion of impervious surfaces per unit area than low-intensity developed areas (e.g. rural residential). Hence, a high-intensity developed land cover class should be assigned a higher coefficient value (perhaps 0.9 for 90% impervious) than that of a medium- or low-intensity developed land cover class (the coefficient values of which perhaps range from 0.7 to 0.25 for 70% to 25% impervious). Generally, percent impervious area in land cover classes other than developed is very low or zero.</span></li>
+<li class="rvps8"><span class="rvts36">NITROGEN coefficient - Represents an estimate of the amount of nitrogen output (stream loading) in kilograms per hectare per year for each land cover class. Nitrogen loading is generally found to be highest in land cover classes that are primarily human-use oriented (agricultural and developed land); hence ATtILA for ArcGIS assigns a higher nitrogen loading coefficient value to these classes as compared to natural land cover classes. Considering only the various natural land cover classes, nitrogen loading is generally found to be highest in classes with high vegetative biomass per unit area (forest) and ATtILA for ArcGIS assigns a higher nitrogen loading coefficient value than those of other natural land cover classes with lower biomass per unit area.</span></li>
+<li class="rvps8"><span class="rvts36">PHOSPHORUS coefficient - Represents an estimate of the amount of phosphorus output (stream loading) in kilograms per hectare per year for each land cover class. Phosphorus loading follows a similar pattern as nitrogen loading--it is found to be highest in human-use oriented land cover classes to which ATtILA for ArcGIS assigns higher phosphorus loading coefficient values versus natural land cover classes. Again, as with nitrogen loading, within the various natural land cover classes ATtILA for ArcGIS assigns the highest phosphorus loading coefficient values to classes with high vegetative biomass per unit area (forest), with coefficient values decreasing with diminishing biomass per unit area.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts36">Reporting unit metrics are based on the coefficient values as coded into the </span><span class="rvts37">Land cover classification file</span><span class="rvts36"> for each land cover class. These metrics are calculated in the following manner: </span></li>
+<ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts36">IMPERVIOUS - The percent impervious metric uses a percent area method to calculate values. For each land cover class, the area within each reporting unit is multiplied by the impervious coefficient associated with that class, resulting in a product for each class. Products for all land cover classes are summed to produce the percent impervious area metric for each reporting unit.</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts46">NOTE:</span><span class="rvts36"> </span><span class="rvts47">The percent area method expects coefficient values to be expressed as decimal values between 1 and 0 (e.g., 0.9 for 90%).</span></li>
+<li class="rvps8"><span class="rvts46">NOTE:</span><span class="rvts47"> The output calculated value is supplied as a percentage.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts36">NITROGEN - The nitrogen loading metric uses a per-unit-area method to calculate values. For each land cover class, the area within each reporting unit is converted to hectares then multiplied by the nitrogen coefficient associated with that class, resulting in a product for each class. Products for all land cover classes are summed, then divided by the total number of hectares within the reporting unit to provide an average nitrogen loading value across each reporting unit in kilograms per hectare per year. </span></li>
+<li class="rvps8"><span class="rvts36">PHOSPHORUS - The phosphorus loading metric uses a per-unit-area method to calculate values. For each land cover class, the area within each reporting unit is converted to hectares then multiplied by the phosphorus coefficient associated with that class, resulting in a product for each class. Products for all land cover classes are summed, then divided by the total number of hectares within the reporting unit to provide an average phosphorus loading value across each reporting unit in kilograms per hectare per year.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">The </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> is </span><span class="rvts19">a zone dataset. </span></li>
+<ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">A zone is defined as a</span><span class="rvts7">ll areas in the input that have the same value. The areas do not have to be contiguous. The term "value" in this definition refers to the unique values in the </span><span class="rvts28">Reporting unit ID field</span><span class="rvts7">. Therefore, all polygons with the same reporting unit ID are treated as a single zone. </span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">When more than one polygon has the same reporting unit ID, the areas for each polygon are combined and metrics are reported as a single record in the </span><span class="rvts28">Output table</span><span class="rvts7">.</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">As the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> is a vector dataset, ArcGIS will perform a vector to raster conversion during processing.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts7">The </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> must not contain overlapping polygons. When overlapping polygons exist, the vector to raster conversion assigns the value of the top-most polygon to any overlapping area, thereby erasing the areas of underlying zones and resulting in flawed metric calculations.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Use the </span><a class="rvts41" href="IdentifyOverlappingPolygons.html">Identify Overlapping Polygons</a><span class="rvts7"> utility to determine if overlapping polygons exist and parse the reporting unit feature layer into two or more feature classes or shapefiles in which no features overlap.</span></li>
+<li class="rvps8"><span class="rvts7">To better control the vector to raster conversion, the tool defaults the </span><span class="rvts28">Snap raster</span><span class="rvts7"> and the </span><span class="rvts28">Processing cell size</span><span class="rvts7"> to that of the </span><span class="rvts28">Land cover grid</span><span class="rvts7">. These may be changed from within the tool.</span></li>
+<li class="rvps8"><span class="rvts7">If a disparity exists between the extents of the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> and the </span><span class="rvts28">Land cover grid</span><span class="rvts7">, the user may wish to set the Extent in Environment Settings &gt; Processing Extent to the smaller of the two to avoid unnecessary processing.</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts19">The </span><span class="rvts35">Land cover classification scheme</span><span class="rvts19"> must correspond to the </span><span class="rvts35">Land cover grid</span><span class="rvts19">. </span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Schemes for common land cover datasets are included with ATtILA for ArcGIS. Supplied schemes may be designated as either "ALL" or "LAND" (e.g. NLCD 2001 ALL vs. NLCD 2001 LAND). Schemes designated as "ALL" include all land cover classes in reporting unit area calculations, while those designated as "LAND" include only terrestrial land cover classes, with non-terrestrial land cover classes such as water and snow/ice excluded. More information about each of the classification schemes supplied with ATtILA for ArcGIS may be found in </span><a class="rvts42" href="SuppliedLandCoverClassificationS.html">Supplied Land Cover Classification Schemas</a><span class="rvts19">.</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">In addition to the common land cover schemes, the tool permits a user-defined land cover classification scheme to be used by specifying a </span><span class="rvts35">Land cover classification file</span><span class="rvts19"> (.xml). Refer to </span><a class="rvts42" href="LandCoverClassification.html">Land Cover Classification</a><span class="rvts19"> for more information.</span></li>
+<li class="rvps8"><span class="rvts24">NOTE: </span><span class="rvts15">When a classification scheme with excluded land cover classes is selected, the areas of the excluded classes are disregarded in metric calculations. For example, when selecting a "LAND" classification scheme, the tool will process individual land cover classes and calculate metrics based on the total </span><span class="rvts45">terrestrial</span><span class="rvts15"> area they occupy within the reporting unit, rather than the percent of the total area within the reporting unit. </span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">Final output is written to the location specified in the </span><span class="rvts28">Output table</span><span class="rvts7"> parameter. The </span><span class="rvts28">Output table</span><span class="rvts7"> may be saved as a File Geodatabase Table, a dBASE Table, or an INFO Table.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> For most consistent results, it is highly recommended that tool output be saved to a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a File Geodatabase Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. The output location must be a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a dBASE Table, include the .dbf extension in the </span><span class="rvts28">Output table</span><span class="rvts7"> name. dBASE tables may not be saved in a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as an INFO Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. INFO tables may not be saved in a file geodatabase. A new directory in the output directory called "info" is automatically created in which the INFO tables are stored. INFO tables have limited portability, so it is recommended that output not be saved as an INFO Table if data sharing is important.</span><span class="rvts14"> &nbsp;</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts19">The user may elect to </span><a class="rvts43" href="LandCoverCoefficientCalculator2.html">Add Quality Assurance Fields</a><span class="rvts19">, and/or </span><a class="rvts43" href="LandCoverCoefficientCalculator1.html">Retain Intermediate Layers Generated During Metric Processing</a><span class="rvts19">.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Choosing to Retain Intermediate Layers saves the intermediate products to one of the following locations:</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts19">When output is saved as a File Geodatabase Table, intermediate products are placed in the same file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts19">When ouput is saved as a dBASE Table or an INFO Table, a file geodatabase named "attilaScratchWorkspace" is automatically generated in the same output location specified for the </span><span class="rvts35">Output table.</span><span class="rvts19"> Intermediate products are placed in the attilaScratchWorkspace file geodatabase.</span></li>
+</ul></ul>
+<li class="rvps8"><span class="rvts7">Field names in the </span><span class="rvts28">Output table</span><span class="rvts7"> are as follows:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts7">PCTIA - The percent impervious area metric for the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">N_Load - The average annual nitrogen load per hectare for the reporting unit (kg/ha/yr).</span></li>
+<li class="rvps8"><span class="rvts7">P_Load - The average annual phosphorus load per hectare for the reporting unit (kg/ha/yr).</span></li>
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> Field names are obtained from the fieldName attribute in each coefficient element in the specified </span><span class="rvts38">Land cover classification file</span><span class="rvts14"> (See the </span><a class="rvts40" href="CoefficientsElement.html">Coefficients Element</a><span class="rvts14"> in </span><a class="rvts40" href="ATtILAsLCCXMLDocument.html">ATtILA's LCC XML Document</a><span class="rvts14">). Output field names can be changed by </span><a class="rvts40" href="CreateorModifyLandCoverClassific.html">editing</a><span class="rvts14"> the</span><span class="rvts38"> Land cover classification file</span><span class="rvts14">.</span></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Syntax</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts19">LCCC (Reporting_unit_feature, Reporting_unit_ID_field, Land_cover_grid, Land_cover_classification_scheme, Land_cover_classification_file, Report_metrics_for_these_coefficients, Output_table, {Processing_cell_size}, {Snap_raster}, Select_options) </span></p>
+<div class="rvps15"><table width="85%" border="1" cellpadding="4" cellspacing="0" style="border-color: #969696; border-style: solid;">
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 238px;"><p class="rvps8"><span class="rvts19">Parameter</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 951px;"><p class="rvps8"><span class="rvts19">Explanation</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 120px;"><p class="rvps8"><span class="rvts19">Data Type</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts16">The vector polygon dataset that defines the reporting units.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_ID_field</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The field in the Reporting unit feature layer that contains the unique ID for each reporting unit. </span></p>
+<p class="rvps8"><span class="rvts7">It may be an integer or a string data type.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Land_cover_grid</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The raster dataset representing land cover classes to be summarized within each Reporting unit feature.</span></p>
+<p class="rvps8"><span class="rvts7">The grid input must be an integer raster layer.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Raster Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Land_cover_classification_scheme</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The land cover classification schemes included in ATtILA and a User Defined option.</span></p>
+<p class="rvps8"><span class="rvts7">The default schemes correspond to common input land cover datasets. Two schemes are supplied for each dataset included in ATtILA:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">{DATASET NAME} ALL - includes all land cover types in the grid with no exclusions.</span></li>
+<li class="rvps8"><span class="rvts7">{DATASET NAME} LAND - excludes non-terrestrial land cover types.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">String</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Land_cover_classification_file</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The full pathname to the user-defined .xml file for custom or non-standard land cover classification schemes.</span></p>
+<p class="rvps8"><span class="rvts7">Pathname is automatically filled when a default scheme is selected.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">File</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Report_metrics_for_these_coefficients</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">A list of the coefficents available for processing.</span></p>
+<p class="rvps8"><span class="rvts7">Check the box to calculate metrics for each coefficient desired within the reporting units.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">String</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Output_table</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The output reporting unit metrics table to be created.</span></p>
+<p class="rvps8"><span class="rvts7">It is recommended that the Output table be saved within a file geodatabase.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Table</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Processing_cell_size (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The Processing cell size for the zonal operation.</span></p>
+<p class="rvps8"><span class="rvts7">The default Processing cell size is the cell size of the input raster land cover data. &nbsp;Optionally, the user may select a different cell size.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Analysis cell size</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Snap_raster (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The raster that the cell alignment of the Land cover grid and rasterized Reporting unit feature layer will be matched to during processing.</span></p>
+<p class="rvps8"><span class="rvts7">The default Snap raster is the Land cover grid.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Raster Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Select_options</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">Two tool options are available to provide additional information:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">Add Quality Assurance Fields - &nbsp;Adds area fields to the Output table to facilitate quality assurance checking.</span></li>
+<li class="rvps8"><span class="rvts7">Retain Intermediate Layers Generated During Metric Calculation - Saves the intermediate table and/or raster that is normally deleted after processing is complete.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Multiple Value</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Environments</span></p>
+<p class="rvps8"><span class="rvts19">Current Workspace, Scratch Workspace, Output Coordinates same as input, Processing extent min of inputs, </span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

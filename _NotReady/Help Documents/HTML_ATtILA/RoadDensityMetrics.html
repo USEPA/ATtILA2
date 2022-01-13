@@ -1,0 +1,269 @@
+﻿<html>
+	
+<head>
+	<title>Road Density Metrics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("RoadDensityMetrics");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Road Density Metrics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Metrics.html">Metrics</a> &rsaquo;&rsaquo; <a href="HumanStressors.html">Human Stressors</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="HumanStressors.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="PopulationDensityMetrics.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="LandscapeCharacteristics.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Summary</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts7">Calculates metrics based on input vector line dataset(s) for each reporting unit polygon and creates an output table. </span></p>
+<p class="rvps8"><span class="rvts7">Default metrics include total length (km) and line density (km/km²) by reporting unit. Also included in the default metrics is percent impervious surface within each reporting unit, the calculation of which assumes that the input vector line dataset represents roads. </span></p>
+<p class="rvps8"><span class="rvts7">In addition to the default metrics, the tool allows for several optional metrics to be calculated:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">Length and density metrics by Road feature class within each reporting unit. Classes are designated based on values in a specified field in the Road feature layer.</span></li>
+<li class="rvps8"><span class="rvts7">Metrics that involve spatial relationships between the Road feature and a second linear feature (Stream feature). The user may select to calculate the following:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps16" style="margin-left: 0px"><span class="rvts7">Metrics that measure the frequency of intersections between the Road feature lines and the Stream feature lines in each reporting unit. Measurements by Road feature class are also available.</span></li>
+<li class="rvps16" style="margin-left: 0px"><span class="rvts7">Metrics that measure the length of the Road feature lines within a specified buffer distance from Stream feature lines within each reporting unit. Measurements by Road feature class are also available.</span></li>
+<li class="rvps16" style="margin-left: 0px"><span class="rvts7">Both.</span></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Usage</span></p>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">This tool processes all polygons in the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> regardless of selections set. The ability to limit land cover calculations to only selected reporting unit polygons is not supported in this release.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">This tool is designed to use vector line datasets that represent roads and streams, but any vector line dataset may be used. Caution should be exercised when interpreting results, particularly when using line datasets that do not represent roads and/or streams.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> To ensure desired results, the </span><span class="rvts28">Reporting unit feature</span><span class="rvts14">, </span><span class="rvts28">Road feature</span><span class="rvts14">, and </span><span class="rvts28">Stream feature</span><span class="rvts14"> must be in projected coordinate systems with linear units of measure. </span></li>
+<li class="rvps8"><span class="rvts7">The </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> must be a polygon feature class or shapefile.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts16">The optional </span><span class="rvts32">Road class field</span><span class="rvts16"> may be used to create metrics for different classes of </span><span class="rvts32">Road feature</span><span class="rvts16"> lines. The </span><span class="rvts32">Road class field</span><span class="rvts16"> may be any field that differentiates category of </span><span class="rvts32">Road feature</span><span class="rvts16"> lines and does not necessarily need to represent road class.</span></li>
+<li class="rvps8"><span class="rvts16">Values in the optional </span><span class="rvts32">Road class field</span><span class="rvts16"> have restrictions. They may not contain spaces or special characters such as hyphens, parentheses, brackets, and symbols such as #, $, %, and &amp;. Essentially, the values in this field are acceptable if they consist only of alphanumeric characters or an underscore. The values in these fields are used to create class-specific metric fields for the three metrics (RDKM, RDDENS, and RDTIA) in the </span><span class="rvts32">Output table</span><span class="rvts16">. If any of the values in the </span><span class="rvts32">Road class field</span><span class="rvts16"> violate these character restrictions, consider using a different class field or creating a new one that corresponds to the restrictions. </span></li>
+<li class="rvps8"><span class="rvts7">If a </span><span class="rvts28">Road class field</span><span class="rvts7"> is specified, the tool creates the new field names by appending the </span><span class="rvts28">Road class field</span><span class="rvts7"> characters to the metric field names. Since field name length is dependent on the output table type (i.e., dBase, INFO, or geodatabase) care should be used so that the length of the final output field name does not exceed the maximum allowable field name limit for the desired output table. When the limit is exceeded, the </span><span class="rvts28">Road class field</span><span class="rvts7"> characters may replace the characters at the end of these field names.</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts16">Example: Two road classes exist in the </span><span class="rvts32">Road feature </span><span class="rvts16">and a dBASE output table type is specified (maximum field length = 10 characters). The </span><span class="rvts32">Road class field</span><span class="rvts16"> designates these as "A31" and "B45100". When the tool is run with default settings (e.g. no options are selected), six output fields are created in the </span><span class="rvts32">Output table</span><span class="rvts16">, which are named as follows (class characters underlined for emphasis):</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts52">A31</span><span class="rvts16">: RDKM</span><span class="rvts52">A31</span><span class="rvts16"> (7 characters), RDDENS</span><span class="rvts52">A31</span><span class="rvts16"> (9 characters), RDTIA</span><span class="rvts52">A31</span><span class="rvts16"> (8 characters)</span></li>
+<li class="rvps8"><span class="rvts52">B45100</span><span class="rvts16">: RDKM</span><span class="rvts52">B45100</span><span class="rvts16"> (10 characters), RDDE</span><span class="rvts52">B45100</span><span class="rvts16"> (10 characters), RDTI</span><span class="rvts52">B45100</span><span class="rvts16"> (10 characters)</span></li>
+</ul>
+<li class="rvps8"><span class="rvts27">NOTE:</span><span class="rvts26">&nbsp;</span><span class="rvts14"> If the </span><span class="rvts38">Road class field</span><span class="rvts14"> characters replace too many of the characters in the metric field names, duplicate field names will be created.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts16">When the optional </span><span class="rvts32">STXRD</span><span class="rvts16"> (stream-road crossing) and/or </span><span class="rvts32">RNS</span><span class="rvts16"> (roads near streams) are checked, the tool allows the user to select a </span><span class="rvts32">Stream feature</span><span class="rvts16">. When </span><span class="rvts32">RNS</span><span class="rvts16"> is checked, the user is also allowed to enter a </span><span class="rvts32">Buffer distance</span><span class="rvts16"> from the </span><span class="rvts32">Stream feature</span><span class="rvts16"> lines.</span></li>
+<li class="rvps8"><span class="rvts7">Final output is written to the location specified in the </span><span class="rvts28">Output table</span><span class="rvts7"> parameter. The </span><span class="rvts28">Output table</span><span class="rvts7"> may be saved as a File Geodatabase Table, a dBASE Table, or an INFO Table.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> For most consistent results, it is highly recommended that tool output be saved to a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a File Geodatabase Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. The output location must be a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a dBASE Table, include the .dbf extension in the </span><span class="rvts28">Output table</span><span class="rvts7"> name. dBASE tables may not be saved in a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as an INFO Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. INFO tables may not be saved in a file geodatabase. A new directory in the output directory called "info" is automatically created in which the INFO tables are stored. INFO tables have limited portability, so it is recommended that output not be saved as an INFO Table if data sharing is important.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts19">The user may elect to </span><a class="rvts48" href="RoadDensityMetrics1.html">Retain Intermediate Layers Generated During Metric Processing</a><span class="rvts19">.</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Choosing to Retain Intermediate Layers saves the intermediate products to one of the following locations:</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts19">When output is saved as a File Geodatabase Table, intermediate products are placed in the same file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts19">When ouput is saved as a dBASE Table or an INFO Table, a file geodatabase named "attilaScratchWorkspace" is automatically generated in the same output location specified for the </span><span class="rvts35">Output table.</span><span class="rvts19"> Intermediate products are placed in the attilaScratchWorkspace file geodatabase.</span></li>
+</ul></ul>
+<li class="rvps8"><span class="rvts7">Field names in the </span><span class="rvts28">Output table</span><span class="rvts7"> follow this naming scheme:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts7">For default tool settings (e.g. no optional settings selected):</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts7">AREAKM2 - The area of the reporting unit in km².</span></li>
+<li class="rvps8"><span class="rvts7">RDKM - The total length of </span><span class="rvts28">Road feature</span><span class="rvts7"> lines in km within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">RDDENS - The density of </span><span class="rvts28">Road feature</span><span class="rvts7"> lines in km/km² within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">RDTIA - An estimate of percent impervious area within the reporting unit. This metric</span><span class="rvts51"> uses road density as the independent variable in a linear regression model to estimate percent impervious surface (see May, et al., 1997). Due to the nature of the regression equation used, values below 1.8 km/km² are assigned a value of 0 for the percent impervious metric, while values above 11 km/km² are considered invalid and are reported as −1.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">When the </span><span class="rvts28">STXRD</span><span class="rvts7"> option is selected:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts7">STRMKM - The total length of </span><span class="rvts28">Stream feature</span><span class="rvts7"> lines in km within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">STRMDENS - The density of </span><span class="rvts28">Stream feature</span><span class="rvts7"> lines in km/km² within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">XCNT (Alias FREQUENCY) - The count of intersections (crossings) between the </span><span class="rvts28">Road feature</span><span class="rvts7"> lines and the </span><span class="rvts28">Stream feature</span><span class="rvts7"> lines within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">STXRD - The density of stream-road crossings per stream km within the reporting unit.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">When the </span><span class="rvts28">RNS</span><span class="rvts7"> option is selected:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts7">RNS[buffer distance] - The proportion of the total length of </span><span class="rvts28">Road feature</span><span class="rvts7"> lines within the </span><span class="rvts28">Buffer distance</span><span class="rvts7"> to the total length of </span><span class="rvts28">Stream feature</span><span class="rvts7"> lines by reporting unit.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">When the option to report metrics by </span><span class="rvts28">Road class field</span><span class="rvts7"> is selected, separate fields are generated for each metric/class combination. For example, if the </span><span class="rvts28">Road class field</span><span class="rvts7"> contains five classes of roads, then five RDDENS metrics will appear in the </span><span class="rvts28">Output table</span><span class="rvts7">--one for each road class. Each of these fields appears in the </span><span class="rvts28">Output table</span><span class="rvts7"> by the field aliases listed below. To view the field names with the appended classes rather than the aliases, open the table, select the Table Options dropdown, and uncheck Show Field Aliases:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts7">RDKM - The total length of </span><span class="rvts28">Road feature</span><span class="rvts7"> lines for each class in the </span><span class="rvts28">Road class field</span><span class="rvts7"> within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">RDDENS - The density of </span><span class="rvts28">Road feature</span><span class="rvts7"> lines for each class in the </span><span class="rvts28">Road class field</span><span class="rvts7"> within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">RDTIA - An estimate of the percent impervious area within the reporting unit contributed by each class.</span></li>
+<li class="rvps8"><span class="rvts7">FREQUENCY - The count of intersections (crossings) between the </span><span class="rvts28">Road feature</span><span class="rvts7"> lines and the </span><span class="rvts28">Stream feature</span><span class="rvts7"> lines for each class within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">STXRD - The density of stream-road crossings for each class per stream km within the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">RNS[buffer distance] - The proportion of the total length of </span><span class="rvts28">Road feature</span><span class="rvts7"> lines within the </span><span class="rvts28">Buffer distance</span><span class="rvts7"> to the total length of </span><span class="rvts28">Stream feature</span><span class="rvts7"> lines in the reporting unit for each class.</span></li>
+</ul></ul></ul>
+<p class="rvps8"><span class="rvts44"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Syntax</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts19">RDM (Reporting_unit_feature, Reporting_unit_ID_field, Road_feature, Output_table, {Road_class_field}, {STXRD}, {RNS}, Stream_feature, Buffer_distance, {Select_options})</span><span class="rvts7"> </span></p>
+<div class="rvps15"><table width="85%" border="1" cellpadding="4" cellspacing="0" style="border-color: #969696; border-style: solid;">
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 238px;"><p class="rvps8"><span class="rvts19">Parameter</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 951px;"><p class="rvps8"><span class="rvts19">Explanation</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 120px;"><p class="rvps8"><span class="rvts19">Data Type</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts16">The vector polygon dataset that defines the reporting units.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_ID_field</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The field in the Reporting unit feature layer that contains the unique ID for each reporting unit. </span></p>
+<p class="rvps8"><span class="rvts7">It may be an integer or a string data type.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Road_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The vector line dataset representing roads or other linear features to be measured.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Output_table</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The output reporting unit metrics table to be created.</span></p>
+<p class="rvps8"><span class="rvts7">It is recommended that the Output table be saved within a file geodatabase.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Table</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Road_class_field (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps12"><span class="rvts16">The field in the Road feature layer that distinguishes classes of linear features in order to calculate separate metrics for each class.</span></p>
+<p class="rvps8"><span class="rvts7">It may be an integer or a string data type.</span></p>
+<p class="rvps12"><span class="rvts16">The values in this field must not contain spaces or special characters.</span></p>
+<p class="rvps12"><span class="rvts16">As class code values are appended to output field names, care should be taken not to exceed the limit for field name size set by output table type.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">STXRD (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">Specifies whether stream-road crossing (STXRD) metrics will be included in the output table.</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">false - No STXRD metrics will not be included. This is the default.</span></li>
+<li class="rvps8"><span class="rvts7">true - STXRD metrics will be included. These include the total number of stream-road crossings (field name: FREQUENCY) and the density of stream-road crossings per stream kilometer (field name: STXRD) in the reporting unit.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Boolean</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">RNS (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">Specifies whether the roads near streams </span><span class="rvts16">(RNS) metric will be included in the output table.</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">false - RNS metric will not be included. This is the default.</span></li>
+<li class="rvps8"><span class="rvts7">true - RNS metric will be included. This metric is a measurement of the </span><span class="rvts16">total length of roads within the buffer distance divided by the total length of stream in the reporting unit. </span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Boolean</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Stream_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The vector line dataset representing streams that is used to calculate the STXRD and/or RNS metrics.</span></p>
+<p class="rvps8"><span class="rvts7">This dataset is required when the STXRD and/or RNS options are checked.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Buffer_distance</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The distance around the Stream features in which buffer zones are created. </span></p>
+<p class="rvps8"><span class="rvts7">The value must be an integer.</span></p>
+<p class="rvps8"><span class="rvts7">If the distance linear units are not specified or are entered as Unknown, the linear unit of the input features' spatial reference is used.</span></p>
+<p class="rvps8"><span class="rvts7">This parameter is required when the RNS option is checked.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Linear unit</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Select_options (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">One tool option is available to provide additional information:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">Retain Intermediate Layers Generated During Metric Calculation - Saves the intermediate table and/or raster that is normally deleted after processing is complete.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Multiple Value</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts50"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Credits</span><span class="rvts50"> </span></p>
+<p class="rvps17"><span class="rvts36">May, C.W., Horner, R.R., Karr, J.R., Mar B.W., Welch, E.B. 1997. </span><span class="rvts47">Effects of urbanization on small streams in the Puget Sound Lowland Ecoregion</span><span class="rvts36">. Watershed Protection Techniques. 2:4. pp. 483−493. </span></p>
+<p class="rvps17"><span class="rvts36"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Environments</span></p>
+<p class="rvps8"><span class="rvts19">Current Workspace, Scratch Workspace, Output Coordinates same as input, Processing extent min of inputs</span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

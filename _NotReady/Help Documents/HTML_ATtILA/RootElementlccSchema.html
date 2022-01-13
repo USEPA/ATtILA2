@@ -1,0 +1,121 @@
+﻿<html>
+	
+<head>
+	<title>Root Element: lccSchema</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("RootElementlccSchema");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Root Element: lccSchema</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="LandCoverClassification.html">Land Cover Classification</a> &rsaquo;&rsaquo; <a href="ATtILAsLCCXMLDocument.html">ATtILA's LCC XML Document</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="ATtILAsLCCXMLDocument.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="XMLDeclaration.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="MetadataElement.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Root Element: lccSchema</span></p>
+<div class="rvps8"><table width="850" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid;">
+<tr valign="top">
+<td style="border-width : 0px; background-color: #99ccff;"><p class="rvps21"><span class="rvts6">&lt;?xml version='1.0' encoding='utf-8'?&gt;</span></p>
+<p class="rvps21"><span class="rvts67">&lt;lccSchema </span><span class="rvts68">xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="XSD_FILE_PATH"</span><span class="rvts67">&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;metadata&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;name&gt;&lt;/name&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;description&gt;&lt;/description&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/metadata&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;coefficients&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;coefficient Id="" Name="" fieldName="" method="" /&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/coefficients&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;values&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;value Id="" Name="" excluded=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;coefficient Id="" value="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/value&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/values&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;classes&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;class Id="" Name="" filter=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;value Id="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/class&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/classes&gt;</span></p>
+<p class="rvps2"><span class="rvts67">&lt;/lccSchema&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps26"><span class="rvts15">Basic structure of ATtILA's Land Cover Classification schema XML document with the lccSchema root element highlighted.</span></p>
+<p class="rvps26"><span class="rvts15"><br/></span></p>
+<p class="rvps8"><span class="rvts19">The &lt;lccSchema&gt; tag is the root element of the LCC XML document. All other elements in the LCC XML document are contained within this element. XML documents are limited to one root element. </span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">The XML root element can also contain information specific to the location and name of an XML Schema Document (XSD). The XSD document is used for validating the form and contents of the XML file. Information about the XSD document is optional.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">The XSD information, if included, appears in the following form:</span></p>
+<div class="rvps8"><table width="850" border="1" cellpadding="10" cellspacing="0" style="border-width: 0px;">
+<tr valign="top">
+<td style="border-width : 1px; border-color: #000000; border-style: solid; background-color: #99ccff;"><p class="rvps8"><span class="rvts65">&lt;root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="XSD_FILE_PATH"&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts7">where XSD_FILE_PATH is the relative or absolute path of the XML schema file. When the XML file is located in the same folder as the designated XSD file, the XSD_FILE_PATH is simply the name of the XSD file.</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts7">The XSD file prepared for validating ATtILA's XML documents is named LCCSchema.xsd. &nbsp;It is located in the ToolboxSource &gt; LandCoverClassifications folder in the ATtILA for ArcGIS toolbox destination folder (</span><a class="rvts17" href="InstallingATtILA.html">see Installing ATtILA</a><span class="rvts7">).</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts7">You can include the following line as your root element if you place your custom XML document in the same folder as the XSD file:</span></p>
+<div class="rvps8"><table width="860" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid; background-color: #99ccff;">
+<tr valign="top">
+<td style="border-width : 0px;"><p class="rvps21"><span class="rvts65">&lt;lccSchema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="LCCSchema_v3.xsd"&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

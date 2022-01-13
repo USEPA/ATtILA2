@@ -1,0 +1,77 @@
+﻿<html>
+	
+<head>
+	<title>Land Cover Classification</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("LandCoverClassification");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Land Cover Classification</h1>
+				
+				</div>
+			<div id="topic_header_nav">
+				<a href="StreamDensityMetrics.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="ATtILAsLCCXMLDocument.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts7">Many ATtILA for ArcGIS tools require a Land Cover Classification (LCC) file as one of the input parameters. The LCC file dictates how the tools process the input Land cover grid based on properties of each land cover class. These properties are set within the LCC file:</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Defines the text description of land cover classes based on the raster integer value.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Determines the inclusion or exclusion of specific land cover classes in metric calculations (e.g. limiting calculations to only terrestrial land cover types via the exclusion of water and ice/snow classes).</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Allows for the grouping of classes (e.g. deciduous, coniferous, and mixed forest classes may be grouped into a single "forest" class).</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Allows for the assignment of coefficients associated with specific land cover classes to calculate </span><span class="rvts19">coefficient-based metrics (e.g. impervious percent, nitrogen loading, and phosphorous loading).</span></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts7">LCC files utilize XML formatting to define these properties for an associated Land cover grid. ATtILA for ArcGIS includes LCC files for some commonly-used Land cover datasets including the National Land Cover Database (NLCD) and the Coast Change Analysis Program (C-CAP). Descriptions of the LCC files that accompany ATtILA for ArcGIS are available in the </span><a class="rvts17" href="SuppliedLandCoverClassificationS.html">Supplied Land Cover Classification Schemas</a><span class="rvts7"> section of this document. Details on the structure of the XML schema and its mandatory and optional elements may be found in </span><a class="rvts39" href="ATtILAsLCCXMLDocument.html">ATtILA's LCC XML Document</a><span class="rvts7">.</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts7">LCC files may be created or edited to allow users to customize the properties of the land cover classes to meet their objectives. As XML files, LCC files may be edited using any standard text editing program. However, it is recommended that LCC file editing be performed using the LCC Editor that accompanies ATtILA for ArcGIS. See </span><a class="rvts39" href="CreateorModifyLandCoverClassific.html">Create or Modify Land Cover Classification</a><span class="rvts7"> for more information on this tool. No previous experience editing XML files is necessary to edit the XML using the LCC Editor, which provides an easy-to-use interface.</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> It is recommended that the LCC file contain entries for all values in the input Land cover grid. However, if the LCC file does not define properties for a Land cover grid value, ATtILA for ArcGIS will alert the user by providing a warning message indicating that a value occurring in the Land cover grid was not defined in the LCC file.</span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

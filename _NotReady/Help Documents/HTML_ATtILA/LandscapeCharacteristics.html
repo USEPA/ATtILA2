@@ -1,0 +1,77 @@
+﻿<html>
+	
+<head>
+	<title>Landscape Characteristics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("LandscapeCharacteristics");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Landscape Characteristics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Metrics.html">Metrics</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="Metrics.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="RoadDensityMetrics.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="CoreandEdgeMetrics.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps12"><span class="rvts16">Natural land cover and anthropogenic land use have a profound effect on landscapes and environmental stressors. &nbsp;For example, cutting down forests reduces uptakes of nitrogen and other nutrients, disrupts habitats for various fauna, and exposes soils to increased runoff. &nbsp;Erosion may be further accelerated if the exposed area is on a slope. &nbsp;The proportions of various land cover/use types within a watershed can provide information about the expected condition of surface waters and aquatic habitats within that watershed.</span></p>
+<p class="rvps12"><span class="rvts16"><br/></span></p>
+<p class="rvps12"><span class="rvts16">The Landscape Characteristics toolset consists of five metric tools:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps13" style="margin-left: 0px"><a class="rvts33" href="CoreandEdgeMetrics.html">Core and Edge Metrics</a><span class="rvts7"> requires a reporting unit polygon layer and a land cover raster with an accompanying land cover classification scheme. </span><span class="rvts16">Core and edge area metrics are commonly generated for forest cover (providing an indication of forest health) and for habitat suitability studies, but may be calculated for any land cover class or group of classes. </span></li>
+<li class="rvps13" style="margin-left: 0px"><a class="rvts33" href="LandCoverDiversity.html">Land Cover Diversity</a><span class="rvts7"> requires a reporting unit polygon layer and a land cover raster. Diversity is an indicator of landscape composition and fragmentation. These indicators are influenced by two components − richness (number of different patch types present) and evenness (distribution of area among patch types). There are four diversity metrics available. H and H' are Shannon−Weiner diversity and Standardized Shannon−Weiner diversity, respectively, C is the Simpson index and S is simple diversity. More information on these, including the algorithms, is provided in the tool-specific section of this manual.</span></li>
+<li class="rvps13" style="margin-left: 0px"><a class="rvts33" href="LandCoveronSlopeProportions.html">Land Cover on Slope Proportions</a><span class="rvts16"> requires a reporting unit polygon layer, a land cover raster with an accompanying land cover classification scheme, and a slope raster. This tool produces a table of the percent of specified land cover types on slopes within each reporting unit. The slope raster may contain values in either percent or degrees. This tool is commonly used to calculate the amount of agriculture on steep slopes as an indicator of water quality. Steep slopes lead to higher runoff of water, soil and fertilizer and are susceptible to erosion.</span></li>
+<li class="rvps13" style="margin-left: 0px"><a class="rvts33" href="LandCoverProportions.html">Land Cover Proportions</a><span class="rvts16"> </span><span class="rvts7">requires a reporting unit polygon layer and a land cover raster with an accompanying land cover classification scheme. </span><span class="rvts16">This tool produces a table of the percent of specified land cover types within each reporting unit. This metric is the foundation for many landscape analyses, including assessment of condition.</span></li>
+<li class="rvps13" style="margin-left: 0px"><a class="rvts29" href="PatchMetrics.html">Patch Metrics</a><span class="rvts16"> requires a reporting unit polygon layer and a land cover raster with an accompanying land cover classification scheme. This </span><span class="rvts7">tool </span><span class="rvts19">calculates number of patches, size of largest patch, average patch size, patch density, and proportion of largest patch area to total patch area. Optionally, Mean Distance to Closest Patch may also be reported.&nbsp;</span><span class="rvts16"> Patch metrics are commonly generated for forest cover for fragmentation studies, but may be calculated for any land cover class or group of classes.</span></li>
+</ul></ul>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

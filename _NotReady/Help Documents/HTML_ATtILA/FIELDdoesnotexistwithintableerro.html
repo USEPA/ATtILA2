@@ -1,0 +1,79 @@
+﻿<html>
+	
+<head>
+	<title>{FIELD} does not exist within table error</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("FIELDdoesnotexistwithintableerro");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">{FIELD} does not exist within table error</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Troubleshooting.html">Troubleshooting</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="Troubleshooting.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="FIELDalreadyexistserror.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="Navigationtothewebpagewascancele.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts19">When running the Road Density Metrics or the Stream Density Metrics tool, an error may occur indicating that a field does not exists:</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps31"><img alt="" style="padding : 1px;" src="lib/trouble_ORDER Field Not Found.png"/></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">This error may be caused by problems with the field used to classify the different road or stream features (Road class field or Stream order field, respectively).</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">If an input feature layer contains a reserved keyword such as ORDER as a field name, that field name is altered slightly by ArcGIS when the input feature layer is copied. ATtILA for ArcGIS copies several of the input feature layers while processing selected metrics. This can result in ATtILA for ArcGIS being unable to located the specified field in the copied dataset. For more guidelines on the naming of fields, search on "Fundamentals of adding and deleting fields" in the ArcGIS help documentation.</span></p>
+<p></p>
+</div>
+	
+	<div id="topic_footer">
+
+			<div id="topic_footer_content">
+				ATtILA for ArcGIS v1.1</div>
+		</div>
+	</body>
+	
+</html>
+

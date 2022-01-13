@@ -1,0 +1,80 @@
+﻿<html>
+	
+<head>
+	<title>Road Density Metrics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("RoadDensityMetrics1");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Road Density Metrics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="AdditionalOptions.html">Additional Options</a> &rsaquo;&rsaquo; <a href="RetainIntermediateLayersGenerate.html">Retain Intermediate Layers Generated</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="RetainIntermediateLayersGenerate.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="PopulationDensityMetrics1.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="CoreandEdgeMetrics1.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Intermediate Files Retained</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts35">rdm_[Reporting unit feature]* vector </span><span class="rvts19">- A polygon feature class containing reporting units with a new area field in km². The name of the intermediate feature class has the prefix "rdm_" followed by a the name of the Reporting unit feature, then followed by a number (e.g. rdm_WI_Counties0, rdm_HUC120, rdm_HUC121, etc.). The number is appended when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_[Road feature]* vector</span><span class="rvts19"> - A line feature class containing road features. The name of the intermediate feature class has the prefix "rdm_" followed by a the name of the Road feature, then followed by a number (e.g. rdm_WI_Roads0, rdm_Interstates0, rdm_Interstates1, etc.). The number is appended when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location. This intermediate vector is only generated if the geometry coordinates for the input Road feature include M or Z values. These values are stripped off in the intermediate file.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_RdsByRU* vector</span><span class="rvts19"> - A line feature class with Road features intersected with reporting units. The name of the intermediate feature class has the prefix "rdm_RdsByRU" followed by a number (e.g. rdm_RdsByRU0, rdm_RdsByRU1, rdm_RdsByRU2, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_[Stream feature]* vector</span><span class="rvts19"> - A line feature class containing stream features. The name of the intermediate feature class has the prefix "rdm_" followed by a the name of the Stream feature, then followed by a number (e.g. rdm_WI_Streams0, rdm_HUC12streams0, rdm_HUC12streams1, etc.). The number is appended when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location. &nbsp;This intermediate vector is only generated if the geometry coordinates for the input Stream feature include M or Z values. These values are stripped off in the intermediate file.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_StrByRU* vector</span><span class="rvts19"> - A line feature class with Stream features intersected with reporting units. The name of the intermediate feature class has the prefix "rdm_StrByRU" followed by a number (e.g. rdm_StrByRU0, rdm_StrByRU1, rdm_StrByRU2, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_PtsOfXing* vector</span><span class="rvts19"> - A point feature class depicting locations where Road feature lines intersect Stream feature lines. The name of the intermediate feature class has the prefix "rdm_PtsOfXing" followed by a number (e.g. rdm_PtsOfXing0, rdm_PtsOfXing1, rdm_PtsOfXing2, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_RdsXStrMP* vector</span><span class="rvts19"> - A multipoint feature class in which all stream-road crossing points from the PtsOfXing feature class are assembled by reporting unit. The name of the intermediate feature class has the prefix "rdm_RdsXStrMP" followed by a number (e.g. rdm_RdsXStrMP0, rdm_RdsXStrMP1, rdm_RdsXStrMP2, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and the results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_RdsXStrTbl* table</span><span class="rvts19"> - A table of stream lengths and stream-road crossing density within each reporting unit. The name of the intermediate table has the prefix "rdm_RdsXStrTbl" followed by a number (e.g. rdm_RdsXStrTbl0, rdm_RdsXStrTbl1, rdm_RdsXStrTbl2, etc.). The number suffix is added when the table is saved in order to give each successive table a unique name when the tool is executed more than once and results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_StrBuffers* vector</span><span class="rvts19"> - A polygon feature class containing Stream features from the StrByRU intermediate feature class buffered by the selected buffer distance. The name of the intermediate feature class has the prefix "rdm_StrBuffers" followed by a number (e.g. rdm_StrBuffers0, rdm_StrBuffers1, rdm_StrBuffers2, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and results saved to the same output location.</span></li>
+<li class="rvps8"><span class="rvts35">rdm_RdsNrStrms* vector</span><span class="rvts19"> - A line feature class containing Road features contained within the StrBuffers intermediate feature class. The name of the intermediate feature class has the prefix "rdm_RdsNrStrms" followed by a number (e.g. RdsNrStrms0, rdm_RdsNrStrms1, rdm_RdsNrStrms2, etc.). The number suffix is added when the feature class is saved in order to give each successive feature class a unique name when the tool is executed more than once and results saved to the same output location.</span></li>
+</ul>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

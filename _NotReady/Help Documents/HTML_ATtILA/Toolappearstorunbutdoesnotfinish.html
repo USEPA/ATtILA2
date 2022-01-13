@@ -1,0 +1,89 @@
+﻿<html>
+	
+<head>
+	<title>Tool appears to run but does not finish</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("Toolappearstorunbutdoesnotfinish");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Tool appears to run but does not finish</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Troubleshooting.html">Troubleshooting</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="Troubleshooting.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="Navigationtothewebpagewascancele.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="UnabletoDetermineConversionFacto.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts16">If one of ATtILA for ArcGIS's tools 'hangs' (i.e., you enter all the necessary tool inputs and click OK, but the tool never finishes):</span></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts16">Open Windows Task Manager and select the hung ArcGIS application in the Applications Tab - Click End Task</span></li>
+<li class="rvps8"><span class="rvts16">Reopen the ArcGIS application where the problem occurred</span></li>
+<li class="rvps8"><span class="rvts16">Right-click on the tool and open it's properties</span></li>
+<li class="rvps8"><span class="rvts16">Check under the source tab to be sure that the 'Run Python script in process' box is checked</span></li>
+</ul>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts16"> &nbsp; &nbsp; &nbsp; &nbsp;</span><img alt="" style="padding : 1px;" src="lib/ATtILA Tool Properties Source.png"/></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts16">That should solve the problem. </span></p>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps8"><span class="rvts16">To relaunch the tool with all it's previously set parameters, checkboxes, and options, do the following:</span></p>
+<p class="rvps8"><span class="rvts16"> &nbsp;</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts16">Open the 'Not Run' shortcut menu in the Geoprocessing &gt; </span><a class="rvts17" href="http://resources.arcgis.com/en/help/main/10.1/index.html#//002100000013000000" target="_blank">Results Window</a></li>
+<li class="rvps8"><span class="rvts16">Right-click on the tool execution that failed</span></li>
+<li class="rvps8"><span class="rvts16">Select 'Re-Run'</span></li>
+</ul>
+<p class="rvps8"><span class="rvts16"><br/></span></p>
+<p class="rvps2"><span class="rvts16"><br/></span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

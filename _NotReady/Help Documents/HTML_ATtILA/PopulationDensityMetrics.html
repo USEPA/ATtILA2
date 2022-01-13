@@ -1,0 +1,215 @@
+﻿<html>
+	
+<head>
+	<title>Population Density Metrics</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("PopulationDensityMetrics");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Population Density Metrics</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Metrics.html">Metrics</a> &rsaquo;&rsaquo; <a href="HumanStressors.html">Human Stressors</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="HumanStressors.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="LandCoverCoefficientCalculator.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="RoadDensityMetrics.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Summary</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts7">Calculates population count and density (people per km²) for each reporting unit polygon and creates an output table. </span></p>
+<p class="rvps8"><span class="rvts7">In addition to the default metrics, the tool optionally calculates population change over time.</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Usage</span></p>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">This tool processes all polygons in the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> regardless of selections set. The ability to limit land cover calculations to only selected reporting unit polygons is not supported in this release.</span></li>
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> To ensure desired results, the </span><span class="rvts28">Reporting unit feature</span><span class="rvts14">, </span><span class="rvts28">Census feature</span><span class="rvts14">, and </span><span class="rvts28">Census T2 feature</span><span class="rvts14"> must be in projected coordinate systems with linear units of measure. </span></li>
+<li class="rvps8"><span class="rvts7">The </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> must be a polygon feature class or shapefile.</span></li>
+<li class="rvps8"><span class="rvts7">This tool assumes that population is distributed evenly throughout each </span><span class="rvts28">Census feature</span><span class="rvts7"> polygon. The tool apportions population by area weighting. For example, if 50% of a </span><span class="rvts28">Census feature</span><span class="rvts7"> polygon is within a reporting unit, the tool will assign 50% of the value in the polygon's </span><span class="rvts28">Population field</span><span class="rvts7"> to that reporting unit. Caution should be exercised when </span><span class="rvts28">Census feature</span><span class="rvts7"> polygons do not have even population distributions as this could result in an overweighting or underweighting of population when the tool performs the apportionment. Generally, greater accuracy will be achieved if the </span><span class="rvts28">Census feature</span><span class="rvts7"> polygons are smaller than the smallest </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> polygons.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts16">When the optional </span><span class="rvts32">POPCHG</span><span class="rvts16"> (population change) is checked, the tool allows the user to select a </span><span class="rvts32">Census T2 feature</span><span class="rvts16"> and a corresponding </span><span class="rvts32">Population T2 field</span><span class="rvts16">. </span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts16">For best results, the </span><span class="rvts32">Census T2 feature</span><span class="rvts16"> should contain polygons at a similar scale to that of the </span><span class="rvts32">Census feature</span><span class="rvts16"> (e.g. if </span><span class="rvts32">Census feature</span><span class="rvts16"> represents census block groups, then </span><span class="rvts32">Census T2 feature</span><span class="rvts16"> should also represent census block groups rather than census tracts or some other census geography).</span></li>
+<li class="rvps8"><span class="rvts32">Census T2 feature</span><span class="rvts16"> may be the same feature layer as used for </span><span class="rvts32">Census feature</span><span class="rvts16">.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">Final output is written to the location specified in the </span><span class="rvts28">Output table</span><span class="rvts7"> parameter. The </span><span class="rvts28">Output table</span><span class="rvts7"> may be saved as a File Geodatabase Table, a dBASE Table, or an INFO Table.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> For most consistent results, it is highly recommended that tool output be saved to a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a File Geodatabase Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. The output location must be a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a dBASE Table, include the .dbf extension in the </span><span class="rvts28">Output table</span><span class="rvts7"> name. dBASE tables may not be saved in a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as an INFO Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. INFO tables may not be saved in a file geodatabase. A new directory in the output directory called "info" is automatically created in which the INFO tables are stored. INFO tables have limited portability, so it is recommended that output not be saved as an INFO Table if data sharing is important.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts19">The user may elect to </span><a class="rvts48" href="PopulationDensityMetrics1.html">Retain Intermediate Layers Generated During Metric Processing</a><span class="rvts19">.</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Choosing to Retain Intermediate Layers saves the intermediate products to one of the following locations:</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts19">When output is saved as a File Geodatabase Table, intermediate products are placed in the same file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts19">When ouput is saved as a dBASE Table or an INFO Table, a file geodatabase named "attilaScratchWorkspace" is automatically generated in the same output location specified for the </span><span class="rvts35">Output table.</span><span class="rvts19"> Intermediate products are placed in the attilaScratchWorkspace file geodatabase.</span></li>
+</ul></ul>
+<li class="rvps8"><span class="rvts7">Field names in the </span><span class="rvts28">Output table</span><span class="rvts7"> follow this naming scheme:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts7">For default tool settings (e.g. no optional settings selected):</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts7">AREAKM2 - The area of the reporting unit in km².</span></li>
+<li class="rvps8"><span class="rvts7">popCount (ALIAS: SUM_intPop) - The estimated total population within the reporting unit derived by area weighting the population values within each </span><span class="rvts28">Census feature</span><span class="rvts7"> polygon that intersects with the reporting unit and summing the area-weighted values.</span></li>
+<li class="rvps8"><span class="rvts7">POPDENS - The estimated population density in persons per km² within the reporting unit derived by dividing popCount by AREAKM2.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">When the </span><span class="rvts28">POPCHG</span><span class="rvts7"> option is selected:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts7">popCount_1 (ALIAS: SUM_intPop) - The estimated total population within the reporting unit derived by area weighting the population values within each </span><span class="rvts28">Census feature</span><span class="rvts7"> polygon (Time 1) that intersects with the reporting unit and summing the area-weighted values.</span></li>
+<li class="rvps8"><span class="rvts7">POPDENS_1 - The estimated population density in persons per km² within the reporting unit derived by dividing popCount_1 by AREAKM2.</span></li>
+<li class="rvps8"><span class="rvts7">popCount_2 (ALIAS: SUM_intPop) - The estimated total population within the reporting unit derived by area weighting the population values within each </span><span class="rvts28">Census T2 feature</span><span class="rvts7"> polygon (Time 2) that intersects with the reporting unit and summing the area-weighted values.</span></li>
+<li class="rvps8"><span class="rvts7">POPDENS_2 - The estimated population density in persons per km² within the reporting unit derived by dividing popCount_2 by AREAKM2.</span></li>
+<li class="rvps8"><span class="rvts7">POPCHG - The estimate percent change in population from Time 1 to Time 2.</span></li>
+</ul></ul></ul>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Syntax</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts19">PDM (Reporting_unit_feature, Reporting_unit_ID_field, Census_feature, Population_field, Output_table, {POPCHG}, Census_T2_feature, Population_T2_field, {Select_options})</span><span class="rvts7"> </span></p>
+<div class="rvps15"><table width="85%" border="1" cellpadding="4" cellspacing="0" style="border-color: #969696; border-style: solid;">
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 238px;"><p class="rvps8"><span class="rvts19">Parameter</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 951px;"><p class="rvps8"><span class="rvts19">Explanation</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 120px;"><p class="rvps8"><span class="rvts19">Data Type</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts16">The vector polygon dataset that defines the reporting units.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_ID_field</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The field in the Reporting unit feature layer that contains the unique ID for each reporting unit. </span></p>
+<p class="rvps8"><span class="rvts7">It may be an integer or a string data type.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Census_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts16">The vector polygon dataset that contains population data.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Population_field</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The field in the Census feature layer that contains population data.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Output_table</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The output reporting unit metrics table to be created.</span></p>
+<p class="rvps8"><span class="rvts7">It is recommended that the Output table be saved within a file geodatabase.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Table</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">POPCHG (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">Specifies whether population change over time (POPCHG) metrics will be included in the output table.</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts49">false</span><span class="rvts7"> - No POPCHG metrics will not be included. This is the default.</span></li>
+<li class="rvps8"><span class="rvts49">true</span><span class="rvts7"> - POPCHG metrics will be included.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Boolean</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Census_T2_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts16">The optional vector polygon dataset (Census time 2) that contains population data for the comparison date.</span></p>
+<p class="rvps8"><span class="rvts16">It may be the same feature layer as Census feature.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Population_T2_field</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The field in the Census feature layer that contains population data for the comparison date.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Select_options (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">One tool option is available to provide additional information:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">Retain Intermediate Layers Generated During Metric Calculation - Saves the intermediate table and/or raster that is normally deleted after processing is complete.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Multiple Value</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts44"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Environments</span></p>
+<p class="rvps8"><span class="rvts19">Current Workspace, Scratch Workspace, Output Coordinates same as input, Processing extent min of inputs, </span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

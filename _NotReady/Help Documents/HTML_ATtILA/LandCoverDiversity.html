@@ -1,0 +1,222 @@
+﻿<html>
+	
+<head>
+	<title>Land Cover Diversity</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("LandCoverDiversity");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Land Cover Diversity</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="Metrics.html">Metrics</a> &rsaquo;&rsaquo; <a href="LandscapeCharacteristics.html">Landscape Characteristics</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="LandscapeCharacteristics.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="CoreandEdgeMetrics.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="LandCoveronSlopeProportions.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Summary</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts7">Calculates land cover diversity within each reporting unit and creates an output table. Metrics include Shannon-Weiner index, standardized Shannon-Weiner index, Simpson's index, and simple diversity.</span></p>
+<p class="rvps8"><span class="rvts16">Diversity metrics quantify landscape composition. These metrics are influenced by two components − richness, the number of different patch types present, and evenness, the distribution of area among the patch types. </span><span class="rvts7">The four diversity metrics calculated in this tool are:</span></p>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Shannon-Weiner index (H) - a measure of the diversity of land cover types throughout the reporting unit. The index value increases with the number of land cover types in the reporting unit.</span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><img alt="" style="padding : 1px;" src="lib/LCD_Formula_H.png"/></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Standardized Shannon-Weiner index (H') - standardizes the Shannon-Weiner index to account for the variety of distinct land cover classes present in the reporting unit.</span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><img alt="" style="padding : 1px;" src="lib/LCD_Formula_HPrime.png"/></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Simpson's index (C) - a measure of the evenness of the distribution of land cover classes throughout the reporting unit. Simpson's index is most sensitive to the presence of common land cover types. Simpson's index values range from 0 to 1, with 1 representing perfect evenness of all land cover types.</span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><img alt="" style="padding : 1px;" src="lib/LCD_Formula_C.png"/></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Simple diversity (S) - a count of the number of distinct land cover classes present in the reporting unit.</span></li>
+</ul></ul>
+<p class="rvps11"><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><span class="rvts7"> &nbsp; &nbsp; &nbsp; &nbsp;</span><img alt="" style="padding : 1px;" src="lib/LCD_Formula_S.png"/></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">For all of the above,</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts56">m</span><span class="rvts14"> </span><span class="rvts7">= the number of different land cover types in the reporting unit</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts55">P</span><span class="rvts58">i</span><span class="rvts49"> = the proportion of the reporting unit comprised of land cover type </span><span class="rvts57">i</span></li>
+</ul></ul></ul>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Usage</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">This tool processes all polygons in the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> regardless of selections set. The ability to limit land cover calculations to only selected reporting unit polygons is not supported in this release.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">The </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> is </span><span class="rvts19">a zone dataset. </span></li>
+<ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">A zone is defined as a</span><span class="rvts7">ll areas in the input that have the same value. The areas do not have to be contiguous. The term "value" in this definition refers to the unique values in the </span><span class="rvts28">Reporting unit ID field</span><span class="rvts7">. Therefore, all polygons with the same reporting unit ID are treated as a single zone. </span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">When more than one polygon has the same reporting unit ID, the areas for each polygon are combined and metrics are reported as a single record in the </span><span class="rvts28">Output table</span><span class="rvts7">.</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">As the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> is a vector dataset, ArcGIS will perform a vector to raster conversion during processing.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 25px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 47px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts7">The </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> must not contain overlapping polygons. When overlapping polygons exist, the vector to raster conversion assigns the value of the top-most polygon to any overlapping area, thereby erasing the areas of underlying zones and resulting in flawed metric calculations.</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts7">Use the </span><a class="rvts17" href="IdentifyOverlappingPolygons.html">Identify Overlapping Polygons</a><span class="rvts7"> utility to determine if overlapping polygons exist and parse the reporting unit feature layer into two or more feature classes or shapefiles in which no features overlap.</span></li>
+<li class="rvps8"><span class="rvts7">To better control the vector to raster conversion, the tool defaults the </span><span class="rvts28">Snap raster</span><span class="rvts7"> and the </span><span class="rvts28">Processing cell size</span><span class="rvts7"> to that of the </span><span class="rvts28">Land cover grid</span><span class="rvts7">. These may be changed from within the tool.</span></li>
+<li class="rvps8"><span class="rvts7">If a disparity exists between the extents of the </span><span class="rvts28">Reporting unit feature</span><span class="rvts7"> and the </span><span class="rvts28">Land cover grid</span><span class="rvts7">, the user may wish to set the Extent in Environment Settings &gt; Processing Extent to the smaller of the two to avoid unnecessary processing.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts7">Final output is written to the location specified in the </span><span class="rvts28">Output table</span><span class="rvts7"> parameter. The </span><span class="rvts28">Output table</span><span class="rvts7"> may be saved as a File Geodatabase Table, a dBASE Table, or an INFO Table.</span></li>
+</ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts38">NOTE:</span><span class="rvts14"> For most consistent results, it is highly recommended that tool output be saved to a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a File Geodatabase Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. The output location must be a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as a dBASE Table, include the .dbf extension in the </span><span class="rvts28">Output table</span><span class="rvts7"> name. dBASE tables may not be saved in a file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts7">When saving as an INFO Table, no extension is necessary for the </span><span class="rvts28">Output table</span><span class="rvts7"> name. INFO tables may not be saved in a file geodatabase. A new directory in the output directory called "info" is automatically created in which the INFO tables are stored. INFO tables have limited portability, so it is recommended that output not be saved as an INFO Table if data sharing is important.</span></li>
+</ul>
+<li class="rvps8"><span class="rvts19">The user may elect to </span><a class="rvts59" href="LandCoverDiversity2.html">Add Quality Assurance Fields</a><span class="rvts19"> &nbsp;and/or </span><a class="rvts48" href="LandCoverDiversity1.html">Retain Intermediate Layers Generated During Metric Processing</a><span class="rvts19">.</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts19">Choosing to Retain Intermediate Layers saves the intermediate products to one of the following locations:</span></li>
+</ul></ul>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: square;">
+<li class="rvps8"><span class="rvts19">When output is saved as a File Geodatabase Table, intermediate products are placed in the same file geodatabase.</span></li>
+<li class="rvps8"><span class="rvts19">When ouput is saved as a dBASE Table or an INFO Table, a file geodatabase named "attilaScratchWorkspace" is automatically generated in the same output location specified for the </span><span class="rvts35">Output table.</span><span class="rvts19"> Intermediate products are placed in the attilaScratchWorkspace file geodatabase.</span></li>
+</ul></ul>
+<li class="rvps8"><span class="rvts7">Field names in the </span><span class="rvts28">Output table</span><span class="rvts7"> are as follows:</span></li>
+<ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps8"><span class="rvts7">H - The Shannon-Weiner index metric for the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">H_Prime - The Standardized Shannon-Weiner index metric for the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">C - The Simpson's index metric for the reporting unit.</span></li>
+<li class="rvps8"><span class="rvts7">S - The simple diversity metric for the reporting unit.</span></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts7"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Syntax</span><span class="rvts34"> </span></p>
+<p class="rvps8"><span class="rvts19">LCD (Reporting_unit_feature, Reporting_unit_ID_field, Land_cover_grid, Output_table, {Processing_cell_size}, {Snap_raster}, Select_options)</span></p>
+<div class="rvps15"><table width="85%" border="1" cellpadding="4" cellspacing="0" style="border-color: #969696; border-style: solid;">
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 238px;"><p class="rvps8"><span class="rvts19">Parameter</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 951px;"><p class="rvps8"><span class="rvts19">Explanation</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; background-color: #c0c0c0; width: 120px;"><p class="rvps8"><span class="rvts19">Data Type</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_feature</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts16">The vector polygon dataset that defines the reporting units.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Feature Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Reporting_unit_ID_field</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The field in the Reporting unit feature layer that contains the unique ID for each reporting unit. </span></p>
+<p class="rvps8"><span class="rvts7">It may be an integer or a string data type.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Field</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Land_cover_grid</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The raster dataset representing land cover classes upon which diversity metrics will be derived within each Reporting unit feature.</span></p>
+<p class="rvps8"><span class="rvts7">The class input must be an integer raster layer.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Raster Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Output_table</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The output reporting unit metrics table to be created.</span></p>
+<p class="rvps8"><span class="rvts7">It is recommended that the Output table be saved within a file geodatabase.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Table</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Processing_cell_size (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The Processing cell size for the zonal operation.</span></p>
+<p class="rvps8"><span class="rvts7">The default Processing cell size is the cell size of the input raster land cover data. &nbsp;Optionally, the user may select a different cell size.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Analysis Cell Size</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Snap_raster (optional)</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">The raster that the cell alignment of the Land cover grid and rasterized Reporting unit feature layer will be matched to during processing.</span></p>
+<p class="rvps8"><span class="rvts7">The default Snap raster is the Land cover grid.</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Raster Layer</span></p>
+</td>
+</tr>
+<tr valign="top">
+<td style="border-color: #969696; border-style: solid; width: 238px;"><p class="rvps8"><span class="rvts7">Select_options</span></p>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 951px;"><p class="rvps8"><span class="rvts7">Two tool options are available to provide additional information:</span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;">
+<li class="rvps8"><span class="rvts7">Add Quality Assurance Fields - &nbsp;Adds area fields to the Output table to facilitate quality assurance checking.</span></li>
+<li class="rvps8"><span class="rvts7">Retain Intermediate Layers Generated During Metric Calculation - Saves the intermediate table and/or raster that is normally deleted after processing is complete.</span></li>
+</ul>
+</td>
+<td valign="top" style="border-color: #969696; border-style: solid; width: 120px;"><p class="rvps8"><span class="rvts7">Multiple Value</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts50"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Credits</span><span class="rvts50"> </span></p>
+<p class="rvps8"><span class="rvts19">Shannon, C. E. (1948). A mathematical theory of communication. </span><span class="rvts15">The Bell System Technical Journal, 27</span><span class="rvts19">, 379-423.</span></p>
+<p class="rvps8"><span class="rvts19">Simpson, E. H. (1949). Measurement of diversity. </span><span class="rvts15">Nature,</span><span class="rvts19"> 163, 4148, 688-688.</span></p>
+<p class="rvps8"><span class="rvts15"><br/></span></p>
+<p class="rvps8"><span class="rvts18">Environments</span></p>
+<p class="rvps8"><span class="rvts19">Current Workspace, Scratch Workspace, Output Coordinates same as input, Processing extent min of inputs, </span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+

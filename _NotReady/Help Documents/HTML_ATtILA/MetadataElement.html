@@ -1,0 +1,121 @@
+﻿<html>
+	
+<head>
+	<title>Metadata Element</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="generator" content="HelpNDoc Professional Edition 4.3.1.364">
+	
+	<link type="text/css" rel="stylesheet" media="all" href="css/reset.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/base.css" />
+	<link type="text/css" rel="stylesheet" media="all" href="css/hnd.css" />
+	<!--[if lte IE 8]>
+		<link type="text/css" rel="stylesheet" media="all" href="css/ielte8.css" />
+	<![endif]-->
+	<style type="text/css">
+		#topic_header
+		{
+			background-color: #EFEFEF;
+		}
+	</style>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/hnd.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		{
+			if (top.frames.length == 0)
+			{
+				var sTopicUrl = top.location.href.substring(top.location.href.lastIndexOf("/") + 1, top.location.href.length);
+				top.location.href = "ATtILA2 Toolbox Help.html?" + sTopicUrl;
+			}
+			else if (top && top.FrameTOC && top.FrameTOC.SelectTocItem)
+			{
+				top.FrameTOC.SelectTocItem("MetadataElement");
+			}
+		});
+	</script>
+	
+	</head>
+
+<body>
+
+<div id="topic_header">
+			<div id="topic_header_content">
+				<h1 id="topic_header_text">Metadata Element</h1>
+				
+				<div id="topic_breadcrumb">
+					<a href="LandCoverClassification.html">Land Cover Classification</a> &rsaquo;&rsaquo; <a href="ATtILAsLCCXMLDocument.html">ATtILA's LCC XML Document</a> &rsaquo;&rsaquo; </div>
+				</div>
+			<div id="topic_header_nav">
+				<a href="ATtILAsLCCXMLDocument.html"><img src="img/arrow_up.png" alt="Parent"/></a>
+				
+				<a href="RootElementlccSchema.html"><img src="img/arrow_left.png" alt="Previous"/></a>
+				
+				<a href="CoefficientsElement.html"><img src="img/arrow_right.png" alt="Next"/></a>
+				
+				</div>
+			<div class="clear"></div>
+		</div>
+	<div id="topic_content">
+		
+<p></p>
+<p class="rvps8"><span class="rvts18">Metadata Element</span></p>
+<div class="rvps8"><table width="850" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid;">
+<tr valign="top">
+<td style="border-width : 0px; background-color: #99ccff;"><p class="rvps21"><span class="rvts6">&lt;?xml version='1.0' encoding='utf-8'?&gt;</span></p>
+<p class="rvps21"><span class="rvts6">&lt;lccSchema </span><span class="rvts65">xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="lcc" xsi:noNamespaceSchemaLocation="XSD_FILE_PATH"</span><span class="rvts6">&gt;</span></p>
+<p class="rvps22"><span class="rvts67">&lt;metadata&gt;</span></p>
+<p class="rvps24"><span class="rvts67">&lt;name&gt;&lt;/name&gt;</span></p>
+<p class="rvps24"><span class="rvts67">&lt;description&gt;&lt;/description&gt;</span></p>
+<p class="rvps22"><span class="rvts67">&lt;/metadata&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;coefficients&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;coefficient Id="" Name="" fieldName="" method="" /&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/coefficients&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;values&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;value Id="" Name="" excluded=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;coefficient Id="" value="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/value&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/values&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;classes&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;class Id="" Name="" filter=""&gt;</span></p>
+<p class="rvps25"><span class="rvts6">&lt;value Id="" /&gt;</span></p>
+<p class="rvps20"><span class="rvts6">&lt;/class&gt;</span></p>
+<p class="rvps23"><span class="rvts6">&lt;/classes&gt;</span></p>
+<p class="rvps2"><span class="rvts6">&lt;/lccSchema&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps26"><span class="rvts15">Basic structure of ATtILA's Land Cover Classification schema XML document with the Metadata element highlighted.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">The Metadata element contains the name of the coding schema along with a brief description. &nbsp;ATtILA for ArcGIS requires the Metadata element to be present when it parses the the XML document, and it cannot be empty. The Metadata element must contain the following two elements:</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<ul style="text-indent: 0px; margin-left: 24px; list-style-position: outside; list-style-type: disc;"><ul style="text-indent: 0px; margin-left: 48px; list-style-position: outside; list-style-type: circle;">
+<li class="rvps11" style="margin-left: 0px"><span class="rvts35">name</span><span class="rvts19"> - text, land cover coding schema name</span></li>
+<li class="rvps11" style="margin-left: 0px"><span class="rvts35">description</span><span class="rvts19"> - text, &nbsp;description of land cover coding schema</span></li>
+</ul></ul>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps27"><span class="rvts19">Example Metadata element:</span></p>
+<div class="rvps8"><table width="380" border="1" cellpadding="10" cellspacing="0" style="border-color: #000000; border-style: solid; background-color: #99ccff;">
+<tr valign="top">
+<td style="border-width : 0px;"><p class="rvps22"><span class="rvts6">&lt;metadata&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;name&gt;NLCD 2001&lt;/name&gt;</span></p>
+<p class="rvps24"><span class="rvts6">&lt;description&gt;National Land Cover Database 2001&lt;/description&gt;</span></p>
+<p class="rvps22"><span class="rvts6">&lt;/metadata&gt;</span></p>
+</td>
+</tr>
+</table>
+</div>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">The information contained in the Metadata element is for informational purposes only. It is displayed in the </span><a class="rvts42" href="ExternalLCCEditor.html">External LCC Editor</a><span class="rvts19">'s Metadata window, and only there. The entries for the name and description attributes can be as long or as short as the user desires.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps28"><span class="rvts69">XML Note</span></p>
+<p class="rvps8"><span class="rvts19">XML is case-sensitive and care should be used when editing the LCC XML documents using a text editor. Wherever possible, element and attribute names for the document have been defined using lowercase characters. The only current exceptions are the attributes "</span><span class="rvts35">Id</span><span class="rvts19">" and "</span><span class="rvts35">Name</span><span class="rvts19">" in the Coefficients, Values, and Classes elements. If editing an LCC XML document outside of the </span><a class="rvts42" href="ExternalLCCEditor.html">External LCC Editor</a><span class="rvts19">, these attributes should be capitalized wherever they appear.</span></p>
+<p class="rvps8"><span class="rvts19"><br/></span></p>
+<p class="rvps8"><span class="rvts19">You may notice that in the Metadata element, the &lt;name&gt; element is lowercase. The distinction here is that "name" in the Metadata element pertains to an </span><span class="rvts15">element</span><span class="rvts19">, and that the capitalization rule only applies to an element's </span><span class="rvts15">attributes</span><span class="rvts19">.</span></p>
+<p></p>
+</div>
+	
+	</body>
+	
+</html>
+
