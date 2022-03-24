@@ -28,7 +28,7 @@ class flcpToolValidator(BaseValidators.ProportionsValidator):
     """ToolValidator for FloodplainLandCoverProportion"""
       
     filterList = flcpConstants.optionalFilter
-    overrideAttributeName = lccConstants.XmlAttributeLcpField
+    overrideAttributeName = lccConstants.XmlAttributeFlcpField
     fieldPrefix = flcpConstants.fieldPrefix
     fieldSuffix = flcpConstants.fieldSuffix
     metricShortName = flcpConstants.shortName 
