@@ -1,0 +1,5 @@
+# Retain Intermediate Layers Generated
+
+The intermediate output are the metrics that are required to calculate the final metrics for the tool. Many metrics produce other map or tables from the initial data inputs necessary for the calculation of selected metrics. By default, these map products are discarded at the end of the ATtILA for ArcGIS metric runs. Several of them, however, can be retained by selecting the 'intermediates' box under additional options in the tool. By default the intermediate files are saved in a geodatabase in the project working directory which can be found (or changed) by selecting 'geoprocessing' on the selection bar, then environments, and workspace. By creating and examining the intermediate layers for the various ATtILA for ArcGIS metrics the user can gain a better understanding how the metric is calculated and what the metric is measuring.
+***
+_Created with the Personal Edition of HelpNDoc: [Produce Kindle eBooks easily](<https://www.helpndoc.com/feature-tour/create-ebooks-for-amazon-kindle>)_
