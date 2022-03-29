@@ -35,6 +35,3 @@ Credits&nbsp;
 Environments
 
 Current Workspace, Scratch Workspace, Output Coordinates same as input, Processing extent min of inputs
-
-***
-_Created with the Personal Edition of HelpNDoc: [Full-featured multi-format Help generator](<https://www.helpndoc.com/help-authoring-tool>)_
