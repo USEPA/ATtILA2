@@ -114,6 +114,12 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                         break
                 # use else or elif here, if additional non-standard QA fields are added
         
+        # create two sets to store the reporting unit IDs for troublesome per capita polygons: one for where the population 
+        # count in the reporting unit is zero, and one for where the reporting unit does not overlap with the input population dataset. 
+        # Sets will not allow duplicate values so their len() count will only include an RU ID once.
+        zeroCountWarning = set()
+        missingCountWarning = set()
+        
         for tabAreaTableRow in tabAreaTable:
             tabAreaDict = tabAreaTableRow.tabAreaDict
             effectiveArea = tabAreaTableRow.effectiveArea
@@ -141,11 +147,32 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
 
                 # add per value (e.g., capita) calculations to row
                 if zoneValueDict:
-                    zoneValue = zoneValueDict[tabAreaTableRow.zoneIdValue]
                     classSqM = metricPercentageAndArea[1] * conversionFactor
-                    perValueCalc = classSqM / zoneValue
+                    
+                    # use a try statement in case the reporting unit does not overlap with the input population dataset
+                    try:
+                        zoneValue = zoneValueDict[tabAreaTableRow.zoneIdValue]
+    
+                        # calculate the per capita value
+                        if zoneValue != 0:
+                            perValueCalc = classSqM / zoneValue
+                        else:
+                            # set a null value for areas with a count value of zero
+                            perValueCalc = -99999
+                            # keep track of the troublesome zone ID
+                            zeroCountWarning.add(tabAreaTableRow.zoneIdValue)
+                            
+                    except:
+                        # set a null value for areas that do not overlap the population dataset
+                        perValueCalc = -55555
+                        # keep track of the troublesome zone ID
+                        missingCountWarning.add(tabAreaTableRow.zoneIdValue)
+                        
+                    # get the output field name identifiers     
                     perValueSuffix = metricConst.perCapitaSuffix
                     meterSquaredSuffix = metricConst.meterSquaredSuffix
+                    
+                    # set the output field values
                     outTableRow.setValue(metricsFieldnameDict[mBaseName][1]+perValueSuffix, perValueCalc)
                     outTableRow.setValue(metricsFieldnameDict[mBaseName][1]+meterSquaredSuffix, classSqM)
 
@@ -174,6 +201,12 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
 
             # commit the row to the output table
             outTableRows.insertRow(outTableRow)
+        
+        # report to the user if null values for troublesome reporting units were inserted into the output table 
+        if len(zeroCountWarning) > 0:
+            arcpy.AddWarning("Zero population was found in %s reporting units. A value of -99999 was assigned to the Per Capita fields for those records." % len(zeroCountWarning))        
+        if len(missingCountWarning) > 0:
+            arcpy.AddWarning("Population data was missing for %s reporting units. A value of -55555 was assigned to the Per Capita fields for those records." % len(missingCountWarning)) 
                 
     finally:
         
