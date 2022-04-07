@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LCCSchema.xsd">
     <metadata>
-        <name>NLCD 2001 - 2016 ALL</name>
-        <description>National Land Cover Database 2001 - 2016 ALL Land Cover Classification Schema. No raster values except those representing NODATA are excluded from the calculation of reporting unit effective area (i.e., effective area equals the total raster area within a reporting unit). Coefficient values for impervious area calculations are based on those reported in Caraco et al. (1998). Those supplied for the nitrogen loading and phosphorous loading estimates were obtained from Reckhow et al. (1980). As coefficient values can vary considerably for a given land cover type across locations, all provided values should be evaluated critically before use and altered when necessary. Complete literature citations are provided in the ATtILA for ArcGIS help file.</description>
+        <name>NLCD (1992 Beta) LAND</name>
+        <description>National Land Cover Database 1992 LAND Land Cover Classification Schema. Only viable for the NLCD dataset produced in 1992. Water-related raster values are tagged as EXCLUDED. Excluded values are ignored when calculating the effective area of a reporting unit. Percentage metrics are based on the effective area of a reporting unit, not the total area. Coefficient values for impervious area calculations are based on those reported in Caraco et al. (1998). Those supplied for the nitrogen loading and phosphorous loading estimates were obtained from Reckhow et al. (1980). As coefficient values can vary considerably for a given land cover type across locations, all provided values should be evaluated critically before use and altered when necessary. Complete literature citations are provided in the ATtILA for ArcGIS help file.</description>
     </metadata>
     <!--  
         * The coefficients node contains coefficients to be assigned to values.
@@ -38,42 +38,42 @@
         * value - decimal, weighting/calculation factor
      -->
     <values>
-        <value Id="0" Name="Unclassified" excluded="true">
+        <value Id="11" Name="Open Water" excluded="true">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="11" Name="Open Water">
+        <value Id="12" Name="Perennial Ice/Snow" excluded="true">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="12" Name="Perennial Ice/Snow">
-            <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="0.0" />
-            <coefficient Id="PHOSPHORUS" value="0.0" />
-        </value>
-        <value Id="21" Name="Open Space Developed">
-            <coefficient Id="IMPERVIOUS" value="0.1" />
-            <coefficient Id="NITROGEN" value="0.0" />
-            <coefficient Id="PHOSPHORUS" value="0.0" />
-        </value>
-        <value Id="22" Name="Low Intensity Developed">
+        <value Id="21" Name="Low Intensity Developed (Residential)">
             <coefficient Id="IMPERVIOUS" value="0.4" />
             <coefficient Id="NITROGEN" value="5.5" />
             <coefficient Id="PHOSPHORUS" value="1.2" />
         </value>
-        <value Id="23" Name="Medium Intensity Developed">
+        <value Id="22" Name="Medium Intensity Developed (Residential)">
             <coefficient Id="IMPERVIOUS" value="0.6" />
             <coefficient Id="NITROGEN" value="5.5" />
             <coefficient Id="PHOSPHORUS" value="1.2" />
         </value>
-        <value Id="24" Name="High Intensity Developed">
+        <value Id="23" Name="High Intensity Devloped (Commercial/Industrial/Transportation)">
             <coefficient Id="IMPERVIOUS" value="0.9" />
             <coefficient Id="NITROGEN" value="5.5" />
             <coefficient Id="PHOSPHORUS" value="1.2" />
         </value>
         <value Id="31" Name="Barren Land (Rock/Sand/Clay)">
+            <coefficient Id="IMPERVIOUS" value="0.0" />
+            <coefficient Id="NITROGEN" value="0.0" />
+            <coefficient Id="PHOSPHORUS" value="0.0" />
+        </value>
+        <value Id="32" Name="Quarry/Strip Mine/Gravel Pit">
+            <coefficient Id="IMPERVIOUS" value="0.0" />
+            <coefficient Id="NITROGEN" value="0.0" />
+            <coefficient Id="PHOSPHORUS" value="0.0" />
+        </value>
+        <value Id="33" Name="Transitional">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
@@ -93,52 +93,52 @@
             <coefficient Id="NITROGEN" value="2.5" />
             <coefficient Id="PHOSPHORUS" value="0.25" />
         </value>
-        <value Id="51" Name="Dwarf Scrub">
+        <value Id="51" Name="Shrubland">
             <coefficient Id="IMPERVIOUS" value="0.02" />
             <coefficient Id="NITROGEN" value="0.4" />
             <coefficient Id="PHOSPHORUS" value="0.04" />
         </value>
-        <value Id="52" Name="Scrub/Shrub">
-            <coefficient Id="IMPERVIOUS" value="0.02" />
-            <coefficient Id="NITROGEN" value="0.4" />
-            <coefficient Id="PHOSPHORUS" value="0.04" />
+        <value Id="61" Name="Orchard/Vineyard/Other Cultivated Crop">
+            <coefficient Id="IMPERVIOUS" value="0.0" />
+            <coefficient Id="NITROGEN" value="6.0" />
+            <coefficient Id="PHOSPHORUS" value="0.8" />
         </value>
         <value Id="71" Name="Grassland">
             <coefficient Id="IMPERVIOUS" value="0.02" />
             <coefficient Id="NITROGEN" value="0.3" />
             <coefficient Id="PHOSPHORUS" value="0.06" />
         </value>
-        <value Id="72" Name="Sedge/Herbaceous">
-            <coefficient Id="IMPERVIOUS" value="0.02" />
-            <coefficient Id="NITROGEN" value="0.3" />
-            <coefficient Id="PHOSPHORUS" value="0.06" />
-        </value>
-        <value Id="73" Name="Lichen">
-            <coefficient Id="IMPERVIOUS" value="0.02" />
-            <coefficient Id="NITROGEN" value="0.3" />
-            <coefficient Id="PHOSPHORUS" value="0.06" />
-        </value>
-        <value Id="74" Name="Moss">
-            <coefficient Id="IMPERVIOUS" value="0.02" />
-            <coefficient Id="NITROGEN" value="0.3" />
-            <coefficient Id="PHOSPHORUS" value="0.06" />
-        </value>
-        <value Id="81" Name="Pasture/Hay">
+        <value Id="81" Name="Pature/Hay">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="5.0" />
             <coefficient Id="PHOSPHORUS" value="0.9" />
         </value>
-        <value Id="82" Name="Cultivated Crop">
+        <value Id="82" Name="Row Crop">
             <coefficient Id="IMPERVIOUS" value="0.0" />
-            <coefficient Id="NITROGEN" value="5.0" />
-            <coefficient Id="PHOSPHORUS" value="0.9" />
+            <coefficient Id="NITROGEN" value="8.5" />
+            <coefficient Id="PHOSPHORUS" value="2.3" />
         </value>
-        <value Id="90" Name="Woody Wetland">
+        <value Id="83" Name="Small Grain">
+            <coefficient Id="IMPERVIOUS" value="0.0" />
+            <coefficient Id="NITROGEN" value="6.0" />
+            <coefficient Id="PHOSPHORUS" value="0.8" />
+        </value>
+        <value Id="84" Name="Fallow">
+            <coefficient Id="IMPERVIOUS" value="0.0" />
+            <coefficient Id="NITROGEN" value="0.0" />
+            <coefficient Id="PHOSPHORUS" value="0.0" />
+        </value>
+        <value Id="85" Name="Open Space Developed (Urban Grass/Recreational Grass)">
+            <coefficient Id="IMPERVIOUS" value="0.1" />
+            <coefficient Id="NITROGEN" value="0.0" />
+            <coefficient Id="PHOSPHORUS" value="0.0" />
+        </value>
+        <value Id="91" Name="Woody Wetland">
             <coefficient Id="IMPERVIOUS" value="0.02" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="95" Name="Emergent Herbaceous Wetland">
+        <value Id="92" Name="Emergent Wetland">
             <coefficient Id="IMPERVIOUS" value="0.02" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
@@ -168,10 +168,6 @@
      -->
     <classes>
         <class Id="NI" Name="All Natural Land Use" filter="" lcpField="NINDEX">
-            <class Id="wtr" Name="Water" filter="">
-                <value Id="11" />
-                <value Id="12" />
-            </class>
             <class Id="bar" Name="Barren" filter="">
                 <value Id="31" />
             </class>
@@ -180,48 +176,49 @@
                 <value Id="42" />
                 <value Id="43" />
             </class>
-            <class Id="tun" Name="Tundra" filter="">
-                <value Id="51" />
-                <value Id="72" />
-                <value Id="73" />
-                <value Id="74" />
-            </class>
             <class Id="shb" Name="Shrubland" filter="">
-                <value Id="52" />
+                <value Id="51" />
             </class>
             <class Id="hrb" Name="Herbaceous" filter="">
                 <value Id="71" />
             </class>
             <class Id="wtl" Name="Wetland" filter="">
                 <class Id="wtlw" Name="Woody Wetland" filter="">
-                    <value Id="90" />
+                    <value Id="91" />
                 </class>
                 <class Id="wtle" Name="Emergent Wetland" filter="">
-                    <value Id="95" />
+                    <value Id="92" />
                 </class>
             </class>
         </class>
         <class Id="UI" Name="All Human Land Use" filter="" lcpField="UINDEX">
             <class Id="dev" Name="Developed" filter="">
-                <class Id="devo" Name="Open Space Developed" filter="">
+                <class Id="devl" Name="Low Intensity Developed" filter="">
                     <value Id="21" />
                 </class>
-                <class Id="devl" Name="Low Intensity Developed" filter="">
+                <class Id="devm" Name="Medium Intensity Developed" filter="">
                     <value Id="22" />
                 </class>
-                <class Id="devm" Name="Medium Intensity Developed" filter="">
+                <class Id="devh" Name="High Intensity Developed" filter="">
                     <value Id="23" />
                 </class>
-                <class Id="devh" Name="High Intensity Devloped" filter="">
-                    <value Id="24" />
+                <class Id="devo" Name="Open Space Developed" filter="">
+                    <value Id="85" />
                 </class>
+            </class>
+            <class Id="mmb" Name="Man-Made Barren" filter="">
+                <value Id="32" />
+                <value Id="33" />
             </class>
             <class Id="agr" Name="Agriculture" filter="">
                 <class Id="agrp" Name="Pasture/Hay" filter="">
                     <value Id="81" />
                 </class>
                 <class Id="agrc" Name="Cultivated Crop" filter="">
+                    <value Id="61" />
                     <value Id="82" />
+                    <value Id="83" />
+                    <value Id="84" />
                 </class>
             </class>
         </class>

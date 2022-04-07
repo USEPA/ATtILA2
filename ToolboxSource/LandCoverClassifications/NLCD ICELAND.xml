@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LCCSchema.xsd">
     <metadata>
-        <name>NLCD 2001 - 2016 LAND</name>
-        <description>National Land Cover Database 2001 - 2016 LAND Land Cover Classification Schema. Water-related raster values are tagged as EXCLUDED. Excluded values are ignored when calculating the effective area of a reporting unit. Percentage metrics are based on the effective area of a reporting unit, not the total area. Coefficient values for impervious area calculations are based on those reported in Caraco et al. (1998). Those supplied for the nitrogen loading and phosphorous loading estimates were obtained from Reckhow et al. (1980). As coefficient values can vary considerably for a given land cover type across locations, all provided values should be evaluated critically before use and altered when necessary. Complete literature citations are provided in the ATtILA for ArcGIS help file.</description>
+        <name>NLCD ICELAND</name>
+        <description>National Land Cover Database ICELAND Land Cover Classification Schema. Viable for the NLCD datasets produced in 2001 or later. ICELAND classification schemes include Perennial Ice/Snow as a land type class. Only Water-related raster values are tagged as EXCLUDED. Excluded values are ignored when calculating the effective area of a reporting unit. Percentage metrics are based on the effective area of a reporting unit, not the total area. Coefficient values for impervious area calculations are based on those reported in Caraco et al. (1998). Those supplied for the nitrogen loading and phosphorous loading estimates were obtained from Reckhow et al. (1980). As coefficient values can vary considerably for a given land cover type across locations, all provided values should be evaluated critically before use and altered when necessary. Complete literature citations are provided in the ATtILA for ArcGIS help file.</description>
     </metadata>
     <!--  
         * The coefficients node contains coefficients to be assigned to values.
@@ -48,7 +48,7 @@
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
         </value>
-        <value Id="12" Name="Perennial Ice/Snow" excluded="true">
+        <value Id="12" Name="Perennial Ice/Snow">
             <coefficient Id="IMPERVIOUS" value="0.0" />
             <coefficient Id="NITROGEN" value="0.0" />
             <coefficient Id="PHOSPHORUS" value="0.0" />
@@ -169,6 +169,7 @@
     <classes>
         <class Id="NI" Name="All Natural Land Use" filter="" lcpField="NINDEX">
             <class Id="bar" Name="Barren" filter="">
+                <value Id="12" />
                 <value Id="31" />
             </class>
             <class Id="for" Name="Forest" filter="">
@@ -195,6 +196,12 @@
                 <class Id="wtle" Name="Emergent Wetland" filter="">
                     <value Id="95" />
                 </class>
+            </class>
+            <class Id="for90" Name="Forest and Woody Wetlands" filter="">
+                <value Id="41" />
+                <value Id="42" />
+                <value Id="43" />
+                <value Id="90" />
             </class>
         </class>
         <class Id="UI" Name="All Human Land Use" filter="" lcpField="UINDEX">
