@@ -1090,7 +1090,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
 
     # Compile a list of fields that will be transferred from the intersected feature class into the output table
     fromFields = ["SUM_" + intPopField]
-    toField = 'popCount' + index
+    toField = 'popCnt' + index
     # Transfer the values to the output table
     table.transferField(summaryTable,outTable,fromFields,[toField],reportingUnitIdField,None)
     

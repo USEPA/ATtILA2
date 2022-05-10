@@ -567,7 +567,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         #patch metrics) extend the clip envelope an adequate distance.
 
         if clipLCGrid == "true":
-            AddMsg(timer.now() + "Reducing input Land cover grid to smallest recommended size...")
+            AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size...")
             
             # from . import utils
             from arcpy import env        
@@ -1549,7 +1549,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             
             AddMsg(timer.now() + " Calculating population change")
             # Set up a calculation expression for population change
-            calcExpression = "getPopChange(!popCount_T1!,!popCount_T2!)"
+            calcExpression = "getPopChange(!popCnt_T1!,!popCnt_T2!)"
             codeBlock = """def getPopChange(pop1,pop2):
     if pop1 == 0:
         if pop2 == 0:
