@@ -1,0 +1,143 @@
+﻿import os
+import sys
+tbxPath = __file__.split("#")[0]
+sourceName = "ToolboxSource" 
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
+sys.path.append(srcDirPath)
+import ATtILA2
+from ATtILA2.constants import validatorConstants
+from ATtILA2.constants import globalConstants
+import arcpy
+
+class ToolValidator:
+    """Class for validating a tool's parameter values and controlling
+    the behavior of the tool's dialog."""
+
+    def __init__(self):
+        """Setup the list of tool parameters."""
+        self.params = arcpy.GetParameterInfo()
+        self.inLineParameter = self.params[0]
+        self.mergeFieldParameter = self.params[2]
+        self.checkboxParameter = self.params[1]
+        self.mergeDistanceParameter = self.params[3]
+        self.outPutCS = self.params[4]
+        self.inCellSizeParameter = self.params[5]
+        self.inSearchRadiusParameter = self.params[6]
+        self.outRasterParameter = self.params[8]
+        self.initialized = False
+        self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.noProjectionInOutputCS = validatorConstants.noProjectionInOutputCS
+        self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
+        self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
+        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
+    
+    def initializeParameters(self):
+        """Refine the properties of a tool's parameters.  This method is
+        called when the tool is opened."""
+        # self.params[1].enabled = True
+        # self.initialized = True
+        return
+
+    def updateParameters(self):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parmater
+        has been changed."""
+        if self.checkboxParameter.value:
+            self.mergeFieldParameter.enabled = True
+            self.mergeDistanceParameter.enabled = True
+            if not self.mergeDistanceParameter.value:
+                self.mergeDistanceParameter.value = '30 Meters'
+        else:
+            self.mergeFieldParameter.enabled = False
+            self.mergeDistanceParameter.enabled = False
+        return
+
+    def updateMessages(self):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        # if optional check box is unselected, clear the parameter message area and value area
+        if not self.mergeFieldParameter.enabled:
+            self.mergeFieldParameter.clearMessage()
+            self.mergeFieldParameter.value = '' 
+        
+        if not self.mergeDistanceParameter.enabled:
+            self.mergeDistanceParameter.clearMessage()
+            self.mergeDistanceParameter.value = '' 
+        else: # Check if merge distance parameter is a positive number
+            if self.mergeDistanceParameter.value:
+                mergeDistanceValue = self.mergeDistanceParameter.value
+                strDistance = str(mergeDistanceValue).split()[0]
+                if float(strDistance) <= 0.0:
+                    self.mergeDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.mergeDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+
+        
+        # Check input features
+        if self.inLineParameter.value and not self.inLineParameter.hasError():
+            # Check for if input feature layer has spatial reference
+            # # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
+            if hasattr(self.inLineParameter.value, "dataSource"):
+                if arcpy.Describe(self.inLineParameter.value.dataSource).spatialReference.name.lower() == "unknown":
+                    self.inLineParameter.setErrorMessage(self.noSpatialReferenceMessage)
+            else:
+                if arcpy.Describe(self.inLineParameter.value).spatialReference.name.lower() == "unknown":
+                    self.inLineParameter.setErrorMessage(self.noSpatialReferenceMessage)
+        if self.outPutCS.value and not self.outPutCS.hasError():
+            if not "PROJECTION[" in  self.outPutCS.valueAsText:
+                self.outPutCS.setErrorMessage(self.noProjectionInOutputCS)
+        
+        # Check if cell size parameter is a positive number           
+        if self.inCellSizeParameter.value:
+            cellsizeValue = self.inCellSizeParameter.value
+            if cellsizeValue <= 0.0:
+                self.inCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+        else: # an entered value of '0' will not present as TRUE and trigger the conditional
+            self.inCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            
+        # Check if search radius parameter is a positive number           
+        if self.inSearchRadiusParameter.value:
+            radiusValue = self.inSearchRadiusParameter.value
+            if radiusValue <= 0.0:
+                self.inSearchRadiusParameter.setErrorMessage(self.nonPositiveNumberMessage)
+        else: # an entered value of '0' will not present as TRUE and trigger the conditional
+            self.inSearchRadiusParameter.setErrorMessage(self.nonPositiveNumberMessage)
+        
+
+        # Check if output raster has a valid filename; it contains no invalid characters, has no extension other than 
+        # those found in globalConstants.rasterExtensions if the output location is in a folder, and has no extension 
+        # if the output is to be placed in a geodatabase.
+        if self.outRasterParameter.value:
+            self.outRasterName = self.outRasterParameter.valueAsText
+        
+            # get the directory path and the filename
+            self.outRasterWorkspace = os.path.split(self.outRasterName)[0]
+            self.rasterFilename = os.path.split(self.outRasterName)[1]
+            
+            # break the filename into its root and extension
+            self.rasterFileRoot = os.path.splitext(self.rasterFilename)[0]
+            self.rasterFileExt = os.path.splitext(self.rasterFilename)[1]
+            
+            # substitue valid characters into the filename root if any invalid characters are present
+            self.validRasterFileRoot = arcpy.ValidateTableName(self.rasterFileRoot,self.outRasterWorkspace)
+            
+            # alert the user if invalid characters are present in the output table name.
+            if self.rasterFileRoot != self.validRasterFileRoot:
+                self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)
+                
+            elif self.rasterFileExt: # check on file extensions. None are allowed in geodatabases and only certain extensions are allowed in folders.
+                self.rasterWorkspaceExt = os.path.splitext(self.outRasterWorkspace)[1]
+                
+                # if the workspace is a geodatabase
+                if self.rasterWorkspaceExt.upper() == ".GDB":
+                    # alert user that file names cannot contain an extension in a GDB
+                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)               
+                else:                    
+                    # get the list of acceptable filename extentions for folder locations
+                    self.rasterExtensions = [".img", ".tif"]
+                    
+                    if self.rasterFileExt not in self.rasterExtensions:
+                        self.outRasterParameter.setErrorMessage("Valid extensions for rasters in folders for this tool are: %s." % str(self.rasterExtensions))           
+
+        return

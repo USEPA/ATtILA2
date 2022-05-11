@@ -1,5 +1,4 @@
-
-import os
+﻿import os
 import sys
 tbxPath = __file__.split("#")[0]
 sourceName = "ToolboxSource" 
@@ -8,17 +7,13 @@ srcDirPath = os.path.join(tbxParentDirPath, sourceName)
 sys.path.append(srcDirPath)
 import ATtILA2
 
-class ToolValidator (ATtILA2.ToolValidator.lcospToolValidator):
+class ToolValidator (ATtILA2.ToolValidator.pifmToolValidator):
     " Class for validating parameters "
 
     inTableIndex = 0
-    inRasterIndex = 2
-    startIndex = 3
-    outTableIndex = 8
-    processingCellSizeIndex = 9 
-    snapRasterIndex = 10 
-    optionalFieldsIndex = 11 
+    inAnyRasterOrPolyIndex = 2
+    inputFields2Index = 3
+    inIntRasterOrPolyIndex = 4
+    outTableIndex = 5
+    optionalFieldsIndex = 6
     srcDirName = srcDirPath
-    inRaster2Index = 6
-
-    

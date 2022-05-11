@@ -1,5 +1,4 @@
-
-import os
+﻿import os
 import sys
 tbxPath = __file__.split("#")[0]
 sourceName = "ToolboxSource" 

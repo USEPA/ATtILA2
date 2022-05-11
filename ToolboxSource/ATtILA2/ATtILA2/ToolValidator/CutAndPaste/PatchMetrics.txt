@@ -1,5 +1,4 @@
-
-import os
+﻿import os
 import sys
 tbxPath = __file__.split("#")[0]
 sourceName = "ToolboxSource" 
@@ -17,8 +16,7 @@ class ToolValidator (ATtILA2.ToolValidator.pmToolValidator):
     inRasterIndex = 2
     inDistanceIndex = 6
     inWholeNumIndex = 7
-    outTableIndex = 8     
+    outTableIndex = 8    
     processingCellSizeIndex = 10 
     snapRasterIndex = 11 
     srcDirName = srcDirPath
-

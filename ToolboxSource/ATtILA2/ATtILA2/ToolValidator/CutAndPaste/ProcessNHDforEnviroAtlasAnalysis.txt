@@ -1,0 +1,105 @@
+﻿import arcpy
+import os
+import sys
+tbxPath = __file__.split("#")[0]
+sourceName = "ToolboxSource" 
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
+sys.path.append(srcDirPath)
+import ATtILA2
+from ATtILA2.constants import validatorConstants
+
+class ToolValidator(object):
+    """Class for validating a tool's parameter values and controlling
+    the behavior of the tool's dialog."""
+
+    def __init__(self):
+        """Setup arcpy and the list of tool parameters."""
+        self.params = arcpy.GetParameterInfo()
+        self.menuParameter = self.params[0]
+        self.menuInParameters = {'Single geodatabase':[1], 
+                                 'Multiple geodatabases':[2,3],
+                                 'Single shapefile':[4],
+                                 'Multiple shapefiles':[5,6]}
+        self.missingFilesMessage = validatorConstants.missingFilesMessage
+        self.missingNHDFilesMessage = validatorConstants.missingNHDFilesMessage
+        self.initialized = False
+
+    def initializeParameters(self):
+        """Refine the properties of a tool's parameters.
+        This method is called when the tool is opened."""
+
+
+    def updateParameters(self):
+        """Modify the values and properties of parameters before internal
+        validation is performed. This method is called whenever a parameter
+        has been changed."""
+        menuKey = self.menuParameter.value
+            
+        for val in self.menuInParameters.values():
+          for indx in val:
+            if indx in self.menuInParameters[menuKey]:
+              self.params[indx].enabled = True
+            else:
+              self.params[indx].enabled = False
+
+
+    def updateMessages(self):
+        """Modify the messages created by internal validation for each tool
+        parameter. This method is called after internal validation."""
+        for val in self.menuInParameters.values():
+          for indx in val:
+            if not self.params[indx].enabled:
+              self.params[indx].clearMessage()
+              #self.params[indx].value = ''
+            else: 
+              self.NHDFiles = []  
+              if self.params[indx].value and indx in [4, 5]:
+                self.rootDir = self.params[indx].value
+                self.Found = self.listdirs(str(self.rootDir), self.NHDFiles)
+                if "Found NHD Files" not in self.Found:
+                    self.message = self.missingFilesMessage
+                    self.errorMessage = self.message.format("folder or its subfolders", "NHDFlowline.shp, NHDWaterbody.shp, and NHDArea.shp")
+                    self.params[indx].setErrorMessage(self.errorMessage)
+                    
+              elif self.params[indx].value and indx in [1]:
+                self.cws = arcpy.env.workspace
+                arcpy.env.workspace = self.params[indx].value
+                self.Found = self.listFeatures(self, self.NHDFiles)
+                if "Found NHD Files" not in self.Found:
+                    self.message = self.missingFilesMessage
+                    self.errorMessage = self.message.format("geodatabase", "NHDFlowline, NHDWaterbody, and NHDArea")
+                    self.params[indx].setErrorMessage(self.errorMessage)
+                arcpy.env.workspace = self.cws
+    
+    def listFeatures(self, envWS, foundList):
+        datasets = arcpy.ListDatasets(feature_type='feature')
+        datasets = [''] + datasets if datasets is not None else []
+        for ds in datasets:
+            for fc in arcpy.ListFeatureClasses(feature_dataset=ds):
+                # path = os.path.join(envWS, ds, fc)
+                if fc == "NHDFlowline":
+                    foundList.append("Found NHD Files")
+                else:
+                    foundList.append(fc)
+        return foundList
+    
+    def listdirs(self, rootdir, foundList):
+        for file in os.listdir(rootdir):
+          d = os.path.join(rootdir, file)
+          if os.path.isdir(d):
+            self.listdirs(d, foundList)
+          else:
+            fBasename = os.path.basename(file)
+            fname = os.path.splitext(fBasename)[0]
+            if os.path.basename(fname) == "NHDFlowline":
+              foundList.append("Found NHD Files")
+              break
+            else:
+                foundList.append(fname)
+        return foundList
+
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True

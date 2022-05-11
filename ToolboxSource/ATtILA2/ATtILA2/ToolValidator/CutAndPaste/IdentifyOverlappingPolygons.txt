@@ -1,3 +1,12 @@
+﻿import os
+import sys
+tbxPath = __file__.split("#")[0]
+sourceName = "ToolboxSource" 
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
+sys.path.append(srcDirPath)
+import ATtILA2
+
 class ToolValidator:
   """Class for validating a tool's parameter values and controlling
   the behavior of the tool's dialog."""

@@ -1,5 +1,4 @@
-
-import os
+﻿import os
 import sys
 tbxPath = __file__.split("#")[0]
 sourceName = "ToolboxSource" 
@@ -20,4 +19,6 @@ class ToolValidator (ATtILA2.ToolValidator.lcpToolValidator):
     snapRasterIndex = 11
     checkbox1Index = 7
     checkboxInParameters = {'checkbox1':[8, 9]}
+    inAnyRasterOrPolyIndex = 8
+    inputFields2Index = 9
     srcDirName = srcDirPath

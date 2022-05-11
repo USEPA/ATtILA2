@@ -1,0 +1,28 @@
+﻿import os
+import sys
+tbxPath = __file__.split("#")[0]
+sourceName = "ToolboxSource" 
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
+sys.path.append(srcDirPath)
+import ATtILA2
+
+class ToolValidator (ATtILA2.ToolValidator.nrlcpToolValidator):
+    " Class for validating parameters "
+
+    inTableIndex = 0 # used here for the input road feature
+    startIndex = 2
+    inRasterIndex = 1
+    inDistanceIndex = 6
+    inDistance2Index = 8
+    inDistance3Index = 9
+    inDistance4Index = 12
+    menu1Index = 5
+    menuInParameters = {'Distance':[6], 'Field: Lane Count':[7,8], 'Field: Lane Width':[9]}
+    checkbox1Index = 11
+    checkboxInParameters = {'checkbox1':[12]}
+    outWorkspaceIndex = 14
+    processingCellSizeIndex = 15 
+    snapRasterIndex = 16
+    optionalFieldsIndex = 17
+    srcDirName = srcDirPath
