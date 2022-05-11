@@ -72,6 +72,7 @@ class ProportionsValidator(object):
     inIntRasterOrPolyIndex = 0
     inputFields2Index = 0
     inDistanceIndex = 0
+    inIntegerDistanceIndex = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
     inPositiveInteger2Index = 0
@@ -161,6 +162,9 @@ class ProportionsValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+            
+        if self.inIntegerDistanceIndex:
+            self.inIntegerDistanceParameter = self.parameters[self.inIntegerDistanceIndex]
             
         if self.inWholeNumIndex:
             self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
@@ -478,6 +482,42 @@ class ProportionsValidator(object):
                 cellSizeValue = self.processingCellSizeParameter.value
             if float(str(cellSizeValue)) <= 0:
                 self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+        
+        # Check if output table has a valid filename; it contains no invalid characters, has no extension other than '.dbf' 
+        # if the output location is in a folder, and has no extension if the output is to be placed in a geodatabase.
+        if self.outTableParameter.value:
+            self.outTableName = self.outTableParameter.valueAsText
+        
+            # get the directory path and the filename
+            self.outWorkspace = os.path.split(self.outTableName)[0]
+            self.tableFilename = os.path.split(self.outTableName)[1]
+            
+            # break the filename into its root and extension
+            self.fileRoot = os.path.splitext(self.tableFilename)[0]
+            self.fileExt = os.path.splitext(self.tableFilename)[1]
+            
+            # substitue valid characters into the filename root if any invalid characters are present
+            self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+            
+            # alert the user if invalid characters are present in the output table name.
+            if self.fileRoot != self.validFileRoot:
+                self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
+                
+            else: # check on file extensions. None are allowed in geodatabases and only ".dbf" is allowed in folders.
+                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                
+                # if the workspace is a geodatabase
+                if self.workspaceExt.upper() == ".GDB":
+                    if self.fileExt:
+                        # alert user that file names cannot contain an extension in a GDB
+                        self.outTableParameter.setErrorMessage(self.invalidExtensionMessage)               
+                else:                    
+                    # get the list of acceptable filename extentions for folder locations
+                    self.tableExtensions = globalConstants.tableExtensions
+                    
+                    if self.fileExt not in self.tableExtensions:
+                        self.outTableParameter.setErrorMessage("Output tables in folders must have the '.dbf' extension.")
+        
             
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
@@ -610,6 +650,19 @@ class ProportionsValidator(object):
                 # need the else condition as a 0 value won't trigger the if clause 
                 self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
                 
+        # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
+        if self.inIntegerDistanceIndex:
+            if self.inIntegerDistanceParameter.value:
+                integerDistanceValue = self.inIntegerDistanceParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strIntegerDistance = str(integerDistanceValue).split()[0]
+                integerDistance = float(strIntegerDistance)
+                valModulus = modf(integerDistance)
+                if valModulus[0] != 0 or valModulus[1] < 1.0:
+                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
             if self.inWholeNumParameter.value:
@@ -623,7 +676,9 @@ class ProportionsValidator(object):
                 positiveIntValue = self.inPositiveIntegerParameter.value
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
                     
         # Check if number input (e.g., number of cells) is a positive integer           
         if self.inPositiveInteger2Index:
@@ -632,6 +687,8 @@ class ProportionsValidator(object):
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
                     self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)
 
         # Check if number input (e.g., cell size) is a positive number           
         if self.inPositiveNumberIndex:
@@ -667,51 +724,89 @@ class ProportionsValidator(object):
                 if float(strLinearUnit) <= 0.0:
                     self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
 
-        # Check if a secondary raster output is indicated
+        # # Check if a secondary raster output is indicated
+        # if self.outRasterIndex:
+        #     # if provided, check if the output raster name is valid in a geodatabase
+        #     if self.outRasterParameter.value:  
+        #         self.outRasterName = self.outRasterParameter.valueAsText
+        #
+        #         # get the directory path and the filename
+        #         self.outWorkspace = os.path.split(self.outRasterName)[0]
+        #         self.rasterFilename = os.path.split(self.outRasterName)[1]
+        #
+        #         # break the filename into its root and extension, if one exists
+        #         self.fileExt = os.path.splitext(self.rasterFilename)[1]
+        #         self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+        #
+        #         # check if the workspace is a geodatabase
+        #         self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+        #
+        #         if self.workspaceExt and self.fileExt:
+        #             # alert user that raster names cannot contain an extension in a GDB
+        #             self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
+        #         else:
+        #
+        #             # substitue valid characters into the filename root, if necessary 
+        #             self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+        #
+        #             # get the list of acceptable raster filename extentions
+        #             self.rasterExtensions = globalConstants.rasterExtensions
+        #
+        #             # assemble the new filename with any valid character substitutions
+        #             if self.fileExt: # a filename extension was provided
+        #                 if self.fileExt in self.rasterExtensions:
+        #                     self.validFilename = self.validFileRoot + self.fileExt
+        #                     self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
+        #                 else: 
+        #                     # drop extension from filename, causing the filename comparison below to fail
+        #                     self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+        #             else: # a filename extension was omitted
+        #                 self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+        #
+        #             # if the validated raster name is different than the input raster name, then the
+        #             # input raster name contains invalid characters or symbols
+        #             if self.outRasterName != self.validRasterName:
+        #                 self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)     
+  
+        # Check if a secondary raster output is indicated      
         if self.outRasterIndex:
-            # if provided, check if the output raster name is valid in a geodatabase
-            if self.outRasterParameter.value:  
+            # Check if output raster has a valid filename; it contains no invalid characters, has no extension other than 
+            # those found in globalConstants.rasterExtensions if the output location is in a folder, and has no extension 
+            # if the output is to be placed in a geodatabase.
+            if self.outRasterParameter.value:
                 self.outRasterName = self.outRasterParameter.valueAsText
             
                 # get the directory path and the filename
-                self.outWorkspace = os.path.split(self.outRasterName)[0]
+                self.outRasterWorkspace = os.path.split(self.outRasterName)[0]
                 self.rasterFilename = os.path.split(self.outRasterName)[1]
                 
-                # break the filename into its root and extension, if one exists
-                self.fileExt = os.path.splitext(self.rasterFilename)[1]
-                self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+                # break the filename into its root and extension
+                self.rasterFileRoot = os.path.splitext(self.rasterFilename)[0]
+                self.rasterFileExt = os.path.splitext(self.rasterFilename)[1]
                 
-                # check if the workspace is a geodatabase
-                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                # substitue valid characters into the filename root if any invalid characters are present
+                self.validRasterFileRoot = arcpy.ValidateTableName(self.rasterFileRoot,self.outRasterWorkspace)
                 
-                if self.workspaceExt and self.fileExt:
-                    # alert user that raster names cannot contain an extension in a GDB
-                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
-                else:
-                
-                    # substitue valid characters into the filename root, if necessary 
-                    self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
-        
-                    # get the list of acceptable raster filename extentions
-                    self.rasterExtensions = globalConstants.rasterExtensions
-        
-                    # assemble the new filename with any valid character substitutions
-                    if self.fileExt: # a filename extension was provided
-                        if self.fileExt in self.rasterExtensions:
-                            self.validFilename = self.validFileRoot + self.fileExt
-                            self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
-                        else: 
-                            # drop extension from filename, causing the filename comparison below to fail
-                            self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
-                    else: # a filename extension was omitted
-                        self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                # alert the user if invalid characters are present in the output table name.
+                if self.rasterFileRoot != self.validRasterFileRoot:
+                    self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)
                     
-                    # if the validated raster name is different than the input raster name, then the
-                    # input raster name contains invalid characters or symbols
-                    if self.outRasterName != self.validRasterName:
-                        self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)                                        
+                elif self.rasterFileExt: # check on file extensions. None are allowed in geodatabases and only certain extensions are allowed in folders.
+                    self.rasterWorkspaceExt = os.path.splitext(self.outRasterWorkspace)[1]
+                    
+                    # if the workspace is a geodatabase
+                    if self.rasterWorkspaceExt.upper() == ".GDB":
+                        # alert user that file names cannot contain an extension in a GDB
+                        self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)               
+                    else:                    
+                        # get the list of acceptable filename extentions for folder locations
+                        # self.rasterExtensions = globalConstants.rasterExtensions
+                        self.rasterExtensions = [".img", ".tif"]
+                        
+                        if self.rasterFileExt not in self.rasterExtensions:
+                            self.outRasterParameter.setErrorMessage("Valid extensions for rasters in folders for this tool are: %s." % str(self.rasterExtensions))           
+                                  
             
-
 class CoefficientValidator(ProportionsValidator):
     """ Class for inheritance by ToolValidator Only """
 
@@ -770,6 +865,7 @@ class NoLccFileValidator(object):
     inIntRasterOrPolyIndex = 0
     inputFields2Index = 0
     inDistanceIndex = 0
+    inIntegerDistanceIndex = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
     inPositiveInteger2Index = 0
@@ -798,8 +894,12 @@ class NoLccFileValidator(object):
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
         self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
+        self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
+        self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
+        self.invalidNumberMessage = validatorConstants.invalidNumberMessage
+        self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -841,6 +941,9 @@ class NoLccFileValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+            
+        if self.inIntegerDistanceIndex:
+            self.inIntegerDistanceParameter = self.parameters[self.inIntegerDistanceIndex]
 
         if self.inWholeNumIndex:
             self.inWholeNumParameter = self.parameters[self.inWholeNumIndex]
@@ -1009,6 +1112,42 @@ class NoLccFileValidator(object):
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
            
+        # Check if output table has a valid filename; it contains no invalid characters, has no extension other than '.dbf' 
+        # if the output location is in a folder, and has no extension if the output is to be placed in a geodatabase.
+        if self.outTableParameter.value:
+            self.outTableName = self.outTableParameter.valueAsText
+        
+            # get the directory path and the filename
+            self.outWorkspace = os.path.split(self.outTableName)[0]
+            self.tableFilename = os.path.split(self.outTableName)[1]
+            
+            # break the filename into its root and extension
+            self.fileRoot = os.path.splitext(self.tableFilename)[0]
+            self.fileExt = os.path.splitext(self.tableFilename)[1]
+            
+            # substitue valid characters into the filename root if any invalid characters are present
+            self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+            
+            # alert the user if invalid characters are present in the output table name.
+            if self.fileRoot != self.validFileRoot:
+                self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
+                
+            else: # check on file extensions. None are allowed in geodatabases and only ".dbf" is allowed in folders.
+                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                
+                # if the workspace is a geodatabase
+                if self.workspaceExt.upper() == ".GDB":
+                    if self.fileExt:
+                        # alert user that file names cannot contain an extension in a GDB
+                        self.outTableParameter.setErrorMessage(self.invalidExtensionMessage)               
+                else:                    
+                    # get the list of acceptable filename extentions for folder locations
+                    self.tableExtensions = globalConstants.tableExtensions
+                    
+                    if self.fileExt not in self.tableExtensions:
+                        self.outTableParameter.setErrorMessage("Output tables in folders must have the '.dbf' extension.")     
+        
+        
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
         # if optional check box is unselected, clear the parameter message area and value area    
@@ -1188,6 +1327,19 @@ class NoLccFileValidator(object):
 #                # need the else condition as a 0 value won't trigger the if clause 
 #                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
 
+        # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
+        if self.inIntegerDistanceIndex:
+            if self.inIntegerDistanceParameter.value:
+                integerDistanceValue = self.inIntegerDistanceParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strIntegerDistance = str(integerDistanceValue).split()[0]
+                integerDistance = float(strIntegerDistance)
+                valModulus = modf(integerDistance)
+                if valModulus[0] != 0 or valModulus[1] < 1.0:
+                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
             if self.inWholeNumParameter.value:
@@ -1202,6 +1354,8 @@ class NoLccFileValidator(object):
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
                     self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
                     
         # Check if number input (e.g., number of cells) is a positive integer           
         if self.inPositiveInteger2Index:
@@ -1209,7 +1363,9 @@ class NoLccFileValidator(object):
                 positiveIntValue = self.inPositiveInteger2Parameter.value
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage) 
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)   
                 
         # Check if number input (e.g., cell size) is a positive number           
         if self.inPositiveNumberIndex:
@@ -1244,50 +1400,44 @@ class NoLccFileValidator(object):
                 if float(strLinearUnit) <= 0.0:
                     self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
 
-        # Check if a secondary raster output is indicated
+        # Check if a secondary raster output is indicated      
         if self.outRasterIndex:
-            # if provided, check if the output raster name is valid in a geodatabase
-            if self.outRasterParameter.value:  
+            # Check if output raster has a valid filename; it contains no invalid characters, has no extension other than 
+            # those found in globalConstants.rasterExtensions if the output location is in a folder, and has no extension 
+            # if the output is to be placed in a geodatabase.
+            if self.outRasterParameter.value:
                 self.outRasterName = self.outRasterParameter.valueAsText
             
                 # get the directory path and the filename
-                self.outWorkspace = os.path.split(self.outRasterName)[0]
+                self.outRasterWorkspace = os.path.split(self.outRasterName)[0]
                 self.rasterFilename = os.path.split(self.outRasterName)[1]
                 
-                # break the filename into its root and extension, if one exists
-                self.fileExt = os.path.splitext(self.rasterFilename)[1]
-                self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+                # break the filename into its root and extension
+                self.rasterFileRoot = os.path.splitext(self.rasterFilename)[0]
+                self.rasterFileExt = os.path.splitext(self.rasterFilename)[1]
                 
-                # check if the workspace is a geodatabase
-                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                # substitue valid characters into the filename root if any invalid characters are present
+                self.validRasterFileRoot = arcpy.ValidateTableName(self.rasterFileRoot,self.outRasterWorkspace)
                 
-                if self.workspaceExt and self.fileExt:
-                    # alert user that raster names cannot contain an extension in a GDB
-                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
-                else:
-                
-                    # substitue valid characters into the filename root, if necessary 
-                    self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
-        
-                    # get the list of acceptable raster filename extentions
-                    self.rasterExtensions = globalConstants.rasterExtensions
-        
-                    # assemble the new filename with any valid character substitutions
-                    if self.fileExt: # a filename extension was provided
-                        if self.fileExt in self.rasterExtensions:
-                            self.validFilename = self.validFileRoot + self.fileExt
-                            self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
-                        else: 
-                            # drop extension from filename, causing the filename comparison below to fail
-                            self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
-                    else: # a filename extension was omitted
-                        self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                # alert the user if invalid characters are present in the output table name.
+                if self.rasterFileRoot != self.validRasterFileRoot:
+                    self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)
                     
-                    # if the validated raster name is different than the input raster name, then the
-                    # input raster name contains invalid characters or symbols
-                    if self.outRasterName != self.validRasterName:
-                        self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage) 
-                                        
+                elif self.rasterFileExt: # check on file extensions. None are allowed in geodatabases and only certain extensions are allowed in folders.
+                    self.rasterWorkspaceExt = os.path.splitext(self.outRasterWorkspace)[1]
+                    
+                    # if the workspace is a geodatabase
+                    if self.rasterWorkspaceExt.upper() == ".GDB":
+                        # alert user that file names cannot contain an extension in a GDB
+                        self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)               
+                    else:                    
+                        # get the list of acceptable filename extentions for folder locations
+                        # self.rasterExtensions = globalConstants.rasterExtensions
+                        self.rasterExtensions = [".img", ".tif"]
+                        
+                        if self.rasterFileExt not in self.rasterExtensions:
+                            self.outRasterParameter.setErrorMessage("Valid extensions for rasters in folders for this tool are: %s." % str(self.rasterExtensions))           
+
                     
 class NoReportingUnitValidator(object):
     """ Class for inheritance by ToolValidator Only
@@ -1344,6 +1494,7 @@ class NoReportingUnitValidator(object):
     inIntRasterOrPolyIndex = 0
     inputFields2Index = 0
     inDistanceIndex = 0
+    inIntegerDistanceIndex = 0
     inDistance2Index = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
@@ -1435,6 +1586,9 @@ class NoReportingUnitValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+            
+        if self.inIntegerDistanceIndex:
+            self.inIntegerDistanceParameter = self.parameters[self.inIntegerDistanceIndex]
             
         if self.inDistance2Index:
             self.inDistance2Parameter = self.parameters[self.inDistance2Index]
@@ -1770,8 +1924,44 @@ class NoReportingUnitValidator(object):
             except:
                 cellSizeValue = self.processingCellSizeParameter.value
             if float(str(cellSizeValue)) <= 0:
-                self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+              
+        # Check if output table has a valid filename; it contains no invalid characters, has no extension other than '.dbf' 
+        # if the output location is in a folder, and has no extension if the output is to be placed in a geodatabase.
+        if self.outTableParameter.value:
+            self.outTableName = self.outTableParameter.valueAsText
+        
+            # get the directory path and the filename
+            self.outWorkspace = os.path.split(self.outTableName)[0]
+            self.tableFilename = os.path.split(self.outTableName)[1]
             
+            # break the filename into its root and extension
+            self.fileRoot = os.path.splitext(self.tableFilename)[0]
+            self.fileExt = os.path.splitext(self.tableFilename)[1]
+            
+            # substitue valid characters into the filename root if any invalid characters are present
+            self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+            
+            # alert the user if invalid characters are present in the output table name.
+            if self.fileRoot != self.validFileRoot:
+                self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
+                
+            else: # check on file extensions. None are allowed in geodatabases and only ".dbf" is allowed in folders.
+                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                
+                # if the workspace is a geodatabase
+                if self.workspaceExt.upper() == ".GDB":
+                    if self.fileExt:
+                        # alert user that file names cannot contain an extension in a GDB
+                        self.outTableParameter.setErrorMessage(self.invalidExtensionMessage)               
+                else:                    
+                    # get the list of acceptable filename extentions for folder locations
+                    self.tableExtensions = globalConstants.tableExtensions
+                    
+                    if self.fileExt not in self.tableExtensions:
+                        self.outTableParameter.setErrorMessage("Output tables in folders must have the '.dbf' extension.")
+        
+        
         # CHECK ON SECONDARY INPUTS IF PROVIDED
         
         # if optional check box is unselected, clear the parameter message area and value area    
@@ -1914,6 +2104,19 @@ class NoReportingUnitValidator(object):
                 else:
                     # need the else condition as a 0 value won't trigger the if clause 
                     self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    
+        # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
+        if self.inIntegerDistanceIndex:
+            if self.inIntegerDistanceParameter.value:
+                integerDistanceValue = self.inIntegerDistanceParameter.value
+                # use the split function so this routine can be used for both long and linear unit data types
+                strIntegerDistance = str(integerDistanceValue).split()[0]
+                integerDistance = float(strIntegerDistance)
+                valModulus = modf(integerDistance)
+                if valModulus[0] != 0 or valModulus[1] < 1.0:
+                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
                 
         # Check if second distance input (e.g., buffer width, edge width) is a positive number            
         if self.inDistance2Index:
@@ -1945,7 +2148,9 @@ class NoReportingUnitValidator(object):
                 positiveIntValue = self.inPositiveIntegerParameter.value
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage) 
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage) 
                 
         # Check if number input (e.g., number of cells) is a positive integer           
         if self.inPositiveInteger2Index:
@@ -1953,7 +2158,9 @@ class NoReportingUnitValidator(object):
                 positiveIntValue = self.inPositiveInteger2Parameter.value
                 valModulus = modf(positiveIntValue)
                 if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage) 
+            else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage) 
 
         # Check if number input (e.g., cell size) is a positive number           
         if self.inPositiveNumberIndex:
@@ -1993,47 +2200,40 @@ class NoReportingUnitValidator(object):
                     if float(strLinearUnit) <= 0.0:
                         self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
                     
-        # Check if a secondary raster output is indicated
+        # Check if a secondary raster output is indicated      
         if self.outRasterIndex:
-            # if provided, check if the output raster name is valid in a geodatabase
-            if self.outRasterParameter.value:  
+            # Check if output raster has a valid filename; it contains no invalid characters, has no extension other than 
+            # those found in globalConstants.rasterExtensions if the output location is in a folder, and has no extension 
+            # if the output is to be placed in a geodatabase.
+            if self.outRasterParameter.value:
                 self.outRasterName = self.outRasterParameter.valueAsText
             
                 # get the directory path and the filename
-                self.outWorkspace = os.path.split(self.outRasterName)[0]
+                self.outRasterWorkspace = os.path.split(self.outRasterName)[0]
                 self.rasterFilename = os.path.split(self.outRasterName)[1]
                 
-                # break the filename into its root and extension, if one exists
-                self.fileExt = os.path.splitext(self.rasterFilename)[1]
-                self.fileRoot = os.path.splitext(self.rasterFilename)[0]
+                # break the filename into its root and extension
+                self.rasterFileRoot = os.path.splitext(self.rasterFilename)[0]
+                self.rasterFileExt = os.path.splitext(self.rasterFilename)[1]
                 
-                # check if the workspace is a geodatabase
-                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                # substitue valid characters into the filename root if any invalid characters are present
+                self.validRasterFileRoot = arcpy.ValidateTableName(self.rasterFileRoot,self.outRasterWorkspace)
                 
-                if self.workspaceExt and self.fileExt:
-                    # alert user that raster names cannot contain an extension in a GDB
-                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)
-                else:
-                
-                    # substitue valid characters into the filename root, if necessary 
-                    self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
-        
-                    # get the list of acceptable raster filename extentions
-                    self.rasterExtensions = globalConstants.rasterExtensions
-        
-                    # assemble the new filename with any valid character substitutions
-                    if self.fileExt: # a filename extension was provided
-                        if self.fileExt in self.rasterExtensions:
-                            self.validFilename = self.validFileRoot + self.fileExt
-                            self.validRasterName = os.path.join(self.outWorkspace,self.validFilename)
-                        else: 
-                            # drop extension from filename, causing the filename comparison below to fail
-                            self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
-                    else: # a filename extension was omitted
-                        self.validRasterName = os.path.join(self.outWorkspace,self.validFileRoot)
+                # alert the user if invalid characters are present in the output table name.
+                if self.rasterFileRoot != self.validRasterFileRoot:
+                    self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)
                     
-                    # if the validated raster name is different than the input raster name, then the
-                    # input raster name contains invalid characters or symbols
-                    if self.outRasterName != self.validRasterName:
-                        self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage) 
-        
+                elif self.rasterFileExt: # check on file extensions. None are allowed in geodatabases and only certain extensions are allowed in folders.
+                    self.rasterWorkspaceExt = os.path.splitext(self.outRasterWorkspace)[1]
+                    
+                    # if the workspace is a geodatabase
+                    if self.rasterWorkspaceExt.upper() == ".GDB":
+                        # alert user that file names cannot contain an extension in a GDB
+                        self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)               
+                    else:                    
+                        # get the list of acceptable filename extentions for folder locations
+                        # self.rasterExtensions = globalConstants.rasterExtensions
+                        self.rasterExtensions = [".img", ".tif"]
+                        
+                        if self.rasterFileExt not in self.rasterExtensions:
+                            self.outRasterParameter.setErrorMessage("Valid extensions for rasters in folders for this tool are: %s." % str(self.rasterExtensions))           

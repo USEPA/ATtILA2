@@ -20,7 +20,7 @@ nonPositiveNumberMessage = "Input requires a positive number. Please enter a val
 nonPositiveIntegerMessage = "Input requires a positive integer value. Please enter an integer greater than zero before proceeding."
 polygonOrIntegerGridMessage = "Non-polygon dataset selected. Input requires a polygon dataset or an integer grid."
 integerGridOrPolgonMessage = "Non-integer grid selected. Input requires an integer grid or polygon dataset."
-invalidTableNameMessage = "Output raster name is invalid. It may contain invalid characters or symbols, such as ., *, ?, \
+invalidTableNameMessage = "Output filename is invalid. It may contain invalid characters or symbols, such as ., *, ?, \
  ', <, >, |, and space or has an invalid starting character such as a number."
 invalidNumberMessage = "Input requires that the number entered not be in the range 0 - 100. \
 Please enter a value outside of this range before proceeding."
