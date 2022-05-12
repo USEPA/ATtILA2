@@ -19,6 +19,7 @@ class ToolValidator (ATtILA2.ToolValidator.splcpToolValidator):
     optionalFieldsIndex = 13 
     srcDirName = srcDirPath
     inVector2Index = 6
-    inDistanceIndex = 8
+    # inDistanceIndex = 8
+    inIntegerDistanceIndex = 8
     checkbox1Index = 9
     checkboxInParameters = {'checkbox1':[7]}

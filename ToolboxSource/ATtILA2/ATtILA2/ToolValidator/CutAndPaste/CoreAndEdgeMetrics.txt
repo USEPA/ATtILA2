@@ -14,7 +14,8 @@ class ToolValidator (ATtILA2.ToolValidator.caemToolValidator):
     startIndex = 3
     optionalFieldsIndex = 10 
     inRasterIndex = 2
-    inDistanceIndex = 6
+    # inDistanceIndex = 6
+    inIntegerDistanceIndex = 6
     outTableIndex = 7     
     processingCellSizeIndex = 8 
     snapRasterIndex = 9 

@@ -14,7 +14,8 @@ class ToolValidator (ATtILA2.ToolValidator.rdmToolValidator):
     srcDirName = srcDirPath
     inVector2Index = 2
     inVector3Index = 7
-    inDistanceIndex = 8
+    # inDistanceIndex = 8
+    inIntegerDistanceIndex = 8
     outTableIndex = 3
     optionalFieldsIndex = 9
     checkbox1Index = 5

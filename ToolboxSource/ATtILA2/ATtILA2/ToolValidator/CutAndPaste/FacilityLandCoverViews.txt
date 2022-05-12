@@ -14,7 +14,8 @@ class ToolValidator (ATtILA2.ToolValidator.flcvToolValidator):
     inRasterIndex = 2 
     startIndex = 3 
     inVector2Index = 6
-    inDistanceIndex = 7
+    # inDistanceIndex = 7
+    inIntegerDistanceIndex = 7
     outTableIndex = 9     
     processingCellSizeIndex = 10 
     snapRasterIndex = 11

@@ -14,7 +14,8 @@ class ToolValidator (ATtILA2.ToolValidator.pmToolValidator):
     startIndex = 3
     optionalFieldsIndex = 12 
     inRasterIndex = 2
-    inDistanceIndex = 6
+    #inDistanceIndex = 6
+    inIntegerDistanceIndex = 6
     inWholeNumIndex = 7
     outTableIndex = 8    
     processingCellSizeIndex = 10 
