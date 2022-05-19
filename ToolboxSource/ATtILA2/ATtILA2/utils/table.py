@@ -129,7 +129,12 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
 
             # Rename the population count field.
             outValueField = metricConst.valueCountFieldNames[index]
-            arcpy.AlterField_management(outTable, "SUM", outValueField, outValueField)
+            try:
+                arcpy.AlterField_management(outTable, "SUM", outValueField, outValueField)
+            except:
+                arcpy.AddField_management(outTable, outValueField, "DOUBLE")
+                arcpy.CalculateField_management(outTable, outValueField, '!SUM!')
+                arcpy.DeleteField_management(outTable, ["SUM"])
         
         else: # census features are polygons
             # Create a copy of the census feature class that we can add new fields to for calculations.
@@ -152,7 +157,12 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             
             # Rename the population count field.
             outValueField = metricConst.valueCountFieldNames[index]
-            arcpy.AlterField_management(outTable, inValueField, outValueField, outValueField)
+            try:
+                arcpy.AlterField_management(outTable, inValueField, outValueField, outValueField)
+            except:
+                arcpy.AddField_management(outTable, outValueField, "DOUBLE")
+                arcpy.CalculateField_management(outTable, outValueField, '!SUM!')
+                arcpy.DeleteField_management(outTable, ["SUM"])
             
         return outTable, outValueField
 

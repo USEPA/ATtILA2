@@ -652,16 +652,19 @@ class ProportionsValidator(object):
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
-            if self.inIntegerDistanceParameter.value:
-                integerDistanceValue = self.inIntegerDistanceParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strIntegerDistance = str(integerDistanceValue).split()[0]
-                integerDistance = float(strIntegerDistance)
-                valModulus = modf(integerDistance)
-                if valModulus[0] != 0 or valModulus[1] < 1.0:
-                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            if not self.inIntegerDistanceParameter.enabled:
+                self.inIntegerDistanceParameter.clearMessage()
+            else:
+                if self.inIntegerDistanceParameter.value:
+                    integerDistanceValue = self.inIntegerDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strIntegerDistance = str(integerDistanceValue).split()[0]
+                    integerDistance = float(strIntegerDistance)
+                    valModulus = modf(integerDistance)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
                 
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
@@ -1329,16 +1332,19 @@ class NoLccFileValidator(object):
 
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
-            if self.inIntegerDistanceParameter.value:
-                integerDistanceValue = self.inIntegerDistanceParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strIntegerDistance = str(integerDistanceValue).split()[0]
-                integerDistance = float(strIntegerDistance)
-                valModulus = modf(integerDistance)
-                if valModulus[0] != 0 or valModulus[1] < 1.0:
-                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            if not self.inIntegerDistanceParameter.enabled:
+                self.inIntegerDistanceParameter.clearMessage()
+            else:
+                if self.inIntegerDistanceParameter.value:
+                    integerDistanceValue = self.inIntegerDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strIntegerDistance = str(integerDistanceValue).split()[0]
+                    integerDistance = float(strIntegerDistance)
+                    valModulus = modf(integerDistance)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
 
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
@@ -2107,16 +2113,19 @@ class NoReportingUnitValidator(object):
                     
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
-            if self.inIntegerDistanceParameter.value:
-                integerDistanceValue = self.inIntegerDistanceParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strIntegerDistance = str(integerDistanceValue).split()[0]
-                integerDistance = float(strIntegerDistance)
-                valModulus = modf(integerDistance)
-                if valModulus[0] != 0 or valModulus[1] < 1.0:
-                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            if not self.inIntegerDistanceParameter.enabled:
+                self.inIntegerDistanceParameter.clearMessage()
+            else:
+                if self.inIntegerDistanceParameter.value:
+                    integerDistanceValue = self.inIntegerDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strIntegerDistance = str(integerDistanceValue).split()[0]
+                    integerDistance = float(strIntegerDistance)
+                    valModulus = modf(integerDistance)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
                 
         # Check if second distance input (e.g., buffer width, edge width) is a positive number            
         if self.inDistance2Index:
