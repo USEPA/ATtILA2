@@ -1533,14 +1533,14 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         # Create an index value to keep track of intermediate outputs and fieldnames.
         index = ""
         #if popChangeYN is checked:
-        if popChangeYN:
+        if popChangeYN == "true":
             index = "1"
         # Perform population density calculation for first (only?) population feature class
         calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
                                       env.workspace,outTable,metricConst,cleanupList,index)
 
         #if popChangeYN is checked:
-        if popChangeYN:
+        if popChangeYN == "true":
             index = "2"
             AddMsg(timer.now() + " Calculating population density for second feature class")
             # Perform population density calculation for second population feature class

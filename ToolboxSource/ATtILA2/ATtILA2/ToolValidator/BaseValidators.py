@@ -84,6 +84,7 @@ class ProportionsValidator(object):
     outRasterIndex = 0
     validNumberIndex = 0
     inPositiveNumberIndex = 0
+    inZeroAndAboveIntegerIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -108,8 +109,10 @@ class ProportionsValidator(object):
         self.noProjectionInOutputCS = validatorConstants.noProjectionInOutputCS
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
-        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
-        self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
+        self.greaterThanZeroMessage = validatorConstants.greaterThanZeroMessage
+        self.greaterThanZeroIntegerMessage = validatorConstants.greaterThanZeroIntegerMessage
+        self.zeroOrGreaterNumberMessage = validatorConstants.zeroOrGreaterNumberMessage
+        self.zeroOrGreaterIntegerMessage = validatorConstants.zeroOrGreaterIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
@@ -204,6 +207,9 @@ class ProportionsValidator(object):
             
         if self.inPositiveNumberIndex:
             self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
+        
+        if self.inZeroAndAboveIntegerIndex:
+            self.inZeroAndAboveIntegerParameter = self.parameters[self.inZeroAndAboveIntegerIndex]
 
                
         # Additional local variables
@@ -474,14 +480,14 @@ class ProportionsValidator(object):
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
 
-        # Check if processingCellSize is a positive number            
+        # Check if processingCellSize is a value greater than zero          
         if self.processingCellSizeParameter.value:
             try:
                 cellSizeValue = arcpy.Raster(str(self.processingCellSizeParameter.value)).meanCellWidth
             except:
                 cellSizeValue = self.processingCellSizeParameter.value
             if float(str(cellSizeValue)) <= 0:
-                self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                self.processingCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if output table has a valid filename; it contains no invalid characters, has no extension other than '.dbf' 
         # if the output location is in a folder, and has no extension if the output is to be placed in a geodatabase.
@@ -638,17 +644,20 @@ class ProportionsValidator(object):
                     if desc.shapeType.lower() != "polygon":
                         self.inIntRasterOrPolyParameter.setErrorMessage(self.polygonOrIntegerGridMessage) 
                                                 
-        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        # Check if distance input (e.g., buffer width, edge width) is a value greater than zero            
         if self.inDistanceIndex:
-            if self.inDistanceParameter.value:
-                distanceValue = self.inDistanceParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strDistance = str(distanceValue).split()[0]
-                if float(strDistance) <= 0.0:
-                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            if not self.inDistanceParameter.enabled:
+                self.inDistanceParameter.clearMessage()
             else:
-                # need the else condition as a 0 value won't trigger the if clause 
-                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                if self.inDistanceParameter.value:
+                    distanceValue = self.inDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strDistance = str(distanceValue).split()[0]
+                    if float(strDistance) <= 0.0:
+                        self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
+                else:
+                    # need the else condition as a 0 value won't trigger the if clause 
+                    self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
@@ -662,46 +671,74 @@ class ProportionsValidator(object):
                     integerDistance = float(strIntegerDistance)
                     valModulus = modf(integerDistance)
                     if valModulus[0] != 0 or valModulus[1] < 1.0:
-                        self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                        self.inIntegerDistanceParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)    
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                    self.inIntegerDistanceParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
                 
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
-            if self.inWholeNumParameter.value:
-                wholeNumValue = self.inWholeNumParameter.value
-                if wholeNumValue < 0.0:
-                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            if not self.inWholeNumParameter.enabled:
+                self.inWholeNumParameter.clearMessage()
+            else:
+                if self.inWholeNumParameter.value:
+                    wholeNumValue = self.inWholeNumParameter.value
+                    if wholeNumValue < 0.0:
+                        self.inWholeNumParameter.setErrorMessage(self.zeroOrGreaterNumberMessage)
+        
+        # Check if number input (e.g., slope threshold) is a positive integer including zero           
+        if self.inZeroAndAboveIntegerIndex:
+            if not self.inZeroAndAboveIntegerParameter.enabled:
+                self.inZeroAndAboveIntegerParameter.clearMessage()
+            else:
+                if self.inZeroAndAboveIntegerParameter.value:
+                    zeroAndAboveValue = self.inZeroAndAboveIntegerParameter.value
+                    valModulus = modf(zeroAndAboveValue)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inZeroAndAboveIntegerParameter.setErrorMessage(self.zeroOrGreaterIntegerMessage) 
                     
-        # Check if number input (e.g., number of cells) is a positive integer           
+        # Check if number input (e.g., number of cells) is a positive integer greater than zero       
         if self.inPositiveIntegerIndex:
-            if self.inPositiveIntegerParameter.value:
-                positiveIntValue = self.inPositiveIntegerParameter.value
-                valModulus = modf(positiveIntValue)
-                if valModulus[0] != 0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveIntegerParameter.enabled:
+                self.inPositiveIntegerParameter.clearMessage()
+            else:
+                if self.inPositiveIntegerParameter.value:
+                    positiveIntValue = self.inPositiveIntegerParameter.value
+                    valModulus = modf(positiveIntValue)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inPositiveIntegerParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)    
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveIntegerParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
                     
-        # Check if number input (e.g., number of cells) is a positive integer           
+        # Check if number input (e.g., number of cells) is a positive integer greater than zero 
         if self.inPositiveInteger2Index:
-            if self.inPositiveInteger2Parameter.value:
-                positiveIntValue = self.inPositiveInteger2Parameter.value
-                valModulus = modf(positiveIntValue)
-                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)  
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveInteger2Parameter.enabled:
+                self.inPositiveInteger2Parameter.clearMessage()
+            else:
+                if self.inPositiveInteger2Parameter.value:
+                    positiveIntValue = self.inPositiveInteger2Parameter.value
+                    valModulus = modf(positiveIntValue)
+                    if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                        self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)  
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
 
-        # Check if number input (e.g., cell size) is a positive number           
+        # Check if number input (e.g., cell size) is a positive number greater than zero        
         if self.inPositiveNumberIndex:
-            if self.inPositiveNumberParameter.value:
-                positiveValue = self.inPositiveNumberParameter.value
-                if positiveValue <= 0.0:
-                    self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)  
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)
-
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveNumberParameter.enabled:
+                self.inPositiveNumberParameter.clearMessage()
+            else:
+                if self.inPositiveNumberParameter.value:
+                    positiveValue = self.inPositiveNumberParameter.value
+                    if positiveValue <= 0.0:
+                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessageMessage)  
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
             if self.validNumberIndex:
@@ -718,14 +755,19 @@ class ProportionsValidator(object):
                     else: # an entered value of '0' will not present as TRUE and trigger the conditional
                         self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)   
                 
-        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
-            if self.inLinearUnitParameter.value:
-                linearUnitValue = self.inLinearUnitParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strLinearUnit = str(linearUnitValue).split()[0]
-                if float(strLinearUnit) <= 0.0:
-                    self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inLinearUnitParameter.enabled:
+                self.inLinearUnitParameter.clearMessage()
+            else:
+                if self.inLinearUnitParameter.value:
+                    linearUnitValue = self.inLinearUnitParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strLinearUnit = str(linearUnitValue).split()[0]
+                    if float(strLinearUnit) <= 0.0:
+                        self.inLinearUnitParameter.setErrorMessage(self.greaterThanZeroMessage)
 
         # # Check if a secondary raster output is indicated
         # if self.outRasterIndex:
@@ -880,6 +922,7 @@ class NoLccFileValidator(object):
     outRasterIndex = 0
     validNumberIndex = 0
     inPositiveNumberIndex = 0
+    inZeroAndAboveIntegerIndex = 0
     
     # Additional local variables
     srcDirName = ""
@@ -896,8 +939,10 @@ class NoLccFileValidator(object):
         self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
-        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
-        self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
+        self.greaterThanZeroMessage = validatorConstants.greaterThanZeroMessage
+        self.greaterThanZeroIntegerMessage = validatorConstants.greaterThanZeroIntegerMessage
+        self.zeroOrGreaterNumberMessage = validatorConstants.zeroOrGreaterNumberMessage
+        self.zeroOrGreaterIntegerMessage = validatorConstants.zeroOrGreaterIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
@@ -986,6 +1031,9 @@ class NoLccFileValidator(object):
             
         if self.inPositiveNumberIndex:
             self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
+            
+        if self.inZeroAndAboveIntegerIndex:
+            self.inZeroAndAboveIntegerParameter = self.parameters[self.inZeroAndAboveIntegerIndex]
 
  
         # Additional local variables
@@ -1307,7 +1355,7 @@ class NoLccFileValidator(object):
                     if desc.shapeType.lower() != "polygon":
                         self.inIntRasterOrPolyParameter.setErrorMessage(self.polygonOrIntegerGridMessage)                        
 
-        # Check if processingCellSize is a positive number    
+        # Check if processingCellSize is a value greater than zero   
         if self.processingCellSizeIndex:        
             if self.processingCellSizeParameter.value:
                 try:
@@ -1315,20 +1363,22 @@ class NoLccFileValidator(object):
                 except:
                     cellSizeValue = self.processingCellSizeParameter.value
                 if float(str(cellSizeValue)) <= 0:
-                    self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    self.processingCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage)
                         
-        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        # Check if distance input (e.g., buffer width, edge width) is a value greater than zero            
         if self.inDistanceIndex:
-            # check that the supplied value is positive
-            if self.inDistanceParameter.value:
-                distanceValue = self.inDistanceParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strDistance = str(distanceValue).split()[0]
-                if float(strDistance) <= 0.0:
-                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
-#            else:
-#                # need the else condition as a 0 value won't trigger the if clause 
-#                self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            if not self.inDistanceParameter.enabled:
+                self.inDistanceParameter.clearMessage()
+            else:
+                if self.inDistanceParameter.value:
+                    distanceValue = self.inDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strDistance = str(distanceValue).split()[0]
+                    if float(strDistance) <= 0.0:
+                        self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
+                else:
+                    # need the else condition as a 0 value won't trigger the if clause 
+                    self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
 
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
@@ -1342,45 +1392,74 @@ class NoLccFileValidator(object):
                     integerDistance = float(strIntegerDistance)
                     valModulus = modf(integerDistance)
                     if valModulus[0] != 0 or valModulus[1] < 1.0:
-                        self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                        self.inIntegerDistanceParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)    
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                    self.inIntegerDistanceParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
 
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
-            if self.inWholeNumParameter.value:
-                wholeNumValue = self.inWholeNumParameter.value
-                if wholeNumValue < 0.0:
-                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+            if not self.inWholeNumParameter.enabled:
+                self.inWholeNumParameter.clearMessage()
+            else:
+                if self.inWholeNumParameter.value:
+                    wholeNumValue = self.inWholeNumParameter.value
+                    if wholeNumValue < 0.0:
+                        self.inWholeNumParameter.setErrorMessage(self.zeroOrGreaterNumberMessage)
+        
+        # Check if number input (e.g., slope threshold) is a positive integer including zero           
+        if self.inZeroAndAboveIntegerIndex:
+            if not self.inZeroAndAboveIntegerParameter.enabled:
+                self.inZeroAndAboveIntegerParameter.clearMessage()
+            else:
+                if self.inZeroAndAboveIntegerParameter.value:
+                    zeroAndAboveValue = self.inZeroAndAboveIntegerParameter.value
+                    valModulus = modf(zeroAndAboveValue)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inZeroAndAboveIntegerParameter.setErrorMessage(self.zeroOrGreaterIntegerMessage) 
 
-        # Check if number input (e.g., number of cells) is a positive integer           
+        # Check if number input (e.g., number of cells) is a positive integer greater than zero       
         if self.inPositiveIntegerIndex:
-            if self.inPositiveIntegerParameter.value:
-                positiveIntValue = self.inPositiveIntegerParameter.value
-                valModulus = modf(positiveIntValue)
-                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveIntegerParameter.enabled:
+                self.inPositiveIntegerParameter.clearMessage()
+            else:
+                if self.inPositiveIntegerParameter.value:
+                    positiveIntValue = self.inPositiveIntegerParameter.value
+                    valModulus = modf(positiveIntValue)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inPositiveIntegerParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)    
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveIntegerParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
                     
-        # Check if number input (e.g., number of cells) is a positive integer           
+        # Check if number input (e.g., number of cells) is a positive integer greater than zero 
         if self.inPositiveInteger2Index:
-            if self.inPositiveInteger2Parameter.value:
-                positiveIntValue = self.inPositiveInteger2Parameter.value
-                valModulus = modf(positiveIntValue)
-                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage) 
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage)   
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveInteger2Parameter.enabled:
+                self.inPositiveInteger2Parameter.clearMessage()
+            else:
+                if self.inPositiveInteger2Parameter.value:
+                    positiveIntValue = self.inPositiveInteger2Parameter.value
+                    valModulus = modf(positiveIntValue)
+                    if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                        self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)  
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
                 
-        # Check if number input (e.g., cell size) is a positive number           
+        # Check if number input (e.g., cell size) is a positive number greater than zero        
         if self.inPositiveNumberIndex:
-            if self.inPositiveNumberParameter.value:
-                positiveValue = self.inPositiveNumberParameter.value
-                if positiveValue <= 0.0:
-                    self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage) 
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveNumberParameter.enabled:
+                self.inPositiveNumberParameter.clearMessage()
+            else:
+                if self.inPositiveNumberParameter.value:
+                    positiveValue = self.inPositiveNumberParameter.value
+                    if positiveValue <= 0.0:
+                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessageMessage)  
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
             if self.validNumberIndex:
@@ -1397,14 +1476,19 @@ class NoLccFileValidator(object):
                     else: # an entered value of '0' will not present as TRUE and trigger the conditional
                         self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
         
-        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
-            if self.inLinearUnitParameter.value:
-                linearUnitValue = self.inLinearUnitParameter.value
-                # use the split function so this routine can be used for both long and linear unit data types
-                strLinearUnit = str(linearUnitValue).split()[0]
-                if float(strLinearUnit) <= 0.0:
-                    self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inLinearUnitParameter.enabled:
+                self.inLinearUnitParameter.clearMessage()
+            else:
+                if self.inLinearUnitParameter.value:
+                    linearUnitValue = self.inLinearUnitParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strLinearUnit = str(linearUnitValue).split()[0]
+                    if float(strLinearUnit) <= 0.0:
+                        self.inLinearUnitParameter.setErrorMessage(self.greaterThanZeroMessage)
 
         # Check if a secondary raster output is indicated      
         if self.outRasterIndex:
@@ -1513,6 +1597,7 @@ class NoReportingUnitValidator(object):
     outRasterIndex = 0
     validNumberIndex = 0
     inPositiveNumberIndex = 0
+    inZeroAndAboveIntegerIndex = 0
     menu1Index = 0
     menuInParameters = {}
         
@@ -1539,8 +1624,10 @@ class NoReportingUnitValidator(object):
         self.noProjectionInOutputCS = validatorConstants.noProjectionInOutputCS
         self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
         self.nonIntegerGridMessage = validatorConstants.nonIntegerGridMessage
-        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
-        self.nonPositiveIntegerMessage = validatorConstants.nonPositiveIntegerMessage
+        self.greaterThanZeroMessage = validatorConstants.greaterThanZeroMessage
+        self.greaterThanZeroIntegerMessage = validatorConstants.greaterThanZeroIntegerMessage
+        self.zeroOrGreaterNumberMessage = validatorConstants.zeroOrGreaterNumberMessage
+        self.zeroOrGreaterIntegerMessage = validatorConstants.zeroOrGreaterIntegerMessage
         self.integerGridOrPolgonMessage = validatorConstants.integerGridOrPolgonMessage
         self.polygonOrIntegerGridMessage = validatorConstants.polygonOrIntegerGridMessage
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
@@ -1637,6 +1724,9 @@ class NoReportingUnitValidator(object):
             
         if self.inPositiveNumberIndex:
             self.inPositiveNumberParameter = self.parameters[self.inPositiveNumberIndex]
+            
+        if self.inZeroAndAboveIntegerIndex:
+            self.inZeroAndAboveIntegerParameter = self.parameters[self.inZeroAndAboveIntegerIndex]
             
         if self.menu1Index:
             self.menu1Parameter = self.parameters[self.menu1Index]
@@ -1923,14 +2013,14 @@ class NoReportingUnitValidator(object):
                 if arcpy.Describe(self.inputTableParameter.value).spatialReference.name.lower() == "unknown":
                     self.inputTableParameter.setErrorMessage(self.noSpatialReferenceMessage)
 
-        # Check if processingCellSize is a positive number            
+        # Check if processingCellSize is a value greater than zero          
         if self.processingCellSizeParameter.value:
             try:
                 cellSizeValue = arcpy.Raster(str(self.processingCellSizeParameter.value)).meanCellWidth
             except:
                 cellSizeValue = self.processingCellSizeParameter.value
             if float(str(cellSizeValue)) <= 0:
-                self.processingCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+                self.processingCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage) 
               
         # Check if output table has a valid filename; it contains no invalid characters, has no extension other than '.dbf' 
         # if the output location is in a folder, and has no extension if the output is to be placed in a geodatabase.
@@ -2094,7 +2184,7 @@ class NoReportingUnitValidator(object):
                     if desc.shapeType.lower() != "polygon":
                         self.inIntRasterOrPolyParameter.setErrorMessage(self.polygonOrIntegerGridMessage) 
                                                 
-        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        # Check if distance input (e.g., buffer width, edge width) is a value greater than zero           
         if self.inDistanceIndex:
             # This parameter can be linked to a checkbox or a menu selection. If it is not checked or selected, this parameter is disabled
             # If it is disabled, do not perform the validation step
@@ -2106,10 +2196,10 @@ class NoReportingUnitValidator(object):
                     # use the split function so this routine can be used for both long and linear unit data types
                     strDistance = str(distanceValue).split()[0]
                     if float(strDistance) <= 0.0:
-                        self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                        self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
                 else:
                     # need the else condition as a 0 value won't trigger the if clause 
-                    self.inDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
                     
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
@@ -2123,9 +2213,9 @@ class NoReportingUnitValidator(object):
                     integerDistance = float(strIntegerDistance)
                     valModulus = modf(integerDistance)
                     if valModulus[0] != 0 or valModulus[1] < 1.0:
-                        self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)    
+                        self.inIntegerDistanceParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)    
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                    self.inIntegerDistanceParameter.setErrorMessage(self.nonPositiveIntegerMessage)
+                    self.inIntegerDistanceParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
                 
         # Check if second distance input (e.g., buffer width, edge width) is a positive number            
         if self.inDistance2Index:
@@ -2139,46 +2229,75 @@ class NoReportingUnitValidator(object):
                     # use the split function so this routine can be used for both long and linear unit data types
                     strDistance = str(distanceValue).split()[0]
                     if float(strDistance) <= 0.0:
-                        self.inDistance2Parameter.setErrorMessage(self.nonPositiveNumberMessage)
+                        self.inDistance2Parameter.setErrorMessage(self.greaterThanZeroMessage)
                 else:
                     # need the else condition as a 0 value won't trigger the if clause 
-                    self.inDistance2Parameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    self.inDistance2Parameter.setErrorMessage(self.greaterThanZeroMessage)
                 
         # Check if distance input (e.g., maximum separation) is a positive number or zero           
         if self.inWholeNumIndex:
-            if self.inWholeNumParameter.value:
-                wholeNumValue = self.inWholeNumParameter.value
-                if wholeNumValue < 0.0:
-                    self.inWholeNumParameter.setErrorMessage(self.nonPositiveNumberMessage) 
+            if not self.inWholeNumParameter.enabled:
+                self.inWholeNumParameter.clearMessage()
+            else:
+                if self.inWholeNumParameter.value:
+                    wholeNumValue = self.inWholeNumParameter.value
+                    if wholeNumValue < 0.0:
+                        self.inWholeNumParameter.setErrorMessage(self.zeroOrGreaterNumberMessage) 
+        
+        # Check if number input (e.g., slope threshold) is a positive integer including zero           
+        if self.inZeroAndAboveIntegerIndex:
+            if not self.inZeroAndAboveIntegerParameter.enabled:
+                self.inZeroAndAboveIntegerParameter.clearMessage()
+            else:
+                if self.inZeroAndAboveIntegerParameter.value:
+                    zeroAndAboveValue = self.inZeroAndAboveIntegerParameter.value
+                    valModulus = modf(zeroAndAboveValue)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inZeroAndAboveIntegerParameter.setErrorMessage(self.zeroOrGreaterIntegerMessage) 
 
-        # Check if number input (e.g., number of cells) is a positive integer           
+        # Check if number input (e.g., number of cells) is a positive integer greater than zero       
         if self.inPositiveIntegerIndex:
-            if self.inPositiveIntegerParameter.value:
-                positiveIntValue = self.inPositiveIntegerParameter.value
-                valModulus = modf(positiveIntValue)
-                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage) 
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveIntegerParameter.setErrorMessage(self.nonPositiveIntegerMessage) 
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveIntegerParameter.enabled:
+                self.inPositiveIntegerParameter.clearMessage()
+            else:
+                if self.inPositiveIntegerParameter.value:
+                    positiveIntValue = self.inPositiveIntegerParameter.value
+                    valModulus = modf(positiveIntValue)
+                    if valModulus[0] != 0 or valModulus[1] < 1.0:
+                        self.inPositiveIntegerParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)    
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveIntegerParameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
                 
-        # Check if number input (e.g., number of cells) is a positive integer           
+        # Check if number input (e.g., number of cells) is a positive integer greater than zero 
         if self.inPositiveInteger2Index:
-            if self.inPositiveInteger2Parameter.value:
-                positiveIntValue = self.inPositiveInteger2Parameter.value
-                valModulus = modf(positiveIntValue)
-                if valModulus[0] != 0.0 or valModulus[1] < 1.0:
-                    self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage) 
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveInteger2Parameter.setErrorMessage(self.nonPositiveIntegerMessage) 
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveInteger2Parameter.enabled:
+                self.inPositiveInteger2Parameter.clearMessage()
+            else:
+                if self.inPositiveInteger2Parameter.value:
+                    positiveIntValue = self.inPositiveInteger2Parameter.value
+                    valModulus = modf(positiveIntValue)
+                    if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                        self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)  
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
 
-        # Check if number input (e.g., cell size) is a positive number           
+        # Check if number input (e.g., cell size) is a positive number greater than zero        
         if self.inPositiveNumberIndex:
-            if self.inPositiveNumberParameter.value:
-                positiveValue = self.inPositiveNumberParameter.value
-                if positiveValue <= 0.0:
-                    self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage) 
-            else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.inPositiveNumberParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.inPositiveNumberParameter.enabled:
+                self.inPositiveNumberParameter.clearMessage()
+            else:
+                if self.inPositiveNumberParameter.value:
+                    positiveValue = self.inPositiveNumberParameter.value
+                    if positiveValue <= 0.0:
+                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessageMessage)  
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
             if self.validNumberIndex:
@@ -2195,19 +2314,19 @@ class NoReportingUnitValidator(object):
                     else: # an entered value of '0' will not present as TRUE and trigger the conditional
                         self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
         
-        # Check if distance input (e.g., buffer width, edge width) is a positive number            
+        # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
-            # This parameter can be linked to a checkbox or a menu selection. If it is not checked or selected, this parameter is disabled
+            # This parameter can be linked to a checkbox. If it is not checked, this parameter is disabled
             # If it is disabled, do not perform the validation step
-            if not self.linearUnitParameter.enabled:
-                self.validNumberParameter.clearMessage()
+            if not self.inLinearUnitParameter.enabled:
+                self.inLinearUnitParameter.clearMessage()
             else:
                 if self.inLinearUnitParameter.value:
                     linearUnitValue = self.inLinearUnitParameter.value
                     # use the split function so this routine can be used for both long and linear unit data types
                     strLinearUnit = str(linearUnitValue).split()[0]
                     if float(strLinearUnit) <= 0.0:
-                        self.inLinearUnitParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                        self.inLinearUnitParameter.setErrorMessage(self.greaterThanZeroMessage)
                     
         # Check if a secondary raster output is indicated      
         if self.outRasterIndex:
