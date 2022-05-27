@@ -7,6 +7,7 @@ tbxParentDirPath =  os.path.dirname(tbxPath)
 srcDirPath = os.path.join(tbxParentDirPath, sourceName)
 sys.path.append(srcDirPath)
 import ATtILA2
+
 class ToolValidator(object):
     """Class for validating a tool's parameter values and controlling
     the behavior of the tool's dialog."""
@@ -14,9 +15,9 @@ class ToolValidator(object):
     def __init__(self):
         """Setup arcpy and the list of tool parameters."""
         self.params = arcpy.GetParameterInfo()
-        self.outWorkspaceParameter = self.params[4]
-        self.prefixParameter = self.params[5]
-        # self.initialized = False
+        self.menuParameter = self.params[0]
+        self.menuInParameters = {'Single':[1], 'Multiple':[2,3]}
+        self.initialized = False
 
     def initializeParameters(self):
         """Refine the properties of a tool's parameters.
@@ -26,19 +27,23 @@ class ToolValidator(object):
         """Modify the values and properties of parameters before internal
         validation is performed. This method is called whenever a parameter
         has been changed."""
+        menuKey = self.menuParameter.value
+            
+        for val in self.menuInParameters.values():
+          for indx in val:
+            if indx in self.menuInParameters[menuKey]:
+              self.params[indx].enabled = True
+            else:
+              self.params[indx].enabled = False
 
     def updateMessages(self):
         """Modify the messages created by internal validation for each tool
         parameter. This method is called after internal validation."""
-        if self.outWorkspaceParameter.value and self.prefixParameter.value:
-            self.outWorkspace = self.outWorkspaceParameter.valueAsText
-            self.prefixValue = self.prefixParameter.value
-            
-            # substitue valid characters into the filename root if any invalid characters are present
-            self.validPrefix = arcpy.ValidateTableName(self.prefixValue,self.outWorkspace)
-            if self.validPrefix != self.prefixValue:
-                self.prefixParameter.setErrorMessage("File base name contains invalid characters or symbols for the output workspace such as ., *, ?, \
- ', <, >, |, and space or has an invalid starting character such as a number. Please adjust the File base name before proceeding.")
+        for val in self.menuInParameters.values():
+          for indx in val:
+            if not self.params[indx].enabled:
+              self.params[indx].clearMessage()
+              #self.params[indx].value = ''
 
     def isLicensed(self):
         """Set whether tool is licensed to execute."""

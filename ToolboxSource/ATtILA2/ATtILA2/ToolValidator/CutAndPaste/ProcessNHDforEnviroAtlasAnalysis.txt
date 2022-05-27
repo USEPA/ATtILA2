@@ -1,4 +1,4 @@
-﻿import arcpy
+import arcpy
 import os
 import sys
 tbxPath = __file__.split("#")[0]

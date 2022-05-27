@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 tbxPath = __file__.split("#")[0]
 sourceName = "ToolboxSource" 
@@ -30,7 +30,7 @@ class ToolValidator:
         self.noProjectionInOutputCS = validatorConstants.noProjectionInOutputCS
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
-        self.nonPositiveNumberMessage = validatorConstants.nonPositiveNumberMessage
+        self.greaterThanZeroMessage = validatorConstants.greaterThanZeroMessage
     
     def initializeParameters(self):
         """Refine the properties of a tool's parameters.  This method is
@@ -69,9 +69,9 @@ class ToolValidator:
                 mergeDistanceValue = self.mergeDistanceParameter.value
                 strDistance = str(mergeDistanceValue).split()[0]
                 if float(strDistance) <= 0.0:
-                    self.mergeDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                    self.mergeDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
             else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                self.mergeDistanceParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                self.mergeDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
 
         
         # Check input features
@@ -92,17 +92,17 @@ class ToolValidator:
         if self.inCellSizeParameter.value:
             cellsizeValue = self.inCellSizeParameter.value
             if cellsizeValue <= 0.0:
-                self.inCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                self.inCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage)
         else: # an entered value of '0' will not present as TRUE and trigger the conditional
-            self.inCellSizeParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            self.inCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage)
             
         # Check if search radius parameter is a positive number           
         if self.inSearchRadiusParameter.value:
             radiusValue = self.inSearchRadiusParameter.value
             if radiusValue <= 0.0:
-                self.inSearchRadiusParameter.setErrorMessage(self.nonPositiveNumberMessage)
+                self.inSearchRadiusParameter.setErrorMessage(self.greaterThanZeroMessage)
         else: # an entered value of '0' will not present as TRUE and trigger the conditional
-            self.inSearchRadiusParameter.setErrorMessage(self.nonPositiveNumberMessage)
+            self.inSearchRadiusParameter.setErrorMessage(self.greaterThanZeroMessage)
         
 
         # Check if output raster has a valid filename; it contains no invalid characters, has no extension other than 

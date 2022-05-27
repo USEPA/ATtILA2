@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 tbxPath = __file__.split("#")[0]
 sourceName = "ToolboxSource" 
@@ -13,7 +13,9 @@ class ToolValidator (ATtILA2.ToolValidator.plcvToolValidator):
     inTableIndex = 0
     startIndex = 3 
     inRasterIndex = 2
-    inWholeNumIndex = 7
+    inPositiveIntegerIndex = 6
+    #inWholeNumIndex = 7
+    inPositiveInteger2Index = 7
     inRaster2Index = 8
     outTableIndex = 9    
     processingCellSizeIndex = 10 
