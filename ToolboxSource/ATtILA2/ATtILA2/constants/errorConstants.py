@@ -40,3 +40,9 @@ Valid unitOfMeasure keywords: CENTIMETERS | DECIMALDEGREES | DECIMETERS | FEET |
                               UNKNOWN | YARDS '''
 
 missingNHDFilesError = '''One or more required files are missing in the selected workspace(s). '''
+
+missingFieldError = '''Input field parameter not supplied. 
+
+A population field is required when the input Population raster or polygon feature is a polygon feature.
+
+Please select a field and try re-running the tool. '''

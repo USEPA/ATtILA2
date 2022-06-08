@@ -24,7 +24,7 @@
 import os, sys, zipfile, shutil
 from datetime import date
 
-def zipws(path, zip, keep):
+def zipws(path, outZip, keep):
     ''' Function for zipping files.  
     
     **Description:**
@@ -34,7 +34,7 @@ def zipws(path, zip, keep):
     **Arguments:**
     
         * *path* - file system path to be zipped
-        * *zip* - name of output zip file
+        * *outZip* - name of output zip file
         * *keep* - If keep is true, the folder, along with all its contents, will be written to the zip file.  If false,
                      only the contents of the input folder will be written to the zip file - the input folder name will 
                      not appear in the zip file.
@@ -50,10 +50,10 @@ def zipws(path, zip, keep):
         for file in filenames:
             try:
                 if keep:
-                    zip.write(os.path.join(dirpath, file),
+                    outZip.write(os.path.join(dirpath, file),
                     os.path.join(os.path.basename(path), os.path.join(dirpath, file)[len(path)+len(os.sep):]))
                 else:
-                    zip.write(os.path.join(dirpath, file),            
+                    outZip.write(os.path.join(dirpath, file),            
                     os.path.join(dirpath[len(path):], file)) 
                     
             except Exception as e:
@@ -79,7 +79,7 @@ def main(_argv):
     # pylet = '../pylet'
     outputZip = 'ATtILA_'+dateStr+'.zip'
     ignoreFiles = shutil.ignore_patterns('.git*','.settings','.project','.pydevproject','*.lfn','*.wsp','tests',
-                                         'AutoSave','apidoc','CutAndPaste','*.bak','*.bat')
+                                         'AutoSave','apidoc','CutAndPaste','*.bak','*.bat', '*.pyc', '__pycache__')
     
     # First create our output directory for staging the deployment.
     # If the directory already exists, remove it.
@@ -102,9 +102,9 @@ def main(_argv):
     if os.path.exists(outputZip):
         os.remove(outputZip)
     # Create the zip file
-    zip = zipfile.ZipFile(outputZip, 'w', zipfile.ZIP_DEFLATED)
-    zipws(outputDir, zip, False)
-    zip.close()
+    outZip = zipfile.ZipFile(outputZip, 'w', zipfile.ZIP_DEFLATED)
+    zipws(outputDir, outZip, False)
+    outZip.close()
     
     # Clean up the staging output directory
     shutil.rmtree(outputDir)

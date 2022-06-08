@@ -279,7 +279,8 @@ class pifmConstants(baseMetricConstants):
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
     populationProportionFieldName = "FP_POP_P"
-    populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
+    # populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
+    populationCountFieldNames = ["RU_POP", "FP_POP_C"]
     popCntTableName = shortName+"_populationCnt"
 
 class pmConstants(baseMetricConstants):
@@ -328,8 +329,8 @@ class plcvConstants(baseMetricConstants):
     shortName = "plcv"
     fieldPrefix = ""
     mvFieldPrefix = ""
-    fieldSuffix = "_WVPOP"
-    wovFieldSuffix = "_WOVPOP"
+    fieldSuffix = "_PV_C"
+    wovFieldSuffix = "_MV_C"
     overlapName = ""
     totalAreaName = ""
     effectiveAreaName = ""
@@ -340,8 +341,8 @@ class plcvConstants(baseMetricConstants):
     # This metric is comprised of several output fields. Fieldname override option 
     # is not available to the user  
     fieldOverrideKey = ""
-    pctSuffix = "_WVPCT"
-    wovPctSuffix = "_WOVPCT"
+    pctSuffix = "_PV_P"
+    wovPctSuffix = "_MV_P"
     additionalSuffixes = [pctSuffix]
     cntField = [fieldPrefix, pctSuffix, "LONG", 10, 0]
     additionalFields = [cntField]

@@ -877,7 +877,11 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             squery = "%s = '%s'" % (delimitedField, str(aZone))
         
         #Create a feature layer of the single reporting unit
-        aReportingUnitLayer = arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"aReportingUnitLayer",squery,"#")
+        if arcpy.Exists("inaReportingUnitLayer"):
+            # delete the layer in case the geoprocessing overwrite output option is turned off
+            arcpy.Delete_management("inaReportingUnitLayer")
+            
+        aReportingUnitLayer = arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"inaReportingUnitLayer",squery,"#")
         
         #Select the centroids that are in the "subwatersheds_Layer"
         arcpy.SelectLayerByLocation_management(patchCentroidsLayer,"INTERSECT", aReportingUnitLayer)
@@ -898,6 +902,10 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             
             # Clip the selected patches to the reporting unit boundary
             # clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, clipPolyDiss)
+            if arcpy.Exists("in_memory/clipPolyDiss"):
+                # delete the layer in case the geoprocessing overwrite output option is turned off
+                arcpy.Delete_management("in_memory/clipPolyDiss")
+                
             clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, "in_memory/clipPolyDiss")
 
             # Determine the number of patches found in this reporting unit using this script's methodology
@@ -966,6 +974,9 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
 
                               
         resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
+        
+        # delete the single reporting unit layer
+        arcpy.Delete_management(aReportingUnitLayer)
         
         mdcpLoopProgress.update()
         

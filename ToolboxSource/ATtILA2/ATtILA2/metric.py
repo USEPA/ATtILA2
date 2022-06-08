@@ -1664,6 +1664,11 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
             arcpy.AlterField_management(popTable_FP, "SUM", outPopField, outPopField)
 
         else: # census features are polygons
+            # Check that the user supplied a population field
+            if len(inPopField) == 0:
+                raise errors.attilaException(errorConstants.missingFieldError)
+                
+            
             # Create a copy of the census feature class that we can add new fields to for calculations.
             fieldMappings = arcpy.FieldMappings()
             fieldMappings.addTable(inCensusDataset)
@@ -1814,12 +1819,12 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.plcvConstants()
 
-        # append the view radius distance value to the field suffix
-        newSuffix = metricConst.fieldSuffix + viewRadius
-        metricConst.fieldParameters[1] = newSuffix
-        # for the output fields, add the input view radius to the field suffix
-        for i, fldParams in enumerate(metricConst.additionalFields):
-            fldParams[1] = metricConst.additionalSuffixes[i] + viewRadius
+        # # append the view radius distance value to the field suffix
+        # newSuffix = metricConst.fieldSuffix + viewRadius
+        # metricConst.fieldParameters[1] = newSuffix
+        # # for the output fields, add the input view radius to the field suffix
+        # for i, fldParams in enumerate(metricConst.additionalFields):
+        #     fldParams[1] = metricConst.additionalSuffixes[i] + viewRadius
          
          
         ''' Housekeeping Steps ''' 
@@ -1849,8 +1854,12 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   metricConst.additionalFields)
-  
-         
+
+        # Newtable is unnecessary. It will be reconstructed later in the script via the metricsFieldnameDict. Need to
+        # remove the table for now as it will cause an error if overwriting Geoprocessing outputs is not allowed.
+        if arcpy.Exists(newtable):
+            arcpy.Delete_management(newtable)
+            
         ''' Metric Computations '''
  
         # Generate table with population counts by reporting unit

@@ -719,9 +719,9 @@ class ProportionsValidator(object):
                 self.inPositiveInteger2Parameter.clearMessage()
             else:
                 if self.inPositiveInteger2Parameter.value:
-                    positiveIntValue = self.inPositiveInteger2Parameter.value
-                    valModulus = modf(positiveIntValue)
-                    if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    positiveInt2Value = self.inPositiveInteger2Parameter.value
+                    val2Modulus = modf(positiveInt2Value)
+                    if val2Modulus[0] != 0 or val2Modulus[1] < 1.0:
                         self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)  
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
@@ -736,24 +736,24 @@ class ProportionsValidator(object):
                 if self.inPositiveNumberParameter.value:
                     positiveValue = self.inPositiveNumberParameter.value
                     if positiveValue <= 0.0:
-                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessageMessage)  
+                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)  
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
-            if self.validNumberIndex:
-                # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
-                # If it is disabled, do not perform the validation step
-                if not self.validNumberParameter.enabled:
-                    self.validNumberParameter.clearMessage()
-                else:
-                    if self.validNumberParameter.value:
-                        invalidNumbers = set((range(101)))
-                        enteredValue = self.validNumberParameter.value
-                        if enteredValue in invalidNumbers:
-                            self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
-                    else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)   
+        if self.validNumberIndex:
+            # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.validNumberParameter.enabled:
+                self.validNumberParameter.clearMessage()
+            else:
+                if self.validNumberParameter.value:
+                    invalidNumbers = set((range(101)))
+                    enteredValue = self.validNumberParameter.value
+                    if enteredValue in invalidNumbers:
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)   
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
@@ -1440,9 +1440,9 @@ class NoLccFileValidator(object):
                 self.inPositiveInteger2Parameter.clearMessage()
             else:
                 if self.inPositiveInteger2Parameter.value:
-                    positiveIntValue = self.inPositiveInteger2Parameter.value
-                    valModulus = modf(positiveIntValue)
-                    if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    positiveInt2Value = self.inPositiveInteger2Parameter.value
+                    val2Modulus = modf(positiveInt2Value)
+                    if val2Modulus[0] != 0 or val2Modulus[1] < 1.0:
                         self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)  
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
@@ -1457,24 +1457,24 @@ class NoLccFileValidator(object):
                 if self.inPositiveNumberParameter.value:
                     positiveValue = self.inPositiveNumberParameter.value
                     if positiveValue <= 0.0:
-                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessageMessage)  
+                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)  
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
-            if self.validNumberIndex:
-                # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
-                # If it is disabled, do not perform the validation step
-                if not self.validNumberParameter.enabled:
-                    self.validNumberParameter.clearMessage()
-                else:
-                    if self.validNumberParameter.value:
-                        invalidNumbers = set((range(101)))
-                        enteredValue = self.validNumberParameter.value
-                        if enteredValue in invalidNumbers:
-                            self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
-                    else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
+        if self.validNumberIndex:
+            # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.validNumberParameter.enabled:
+                self.validNumberParameter.clearMessage()
+            else:
+                if self.validNumberParameter.value:
+                    invalidNumbers = set((range(101)))
+                    enteredValue = self.validNumberParameter.value
+                    if enteredValue in invalidNumbers:
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
         
         # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
@@ -2278,9 +2278,9 @@ class NoReportingUnitValidator(object):
                 self.inPositiveInteger2Parameter.clearMessage()
             else:
                 if self.inPositiveInteger2Parameter.value:
-                    positiveIntValue = self.inPositiveInteger2Parameter.value
-                    valModulus = modf(positiveIntValue)
-                    if valModulus[0] != 0.0 or valModulus[1] < 1.0:
+                    positiveInt2Value = self.inPositiveInteger2Parameter.value
+                    val2Modulus = modf(positiveInt2Value)
+                    if val2Modulus[0] != 0 or val2Modulus[1] < 1.0:
                         self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)  
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.inPositiveInteger2Parameter.setErrorMessage(self.greaterThanZeroIntegerMessage)
@@ -2295,24 +2295,24 @@ class NoReportingUnitValidator(object):
                 if self.inPositiveNumberParameter.value:
                     positiveValue = self.inPositiveNumberParameter.value
                     if positiveValue <= 0.0:
-                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessageMessage)  
+                        self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)  
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.inPositiveNumberParameter.setErrorMessage(self.greaterThanZeroMessage)
         
         # Check if number input (e.g., burn in value) is in the set of invalid numbers (i.e., 0 to 100)
-            if self.validNumberIndex:
-                # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
-                # If it is disabled, do not perform the validation step
-                if not self.validNumberParameter.enabled:
-                    self.validNumberParameter.clearMessage()
-                else:
-                    if self.validNumberParameter.value:
-                        invalidNumbers = set((range(101)))
-                        enteredValue = self.validNumberParameter.value
-                        if enteredValue in invalidNumbers:
-                            self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
-                    else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
+        if self.validNumberIndex:
+            # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.validNumberParameter.enabled:
+                self.validNumberParameter.clearMessage()
+            else:
+                if self.validNumberParameter.value:
+                    invalidNumbers = set((range(101)))
+                    enteredValue = self.validNumberParameter.value
+                    if enteredValue in invalidNumbers:
+                        self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
         
         # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
