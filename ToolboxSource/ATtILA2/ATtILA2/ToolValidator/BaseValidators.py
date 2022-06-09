@@ -85,6 +85,7 @@ class ProportionsValidator(object):
     validNumberIndex = 0
     inPositiveNumberIndex = 0
     inZeroAndAboveIntegerIndex = 0
+    integerPercentageIndex = 0
         
     # Additional local variables
     srcDirName = ""
@@ -118,6 +119,7 @@ class ProportionsValidator(object):
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
+        self.integerPercentageMessage = validatorConstants.integerPercentageMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -210,6 +212,9 @@ class ProportionsValidator(object):
         
         if self.inZeroAndAboveIntegerIndex:
             self.inZeroAndAboveIntegerParameter = self.parameters[self.inZeroAndAboveIntegerIndex]
+        
+        if self.integerPercentageIndex:
+            self.integerPercentageParameter = self.parameters[self.integerPercentageIndex]
 
                
         # Additional local variables
@@ -754,6 +759,21 @@ class ProportionsValidator(object):
                         self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)   
+
+        # Check if number input (e.g., percent view threshold) is in the set of valid numbers (i.e., 1 to 100)
+        if self.integerPercentageIndex:
+            # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.integerPercentageParameter.enabled:
+                self.integerPercentageParameter.clearMessage()
+            else:
+                if self.integerPercentageParameter.value:
+                    validIntegers = set((range(1,101)))
+                    pctValue = self.integerPercentageParameter.value
+                    if pctValue not in validIntegers:
+                        self.integerPercentageParameter.setErrorMessage(self.integerPercentageMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.integerPercentageParameter.setErrorMessage(self.integerPercentageMessage)
                 
         # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
@@ -923,6 +943,7 @@ class NoLccFileValidator(object):
     validNumberIndex = 0
     inPositiveNumberIndex = 0
     inZeroAndAboveIntegerIndex = 0
+    integerPercentageIndex = 0
     
     # Additional local variables
     srcDirName = ""
@@ -948,6 +969,7 @@ class NoLccFileValidator(object):
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
+        self.integerPercentageMessage = validatorConstants.integerPercentageMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -1034,7 +1056,9 @@ class NoLccFileValidator(object):
             
         if self.inZeroAndAboveIntegerIndex:
             self.inZeroAndAboveIntegerParameter = self.parameters[self.inZeroAndAboveIntegerIndex]
-
+        
+        if self.integerPercentageIndex:
+            self.integerPercentageParameter = self.parameters[self.integerPercentageIndex]
  
         # Additional local variables
         self.currentFilePath = ""
@@ -1474,7 +1498,22 @@ class NoLccFileValidator(object):
                     if enteredValue in invalidNumbers:
                         self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
-                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
+                    self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
+        
+        # Check if number input (e.g., percent view threshold) is in the set of valid numbers (i.e., 1 to 100)
+        if self.integerPercentageIndex:
+            # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.integerPercentageParameter.enabled:
+                self.integerPercentageParameter.clearMessage()
+            else:
+                if self.integerPercentageParameter.value:
+                    validIntegers = set((range(1,101)))
+                    pctValue = self.integerPercentageParameter.value
+                    if pctValue not in validIntegers:
+                        self.integerPercentageParameter.setErrorMessage(self.integerPercentageMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.integerPercentageParameter.setErrorMessage(self.integerPercentageMessage)                    
         
         # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
@@ -1598,6 +1637,7 @@ class NoReportingUnitValidator(object):
     validNumberIndex = 0
     inPositiveNumberIndex = 0
     inZeroAndAboveIntegerIndex = 0
+    integerPercentageIndex = 0
     menu1Index = 0
     menuInParameters = {}
         
@@ -1633,6 +1673,7 @@ class NoReportingUnitValidator(object):
         self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
+        self.integerPercentageMessage = validatorConstants.integerPercentageMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -1727,6 +1768,9 @@ class NoReportingUnitValidator(object):
             
         if self.inZeroAndAboveIntegerIndex:
             self.inZeroAndAboveIntegerParameter = self.parameters[self.inZeroAndAboveIntegerIndex]
+        
+        if self.integerPercentageIndex:
+            self.integerPercentageParameter = self.parameters[self.integerPercentageIndex]
             
         if self.menu1Index:
             self.menu1Parameter = self.parameters[self.menu1Index]
@@ -2313,6 +2357,21 @@ class NoReportingUnitValidator(object):
                         self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)
                 else: # an entered value of '0' will not present as TRUE and trigger the conditional
                     self.validNumberParameter.setErrorMessage(self.invalidNumberMessage)                    
+        
+        # Check if number input (e.g., percent view threshold) is in the set of valid numbers (i.e., 1 to 100)
+        if self.integerPercentageIndex:
+            # This parameter is often linked to a checkbox. If it is not checked, this parameter is disabled
+            # If it is disabled, do not perform the validation step
+            if not self.integerPercentageParameter.enabled:
+                self.integerPercentageParameter.clearMessage()
+            else:
+                if self.integerPercentageParameter.value:
+                    validIntegers = set((range(1,101)))
+                    pctValue = self.integerPercentageParameter.value
+                    if pctValue not in validIntegers:
+                        self.integerPercentageParameter.setErrorMessage(self.integerPercentageMessage)
+                else: # an entered value of '0' will not present as TRUE and trigger the conditional
+                    self.integerPercentageParameter.setErrorMessage(self.integerPercentageMessage)
         
         # Check if distance input (e.g., buffer width, edge width) is a positive number greater than zero
         if self.inLinearUnitIndex:
