@@ -73,8 +73,8 @@ class flcpConstants(baseMetricConstants):
 class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
     shortName = "flcv"
-    fieldSuffix = ""
-    fieldPrefix = "Low_"
+    fieldSuffix = "_Low"
+    fieldPrefix = ""
     overlapName = "FLCV_OVER"
     totalAreaName = "FLCV_TOTA"
     effectiveAreaName = "FLCV_EFFA"
