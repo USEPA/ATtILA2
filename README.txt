@@ -1,20 +1,20 @@
-===========================================================================================
-Analytical Tools Interface for Landscape Assessments for ArcGIS (ATtILA for ArcGIS) ReadMe
-===========================================================================================
+==================================================================================================
+Analytical Tools Interface for Landscape Assessments for ArcGIS Pro (ATtILA for ArcGIS Pro) ReadMe
+==================================================================================================
 
 ---------------
-version 1.1
+version 2.0
 ---------------
 
-09-01-2020 
+06-14-2022 
 
-This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see the manual located in \{ATtILA Destination Folder}\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm.
+This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see ATtILA's wiki located at https://github.com/USEPA/ATtILA2/wiki.
 
 ---------------
 What is ATtILA?
 ---------------
 
-ATtILA for ArcGIS is an Esri ArcGIS toolbox that allows users to easily calculate many common landscape metrics. GIS expertise is not required, but some experience with ArcGIS is recommended. Three metric groups (toolsets) are currently included in ATtILA:  Human Stressors, Landscape Characteristics, and Riparian Characteristics. ATtILA for ArcGIS is written using the Python programming language and is designed to accommodate spatial data from a variety of sources.
+ATtILA for ArcGIS Pro is an Esri ArcGIS toolbox that allows users to easily calculate many common landscape metrics. GIS expertise is not required, but some experience with ArcGIS is recommended. Three metric groups (toolsets) are currently included in ATtILA: Landscape Characteristics, People in the Landscape, and Riparian Characteristics, along with a Utilities section. ATtILA for ArcGIS Pro is written using the Python programming language and is designed to accommodate spatial data from a variety of sources.
 
 -----------------------
 Notice
@@ -32,12 +32,12 @@ The United States Environmental Protection Agency through its Office of Research
 Installing ATtILA
 ------------------
 
-This README provides basic information on installing ATtILA for ArcGIS. For more detailed instructions on installing and using ATtILA, please see the manual located in \{ATtILA Destination Folder}\ToolboxSource\ATtILA2\doc\ATtILA for ArcGIS Toolbox Help.chm. Depending on the installation location, the help manual may fail to open reporting that 'Navigation to the webpage was cancelled.' This error often occurs when the CHM Help file is located on a network drive. To resolve, copy the file onto a local drive and reopen. New users should read through the manual at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS processes.
+This README provides basic information on installing ATtILA for ArcGIS Pro. For more detailed instructions on installing and using custom toolboxes in ArcGIS Pro, please see 'Connect to a toolbox' in ArcGIS Pro's Online Help.  New users should read through this wiki at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS Pro processes.
 
 REQUIREMENTS:
 -------------
 
-ATtILA for ArcGIS requires ArcGIS Pro 2.5 and the Spatial Analyst extension.  ATtILA for ArcGIS has not yet been tested on ArcGIS 2.6.1 or later versions.
+ATtILA for ArcGIS Pro requires ArcGIS Pro 2.6 or later and the Spatial Analyst extension.  ATtILA for ArcGIS Pro has not yet been tested on ArcGIS 3.0 or later versions.
 
 INSTALLATION:
 ------------
@@ -48,14 +48,13 @@ INSTALLATION:
 
     |
     |--Destination Folder
-    |    |--ATtILA2.tbx
+    |    |--ATtILA v2.tbx
     |    |--ToolboxSource\
     |         |--ATtILA2
     |              |--ATtILA2
     |                   |--constants
     |                   |--ToolValidator
     |                   |--utils
-    |              |--doc
     |              |--scripts
     |                   |--bin
     |         |--LandCoverClassifications
@@ -65,30 +64,40 @@ INSTALLATION:
 
 3. Start ArcGIS Pro. Open Catalog View or Catalog Pane, and right click on Toolboxes. Click on Add Toolbox. 
     
-4. Navigate to Attila2.tbx, select it and click Open.
+4. Navigate to Attila2.tbx, select it and click OK.
 
 5. Check to see if the toolbox installed correctly, i.e., open Toolbox to see tools contained within.
  
 -ATtILA Tools
-    -Human Stressors
-        -Land Cover Coefficient Calculator
-        -Population Density Metrics
-        -Road Density Metrics
     -Landscape Characteristics
         -Core and Edge Metrics
         -Land Cover Diversity
         -Land Cover on Slope Proportions
 		-Land Cover Proportions
+		-Neighborhood Proportions
 		-Patch Metrics
+	-People in the Landscape
+		-Facility Land Cover Views
+		-Intersection Density
+        -Land Cover Coefficient Calculator
+        -Population Density Metrics
+		-Population in Floodplain Metrics
+		-Population Land Cover Views
+        -Road Density Metrics
     -Riparian Characteristics
+		-Floodplain Land Cover Proportions
         -Riparian Land Cover Proportions
         -Sample Point Land Cover Proportions
         -Stream Density Metric
     -Utilities
+		-Create or Modify Land Cover Classification (.xml)
         -Identify Overlapping Polygons
-    -Create or Modify Land Cover Classification (.xml) File
+		-Process EnviroAtlas High Resolution Metrics
+		-Process NAVTEQ for EnviroAtlas Analyses
+		-Process NHD for EnviroAtlas Analysis
+		
 
-NOTE: To make the ATtILA toolbox available for any future ArcGIS Pro projects, right-click on the ATtILA Toolbox and select 'Add to New Projects'. For more details on connecting to custom toolboxes, search for "Connect to a toolbox" in ArcGIS Pro's online help.
+NOTE: To make the ATtILA for ArcGIS Pro toolbox available to all new projects, right-click on the toolbox and select 'Add to New Projects'. This will add a link to ATtILA for ArcGIS Pro toolbox in project favorites. For more details on accessing ATtILA this way, see 'Project favorites' in ArcGIS Pro's Online Help.
 
 -------------
 Bug Reporting
@@ -100,31 +109,26 @@ Please report bugs and forward comments to: LEBProjects@epa.gov and include “ATt
 Acknowledgements
 ----------------
 
-Programmers:
-------------
 Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (EPA), BaoHong Ji (EPA), and Torrin Hultgren (EPA), with special assistance from Ellen D'Amico (Dynamac Corporation), and Doug Browning (EPA Student Services Contractor).
 
 David Gottlieb (EPA Student Services Contractor) wrote the code for the Land Cover Coding Editor.
 
 The original ATtILA ArcView extension tool was written in Avenue code by Don Ebert and Tim Wade with assistance from Dennis Yankee (Tennessee Valley Authority, Public Power Institute) who wrote code for the PCTIA_RD metric.
 
-The following programmers were not directly involved with the project, but gave permission for their code to be incorporated into the original of ATtILA and we greatly appreciate their generosity:
+The following programmers were not directly involved with the project, but gave permission for their code to be incorporated into the original ATtILA and we greatly appreciate their generosity:
 
--Laine, Jarko. 1998. Intersec Script, Novo.
--Eichenlaub, Bill. 1998. Profiler Script (Version 1.0), National Park Service (http://arcscripts.esri.com/details.asp?dbid=11096).
--O’Malley, Kevin. 1999. Two Theme Analyst Extension, http://arcscripts.esri.com/details.asp?dbid=10653
--DeLaune, Mike. 2003. XTools Extension, Oregon Department of Forestry (http://arcscripts.esri.com/details.asp?dbid=11526).
--Martin, Eugene. 1999. Spatial.AlignedGridExtract Script, University of Washington. http://arcscripts.esri.com/details.asp?dbid=10759
--Fox, Timothy J. 1998. Nearest Feature Analysis Tool Script, USGS Upper Midwest Environmental Science Center. http://arcscripts.esri.com/details.asp?dbid=11234
--Cosmas, Tom. 1999. Table.RenameField Script, New Jersey Department of Environmental Protection. (http://arcscripts.esri.com/details.asp?dbid=11402)
--Schultz, Ron. 2003. Bearing extension (http://arcscripts.esri.com/details.asp?dbid=10310). 
--Jenness, Jeff. 2005. Distance/Azimuth Tools (Version 1.4b), Jenness Enterprises (http://arcscripts.esri.com/details.asp?dbid=13239).
+- Laine, Jarko. 1998. Intersec Script, Novo.  
+- Eichenlaub, Bill. 1998. Profiler Script (Version 1.0), National Park Service.  
+- O’Malley, Kevin. 1999. Two Theme Analyst Extension.  
+- DeLaune, Mike. 2003. XTools Extension, Oregon Department of Forestry.  
+- Martin, Eugene. 1999. Spatial.AlignedGridExtract Script, University of Washington.  
+- Fox, Timothy J. 1998. Nearest Feature Analysis Tool Script, USGS Upper Midwest Environmental Science Center.  
+- Cosmas, Tom. 1999. Table.RenameField Script, New Jersey Department of Environmental Protection.  
+- Schultz, Ron. 2003. Bearing extension.   
+- Jenness, Jeff. 2005. Distance/Azimuth Tools (Version 1.4b), Jenness Enterprises.  
 
+Tim Wade (EPA), Deborah Chaloud (EPA), Megan Culler (EPA Student Services Contractor), Steven Jett (Innovate!, Inc.), Barabara Rosenbaum (EPA), Caroline Erickson (EPA) and Bob Ohman (EPA Senior Environmental Employment Program) wrote the help files for the  many versions of ATtILA.  
 
-Help Files:
------------
-Deborah Chaloud (EPA), Megan Culler (EPA Student Services Contractor), Steven Jett (Innovate!, Inc.), Caroline Erickson (EPA) and Bob Ohman (EPA Senior Environmental Employment Program) assisted with the help files.
+Rose Marie Moore (EPA), Anne Neale (EPA), Jeremy Baynes (EPA), and Barbara Rosenbaum (EPA) gave assistance with overall planning and budgeting.  
 
-Other Contributors:
--------------------
-Rose Marie Moore (EPA) and Barbara Rosenbaum (EPA) helped with coordination and planning of the project. 
+Jeremy Baynes (EPA), Barbara Rosenbaum (EPA), Anne Neale (EPA), Laura Jackson (EPA), Megan Culler (Student Services Contractor), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (Student Services Contractor), Talyor Minich (EPA), and Torrin Hultgren (EPA) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.  
