@@ -60,41 +60,39 @@ INSTALLATION:
     |         |--LandCoverClassifications
 
 
-
-
 3. Start ArcGIS Pro. Open Catalog View or Catalog Pane, and right click on Toolboxes. Click on Add Toolbox. 
     
 4. Navigate to Attila2.tbx, select it and click OK.
 
 5. Check to see if the toolbox installed correctly, i.e., open Toolbox to see tools contained within.
  
--ATtILA Tools
-    -Landscape Characteristics
-        -Core and Edge Metrics
-        -Land Cover Diversity
-        -Land Cover on Slope Proportions
-        -Land Cover Proportions
-        -Neighborhood Proportions
-        -Patch Metrics
-    -People in the Landscape
-        -Facility Land Cover Views
-        -Intersection Density
-        -Land Cover Coefficient Calculator
-        -Population Density Metrics
-        -Population in Floodplain Metrics
-        -Population Land Cover Views
-        -Road Density Metrics
-    -Riparian Characteristics
-        -Floodplain Land Cover Proportions
-        -Riparian Land Cover Proportions
-        -Sample Point Land Cover Proportions
-        -Stream Density Metric
-    -Utilities
-        -Create or Modify Land Cover Classification (.xml)
-        -Identify Overlapping Polygons
-        -Process EnviroAtlas High Resolution Metrics
-        -Process NAVTEQ for EnviroAtlas Analyses
-        -Process NHD for EnviroAtlas Analysis
+    |-ATtILA Tools
+    |    -Landscape Characteristics
+    |        -Core and Edge Metrics
+    |        -Land Cover Diversity
+    |        -Land Cover on Slope Proportions
+    |        -Land Cover Proportions
+    |        -Neighborhood Proportions
+    |        -Patch Metrics
+    |    -People in the Landscape
+    |        -Facility Land Cover Views
+    |        -Intersection Density
+    |        -Land Cover Coefficient Calculator
+    |        -Population Density Metrics
+    |        -Population in Floodplain Metrics
+    |        -Population Land Cover Views
+    |        -Road Density Metrics
+    |    -Riparian Characteristics
+    |        -Floodplain Land Cover Proportions
+    |        -Riparian Land Cover Proportions
+    |        -Sample Point Land Cover Proportions
+    |        -Stream Density Metric
+    |    -Utilities
+    |        -Create or Modify Land Cover Classification (.xml)
+    |        -Identify Overlapping Polygons
+    |        -Process EnviroAtlas High Resolution Metrics
+    |        -Process NAVTEQ for EnviroAtlas Analyses
+    |        -Process NHD for EnviroAtlas Analysis
 		
 
 NOTE: To make the ATtILA for ArcGIS Pro toolbox available to all new projects, right-click on the toolbox and select 'Add to New Projects'. This will add a link to ATtILA for ArcGIS Pro toolbox in project favorites. For more details on accessing ATtILA this way, see 'Project favorites' in ArcGIS Pro's Online Help.
