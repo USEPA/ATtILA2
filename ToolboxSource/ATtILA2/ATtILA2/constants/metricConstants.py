@@ -161,7 +161,7 @@ class lcdConstants(baseMetricConstants):
 class lcospConstants(baseMetricConstants):
     name = "LandCoverOnSlopeProportions"
     shortName = "lcosp"
-    fieldSuffix = "SL"
+    fieldSuffix = "_SL"
     fieldPrefix = ""
     overlapName = "LCOSP_OVER"
     totalAreaName = "LCOSP_TOTA"
