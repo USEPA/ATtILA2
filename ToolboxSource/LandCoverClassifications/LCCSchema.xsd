@@ -173,7 +173,9 @@
 		</xs:simpleType>
 	</xs:attribute>
     <xs:attribute type="xs:string" name="Name" use="optional"/>
+	<xs:attribute type="xs:string" name="caemField" use="optional"/>
 	<xs:attribute type="xs:string" name="flcpField" use="optional"/>
+	<xs:attribute type="xs:string" name="flcvField" use="optional"/>
     <xs:attribute type="xs:string" name="lcpField" use="optional"/>
     <xs:attribute type="xs:string" name="rlcpField" use="optional"/>
     <xs:attribute type="xs:string" name="lcospField" use="optional"/>

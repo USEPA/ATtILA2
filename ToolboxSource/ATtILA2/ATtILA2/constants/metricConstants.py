@@ -36,7 +36,7 @@ class caemConstants(baseMetricConstants):
         ]
     # This metric is comprised of several output fields. Fieldname override option 
     # is not available to the user
-    fieldOverrideKey = ""
+    fieldOverrideKey = shortName + gc.fieldOverrideName
     coreSuffix = "_COR"
     edgeSuffix = "_EDG"
     additionalSuffixes = [coreSuffix, edgeSuffix]
@@ -87,7 +87,7 @@ class flcvConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
-    #fieldOverrideKey = shortName + gc.fieldOverrideName
+    fieldOverrideKey = shortName + gc.fieldOverrideName
     lcpFieldSuffix = ""
     lcpFieldPrefix = "p"
     lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultIntegerFieldType, 6, 1]
@@ -137,7 +137,8 @@ class lcccConstants(baseMetricConstants):
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6]
         ]    
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    # Output field names are fixed. Field name override option is not available to the user.   
+    fieldOverrideKey = ""
     perUnitAreaMetrics = ("NITROGEN", "PHOSPHORUS")
     percentageMetrics = ("IMPERVIOUS")
 
@@ -155,7 +156,8 @@ class lcdConstants(baseMetricConstants):
     qaCheckFieldParameters = [
                               [overlapName, gc.defaultIntegerFieldType, 6]
                               ]
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    # Output field names are fixed. Field name override option is not available to the user.
+    fieldOverrideKey = ""
     fixedMetricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
 
 class lcospConstants(baseMetricConstants):
@@ -258,7 +260,7 @@ class pdmConstants(baseMetricConstants):
     optionalFilter = [gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    fieldOverrideKey = ""
     areaFieldname = "AREAKM2"
     populationDensityFieldName = "POPDENS"
     populationChangeFieldName = "POPCHG"
@@ -401,7 +403,7 @@ class rdmConstants(baseMetricConstants):
     optionalFilter = [gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    fieldOverrideKey = ""
     areaFieldname = "AREAKM2"
     roadDensityFieldName = "RDDENS"
     roadLengthFieldName = "RDKM"
@@ -433,7 +435,7 @@ class sdmConstants(baseMetricConstants):
     optionalFilter = [gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
-    fieldOverrideKey = shortName + gc.fieldOverrideName
+    fieldOverrideKey = ""
     areaFieldname = "AREAKM2"
     lineLengthFieldName = "STRMKM"
     lineDensityFieldName = "STRMDENS"

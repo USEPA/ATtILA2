@@ -19,7 +19,7 @@ class caemToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for CoreAndEdgeMetrics """
     
     filterList = caemConstants.optionalFilter
-#    overrideAttributeName = lccConstants.XmlAttributeCaemField
+    overrideAttributeName = lccConstants.XmlAttributeCaemField
     fieldPrefix = caemConstants.fieldPrefix
     fieldSuffix = caemConstants.fieldSuffix    
     metricShortName = caemConstants.shortName
@@ -37,7 +37,7 @@ class flcvToolValidator(BaseValidators.ProportionsValidator):
     """ToolValidator for Facility Land Cover Views"""
       
     filterList = flcvConstants.optionalFilter
-    #overrideAttributeName = lccConstants.XmlAttributeFlcvField
+    overrideAttributeName = lccConstants.XmlAttributeFlcvField
     fieldPrefix = flcvConstants.fieldPrefix
     fieldSuffix = flcvConstants.fieldSuffix
     metricShortName = flcvConstants.shortName 

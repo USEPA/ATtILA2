@@ -14,7 +14,7 @@ PredefinedFileDirName = "LandCoverClassifications"
 UserDefinedOptionDescription = "User Defined"
 AutoSaveFileName = "autoSave.xml"
 TimeInterval = 5000     # 1 sec = 1000 millseconds
-overwriteFieldList = ['flcpField', 'lcospField', 'lcpField', 'rlcpField', 'splcpField']
+overwriteFieldList = ['caemField', 'flcpField', 'flcvField', 'lcospField', 'lcpField', 'rlcpField', 'splcpField']
 
 
 # XML Elements
@@ -34,7 +34,9 @@ XmlAttributeId = "Id"
 XmlAttributeName = "Name"
 XmlAttributeDescription = "description"
 XmlAttributeNodata = "excluded"
+XmlAttributeCaemField = "caemField"
 XmlAttributeFlcpField = "flcpField"
+XmlAttributeFlcvField = "flcvField"
 XmlAttributeLcospField = "lcospField"
 XmlAttributeLcpField = "lcpField"
 XmlAttributeRlcpField = "rlcpField"
