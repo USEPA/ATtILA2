@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LCCSchema.xsd">
+<lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="lcc LCCSchema.xsd">
     <metadata>
         <name>CDL / NLCD Hybrid 2016 ALL</name>
         <description>Crop Data Layer/National Land Cover Dataset Hybrid 2016 LAND Land Cover Classification Schema. Unlike typical LAND-designated Land Cover Classification Coding Schemes, in ICELAND, the grid value for PERENNIAL ICE/SNOW (112) is NOT an EXCLUDED value, but is used in the calcuation of land area within a reporting unit. PERENNIAL ICE/SNOW has also been included in the BARREN and NATURAL superclasses. Several new land cover codes were added to the 2016 schema that were not present in 2011 (39, 51, 62, 63, 64, 65, 81, 82, 83, 87, 88). They have been included in appropriate super-classes. </description>
@@ -724,11 +724,11 @@
         * OPTIONAL ATTRIBUTES
         * Name - text, word or phrase describing class
         * filter - text, a string of one or more tool name abbreviations separated by a ";"
-        *        - possible abbreviations are: caem, flcp, lcosp, lcp, pm, rlcp, and splcp
+        *        - possible abbreviations are: caem, flcp, flcv, lcosp, lcp, np, plcv, pm, rlcp, and splcp
         *        - used to exclude the class from the selectable classes in the tool's GUI
         * xxxxField - text, overrides ATtILA-generated field name for output
         *           - where xxxx equals a tool name abbreviation
-        *           - possible abbreviations are: flcp, lcosp, lcp, rlcp, and splcp
+        *           - possible abbreviations are: caem, flcp, flcv, lcosp, lcp, rlcp, and splcp
         *           - a separate xxxxField attribute can exist for each tool
         *           - must conform to the field naming conventions dictated by the output database system
 

@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LCCSchema.xsd">
+<lccSchema xmlns="lcc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="lcc LCCSchema.xsd">
     <metadata>
         <name>CDL / NLCD Hybrid 2016 ALL</name>
         <description>Crop Data Layer/National Land Cover Dataset Hybrid 2016 ALL Land Cover Classification Schema. No raster values except those representing NODATA are excluded from the calculation of reporting unit effective area (i.e., effective area equals the total raster area within a reporting unit).</description>
@@ -724,11 +724,11 @@
         * OPTIONAL ATTRIBUTES
         * Name - text, word or phrase describing class
         * filter - text, a string of one or more tool name abbreviations separated by a ";"
-        *        - possible abbreviations are: caem, flcp, lcosp, lcp, pm, rlcp, and splcp
+        *        - possible abbreviations are: caem, flcp, flcv, lcosp, lcp, np, plcv, pm, rlcp, and splcp
         *        - used to exclude the class from the selectable classes in the tool's GUI
         * xxxxField - text, overrides ATtILA-generated field name for output
         *           - where xxxx equals a tool name abbreviation
-        *           - possible abbreviations are: flcp, lcosp, lcp, rlcp, and splcp
+        *           - possible abbreviations are: caem, flcp, flcv, lcosp, lcp, rlcp, and splcp
         *           - a separate xxxxField attribute can exist for each tool
         *           - must conform to the field naming conventions dictated by the output database system
 

@@ -34,8 +34,6 @@ class caemConstants(baseMetricConstants):
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15]                                        
         ]
-    # This metric is comprised of several output fields. Fieldname override option 
-    # is not available to the user
     fieldOverrideKey = shortName + gc.fieldOverrideName
     coreSuffix = "_COR"
     edgeSuffix = "_EDG"
