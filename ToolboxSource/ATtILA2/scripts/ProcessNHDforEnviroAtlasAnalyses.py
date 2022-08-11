@@ -211,7 +211,7 @@ def main(_argv):
             # Output Feature Classes
             outStrmLineFC = wsBaseName+"_strmLine"+ext
             outStrmArealFC = wsBaseName+"_strmAreal"+ext
-            outStrmLineNAPFC = wsBaseName+"strmLineNAP"+ext
+            outStrmLineNAPFC = wsBaseName+"_strmLineNAP"+ext
             
             # Intermediary Feature Classes
             outStrmEndsFC = wsBaseName+"_strmEnds"+ext
