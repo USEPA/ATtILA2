@@ -98,7 +98,7 @@ INSTALLATION:
     |        -Floodplain Land Cover Proportions
     |        -Riparian Land Cover Proportions
     |        -Sample Point Land Cover Proportions
-    |        -Stream Density Metric
+    |        -Stream Density Metrics
     |    -Utilities
     |        -Create or Modify Land Cover Classification (.xml)
     |        -Identify Overlapping Polygons
