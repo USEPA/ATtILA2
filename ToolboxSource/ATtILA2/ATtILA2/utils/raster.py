@@ -123,12 +123,17 @@ def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDist
         linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
         bufferFloat = cellSize * (int(inBufferDistance)+1)
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
-        arcpy.Buffer_analysis(inReportingUnitFeature, "in_memory/ru_buffer", bufferDistance, "#", "#", "ALL")
+        # using in_memory to save time doesn't appear to be a viable option when this code is run via the Python window.
+        # arcpy.Buffer_analysis(inReportingUnitFeature, "in_memory/ru_buffer", bufferDistance, "#", "#", "ALL")
+        clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
+        clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
         
     # Clipping input grid to desired extent...
     if inBufferDistance:
-        clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName,"in_memory/ru_buffer", "", "NONE")
-        arcpy.Delete_management("in_memory")
+        # clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName,"in_memory/ru_buffer", "", "NONE")
+        clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, clipBuffer, "", "NONE")
+        # arcpy.Delete_management("in_memory")
+        arcpy.Delete_management(clipBuffer)
     else:
         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, inReportingUnitFeature, "", "NONE")
     
