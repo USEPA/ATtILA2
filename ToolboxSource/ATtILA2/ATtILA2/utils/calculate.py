@@ -860,6 +860,9 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                 squery = "%s = '%s'" % (delimitedField, str(aZone))
             
             #Create a feature layer of the single reporting unit
+            if arcpy.Exists("subwatersheds_Layer"):
+                # delete the layer in case the geoprocessing overwrite output option is turned off
+                arcpy.Delete_management("subwatersheds_Layer")
             arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery)
             
             #Set the geoprocessing extent to just the extent of the selected reporting unit
@@ -867,11 +870,14 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             arcpy.CopyFeatures_management("subwatersheds_Layer", selectedRUName)
     
             #Tabulate areas of patches within single reporting unit
+            if arcpy.Exists("temptable"):
+                # delete the temp table in case the geoprocessing overwrite output option is turned off
+                arcpy.Delete_management("temptable")
             tabareaTable = "temptable"
             arcpy.sa.TabulateArea(selectedRUName, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
             
             #Delete the single reporting unit feature layer
-            arcpy.Delete_management("subWatersheds_Layer")
+            arcpy.Delete_management("subwatersheds_Layer")
             arcpy.Delete_management(selectedRUName)
             
             rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
@@ -919,7 +925,11 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                 
             resultsDict[aZone] = (proportion,numpatch,avepatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
             
-            arcpy.Delete_management(tabareaTable)
+            if arcpy.Exists(selectedRUName):
+                arcpy.Delete_management(selectedRUName)
+            
+            if arcpy.Exists(tabareaTable):
+                arcpy.Delete_management(tabareaTable)
             
             loopProgress.update()
             

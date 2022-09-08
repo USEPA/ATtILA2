@@ -902,11 +902,10 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             
             # Clip the selected patches to the reporting unit boundary
             # clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, clipPolyDiss)
-            if arcpy.Exists("in_memory/clipPolyDiss"):
+            if arcpy.Exists("clipPolyDiss"):
                 # delete the layer in case the geoprocessing overwrite output option is turned off
-                arcpy.Delete_management("in_memory/clipPolyDiss")
-                
-            clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, "in_memory/clipPolyDiss")
+                arcpy.Delete_management("clipPolyDiss")    
+            clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, "clipPolyDiss")
 
             # Determine the number of patches found in this reporting unit using this script's methodology
             totalNumPatches = int(arcpy.GetCount_management(clipPolyDissFeature).getOutput(0))
@@ -924,10 +923,12 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
                 # Try to correct with a second dissolve using only the clipped polygons within the reporting unit
                 
                 #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-                arcpy.Dissolve_management(clipPolyDissFeature, "in_memory/wshed_Polygons_Diss","gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+                if arcpy.Exists("wshed_Polygons_Diss"):
+                    arcpy.Delete_management("wshed_Polygons_Diss")
+                arcpy.Dissolve_management(clipPolyDissFeature, "wshed_Polygons_Diss","gridcode","#", "MULTI_PART","DISSOLVE_LINES")
                  
                 #Create a feature layer of the newly dissolved patches
-                arcpy.MakeFeatureLayer_management("in_memory/wshed_Polygons_Diss", "FinalPatch_diss_Layer")
+                arcpy.MakeFeatureLayer_management("wshed_Polygons_Diss", "FinalPatch_diss_Layer")
                 
                 # Re-evaluate the number of patches within the reporting unit
                 totalNumPatches = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
@@ -938,7 +939,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
                 
                 if totalNumPatches != pmPatches:
                     # Alert the user that the problem was not corrected
-                    arcpy.AddWarning("Possible error in the number of patches foud in " + str(aZone) +" \n" + \
+                    arcpy.AddWarning("Possible error in the number of patches found in " + str(aZone) +" \n" + \
                                      "Calculated value for MDCP for this reporting unit is suspect")
              
             #Get total number of patches and calculate the mean distance
@@ -978,6 +979,14 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         # delete the single reporting unit layer
         arcpy.Delete_management(aReportingUnitLayer)
         
+        # clean up temporary files
+        if arcpy.Exists(clipPolyDissFeature):
+            arcpy.Delete_management(clipPolyDissFeature)
+        if arcpy.Exists("wshed_Polygons_Diss"):
+            arcpy.Delete_management("wshed_Polygons_Diss")
+        if arcpy.Exists("FinalPatch_diss_Layer"):
+            arcpy.Delete_management("FinalPatch_diss_Layer")
+        
         mdcpLoopProgress.update()
         
     if noPatches > 0:
@@ -987,6 +996,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         arcpy.AddWarning("%s reporting units contained a single patch. MDCP was set to 0 for these units." % (str(singlePatch)))
         
     arcpy.Delete_management(patchCentroidsLayer)
+    arcpy.Delete_management(patchDissolvedLayer)
               
     return resultDict
 
