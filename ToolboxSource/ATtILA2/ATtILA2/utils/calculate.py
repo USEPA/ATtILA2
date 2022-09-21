@@ -9,6 +9,7 @@ from . import messages
 from . import files
 from . import vector
 from . import table
+from future.backports.test.pystone import FALSE
 
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum, excludedValues):
@@ -1186,6 +1187,18 @@ def differenceValue(inTable, totalField, subtratorField, resultField):
     
     # Calculate and record the percent population within view area
     vector.addCalculateField(inTable, resultField, calcExpression, codeBlock)
+    
+def aboveValue(inTable, sourceField, threshold, addedField):
+    # Set up a calculate percentage expression 
+    calcExpression = "getValuePercent(!"+sourceField+"!, "+ threshold + ")"
+    codeBlock = """def getValuePercent(n, d):
+                        if n < d:
+                            return 0
+                        else:
+                            return 1"""
+    
+    # Calculate and record the percent population within view area
+    vector.addCalculateFieldInteger(inTable, addedField, calcExpression, codeBlock)
 
 def belowValue(inTable, sourceField, threshold, addedField):
     # Set up a calculate percentage expression 
@@ -1201,17 +1214,30 @@ def belowValue(inTable, sourceField, threshold, addedField):
         
 
 def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,
-                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict):
+                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict, timer):
     
     import os 
     
-    arcpy.AddMessage("Finding facilities with views below threshold limit for selected class(es)...")
+    # assign some metric constants to variables
+    lowSuffix = metricConst.fieldSuffix
+    highSuffix = metricConst.highSuffix
+    belowSuffix = metricConst.belowFieldSuffix
+    aboveSuffix = metricConst.aboveFieldSuffix
+    cntFldName = metricConst.facilityCountFieldName
+    
+    arcpy.AddMessage("%s Finding facilities with views below threshold limit for selected class(es)..." % (timer.now()))
     for mBaseName in metricsBaseNameList:
         # belowValue(inTable, sourceField, threshold, addedField)
-        belowValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + metricConst.thresholdFieldSuffix)
+        belowValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + belowSuffix)
+        # Find facilities with views at or above threshold limit. This value can be used to check if all facilities have land cover information
+        aboveValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + aboveSuffix)
 
     # attach the reporting unit id's to the land cover proportions table by use of a join
-    tableWithRUID = arcpy.AddJoin_management(facilityLCPTable, "ORIG_FID", facilityRUIDTable, "OBJECTID", "KEEP_ALL")
+   
+    # joining the facilityLCPTable to the facilityRUIDTable will maintain a record for all input facilities. NULL values
+    # will be assigned to any facility that did not have any land cover data (i.e., at least 1 raster cell center) in its
+    # view radius buffer
+    tableWithRUID = arcpy.AddJoin_management(facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID", "KEEP_ALL")
     
     # Make the join permanent by saving the table to a new file
     # Get a unique name with full path for the output features - will default to current workspace:
@@ -1219,10 +1245,12 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
     arcpy.TableToTable_conversion(tableWithRUID, os.path.dirname(facilityLCPTable), os.path.basename(lcpTableWithRUID))
  
-    arcpy.AddMessage("Summarizing facilities with low views by Reporting Unit...")
+    arcpy.AddMessage("%s Summarizing facilities with low views by Reporting Unit..." % (timer.now()))
     stats = []
     for mBaseName in metricsBaseNameList:
-        stats.append([mBaseName + metricConst.thresholdFieldSuffix, "Sum"])
+        stats.append([mBaseName + belowSuffix, "Sum"])
+        
+        stats.append([mBaseName + aboveSuffix, "Sum"])
     
     # Get a unique name with full path for the output features - will default to current workspace:
     namePrefix = metricConst.statsResultTable+viewRadius.split()[0]+"_"
@@ -1236,7 +1264,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
 #     arcpy.AlterField_management(statsResultTable, "FREQUENCY", cntFldName, cntFldName)
 #      
 #     for mBaseName in metricsBaseNameList:
-#         oldFieldName = "SUM_" + mBaseName + metricConst.thresholdFieldSuffix
+#         oldFieldName = "SUM_" + mBaseName + metricConst.belowFieldSuffix
 #         newFieldName = metricsFieldnameDict[mBaseName][0]
 #         arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
 #    
@@ -1244,6 +1272,8 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
 
     # Use the try: finally: section of code when INFO tables are possible as outputs.
     try:
+        setWarning = False
+        
         # Create the search cursor to query the contents of the BELOW THRESHOLD statistics table
         inTableRows = arcpy.SearchCursor(statsResultTable)
         
@@ -1258,18 +1288,39 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
             outTableRow.setValue(reportingUnitIdField, inRow.getValue(reportingUnitIdField))
    
             # set the number of facilities in the reporting unit in the output row 
-            outTableRow.setValue(metricConst.facilityCountFieldName, inRow.getValue("FREQUENCY"))
+            facilityCount = inRow.getValue("FREQUENCY")
+            outTableRow.setValue(cntFldName, facilityCount)
             
-            # set the number of facilities in the reporting unit with below threshold views in the output row
-            # do this for each selected metric class 
+            # set the number of facilities in the reporting unit with below threshold views and above threshold views
+            # in the output row. Do this for each selected metric class 
             for mBaseName in metricsBaseNameList:
                 metricFieldName = metricsFieldnameDict[mBaseName][0]
-                statsFieldName = "SUM_" + mBaseName + metricConst.thresholdFieldSuffix
-                outTableRow.setValue(metricFieldName, inRow.getValue(statsFieldName))
+                
+                # assemble the name for the high count field    
+                outClassName = metricsFieldnameDict[mBaseName][1]
+                highFieldName = metricConst.highField[0]+outClassName+metricConst.highField[1]
+        
+                belowStatsFieldName = "SUM_" + mBaseName + belowSuffix
+                lowValue = inRow.getValue(belowStatsFieldName)
+                outTableRow.setValue(metricFieldName, lowValue )
+                
+                aboveStatsFieldName = "SUM_" + mBaseName + aboveSuffix
+                highValue = inRow.getValue(aboveStatsFieldName)
+                outTableRow.setValue(highFieldName, highValue)
    
             # commit the row to the output table
             outTableRows.insertRow(outTableRow)
-                
+            
+            if (lowValue + highValue != facilityCount):
+                setWarning = True
+        
+        if (setWarning):
+            arcpy.AddWarning("One or more facilities did not have land cover data within its view radius. "\
+                             "Check that the view radius is sufficiently large enough to contain at least one cell center "\
+                             "of the land cover grid or that the land cover raster extends beneath all facility features. "\
+                             "Problematic reporting units have a value in the "+ cntFldName +" field higher than the sum "\
+                             "of the values in the '"+ lowSuffix +"' and '"+ highSuffix +"' fields.")
+                   
     finally:
         
         # delete cursor and row objects to remove locks on the data

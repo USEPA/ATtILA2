@@ -89,7 +89,8 @@ class flcvConstants(baseMetricConstants):
     lcpFieldSuffix = ""
     lcpFieldPrefix = "p"
     lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultIntegerFieldType, 6, 1]
-    thresholdFieldSuffix = "_Below"
+    belowFieldSuffix = "_Below"
+    aboveFieldSuffix = "_Above"
     facilityCopyName = shortName+"_Facility"
     facilityWithRUIDName = shortName+"_FacilityRUID"
     viewBufferName = shortName+"_ViewBuffer"
@@ -99,6 +100,10 @@ class flcvConstants(baseMetricConstants):
     facilityCountFieldName = "FAC_Count"
     facilityCountField = [facilityCountFieldName,"LONG",None, 10]
     singleFields = [facilityCountField]
+    highSuffix = "_High"
+    additionalSuffixes = [highSuffix]
+    highField = ["", highSuffix, gc.defaultDecimalFieldType, 6, 1]
+    additionalFields = [highField]
     
 class idConstants(baseMetricConstants):
     name = "IntersectionDensity"
