@@ -1516,7 +1516,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
         desc = arcpy.Describe(inReportingUnitFeature)
-        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(timer.now() + " Creating temporary copy of " + desc.name)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
