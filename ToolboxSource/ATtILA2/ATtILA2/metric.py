@@ -401,7 +401,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                     
             def _housekeeping(self):
                 # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
-        
+            
                 # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
                 settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict)
                 # alert user if the land cover grid has values undefined in the LCC XML file
@@ -410,16 +410,19 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                 settings.checkGridCellDimensions(self.inLandCoverGrid)
                 # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
                 self.outIdField = settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
-        
+            
                 # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
                 self.zoneAreaDict = None
                 if self.addQAFields:
                     AddMsg(self.timer.now() + " Tabulating the area of the floodplains within each reporting unit...")
                     fpTabAreaTable = files.nameIntermediateFile([self.metricConst.fpTabAreaName, "Dataset"], self.cleanupList)   
-                    
+            
                     arcpy.sa.TabulateArea(self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize)
-
-                    self.zoneAreaDict = table.getIdValueDict(fpTabAreaTable, self.reportingUnitIdField, "VALUE_1")
+            
+                    # self.zoneAreaDict = table.getIdValueDict(fpTabAreaTable, self.reportingUnitIdField, "VALUE_1")
+                    # This new techniques allows the use of all non-zero values in a grid to designate floodplain areas instead of just '1'. 
+                    self.excludedValueFields = ["VALUE_0"]
+                    self.zoneAreaDict = table.getZoneSumValueDict(fpTabAreaTable, self.reportingUnitIdField, self.excludedValueFields)
                                     
                      
         class metricCalcFLCPPolygon(metricCalc):

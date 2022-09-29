@@ -206,6 +206,53 @@ def getIdValueDict(inTable, keyField, valueField):
         zoneValueDict[key] = (value)
 
     return zoneValueDict
+
+
+def getZoneSumValueDict(inTable, keyField, excludedValueFields):
+    """ Generates a dictionary with the sum value of specific VALUE fields in a table keyed to the table's ID field entry
+
+        **Description:**
+        
+        Generates a dictionary with the sum value from all specified fields in a table keyed to the table's ID field entry.  No 
+        check is made for duplicate keys. The value for the last key encountered will be present in the dictionary.
+        
+        
+        **Arguments:**
+        
+        * *inTable* - Table containing an ID field and one or more Value fields. Assumes one record per ID.
+        * *keyField* - Unique ID field
+        * *excludedValueFields* - A list containing field names not to be included in the summing
+        
+        
+        **Returns:** 
+        
+        * dict - The item from keyField is the key and the value field entry is the sum total of selected fields
+
+        
+    """  
+    
+    valueFieldPrefix = "VALUE_"
+    zoneSumValueDict = {}
+    tabAreaValueFields = arcpy.ListFields(inTable, valueFieldPrefix + "*" )
+    
+    # initialize the total value
+    valueTotal = 0
+    
+    rows = arcpy.SearchCursor(inTable)
+    for row in rows:
+        key = row.getValue(keyField)
+
+        for aFld in tabAreaValueFields:
+            if aFld.name not in excludedValueFields:
+                valueTotal += row.getValue(aFld.name)
+
+        zoneSumValueDict[key] = (valueTotal)
+       
+        # reset the total value to zero 
+        valueTotal = 0
+        
+    return zoneSumValueDict
+        
         
 
 def fullNameTruncation(outputFldName, maxFieldNameSize, outputFieldNames):
