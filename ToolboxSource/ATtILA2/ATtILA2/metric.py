@@ -830,7 +830,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             
             caemCalc.metricsBaseNameList = metricsBaseNameList
 
-            #delet the intermediate raster if save intermediates option is not chosen 
+            #delete the intermediate raster if save intermediates option is not chosen 
             if caemCalc.saveIntermediates:
                 pass
             else:
@@ -1645,8 +1645,16 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
                 # PopulationRaster. The snap raster, and cell size have already been set to match the census raster
                 AddMsg(timer.now() + " Setting non-floodplain areas to NULL")
                 delimitedVALUE = arcpy.AddFieldDelimiters(inFloodplainDataset,"VALUE")
-                whereClause = delimitedVALUE+" <> 1"
+                # whereClause = delimitedVALUE+" <> 1"
+                whereClause = delimitedVALUE+" = 0"
                 inCensusDataset = arcpy.sa.SetNull(inFloodplainDataset, inCensusDataset, whereClause)
+                
+                if globalConstants.intermediateName in processed:
+                    namePrefix = "%s_" % (metricConst.floodplainPopName)
+                    scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+                    inCensusDataset.save(scratchName)
+                    AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+                    
                  
             else: # floodplain feature is a polygon
                 # Assign the reporting unit ID to intersecting floodplain polygon segments using Identity
@@ -1701,7 +1709,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
                 # Convert the Raster floodplain to Polygon
                 AddMsg(timer.now() + " Converting floodplain raster to a polygon feature")
                 delimitedVALUE = arcpy.AddFieldDelimiters(inFloodplainDataset,"VALUE")
-                whereClause = delimitedVALUE+" <> 1"
+                whereClause = delimitedVALUE+" = 0"
                 nullGrid = arcpy.sa.SetNull(inFloodplainDataset, 1, whereClause)
                 tempName = "%s_%s" % (metricConst.shortName, descFldpln.baseName + "_Poly")
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)

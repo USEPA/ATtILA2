@@ -287,6 +287,7 @@ class pifmConstants(baseMetricConstants):
     # populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
     populationCountFieldNames = ["RU_POP", "FP_POP_C"]
     popCntTableName = shortName+"_populationCnt"
+    floodplainPopName = shortName+"_populationFP"
 
 class pmConstants(baseMetricConstants):
     name = "PatchMetrics"
