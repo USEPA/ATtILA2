@@ -141,6 +141,6 @@ Tim Wade (EPA), Deborah Chaloud (EPA), Megan Culler (EPA Student Services Contra
 
 Rose Marie Moore (EPA), Anne Neale (EPA), Jeremy Baynes (EPA), and Barbara Rosenbaum (EPA) gave assistance with overall planning and budgeting.  
 
-Jeremy Baynes (EPA), Barbara Rosenbaum (EPA), Anne Neale (EPA), Laura Jackson (EPA), Megan Culler (Student Services Contractor), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (Student Services Contractor), Talyor Minich (EPA), and Torrin Hultgren (EPA) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.  
+Molly Jenkins (ORISE Participant) provided invaluable assistance with ATtILA's webpage and graphic design.
 
-Molly Jenkins (EPA) provided invaluable assistance with ATtILA's webpage and graphic design.
+Jeremy Baynes (EPA), Barbara Rosenbaum (EPA), Anne Neale (EPA), Laura Jackson (EPA), Megan Culler (Student Services Contractor), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (Student Services Contractor), Talyor Minich (EPA), and Torrin Hultgren (EPA) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.  
