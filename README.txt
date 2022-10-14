@@ -6,7 +6,7 @@ Analytical Tools Interface for Landscape Assessments for ArcGIS Pro (ATtILA for 
 version 2.0
 ---------------
 
-06-14-2022 
+10-14-2022 
 
 This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see ATtILA's wiki located at https://github.com/USEPA/ATtILA2/wiki.
 
@@ -44,7 +44,7 @@ When this document review is complete and the comments are incorporated, then th
 Installing ATtILA
 ------------------
 
-This README provides basic information on installing ATtILA for ArcGIS Pro. For more detailed instructions on installing and using custom toolboxes in ArcGIS Pro, please see 'Connect to a toolbox' in ArcGIS Pro's Online Help.  New users should read through this wiki at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS Pro processes.
+This README provides basic information on installing ATtILA for ArcGIS Pro using the downloadable zip file available at https://www.epa.gov/enviroatlas/attila-toolbox. For more detailed instructions on installing and using custom toolboxes in ArcGIS Pro, please see 'Connect to a toolbox' in ArcGIS Pro's Online Help.  New users should read through this wiki at least once to familiarize themselves with potential pitfalls associated with spatial data, ArcGIS limitations, or ATtILA for ArcGIS Pro processes.
 
 REQUIREMENTS:
 -------------
@@ -74,11 +74,11 @@ INSTALLATION:
 
 3. Start ArcGIS Pro. Open Catalog View or Catalog Pane, and right click on Toolboxes. Click on Add Toolbox. 
     
-4. Navigate to Attila2.tbx, select it and click OK.
+4. Navigate to ATtILA tbx, select it and click OK.
 
 5. Check to see if the toolbox installed correctly, i.e., open Toolbox to see tools contained within.
  
-    |-ATtILA Tools
+    |-ATtILA
     |    -Landscape Characteristics
     |        -Core and Edge Metrics
     |        -Land Cover Diversity
@@ -102,9 +102,9 @@ INSTALLATION:
     |    -Utilities
     |        -Create or Modify Land Cover Classification (.xml)
     |        -Identify Overlapping Polygons
-    |        -Process EnviroAtlas High Resolution Metrics
     |        -Process NAVTEQ for EnviroAtlas Analyses
     |        -Process NHD for EnviroAtlas Analysis
+	|    -Online Help
 		
 
 NOTE: To make the ATtILA for ArcGIS Pro toolbox available to all new projects, right-click on the toolbox and select 'Add to New Projects'. This will add a link to ATtILA for ArcGIS Pro toolbox in project favorites. For more details on accessing ATtILA this way, see 'Project favorites' in ArcGIS Pro's Online Help.
@@ -116,10 +116,10 @@ Contact
 Please report bugs and forward comments to: https://ecomments.epa.gov/enviroatlas/ and include “ATtILA” in the subject line.
 
 ----------------
-Acknowledgements
+Credits
 ----------------
 
-Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (EPA), BaoHong Ji (EPA), and Torrin Hultgren (EPA), with special assistance from Ellen D'Amico (Dynamac Corporation), and Doug Browning (EPA Student Services Contractor).
+Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (EPA), Baohong Ji (EPA), and Torrin Hultgren (EPA), with special assistance from Ellen D'Amico (Dynamac Corporation), and Doug Browning (EPA Student Services Contractor).
 
 David Gottlieb (EPA Student Services Contractor) wrote the code for the Land Cover Coding Editor.
 
@@ -142,3 +142,5 @@ Tim Wade (EPA), Deborah Chaloud (EPA), Megan Culler (EPA Student Services Contra
 Rose Marie Moore (EPA), Anne Neale (EPA), Jeremy Baynes (EPA), and Barbara Rosenbaum (EPA) gave assistance with overall planning and budgeting.  
 
 Jeremy Baynes (EPA), Barbara Rosenbaum (EPA), Anne Neale (EPA), Laura Jackson (EPA), Megan Culler (Student Services Contractor), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (Student Services Contractor), Talyor Minich (EPA), and Torrin Hultgren (EPA) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.  
+
+Molly Jenkins (EPA) provided invaluable assistance with ATtILA's webpage and graphic design.
