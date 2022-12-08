@@ -921,41 +921,6 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                 # Generate a default filename for the buffer feature class
                 self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
                 
-                # # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the effective area 
-                # # (i.e., land area if water areas are excluded) within each initial Reporting Unit feature. Use it to calculate what percentage 
-                # # of the reporting unit's effective area is within the replacement reporting unit boundaries (e.g., 18% of the effective area 
-                # # within the reporting unit is in the riparian buffer zone)
-                #
-                # if self.addQAFields:
-                #     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
-                #     self.lccValuesDict = self.lccObj.values
-                #     # Get the grid values for the input land cover grid
-                #     self.landCoverValues = raster.getRasterValues(self.inLandCoverGrid)
-                #     # get the list of excluded values that are found in the input land cover raster
-                #     self.excludedValuesList = self.lccValuesDict.getExcludedValueIds().intersection(self.landCoverValues)
-                #
-                #     if len(self.excludedValuesList) > 0:
-                #         AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % self.timer.now())
-                #         # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
-                #         if self.saveIntermediates:
-                #             self.ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
-                #         self.ruAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
-                #                               self.inLandCoverGrid, self.ruTableName, self.lccObj)
-                #
-                #         self.reportingUnitAreaDict = {}
-                #         for ruAreaTableRow in self.ruAreaTable:
-                #             key = ruAreaTableRow.zoneIdValue
-                #             area = ruAreaTableRow.effectiveArea
-                #
-                #             self.reportingUnitAreaDict[key] = area
-                #
-                #     else:
-                #         AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % self.timer.now())
-                #         # settings.getOutputSpatialReference will return either the environment outputCoordinateSystem if one is set or the spatial reference of the dataset parameter    
-                #         self.outputSpatialRef = settings.getOutputSpatialReference(self.inLandCoverGrid)
-                #         self.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
-                    
-
                 # Generate the buffer area to use in the metric calculation
                 if enforceBoundary == "true":
                     self.inReportingUnitFeature, self.cleanupList = vector.bufferFeaturesByIntersect(self.inStreamFeatures,
@@ -980,41 +945,6 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.enforceBoundary = enforceBoundary
 
         rlcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
-        
-        # # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the effective area 
-        # # (i.e., land area if water areas are excluded) within each initial Reporting Unit feature. Use it to calculate what percentage 
-        # # of the reporting unit's effective area is within the replacement reporting unit boundaries (e.g., 18% of the effective area 
-        # # within the reporting unit is in the riparian buffer zone)
-        #
-        # if rlcpCalc.addQAFields:
-        #     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
-        #     lccValuesDict = rlcpCalc.lccObj.values
-        #     # Get the grid values for the input land cover grid
-        #     landCoverValues = raster.getRasterValues(inLandCoverGrid)
-        #     # get the list of excluded values that are found in the input land cover raster
-        #     excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
-        #
-        #     if len(excludedValuesList) > 0:
-        #         AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
-        #         # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
-        #         if rlcpCalc.saveIntermediates:
-        #             ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
-        #         else:
-        #             ruTableName = None
-        #         ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, rlcpCalc.lccObj)
-        #
-        #         rlcpCalc.reportingUnitAreaDict = {}
-        #         for ruAreaTableRow in ruAreaTable:
-        #             key = ruAreaTableRow.zoneIdValue
-        #             area = ruAreaTableRow.effectiveArea
-        #
-        #             rlcpCalc.reportingUnitAreaDict[key] = area
-        #
-        #     else:
-        #         AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
-        #         # settings.getOutputSpatialReference will return either the environment outputCoordinateSystem if one is set or the spatial reference of the dataset parameter    
-        #         outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
-        #         rlcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
         
         # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
         # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
@@ -1140,41 +1070,6 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         splcpCalc.ruLinkField = ruLinkField
         splcpCalc.enforceBoundary = enforceBoundary
         splcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
-        
-        # # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the effective area 
-        # # (i.e., land area if water areas are excluded) within each initial Reporting Unit feature. Use it to calculate what percentage 
-        # # of the reporting unit's effective area is within the replacement reporting unit boundaries (e.g., 18% of the effective area 
-        # # within the reporting unit is in the riparian buffer zone)
-        #
-        # if splcpCalc.addQAFields:
-        #     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
-        #     lccValuesDict = splcpCalc.lccObj.values
-        #     # Get the grid values for the input land cover grid
-        #     landCoverValues = raster.getRasterValues(inLandCoverGrid)
-        #     # get the list of excluded values that are found in the input land cover raster
-        #     excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
-        #
-        #     if len(excludedValuesList) > 0:
-        #         AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
-        #         # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
-        #         if splcpCalc.saveIntermediates:
-        #             ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
-        #         else:
-        #             ruTableName = None
-        #         ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, splcpCalc.lccObj)
-        #
-        #         splcpCalc.reportingUnitAreaDict = {}
-        #         for ruAreaTableRow in ruAreaTable:
-        #             key = ruAreaTableRow.zoneIdValue
-        #             area = ruAreaTableRow.effectiveArea
-        #
-        #             splcpCalc.reportingUnitAreaDict[key] = area
-        #
-        #     else:
-        #         AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
-        #         # settings.getOutputSpatialReference will return either the environment outputCoordinateSystem if one is set or the spatial reference of the dataset parameter    
-        #         outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
-        #         splcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
         
         # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
         # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
