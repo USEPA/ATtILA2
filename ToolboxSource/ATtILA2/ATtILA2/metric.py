@@ -462,15 +462,51 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         flcpCalc.nullValuesList = [0] # List of values in the binary floodplain grid to set to null
         flcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
         
-        
+        # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
+        # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
+        # are tagged as excluded, these values are identical. Use this dictionary to calculate 1) what percentage of the reporting unit's effective area 
+        # is within the replacement reporting unit boundaries (e.g., 18% of the effective area within the reporting unit is in the riparian buffer zone), and
+        # 2) the overall percentage of the reporting unit that is within the buffer area (e.g., 25% of the reporting unit is in the riparian buffer zone).
         if flcpCalc.addQAFields:
-            # Before generating the replacement reporting unit feature, get a dictionary of the areas for the initial Reporting Unit features. 
-            # Use it to calculate the percent area covered by the replacement reporting unit (e.g., 18% of the reporting unit is riparian buffer)
-            # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
-            # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
-            # area of the reporting unit's polygon features to store in the zoneAreaDict
+            # First generate the dictionary with the RU ID as the key and the vector measurement of the reporting unit area as its value. 
             outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
-            flcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)        
+            flcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+            
+            # Now alter the dictionary's value to be a list with two values: 
+            # index 0 will be the vector measure of the reporting unit polygon, and 
+            # index 1 will be the raster measure of the effective area within the reporting unit.
+        
+            # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
+            lccValuesDict = flcpCalc.lccObj.values
+            # Get the grid values for the input land cover grid
+            landCoverValues = raster.getRasterValues(inLandCoverGrid)
+            # get the list of excluded values that are found in the input land cover raster
+            excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+            
+            if len(excludedValuesList) > 0:
+                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
+                # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
+                if flcpCalc.saveIntermediates:
+                    # name the table so that it will be saved
+                    ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
+                else:
+                    ruTableName = None
+                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, flcpCalc.lccObj)
+                
+                for ruAreaTableRow in ruAreaTable:
+                    key = ruAreaTableRow.zoneIdValue
+                    area = ruAreaTableRow.effectiveArea
+                    # make the value of key a list
+                    flcpCalc.reportingUnitAreaDict[key] = [flcpCalc.reportingUnitAreaDict[key]]
+                    flcpCalc.reportingUnitAreaDict[key].append(area)
+            
+            else:
+                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
+                for aKey in flcpCalc.testAreaDict.keys():
+                    area = flcpCalc.reportingUnitAreaDict[aKey]
+                    # make the value of key a list
+                    flcpCalc.reportingUnitAreaDict[aKey] = [flcpCalc.reportingUnitAreaDict[aKey]]
+                    flcpCalc.reportingUnitAreaDict[aKey].append(area)                    
         
 
         # Run Calculation 
@@ -855,12 +891,14 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                             optionalFieldGroups):
     """ Interface for script executing Riparian Land Cover Proportion Metrics """
     try:
+        timer = DateTimer()
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.rlcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
         # append the buffer distance value to the percent buffer field
-        metricConst.qaCheckFieldParameters[4][0] = "%s%s" % (metricConst.pctBufferBase, inBufferDistance.split()[0])
+        metricConst.qaCheckFieldParameters[5][0] = "%s%s" % (metricConst.pctBufferBase, inBufferDistance.split()[0])
+        metricConst.qaCheckFieldParameters[4][0] = "%s%s" % (metricConst.totaPctBase, inBufferDistance.split()[0])
 
         class metricCalcRLCP(metricCalc):
             """ Subclass that overrides buffering function for the RiparianLandCoverProportions calculation """
@@ -883,13 +921,40 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                 # Generate a default filename for the buffer feature class
                 self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
                 
-                # Before generating the replacement reporting unit feature, get a dictionary of the areas for the initial Reporting Unit features. 
-                # Use it to calculate the percent area covered by the replacement reporting unit (e.g., 18% of the reporting unit is riparian buffer)
-                # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
-                # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
-                # area of the reporting unit's polygon features to store in the zoneAreaDict
-                self.outputSpatialRef = settings.getOutputSpatialReference(self.inLandCoverGrid)
-                self.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+                # # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the effective area 
+                # # (i.e., land area if water areas are excluded) within each initial Reporting Unit feature. Use it to calculate what percentage 
+                # # of the reporting unit's effective area is within the replacement reporting unit boundaries (e.g., 18% of the effective area 
+                # # within the reporting unit is in the riparian buffer zone)
+                #
+                # if self.addQAFields:
+                #     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
+                #     self.lccValuesDict = self.lccObj.values
+                #     # Get the grid values for the input land cover grid
+                #     self.landCoverValues = raster.getRasterValues(self.inLandCoverGrid)
+                #     # get the list of excluded values that are found in the input land cover raster
+                #     self.excludedValuesList = self.lccValuesDict.getExcludedValueIds().intersection(self.landCoverValues)
+                #
+                #     if len(self.excludedValuesList) > 0:
+                #         AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % self.timer.now())
+                #         # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
+                #         if self.saveIntermediates:
+                #             self.ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
+                #         self.ruAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
+                #                               self.inLandCoverGrid, self.ruTableName, self.lccObj)
+                #
+                #         self.reportingUnitAreaDict = {}
+                #         for ruAreaTableRow in self.ruAreaTable:
+                #             key = ruAreaTableRow.zoneIdValue
+                #             area = ruAreaTableRow.effectiveArea
+                #
+                #             self.reportingUnitAreaDict[key] = area
+                #
+                #     else:
+                #         AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % self.timer.now())
+                #         # settings.getOutputSpatialReference will return either the environment outputCoordinateSystem if one is set or the spatial reference of the dataset parameter    
+                #         self.outputSpatialRef = settings.getOutputSpatialReference(self.inLandCoverGrid)
+                #         self.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
+                    
 
                 # Generate the buffer area to use in the metric calculation
                 if enforceBoundary == "true":
@@ -915,6 +980,88 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.enforceBoundary = enforceBoundary
 
         rlcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        
+        # # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the effective area 
+        # # (i.e., land area if water areas are excluded) within each initial Reporting Unit feature. Use it to calculate what percentage 
+        # # of the reporting unit's effective area is within the replacement reporting unit boundaries (e.g., 18% of the effective area 
+        # # within the reporting unit is in the riparian buffer zone)
+        #
+        # if rlcpCalc.addQAFields:
+        #     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
+        #     lccValuesDict = rlcpCalc.lccObj.values
+        #     # Get the grid values for the input land cover grid
+        #     landCoverValues = raster.getRasterValues(inLandCoverGrid)
+        #     # get the list of excluded values that are found in the input land cover raster
+        #     excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+        #
+        #     if len(excludedValuesList) > 0:
+        #         AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
+        #         # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
+        #         if rlcpCalc.saveIntermediates:
+        #             ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
+        #         else:
+        #             ruTableName = None
+        #         ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, rlcpCalc.lccObj)
+        #
+        #         rlcpCalc.reportingUnitAreaDict = {}
+        #         for ruAreaTableRow in ruAreaTable:
+        #             key = ruAreaTableRow.zoneIdValue
+        #             area = ruAreaTableRow.effectiveArea
+        #
+        #             rlcpCalc.reportingUnitAreaDict[key] = area
+        #
+        #     else:
+        #         AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
+        #         # settings.getOutputSpatialReference will return either the environment outputCoordinateSystem if one is set or the spatial reference of the dataset parameter    
+        #         outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
+        #         rlcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+        
+        # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
+        # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
+        # are tagged as excluded, these values are identical. Use this dictionary to calculate 1) what percentage of the reporting unit's effective area 
+        # is within the replacement reporting unit boundaries (e.g., 18% of the effective area within the reporting unit is in the riparian buffer zone), and
+        # 2) the overall percentage of the reporting unit that is within the buffer area (e.g., 25% of the reporting unit is in the riparian buffer zone).
+        if rlcpCalc.addQAFields:
+            # First generate the dictionary with the RU ID as the key and the vector measurement of the reporting unit area as its value. 
+            outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
+            rlcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+            
+            # Now alter the dictionary's value to be a list with two values: 
+            # index 0 will be the vector measure of the reporting unit polygon, and 
+            # index 1 will be the raster measure of the effective area within the reporting unit.
+        
+            # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
+            lccValuesDict = rlcpCalc.lccObj.values
+            # Get the grid values for the input land cover grid
+            landCoverValues = raster.getRasterValues(inLandCoverGrid)
+            # get the list of excluded values that are found in the input land cover raster
+            excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+            
+            if len(excludedValuesList) > 0:
+                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
+                # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
+                if rlcpCalc.saveIntermediates:
+                    # name the table so that it will be saved
+                    ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
+                else:
+                    ruTableName = None
+                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, rlcpCalc.lccObj)
+                
+                for ruAreaTableRow in ruAreaTable:
+                    key = ruAreaTableRow.zoneIdValue
+                    area = ruAreaTableRow.effectiveArea
+                    # make the value of key a list
+                    rlcpCalc.reportingUnitAreaDict[key] = [rlcpCalc.reportingUnitAreaDict[key]]
+                    rlcpCalc.reportingUnitAreaDict[key].append(area)
+            
+            else:
+                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
+                for aKey in rlcpCalc.testAreaDict.keys():
+                    area = rlcpCalc.reportingUnitAreaDict[aKey]
+                    # make the value of key a list
+                    rlcpCalc.reportingUnitAreaDict[aKey] = [rlcpCalc.reportingUnitAreaDict[aKey]]
+                    rlcpCalc.reportingUnitAreaDict[aKey].append(area)                    
+        
 
         # Run Calculation
         rlcpCalc.run()      
@@ -935,12 +1082,14 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
     """ Interface for script executing Sample Point Land Cover Proportion Metrics """
 
     try:
+        timer = DateTimer()
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.splcpConstants()
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
         # append the buffer distance value to the percent buffer field
-        metricConst.qaCheckFieldParameters[4][0] = "%s%s" % (metricConst.pctBufferBase, inBufferDistance.split()[0])
+        metricConst.qaCheckFieldParameters[5][0] = "%s%s" % (metricConst.pctBufferBase, inBufferDistance.split()[0])
+        metricConst.qaCheckFieldParameters[4][0] = "%s%s" % (metricConst.totaPctBase, inBufferDistance.split()[0])
 
         class metricCalcSPLCP(metricCalc):
             """ Subclass that overrides specific functions for the SamplePointLandCoverProportions calculation """
@@ -964,14 +1113,6 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
-                
-                # Before generating the replacement reporting unit feature, get a dictionary of the areas for the initial Reporting Unit features. 
-                # Use it to calculate the percent area covered by the replacement reporting unit (e.g., 18% of the reporting unit is riparian buffer)
-                # Check to see if an outputGeorgraphicCoordinate system is set in the environments. If one is not specified
-                # return the spatial reference for the land cover grid. Use the returned spatial reference to calculate the
-                # area of the reporting unit's polygon features to store in the zoneAreaDict
-                self.outputSpatialRef = settings.getOutputSpatialReference(self.inLandCoverGrid)
-                self.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
                 
                 # Buffer the points and use the output as the new reporting units
                 if enforceBoundary == "true":
@@ -999,6 +1140,88 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         splcpCalc.ruLinkField = ruLinkField
         splcpCalc.enforceBoundary = enforceBoundary
         splcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        
+        # # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the effective area 
+        # # (i.e., land area if water areas are excluded) within each initial Reporting Unit feature. Use it to calculate what percentage 
+        # # of the reporting unit's effective area is within the replacement reporting unit boundaries (e.g., 18% of the effective area 
+        # # within the reporting unit is in the riparian buffer zone)
+        #
+        # if splcpCalc.addQAFields:
+        #     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
+        #     lccValuesDict = splcpCalc.lccObj.values
+        #     # Get the grid values for the input land cover grid
+        #     landCoverValues = raster.getRasterValues(inLandCoverGrid)
+        #     # get the list of excluded values that are found in the input land cover raster
+        #     excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+        #
+        #     if len(excludedValuesList) > 0:
+        #         AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
+        #         # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
+        #         if splcpCalc.saveIntermediates:
+        #             ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
+        #         else:
+        #             ruTableName = None
+        #         ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, splcpCalc.lccObj)
+        #
+        #         splcpCalc.reportingUnitAreaDict = {}
+        #         for ruAreaTableRow in ruAreaTable:
+        #             key = ruAreaTableRow.zoneIdValue
+        #             area = ruAreaTableRow.effectiveArea
+        #
+        #             splcpCalc.reportingUnitAreaDict[key] = area
+        #
+        #     else:
+        #         AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
+        #         # settings.getOutputSpatialReference will return either the environment outputCoordinateSystem if one is set or the spatial reference of the dataset parameter    
+        #         outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
+        #         splcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+        
+        # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
+        # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
+        # are tagged as excluded, these values are identical. Use this dictionary to calculate 1) what percentage of the reporting unit's effective area 
+        # is within the replacement reporting unit boundaries (e.g., 18% of the effective area within the reporting unit is in the riparian buffer zone), and
+        # 2) the overall percentage of the reporting unit that is within the buffer area (e.g., 25% of the reporting unit is in the riparian buffer zone).
+        if splcpCalc.addQAFields:
+            # First generate the dictionary with the RU ID as the key and the vector measurement of the reporting unit area as its value. 
+            outputSpatialRef = settings.getOutputSpatialReference(inLandCoverGrid)
+            splcpCalc.reportingUnitAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+            
+            # Now alter the dictionary's value to be a list with two values: 
+            # index 0 will be the vector measure of the reporting unit polygon, and 
+            # index 1 will be the raster measure of the effective area within the reporting unit.
+        
+            # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
+            lccValuesDict = splcpCalc.lccObj.values
+            # Get the grid values for the input land cover grid
+            landCoverValues = raster.getRasterValues(inLandCoverGrid)
+            # get the list of excluded values that are found in the input land cover raster
+            excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+            
+            if len(excludedValuesList) > 0:
+                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
+                # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
+                if splcpCalc.saveIntermediates:
+                    # name the table so that it will be saved
+                    ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
+                else:
+                    ruTableName = None
+                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, splcpCalc.lccObj)
+                
+                for ruAreaTableRow in ruAreaTable:
+                    key = ruAreaTableRow.zoneIdValue
+                    area = ruAreaTableRow.effectiveArea
+                    # make the value of key a list
+                    splcpCalc.reportingUnitAreaDict[key] = [splcpCalc.reportingUnitAreaDict[key]]
+                    splcpCalc.reportingUnitAreaDict[key].append(area)
+            
+            else:
+                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
+                for aKey in splcpCalc.testAreaDict.keys():
+                    area = splcpCalc.reportingUnitAreaDict[aKey]
+                    # make the value of key a list
+                    splcpCalc.reportingUnitAreaDict[aKey] = [splcpCalc.reportingUnitAreaDict[aKey]]
+                    splcpCalc.reportingUnitAreaDict[aKey].append(area)                    
+        
 
         # Run Calculation
         splcpCalc.run()

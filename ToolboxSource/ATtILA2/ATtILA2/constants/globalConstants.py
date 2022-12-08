@@ -19,6 +19,7 @@ defaultAreaFieldType = "DOUBLE"
 fieldOverrideName = "Field"
 metricNameTooLong = "Provided metric name too long for output location. Truncated {0} to {1} "
 tabulateAreaTableAbbv = "_TabArea"
+ruTabulateAreaTableAbbv = "_TabAreaRU"
 scratchGDBFilename = "attilaScratchWorkspace.gdb"
 # These are the extensions Esri recognizes as rasters. They may not all be acceptable when saving a calculated grid. Tools
 # such as Intersection Density can only save its output with ".img", or ".tif" extensions when saving to a folder. An 

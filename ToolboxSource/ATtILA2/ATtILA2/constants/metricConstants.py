@@ -52,8 +52,11 @@ class flcpConstants(baseMetricConstants):
     effectiveAreaName = "FLCP_EFFA"
     excludedAreaName = "FLCP_EXCA"
     pctBufferSuffix = ""
-    pctBufferBase = "%s_PCT" % shortName.upper()
+    pctBufferBase = "%sEFFA" % fieldPrefix
     pctBufferName = "%s%s" % (pctBufferBase, pctBufferSuffix)
+    totaPctSuffix = ""
+    totaPctBase = "%sTOTA" % fieldPrefix
+    totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -61,6 +64,7 @@ class flcpConstants(baseMetricConstants):
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15],
+        [totaPctName, gc.defaultDecimalFieldType, 6, 1],
         [pctBufferName, gc.defaultDecimalFieldType, 6, 1]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
@@ -382,8 +386,11 @@ class rlcpConstants(baseMetricConstants):
     effectiveAreaName = "RLCP_EFFA"
     excludedAreaName = "RLCP_EXCA"
     pctBufferSuffix = ""
-    pctBufferBase = "%sBUFF" % fieldPrefix
+    pctBufferBase = "%sEFFA" % fieldPrefix
     pctBufferName = "%s%s" % (pctBufferBase, pctBufferSuffix)
+    totaPctSuffix = ""
+    totaPctBase = "%sTOTA" % fieldPrefix
+    totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -391,6 +398,7 @@ class rlcpConstants(baseMetricConstants):
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15],
+        [totaPctName, gc.defaultDecimalFieldType, 6, 1],
         [pctBufferName, gc.defaultDecimalFieldType, 6, 1]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
@@ -455,8 +463,11 @@ class splcpConstants(baseMetricConstants):
     effectiveAreaName = "SPLCP_EFFA"
     excludedAreaName = "SPLCP_EXCA"
     pctBufferSuffix = ""
-    pctBufferBase = "%sBUFF" % fieldPrefix
+    pctBufferBase = "%sEFFA" % fieldPrefix
     pctBufferName = "%s%s" % (pctBufferBase, pctBufferSuffix)
+    totaPctSuffix = ""
+    totaPctBase = "%sTOTA" % fieldPrefix
+    totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -464,6 +475,7 @@ class splcpConstants(baseMetricConstants):
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15],
+        [totaPctName, gc.defaultDecimalFieldType, 6, 1],
         [pctBufferName, gc.defaultDecimalFieldType, 6, 1]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName

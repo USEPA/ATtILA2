@@ -84,9 +84,10 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                         Used in grid overlap calculations.
                         The 'zone' may be the input reporting unit or a polygon that represents an area within 
                         the reporting unit such as a riparian buffer.
-        * *reportingUnitAreaDict* -  dictionary with the area of the input reporting unit polygons keyed to the polygon's ID value.
-                        Used in buffer area percentage calculations (e.g. riparian buffer areas comprise 9.6% of the reporting unit).
-                        If the reporting unit themes is not replaced in the metric calculations, the reportingUnitAreaDict 
+        * *reportingUnitAreaDict* -  dictionary with a two item list keyed to the reporting unit's ID value. The two items are: the input reporting unit's 
+                        total area and its effective area.
+                        Used in buffer area percentage calculations (e.g. land area in the riparian buffer zones comprise 9.6% of the land 
+                        area in the reporting unit). If the reporting unit themes is not replaced in the metric calculations, the reportingUnitAreaDict 
                         values are equal to those in the zoneAreaDict.
         * *zoneValueDict* - dictionary with a value for an input polygon feature keyed to the polygon's ID value.
                         Used in lcc class area per value calculations (e.g. square meters of forest per person).
@@ -102,7 +103,7 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
         outTableRows = arcpy.InsertCursor(newTable)
         
         # find the index positions of any non-standard QA fields. Standard QA fields include: OVER, TOTA, EFFA, EXCA.
-        # non-standard QA fields include: BUFF
+        # non-standard QA fields include: rTOTA, rEFFA, sTOTA, sEFFA, fTOTA, fEFFA
         if zoneAreaDict:
             calcBuffPct = False
             qaCheckFlds = metricConst.qaCheckFieldParameters
@@ -112,7 +113,11 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                     if fldName.startswith(metricConst.pctBufferName):
                         buffIndx = qaCheckFlds.index(aFldParams)  
                         calcBuffPct = True
-                        break
+                    
+                    if fldName.startswith(metricConst.totaPctName):
+                        totaPctIndx = qaCheckFlds.index(aFldParams)
+                        
+
                 # use else or elif here, if additional non-standard QA fields are added
         
         # create two sets to store the reporting unit IDs for troublesome per capita polygons: one for where the population 
@@ -188,16 +193,26 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                 outTableRow.setValue(qaCheckFlds[2][0], tabAreaTableRow.effectiveArea)
                 outTableRow.setValue(qaCheckFlds[3][0], tabAreaTableRow.excludedArea)
                 
-                # process non-standard QA fields (e.g., BUFF)
+                # process non-standard QA fields (e.g., rTOTA, rEFFA)
                 if len(qaCheckFlds) > 4:
                     if calcBuffPct:
                         if reportingUnitAreaDict:
-                            ruArea = reportingUnitAreaDict[tabAreaTableRow.zoneIdValue]
+                            ruEffectiveArea = reportingUnitAreaDict[tabAreaTableRow.zoneIdValue][1]
+                            ruTotalArea = reportingUnitAreaDict[tabAreaTableRow.zoneIdValue][0]
                         else:
-                            ruArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+                            ruEffectiveArea = zoneAreaDict[tabAreaTableRow.zoneIdValue]
+                            ruTotalArea = ruEffectiveArea
+
+                        # calculate the percentage of effective area in the reporting unit to the effective area of the entire reporting unit
+                        buffEffectiveArea = tabAreaTableRow.effectiveArea
+                        effaPercentCalc = (buffEffectiveArea/ruEffectiveArea) * 100
+                        outTableRow.setValue(qaCheckFlds[buffIndx][0], effaPercentCalc)
                         
-                        percentCalc = (zoneArea/ruArea) * 100
-                        outTableRow.setValue(qaCheckFlds[buffIndx][0], percentCalc)     
+                        # calculate the percentage of the reporting unit that is in the buffer area
+                        buffTotalArea = tabAreaTableRow.totalArea
+                        totaPercentCalc = (buffTotalArea/ruTotalArea) * 100
+                        outTableRow.setValue(qaCheckFlds[totaPctIndx][0], totaPercentCalc)
+                             
                     # use else or elif here, if additional non-standard QA fields are added
 
             # commit the row to the output table
