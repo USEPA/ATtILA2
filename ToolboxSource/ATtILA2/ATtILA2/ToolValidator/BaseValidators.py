@@ -1701,7 +1701,8 @@ class NoReportingUnitValidator(object):
         self.lccClassesParameter = self.parameters[self.lccClassesIndex]
         self.processingCellSizeParameter = self.parameters[self.processingCellSizeIndex]
         self.inRasterParameter = self.parameters[self.inRasterIndex]
-        self.outTableParameter = self.parameters[self.outTableIndex]
+        if self.outTableIndex != -1: # Tools without an output table should have a value of -1 for the outTableIndex
+            self.outTableParameter = self.parameters[self.outTableIndex]
         self.snapRasterParameter = self.parameters[self.snapRasterIndex]
         self.optionsParameter = self.parameters[self.optionalFieldsIndex]
         
@@ -1872,10 +1873,11 @@ class NoReportingUnitValidator(object):
             Removes .shp that is automatically generated for output table parameters and replaces it with .dbf
         
         """
-       
-        if self.outTableParameter.value:
-            outTablePath = str(self.outTableParameter.value)
-            self.outTableParameter.value  = outTablePath.replace('.shp', '.dbf')
+        # Tools without an output table should have a value of -1 for the outTableIndex
+        if self.outTableIndex != -1:
+            if self.outTableParameter.value:
+                    outTablePath = str(self.outTableParameter.value)
+                    self.outTableParameter.value  = outTablePath.replace('.shp', '.dbf')
 
     
     def updateInputLccParameters(self):
@@ -2068,38 +2070,40 @@ class NoReportingUnitValidator(object):
               
         # Check if output table has a valid filename; it contains no invalid characters, has no extension other than '.dbf' 
         # if the output location is in a folder, and has no extension if the output is to be placed in a geodatabase.
-        if self.outTableParameter.value:
-            self.outTableName = self.outTableParameter.valueAsText
-        
-            # get the directory path and the filename
-            self.outWorkspace = os.path.split(self.outTableName)[0]
-            self.tableFilename = os.path.split(self.outTableName)[1]
+        # Tools without an output table should have a value of -1 for the outTableIndex 
+        if self.outTableIndex != -1:
+            if self.outTableParameter.value:
+                self.outTableName = self.outTableParameter.valueAsText
             
-            # break the filename into its root and extension
-            self.fileRoot = os.path.splitext(self.tableFilename)[0]
-            self.fileExt = os.path.splitext(self.tableFilename)[1]
-            
-            # substitue valid characters into the filename root if any invalid characters are present
-            self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
-            
-            # alert the user if invalid characters are present in the output table name.
-            if self.fileRoot != self.validFileRoot:
-                self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
+                # get the directory path and the filename
+                self.outWorkspace = os.path.split(self.outTableName)[0]
+                self.tableFilename = os.path.split(self.outTableName)[1]
                 
-            else: # check on file extensions. None are allowed in geodatabases and only ".dbf" is allowed in folders.
-                self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                # break the filename into its root and extension
+                self.fileRoot = os.path.splitext(self.tableFilename)[0]
+                self.fileExt = os.path.splitext(self.tableFilename)[1]
                 
-                # if the workspace is a geodatabase
-                if self.workspaceExt.upper() == ".GDB":
-                    if self.fileExt:
-                        # alert user that file names cannot contain an extension in a GDB
-                        self.outTableParameter.setErrorMessage(self.invalidExtensionMessage)               
-                else:                    
-                    # get the list of acceptable filename extentions for folder locations
-                    self.tableExtensions = globalConstants.tableExtensions
+                # substitue valid characters into the filename root if any invalid characters are present
+                self.validFileRoot = arcpy.ValidateTableName(self.fileRoot,self.outWorkspace)
+                
+                # alert the user if invalid characters are present in the output table name.
+                if self.fileRoot != self.validFileRoot:
+                    self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
                     
-                    if self.fileExt not in self.tableExtensions:
-                        self.outTableParameter.setErrorMessage("Output tables in folders must have the '.dbf' extension.")
+                else: # check on file extensions. None are allowed in geodatabases and only ".dbf" is allowed in folders.
+                    self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
+                    
+                    # if the workspace is a geodatabase
+                    if self.workspaceExt.upper() == ".GDB":
+                        if self.fileExt:
+                            # alert user that file names cannot contain an extension in a GDB
+                            self.outTableParameter.setErrorMessage(self.invalidExtensionMessage)               
+                    else:                    
+                        # get the list of acceptable filename extentions for folder locations
+                        self.tableExtensions = globalConstants.tableExtensions
+                        
+                        if self.fileExt not in self.tableExtensions:
+                            self.outTableParameter.setErrorMessage("Output tables in folders must have the '.dbf' extension.")
         
         
         # CHECK ON SECONDARY INPUTS IF PROVIDED
