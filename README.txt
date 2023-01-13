@@ -119,11 +119,11 @@ Please report bugs and forward comments to: https://ecomments.epa.gov/enviroatla
 Credits
 ----------------
 
-Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (EPA), Baohong Ji (EPA), and Torrin Hultgren (EPA), with special assistance from Ellen D'Amico (Dynamac Corporation), and Doug Browning (EPA Student Services Contractor).
+Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (former EPA), Baohong Ji (former Woolpert), and Torrin Hultgren (GDIT), with special assistance from Ellen D'Amico (EPA), and Doug Browning (former EPA Student Services Contractor).
 
-David Gottlieb (EPA Student Services Contractor) wrote the code for the Land Cover Coding Editor.
+David Gottlieb (former EPA Student Services Contractor) wrote the code for the Land Cover Coding Editor.
 
-The original ATtILA ArcView extension tool was written in Avenue code by Don Ebert and Tim Wade with assistance from Dennis Yankee (Tennessee Valley Authority, Public Power Institute) who wrote code for the PCTIA_RD metric.
+The original ATtILA ArcView extension tool was written in Avenue code by Don Ebert (EPA) and Tim Wade (former EPA) with assistance from Dennis Yankee (Tennessee Valley Authority, Public Power Institute) who wrote code for the PCTIA_RD metric.
 
 The following programmers were not directly involved with the project, but gave permission for their code to be incorporated into the original ATtILA and we greatly appreciate their generosity:
 
@@ -137,10 +137,10 @@ The following programmers were not directly involved with the project, but gave 
 - Schultz, Ron. 2003. Bearing extension.   
 - Jenness, Jeff. 2005. Distance/Azimuth Tools (Version 1.4b), Jenness Enterprises.  
 
-Tim Wade (EPA), Deborah Chaloud (EPA), Megan Culler (EPA Student Services Contractor), Steven Jett (Innovate!, Inc.), Barabara Rosenbaum (EPA), Caroline Erickson (EPA) and Bob Ohman (EPA Senior Environmental Employment Program) wrote the help files for the  many versions of ATtILA.  
+Tim Wade (former EPA), Deborah Chaloud (former EPA), Megan Culler (EPA ORISE Participant), Steven Jett (Woolpert), Barabara Rosenbaum (Woolpert), Caroline Erickson (former EPA) and Bob Ohman (former EPA Senior Environmental Employment Program) wrote the help files for the  many versions of ATtILA.  
 
-Rose Marie Moore (EPA), Anne Neale (EPA), Jeremy Baynes (EPA), and Barbara Rosenbaum (EPA) gave assistance with overall planning and budgeting.  
+Rose Marie Moore (former EPA), Anne Neale (EPA), Jeremy Baynes (EPA), and Barbara Rosenbaum (Woolpert) gave assistance with overall planning and budgeting.  
 
-Molly Jenkins (ORISE Participant) provided invaluable assistance with ATtILA's webpage and graphic design.
+Molly Jenkins (EPA ORISE Participant), Brittany Jackson (EPA Student Services Contractor), and Sandra Bryce (Woolpert) provided invaluable assistance with ATtILA's webpage, wiki, and documentation.
 
-Jeremy Baynes (EPA), Barbara Rosenbaum (EPA), Anne Neale (EPA), Laura Jackson (EPA), Megan Culler (Student Services Contractor), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (Student Services Contractor), Talyor Minich (EPA), and Torrin Hultgren (EPA) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.  
+Jeremy Baynes (EPA), Barbara Rosenbaum (Woolpert), Anne Neale (EPA), Laura Jackson (former EPA), Megan Culler (EPA ORISE Participant), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (Student Services Contractor), Talyor Minich (EPA), James Wickham (EPA), Megan Mehaffey (EPA), and Torrin Hultgren (GDIT) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.  
