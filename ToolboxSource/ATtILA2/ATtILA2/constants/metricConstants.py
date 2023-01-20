@@ -244,7 +244,7 @@ class npConstants(baseMetricConstants):
     optionalFilter = [gc.intermediateDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
     fieldOverrideKey = ""
-    burnInGridName = shortName+"_BurnIn"
+    burnInGridName = "BurnIn"
     proxPolygonOutputName = "_ProxPoly"
     proxZoneRaserOutName = "_ProxZone"
     proxRasterOutName = "_Prox"

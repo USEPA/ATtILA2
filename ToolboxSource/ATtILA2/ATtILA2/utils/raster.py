@@ -3,7 +3,7 @@
 """
 import arcpy
 import os
-from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull,Extent
+from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull,Extent,Float
 from . import *
 from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
@@ -550,11 +550,12 @@ def getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
     AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.now()))
-    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    # force the output to be a floating point grid.
+    # ArcGIS can assign NODATA to a cell when its neighborhood sum is 256 and the raster is an integer type
+    reclassGrid = Float(Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs)))
     
     AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
     neighborhood = arcpy.sa.NbrRectangle(int(inNeighborhoodSize), int(inNeighborhoodSize), "CELL")
-    #nbrSumGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM", "NODATA")
     nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid, neighborhood, "SUM", "NODATA")
         
     AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
@@ -566,9 +567,11 @@ def getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList
         whereClause = delimitedVALUE+" = 0"
         proportionsGrid = Con(burnInGrid, proportionsGrid, burnInGrid, whereClause)
     
-    proportionsIntGrid = arcpy.sa.Int(proportionsGrid)
-
-    return proportionsIntGrid, nbrCntGrid
+    # ArcGIS Pro version 2.9 allows the reclassification of a floating point raster using remap techniques.
+    # No need to convert the proportions grid to an integer grid
+    #proportionsIntGrid = arcpy.sa.Int(proportionsGrid)
+    
+    return proportionsGrid, nbrCntGrid
 
 
 def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, timer):

@@ -2297,6 +2297,73 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
         setupAndRestore.standardRestore()
         
         
+# def runNeighborhoodProportionsQA(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
+#                       burnIn, burnInValue="", minPatchSize="#", createZones="", zoneBin_str="", overWrite="",
+#                       outWorkspace="#", optionalFieldGroups="#"):
+#     """ Interface for script executing Generate Proximity Polygons utility """
+#
+#     from arcpy import env
+#     from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
+#
+#     # process the inLandCoverGrid for the selected class
+#     AddMsg("Processing neighborhood proportions grid...")
+#
+#     # get output grid name. Add it to the list of features to add to the Contents pane
+#     namePrefix = "ProxGrid"
+#     proximityGridName = files.getRasterName(namePrefix)
+#
+#
+#     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+#     reclassPairs = [[0, 0], [10, 0], [20, 0], [30, 0], [40, 1], [70, 1], [91, 1], [92, 1]]
+#
+#
+#     AddMsg("Reclassifying selected land cover class to 1. All other values = 0...")
+#     reclassGrid = arcpy.sa.Float(Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs)))
+#     namePrefix = "ClassGrid"
+#     reclassScratchName = files.getRasterName(namePrefix)
+#     reclassGrid.save(reclassScratchName)
+#
+#     AddMsg("Building raster attribute table...")
+#     arcpy.management.BuildRasterAttributeTable(reclassGrid, "Overwrite")
+#
+#     desc = arcpy.Describe(reclassGrid)
+#     AddMsg("baseNaem = "+desc.baseName)
+#     AddMsg("catalogPath = "+desc.catalogPath)
+#     AddMsg("file = "+desc.file)
+#     AddMsg("name = "+desc.name)
+#     AddMsg("path = "+desc.path)
+#
+#     env.snapRaster = reclassGrid
+#     AddMsg("setting cellSize")
+#     AddMsg("reclassScratchName = "+reclassScratchName)
+#     env.cellSize = reclassScratchName
+#     # arcpy.env.cellSizeProjectionMethod = "CONVERT_UNITS"
+#     # arcpy.env.cellAlignment = "DEFAULT"
+#
+#     AddMsg("Performing focal SUM on reclassified raster using cell neighborhood...")
+#     neighborhoodStr = "Rectangle 251 251 CELL"
+#     AddMsg("neighborhoodStr = "+neighborhoodStr)
+#
+#     fullPath = 'r"'+reclassScratchName+'"'
+#     AddMsg("reclassScratchName = "+fullPath)
+#
+#     nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid, neighborhoodStr, "SUM", "NODATA", 90)
+#     namePrefix = "CountGrid"
+#     nbrCntGridScratchName = files.getRasterName(namePrefix)  
+#     nbrCntGrid.save(nbrCntGridScratchName)
+#     AddMsg(" Save intermediate grid complete: "+os.path.basename(nbrCntGridScratchName))
+#
+#     AddMsg("Calculating the proportion of land cover class within cell neighborhood...")
+#     proximityGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / 63001) * 100') )
+#
+#
+#
+#
+#     proximityGrid.save(proximityGridName) 
+#     AddMsg("Save proportions grid complete")
+          
+
+
 def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
                       burnIn, burnInValue="", minPatchSize="#", createZones="", zoneBin_str="", overWrite="",
                       outWorkspace="#", optionalFieldGroups="#"):
@@ -2346,9 +2413,10 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
         # Save the current environment settings, then set to desired condition  
         tempEnvironment0 = env.overwriteOutput
         if overWrite == "true":
-            if env.overwriteOutput == False:
-                env.overwriteOutput = True
-                arcpy.AddWarning("The 'Allow geoprocessing tools to overwrite existing datasets' option has been set to TRUE per your request. The option will be reset to FALSE upon completion of this tool.")
+            env.overwriteOutput = True
+            arcpy.AddWarning("The 'Allow geoprocessing tools to overwrite existing datasets' option has been set to TRUE per your request. The option will be reset to FALSE upon completion of this tool.")
+        else:
+            env.overwriteOutput = False
 
         # create list of layers to add to the active Map
         addToActiveMap = []
@@ -2406,7 +2474,8 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
                 
                 # save the intermediate raster if save intermediates option has been chosen
                 if saveIntermediates: 
-                    namePrefix = metricConst.burnInGridName
+                    # namePrefix = metricConst.burnInGridName
+                    namePrefix = ("{0}_{1}_{2}").format(metricConst.shortName,minPatchSize,metricConst.burnInGridName)
                     scratchName = files.getRasterName(namePrefix)
                     burnInGrid.save(scratchName)
                     AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
