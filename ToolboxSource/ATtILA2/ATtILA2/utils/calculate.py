@@ -1207,7 +1207,7 @@ def aboveValue(inTable, sourceField, threshold, addedField):
     # Set up a calculate percentage expression 
     calcExpression = "getValuePercent(!"+sourceField+"!, "+ threshold + ")"
     codeBlock = """def getValuePercent(n, d):
-                        if n < d:
+                        if n <= d:
                             return 0
                         else:
                             return 1"""
@@ -1219,7 +1219,7 @@ def belowValue(inTable, sourceField, threshold, addedField):
     # Set up a calculate percentage expression 
     calcExpression = "getValuePercent(!"+sourceField+"!, "+ threshold + ")"
     codeBlock = """def getValuePercent(n, d):
-                        if n < d:
+                        if n <= d:
                             return 1
                         else:
                             return 0"""

@@ -92,7 +92,7 @@ class flcvConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     lcpFieldSuffix = ""
     lcpFieldPrefix = "p"
-    lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultIntegerFieldType, 6, 1]
+    lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     belowFieldSuffix = "_Below"
     aboveFieldSuffix = "_Above"
     facilityCopyName = shortName+"_Facility"
