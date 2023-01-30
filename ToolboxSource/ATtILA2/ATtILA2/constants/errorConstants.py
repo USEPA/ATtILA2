@@ -46,3 +46,15 @@ missingFieldError = '''Input field parameter not supplied.
 A population field is required when the input Population raster or polygon feature is a polygon feature.
 
 Please select a field and try re-running the tool. '''
+
+rasterOutputFormatError = '''
+
+An error occurred while attempting to save a raster dataset to the output geodatabase.
+
+This error typically occurs when there may already exist an output raster with the same name and format.
+While ATtILA checks for this condition during tool operation, a residual lock file may exist in the output workspace. 
+
+Try running the ATtILA tool again with the same parameters, often this error will not occur on the subsequent attempt, 
+or try selecting a new geodatabase to write the output to.
+
+'''

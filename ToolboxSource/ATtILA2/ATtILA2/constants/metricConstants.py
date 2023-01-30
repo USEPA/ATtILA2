@@ -246,9 +246,9 @@ class npConstants(baseMetricConstants):
     fieldOverrideKey = ""
     burnInGridName = "BurnIn"
     proxPolygonOutputName = "_ProxPoly"
-    proxZoneRaserOutName = "_ProxZone"
+    proxZoneRaserOutName = "_Zone"
     proxRasterOutName = "_Prox"
-    proxFocalSumOutName = "_ProxCnt"
+    proxFocalSumOutName = "_Cnt"
     
 class nrlcpConstants(baseMetricConstants):
     name = "NearRoadLandCoverProportions"

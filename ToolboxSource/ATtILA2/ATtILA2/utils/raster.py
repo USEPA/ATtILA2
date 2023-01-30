@@ -3,7 +3,7 @@
 """
 import arcpy
 import os
-from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull,Extent,Float
+from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull,Extent
 from . import *
 from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
@@ -550,13 +550,11 @@ def getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
     AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.now()))
-    # force the output to be a floating point grid.
-    # ArcGIS can assign NODATA to a cell when its neighborhood sum is 256 and the raster is an integer type
-    reclassGrid = Float(Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs)))
+    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     
     AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
     neighborhood = arcpy.sa.NbrRectangle(int(inNeighborhoodSize), int(inNeighborhoodSize), "CELL")
-    nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid, neighborhood, "SUM", "NODATA")
+    nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM", "NODATA")
         
     AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
     proportionsGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / '+str(maxCellCount)+') * 100') )
@@ -628,10 +626,24 @@ def getPatchViewGrid(m, classValuesList, excludedValuesList, inLandCoverGrid, la
     else:
         patchGrid = reclassGrid
         
+    AddMsg(("{0} Performing focal SUM on patches of {1} using {2} cell radius neighborhood...").format(timer.now(), m.upper(), viewRadius))
+    neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
+    focalGrid = arcpy.sa.FocalStatistics(patchGrid == classValue, neighborhood, "SUM", "NODATA")
+    
+    AddMsg(("{0} Reclassifying focal SUM results into a single-value raster where 1 = potential view area...").format(timer.now()))
+    whereValue = conValues[0]
+    trueValue = conValues[1]
+    viewGrid = Con(Raster(focalGrid) > whereValue, trueValue)
+    
     # save the intermediate raster if save intermediates option has been chosen
     if saveIntermediates: 
         namePrefix = "%s_%s%s_" % (metricConst.shortName, m.upper(), metricConst.patchGridName)
         scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+        # Delete output grid if it already exists in the GDB. This prevents errors caused by lingering locks and such
+        try:
+            arcpy.Delete_management(scratchName)
+        except:
+            pass
         patchGrid.save(scratchName)
         
         # add a CATEGORY field for raster labels; make it large enough to hold your longest category label.        
@@ -649,15 +661,6 @@ def getPatchViewGrid(m, classValuesList, excludedValuesList, inLandCoverGrid, la
         updateCategoryLabels(patchGrid, categoryDict)
                 
         AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
-
-    AddMsg(("{0} Performing focal SUM on patches of {1} using {2} cell radius neighborhood...").format(timer.now(), m.upper(), viewRadius))
-    neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
-    focalGrid = arcpy.sa.FocalStatistics(patchGrid == classValue, neighborhood, "SUM")
-    
-    AddMsg(("{0} Reclassifying focal SUM results into a single-value raster where 1 = potential view area...").format(timer.now()))
-    whereValue = conValues[0]
-    trueValue = conValues[1]
-    viewGrid = Con(Raster(focalGrid) > whereValue, trueValue)
             
     return viewGrid
 
@@ -738,7 +741,7 @@ def calcCircleCellCount(inRaster,radiusInCells):
     #oneRaster.save("oneRaster")
     
     neighborhood = arcpy.sa.NbrCircle(radiusInCells, "CELL")
-    nbrCntGrid = arcpy.sa.FocalStatistics(oneRaster, neighborhood, "SUM", "NODATA")
+    nbrCntGrid = arcpy.sa.FocalStatistics(oneRaster == 1, neighborhood, "SUM", "NODATA")
     #nbrCntGrid.save("nbrCntGrid")
     
     circleCellCount = nbrCntGrid.maximum

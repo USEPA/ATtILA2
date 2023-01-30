@@ -2477,6 +2477,7 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
                     # namePrefix = metricConst.burnInGridName
                     namePrefix = ("{0}_{1}_{2}").format(metricConst.shortName,minPatchSize,metricConst.burnInGridName)
                     scratchName = files.getRasterName(namePrefix)
+                    AddMsg(timer.now() + " Saving intermediate grid: "+os.path.basename(scratchName))
                     burnInGrid.save(scratchName)
                     AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
 
@@ -2487,23 +2488,66 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
  
             # process the inLandCoverGrid for the selected class
             AddMsg(("Processing {0} neighborhood proportions grid...").format(m.upper()))
- 
-            # get output grid name. Add it to the list of features to add to the Contents pane
-            namePrefix = ("{0}_{1}x{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxRasterOutName)
-            proximityGridName = files.getRasterName(namePrefix)
-            addToActiveMap.append(proximityGridName)
 
-            proximityGrid, nbrCntGrid = raster.getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList, 
-                                                                    excludedValuesList, inLandCoverGrid, burnIn, burnInGrid, timer)
+            # proximityGrid, nbrCntGrid = raster.getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList, 
+            #                                                         excludedValuesList, inLandCoverGrid, burnIn, burnInGrid, timer)
             
-            proximityGrid.save(proximityGridName) 
+            maxCellCount = pow(int(inNeighborhoodSize), 2)
+                 
+            # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
+            # define the reclass values
+            classValue = 1
+            excludedValue = 0
+            otherValue = 0
+            newValuesList = [classValue, excludedValue, otherValue]
+            
+            # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
+            reclassPairs = raster.getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
+              
+            AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.now()))
+            reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+            
+            AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
+            neighborhood = arcpy.sa.NbrRectangle(int(inNeighborhoodSize), int(inNeighborhoodSize), "CELL")
+            nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM", "NODATA")
+                
+            AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
+            proximityGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / '+str(maxCellCount)+') * 100') )
+        
+            if burnIn == "true":
+                AddMsg(("{0} Burning excluded areas into proportions grid...").format(timer.now()))
+                delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
+                whereClause = delimitedVALUE+" = 0"
+                proximityGrid = Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
+        
+        
+            
+            # get output grid name. Add it to the list of features to add to the Contents pane
+            namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxRasterOutName)
+            proximityGridName = files.getRasterName(namePrefix)
+            datasetList = arcpy.ListDatasets()
+            if proximityGridName in datasetList:
+                arcpy.Delete_management(proximityGridName)
+            AddMsg(timer.now() + " Saving proportions grid: "+os.path.basename(proximityGridName))
+            try:
+                proximityGrid.save(proximityGridName)
+            except:
+                raise errors.attilaException(errorConstants.rasterOutputFormatError) 
             AddMsg(timer.now() + " Save proportions grid complete: "+os.path.basename(proximityGridName))
+            addToActiveMap.append(proximityGridName)
                   
             # save the intermediate raster if save intermediates option has been chosen 
             if saveIntermediates:
-                namePrefix = ("{0}_{1}x{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxFocalSumOutName)
+                namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxFocalSumOutName)
                 scratchName = files.getRasterName(namePrefix)  
-                nbrCntGrid.save(scratchName)
+                datasetList = arcpy.ListDatasets()
+                if scratchName in datasetList:
+                    arcpy.Delete_management(scratchName)
+                AddMsg(timer.now() + " Saving intermediate grid: "+os.path.basename(scratchName))
+                try:
+                    nbrCntGrid.save(scratchName)
+                except:
+                    raise errors.attilaException(errorConstants.rasterOutputFormatError)
                 AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
   
             # convert neighborhood proportions raster to zones if createZones is selected
@@ -2518,9 +2562,15 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
                 time.sleep(1) # A small pause is needed here between quick successive timer calls
                 AddMsg(("{0} Reclassifying proportions grid into {1}% breaks...").format(timer.now(), zoneBin_str))
                 nbrZoneGrid = Reclassify(proximityGrid, "VALUE", rngRemap)
-                namePrefix = ("{0}_{1}x{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxZoneRaserOutName)
+                namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxZoneRaserOutName)
                 scratchName = files.getRasterName(namePrefix)
-                nbrZoneGrid.save(scratchName)
+                datasetList = arcpy.ListDatasets()
+                if scratchName in datasetList:
+                    arcpy.Delete_management(scratchName)
+                try:
+                    nbrZoneGrid.save(scratchName)
+                except:
+                    raise errors.attilaException(errorConstants.rasterOutputFormatError)
                 addToActiveMap.append(scratchName)
  
      
