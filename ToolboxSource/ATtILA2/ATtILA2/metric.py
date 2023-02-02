@@ -2561,7 +2561,13 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
                 
                 time.sleep(1) # A small pause is needed here between quick successive timer calls
                 AddMsg(("{0} Reclassifying proportions grid into {1}% breaks...").format(timer.now(), zoneBin_str))
-                nbrZoneGrid = Reclassify(proximityGrid, "VALUE", rngRemap)
+                # nbrZoneGrid = Reclassify(proximityGrid, "VALUE", rngRemap)
+                # The simple reclassify operation above, often leaves the ESRI default layer name in the saved 
+                # nbrZoneGrid when the land cover raster is relatively small. Although the nbrZoneGrid appears to have the
+                # correct name in the catalog, when the raster is added to a map, the layer name is displayed in the TOC
+                # instead of the saved raster name (e.g., Reclass_NI_91 instead of NI_9_Zone0). The technique below appears
+                # to alleviate that problem without adding substantial time to the reclassification operation.
+                nbrZoneGrid = (Reclassify(proximityGrid, "VALUE", rngRemap) * 1)
                 namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxZoneRaserOutName)
                 scratchName = files.getRasterName(namePrefix)
                 datasetList = arcpy.ListDatasets()
