@@ -294,6 +294,22 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         # append the slope threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
+        # # This block of code can be used if we want to change the Slope Threshold input to a double parameter type
+        # # If we do that, we'd also have to change the tool validation property to comment out the inZeroAndAboveIntegerIndex = 7 line 
+        # # to cause a check for integer values
+
+        # # validThresholdValue = inSlopeThresholdValue
+        # # aDecimal = '.'
+        # # aNegative = '-'
+        # # firstCharacter = inSlopeThresholdValue[0]
+        # # if firstCharacter == aNegative:
+        # #     validThresholdValue = inSlopeThresholdValue.replace(firstCharacter, "n", 1)
+        # #
+        # # if aDecimal in validThresholdValue:
+        # #     finalThresholdValue = validThresholdValue.replace(".","pt")
+        # # else:
+        # #     finalThresholdValue = validThresholdValue
+        
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
         #patch metrics) extend the clip envelope an adequate distance.       
