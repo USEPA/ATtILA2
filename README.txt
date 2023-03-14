@@ -6,7 +6,7 @@ Analytical Tools Interface for Landscape Assessments for ArcGIS Pro (ATtILA for 
 version 2.0
 ---------------
 
-10-14-2022 
+03-14-2023
 
 This file is intended to give a brief overview of what ATtILA is, how to install it, and where to find more information. For more detailed documentation, please see ATtILA's wiki located at https://github.com/USEPA/ATtILA2/wiki.
 
@@ -49,7 +49,7 @@ This README provides basic information on installing ATtILA for ArcGIS Pro using
 REQUIREMENTS:
 -------------
 
-ATtILA for ArcGIS Pro requires ArcGIS Pro 2.6 or later and the Spatial Analyst extension.  ATtILA for ArcGIS Pro has not yet been tested on ArcGIS 3.0 or later versions.
+ATtILA requires ArcGIS Pro 2.9 or later and the Spatial Analyst extension. ATtILA has been tested up to ArcGIS Pro 3.1.
 
 INSTALLATION:
 ------------
@@ -104,7 +104,7 @@ INSTALLATION:
     |        -Identify Overlapping Polygons
     |        -Process NAVTEQ for EnviroAtlas Analyses
     |        -Process NHD for EnviroAtlas Analysis
-	|    -Online Help
+    |    -Online Help
 		
 
 NOTE: To make the ATtILA for ArcGIS Pro toolbox available to all new projects, right-click on the toolbox and select 'Add to New Projects'. This will add a link to ATtILA for ArcGIS Pro toolbox in project favorites. For more details on accessing ATtILA this way, see 'Project favorites' in ArcGIS Pro's Online Help.
