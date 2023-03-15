@@ -49,7 +49,7 @@ This README provides basic information on installing ATtILA for ArcGIS Pro using
 REQUIREMENTS:
 -------------
 
-ATtILA requires ArcGIS Pro 2.9 or later and the Spatial Analyst extension. ATtILA has been tested up to ArcGIS Pro 3.1.
+ATtILA requires ArcGIS Pro 2.9 or later and the Spatial Analyst extension. ATtILA has been tested on ArcGIS Pro through version 3.1.
 
 INSTALLATION:
 ------------
