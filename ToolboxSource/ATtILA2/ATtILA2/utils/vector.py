@@ -139,6 +139,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     import os
     
     try:
+        # AddMsg("Parallel Processing Factor: " + str(env.parallelProcessingFactor))
         toolShortName = outFeatures[:outFeatures.find("_")]
         outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
         
@@ -174,8 +175,21 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             # Start by intersecting the input features and the reporting units 
             AddMsg("Intersecting "+inFCDesc.baseName+" and reporting units")
             firstIntersectionName = files.nameIntermediateFile([inFCName+"_intersect","FeatureClass"], cleanupList)
-            intersectResult = arcpy.Intersect_analysis([repUnits,inFC],firstIntersectionName,"ALL","","INPUT")
             
+            # If Parallel Processing Factor environment setting is enabled and there is no intersecting features between
+            # the reporting units and the stream feature, the Intersect operation will fail. Skip to the next stream feature
+            # when this occurs.
+            try:
+                intersectResult = arcpy.Intersect_analysis([repUnits,inFC],firstIntersectionName,"ALL","","INPUT")
+            except:
+                AddMsg("No features of {0} intersect with features of {1}. Omitting {0} from further processing.".format(inFCName, arcpy.Describe(repUnits).baseName), 1)
+                continue
+            
+            # Check for empty intersect features
+            if not arcpy.SearchCursor(firstIntersectionName).next():
+                AddMsg("No features of {0} intersect with features of {1}. Omitting {0} from further processing.".format(inFCName, arcpy.Describe(repUnits).baseName), 1)
+                continue
+
             # We are later going to perform a second intersection with the reporting units layer, which will cause
             # a name collision with the reporting unitID field - in anticipation of this, rename the unitID field.
             # This functionality is dependent on the intermediate dataset being in a geodatabase - no shapefiles allowed.
@@ -251,7 +265,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             outputList.append(finalOutput)
         
         # merge and dissolve buffer features from all input feature classes into a single feature class.
-        if len(inFeaturesList) > 1:
+        if len(outputList) > 1:
             AddMsg("Merging buffer zones from all input Stream features")
             mergeName = files.nameIntermediateFile([toolShortName+"_mergeOutput","FeatureClass"],cleanupList)
             mergeOutput = arcpy.Merge_management(outputList,mergeName)

@@ -15,6 +15,7 @@ _tempEnvironment2 = ""
 _tempEnvironment3 = ""
 _tempEnvironment4 = ""
 _tempEnvironment5 = ""
+_tempEnvironment6 = ""
 
 
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
@@ -30,6 +31,7 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment3 = env.extent
     _tempEnvironment4 = env.outputMFlag
     _tempEnvironment5 = env.outputZFlag
+    _tempEnvironment6 = env.parallelProcessingFactor
 
     env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, fallBackDirectory)
     
@@ -52,6 +54,23 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     # Disable for the duration of the tool.
     env.outputMFlag = "Disabled"
     
+    # Do not copy Z values when making copies of features.
+    env.outputZFlag = "Disabled" 
+    
+    # # attempt to improve tool performance by enabling Parallel Processing. If the environment is already set, leave as is, but 
+    # # if it's blank, set it to 100%
+    # currentFactor = env.parallelProcessingFactor
+    # if currentFactor == None:
+    #     env.parallelProcessingFactor = '100%'
+    
+    # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+    currentFactor = str(env.parallelProcessingFactor)
+    if currentFactor == 'None' or currentFactor == '0':
+        pass
+    else:
+        arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+        env.parallelProcessingFactor = None
+    
     return itemTuples
 
     
@@ -65,6 +84,7 @@ def standardRestore():
     env.extent = _tempEnvironment3
     env.outputMFlag = _tempEnvironment4
     env.outputZFlag = _tempEnvironment5
+    env.parallelProcessingFactor = _tempEnvironment6
     
     # return the spatial analyst license    
     try:
