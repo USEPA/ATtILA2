@@ -205,7 +205,10 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
 
                         # calculate the percentage of effective area in the reporting unit to the effective area of the entire reporting unit
                         buffEffectiveArea = tabAreaTableRow.effectiveArea
-                        effaPercentCalc = (buffEffectiveArea/ruEffectiveArea) * 100
+                        if ruEffectiveArea > 0:
+                            effaPercentCalc = (buffEffectiveArea/ruEffectiveArea) * 100
+                        else:
+                            effaPercentCalc = 0
                         outTableRow.setValue(qaCheckFlds[buffIndx][0], effaPercentCalc)
 
                         # calculate the percentage of the reporting unit that is in the buffer area
