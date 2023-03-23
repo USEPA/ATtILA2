@@ -663,7 +663,7 @@ class LandCoverClasses(LandCoverBaseClasses, dict):
         descendentClasses = []
 
         for childClass in landCoverClass.childClasses:
-            print("childClass is", childClass.name)
+            # print("childClass is", childClass.name)
             descendentClasses += self._getDescendentClasses(childClass)
             descendentClasses.append(childClass)       
         
