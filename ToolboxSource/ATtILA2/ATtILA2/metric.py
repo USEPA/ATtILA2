@@ -1244,6 +1244,15 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
+        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        _tempEnvironment6 = env.parallelProcessingFactor
+        currentFactor = str(env.parallelProcessingFactor)
+        if currentFactor == 'None' or currentFactor == '0':
+            pass
+        else:
+            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+            env.parallelProcessingFactor = None
+        
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
@@ -1412,6 +1421,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
         env.outputZFlag = _tempEnvironment5
+        env.parallelProcessingFactor = _tempEnvironment6
 
 
 def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, lineCategoryField="", 
@@ -1446,6 +1456,15 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        _tempEnvironment6 = env.parallelProcessingFactor
+        currentFactor = str(env.parallelProcessingFactor)
+        if currentFactor == 'None' or currentFactor == '0':
+            pass
+        else:
+            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+            env.parallelProcessingFactor = None
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -1520,6 +1539,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
         env.outputZFlag = _tempEnvironment5
+        env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
@@ -1649,6 +1669,15 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
+        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        _tempEnvironment6 = env.parallelProcessingFactor
+        currentFactor = str(env.parallelProcessingFactor)
+        if currentFactor == 'None' or currentFactor == '0':
+            pass
+        else:
+            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+            env.parallelProcessingFactor = None
+        
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
@@ -1709,6 +1738,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         env.workspace = _tempEnvironment1
+        env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
@@ -1725,6 +1755,15 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         _tempEnvironment0 = env.snapRaster
         _tempEnvironment1 = env.workspace
         _tempEnvironment2 = env.cellSize
+        _tempEnvironment6 = env.parallelProcessingFactor
+        
+        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        currentFactor = str(env.parallelProcessingFactor)
+        if currentFactor == 'None' or currentFactor == '0':
+            pass
+        else:
+            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+            env.parallelProcessingFactor = None
         
         # set the workspace for ATtILA intermediary files
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -1933,6 +1972,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         env.snapRaster = _tempEnvironment0
         env.workspace = _tempEnvironment1
         env.cellSize = _tempEnvironment2
+        env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -2741,7 +2781,11 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
         # Calculate a magnitude-per-unit area from the intersection features using a kernel function to fit a smoothly tapered surface to each point. 
         # The output cell size, search radius, and area units can be altered by the user
         AddMsg(("{0} Performing kernel density: Result saved as {1}.").format(timer.now(), os.path.basename(outRaster)))
-        den = arcpy.sa.KernelDensity(intersectFeatureName, "NONE", int(cellSize), int(searchRadius), areaUnits)
+        # Sometimes, often when the extent of an area is small, the ESRI default layer name is retained in the
+        # saved output raster. Although the output raster appears to have the correct name in the catalog, when the 
+        # raster is added to a map, the layer name is displayed in the TOC instead. Multiplying the result by 1  
+        # appears to alleviate that problem without adding substantial time to the overall operation.
+        den = (arcpy.sa.KernelDensity(intersectFeatureName, "NONE", int(cellSize), int(searchRadius), areaUnits) * 1)
 
         # Save the kernel density raster
         den.save(outRaster)

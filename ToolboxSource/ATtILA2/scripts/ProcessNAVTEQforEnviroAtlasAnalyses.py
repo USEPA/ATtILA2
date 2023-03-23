@@ -44,6 +44,15 @@ def main(_argv):
     
     #Script arguments
     try:
+        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        tempEnvironment0 = env.parallelProcessingFactor
+        currentFactor = str(env.parallelProcessingFactor)
+        if currentFactor == 'None' or currentFactor == '0':
+            pass
+        else:
+            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+            env.parallelProcessingFactor = None
+        
         ext = checkOutputType(outputLoc)
         metricConst = metricConstants.pnfeaConstants()
         NAVTEQ_LandUseA = database + "\\LandUseA"       
@@ -267,6 +276,8 @@ def main(_argv):
         errors.standardErrorHandling(e)
  
     finally:
+        env.parallelProcessingFactor = tempEnvironment0
+        
         for (intermediateResult) in intermediateList:
             arcpy.Delete_management(intermediateResult)
    
