@@ -123,16 +123,11 @@ def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDist
         linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
         bufferFloat = cellSize * (int(inBufferDistance)+1)
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
-        # using in_memory to save time doesn't appear to be a viable option when this code is run via the Python window.
-        # arcpy.Buffer_analysis(inReportingUnitFeature, "in_memory/ru_buffer", bufferDistance, "#", "#", "ALL")
         clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
         clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
         
-    # Clipping input grid to desired extent...
-    if inBufferDistance:
-        # clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName,"in_memory/ru_buffer", "", "NONE")
+        # Clipping input grid to desired extent...
         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, clipBuffer, "", "NONE")
-        # arcpy.Delete_management("in_memory")
         arcpy.Delete_management(clipBuffer)
     else:
         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, inReportingUnitFeature, "", "NONE")
@@ -301,7 +296,8 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     distGrid = EucDistance(otherGrid)
     
     AddMsg(timer.now() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...")
-    edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
+    # edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
+    edgeDist = (float(PatchEdgeWidth_str) + 0.5) * Raster(inLandCoverGrid).meanCellWidth
 
     zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     
@@ -382,8 +378,10 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
         regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
     else:
         AddMsg(timer.now() + " Connecting clusters of Class:"+m+" within maximum separation distance...")
-        fltProcessingCellSize = float(processingCellSize_str)
-        maxSep = intMaxSeparation * float(processingCellSize_str)
+        # fltProcessingCellSize = float(processingCellSize_str)
+        # maxSep = intMaxSeparation * float(processingCellSize_str)
+        fltProcessingCellSize = Raster(inLandCoverGrid).meanCellWidth
+        maxSep = intMaxSeparation * Raster(inLandCoverGrid).meanCellWidth
         delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
         whereClause = delimitedVALUE+" < " + str(classValue)
         classRaster = SetNull(reclassGrid, 1, whereClause)

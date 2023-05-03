@@ -4,6 +4,7 @@
 import os
 import arcpy
 import time
+from arcpy.sa import Raster
 from . import errors
 from . import setupAndRestore
 #from pylet import lcc
@@ -50,6 +51,12 @@ class metricCalc:
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, ignoreHighest=False):
         self.timer = DateTimer()
         AddMsg(self.timer.start() + " Setting up environment variables")
+        
+        # Check to see if the user has specified a Processing cell size other than the cell size of the inLandCoverGrid
+        inLandCoverGridCellSize = Raster(inLandCoverGrid).meanCellWidth
+        if float(processingCellSize) != inLandCoverGridCellSize:
+            AddMsg("Processing cell size and the cell size for the input Land cover grid are not equal.\n"\
+                   "For the most accurate results, it is highly recommended to use the cell size of the input Land cover grid as the Processing cell size.", 1)
         
         # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
@@ -1250,6 +1257,8 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         if currentFactor == 'None' or currentFactor == '0':
             pass
         else:
+            # Advise the user that results when using parallel processing may be different from results obtained without its use.
+            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
             env.parallelProcessingFactor = None
         
@@ -1463,6 +1472,8 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         if currentFactor == 'None' or currentFactor == '0':
             pass
         else:
+            # Advise the user that results when using parallel processing may be different from results obtained without its use.
+            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
             env.parallelProcessingFactor = None
         
@@ -1675,6 +1686,8 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         if currentFactor == 'None' or currentFactor == '0':
             pass
         else:
+            # Advise the user that results when using parallel processing may be different from results obtained without its use.
+            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
             env.parallelProcessingFactor = None
         
@@ -1762,6 +1775,8 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         if currentFactor == 'None' or currentFactor == '0':
             pass
         else:
+            # Advise the user that results when using parallel processing may be different from results obtained without its use.
+            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
             env.parallelProcessingFactor = None
         

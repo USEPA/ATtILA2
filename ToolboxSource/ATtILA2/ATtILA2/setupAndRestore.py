@@ -57,17 +57,13 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     # Do not copy Z values when making copies of features.
     env.outputZFlag = "Disabled" 
     
-    # # attempt to improve tool performance by enabling Parallel Processing. If the environment is already set, leave as is, but 
-    # # if it's blank, set it to 100%
-    # currentFactor = env.parallelProcessingFactor
-    # if currentFactor == None:
-    #     env.parallelProcessingFactor = '100%'
-    
     # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
     currentFactor = str(env.parallelProcessingFactor)
     if currentFactor == 'None' or currentFactor == '0':
         pass
     else:
+        # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
         arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
         env.parallelProcessingFactor = None
     
