@@ -3,7 +3,6 @@
 import os
 import arcpy
 from arcpy import env
-#from pylet import utils
 from .utils import environment
 from .utils import parameters
 from .utils.messages import AddMsg
@@ -93,13 +92,11 @@ def standardRestore():
         pass
 
 
-# def createLogFile(inDataset, metricConst):
 def createLogFile(inDataset, dateTimeStamp):
     """ Create log file to capture tool processing steps. """
     
     inBaseName = os.path.basename(inDataset)
     inRootName = os.path.splitext(inBaseName)[0]
-    # logBaseName = ('{0}_{1}').format(inRootName, metricConst.logTimeStamp)
     logBaseName = ('{0}_{1}').format(inRootName, dateTimeStamp)
     
     odsc = arcpy.Describe(env.workspace)
@@ -137,11 +134,9 @@ def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset):
     from datetime import datetime
     processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)    
     if globalConstants.logName in processed:
-        # place current date and time into metric constants
-        # metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
+        # capture current date and time
         logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
         # create the log file in the appropriate folder
-        # logFile = createLogFile(outDataset, metricConst)
         logFile = createLogFile(outDataset, logTimeStamp)
         if logFile:
             # start the log file by capturing the tool's parameters.

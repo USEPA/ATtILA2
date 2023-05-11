@@ -193,27 +193,11 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcpConstants()
         
+        # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, snapRaster, optionalFieldGroups]
-        
+        # create a log file if requested, otherwise logFile = None.
         logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
-        
-        # processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)    
-        # if globalConstants.logName in processed:
-        #     # place current date and time into metric constants
-        #     metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
-        #     # create the log file in the appropriate folder
-        #     logFile = setupAndRestore.createLogFile(outTable, metricConst)
-        #     if logFile:
-        #         # start the log file by capturing the tool's parameters.
-        #         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-        #                           metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
-        #                           snapRaster, optionalFieldGroups]
-        #         labelsList = metricConst.parameterLabels
-        #         setupAndRestore.logWriteParameters(logFile, parametersList, labelsList)
-        # else:
-        #     logFile = None
-            
         
         # Create new subclass of metric calculation
         class metricCalcLCP(metricCalc):        
@@ -298,22 +282,6 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
 
         # Set the conversion factor as a class attribute
         lcpCalc.conversionFactor = conversionFactor
-        
-        # # Check to see if the user has opted to save a log file
-        # lcpCalc.makeLogFile = globalConstants.logName in lcpCalc.optionalGroupsList
-        # if lcpCalc.makeLogFile:
-        #     # place current date and time into metric constants
-        #     metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
-        #     # create the log file in the appropriate folder
-        #     lcpCalc.logFile = setupAndRestore.createLogFile(outTable, metricConst)
-        #     # start the log file by capturing the tool's parameters.
-        #     parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
-        #                       metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
-        #                       snapRaster, optionalFieldGroups]
-        #     labelsList = metricConst.parameterLabels
-        #     setupAndRestore.logWriteParameters(lcpCalc.logFile, parametersList, labelsList)
-        # else:
-        #     lcpCalc.logFile = None 
 
         
         # Run Calculation

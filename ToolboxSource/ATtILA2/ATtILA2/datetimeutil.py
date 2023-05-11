@@ -131,7 +131,6 @@ class DateTimer:
     FINISH_MSG = "Finished: {0} (Elapsed: {1})"
     START_MSG = "Started: {0}"
     SPLIT_MSG = "Split: {0} (Elapsed: {1})"
-    # TIME_MSG = "Time: {0}"
     TIME_MSG = "[{0}]"
 
     def __init__(self, report=True):

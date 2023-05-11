@@ -16,7 +16,6 @@ class baseMetricConstants():
     fieldOverrideKey = ''
     additionalFields = []
     pctBufferName = ''
-    # logTimeStamp = ''
     parameterLabels = []
 
 class caemConstants(baseMetricConstants):
