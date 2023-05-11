@@ -16,6 +16,8 @@ class baseMetricConstants():
     fieldOverrideKey = ''
     additionalFields = []
     pctBufferName = ''
+    # logTimeStamp = ''
+    parameterLabels = []
 
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
@@ -26,7 +28,7 @@ class caemConstants(baseMetricConstants):
     totalAreaName = "CAEM_TOTA"
     effectiveAreaName = "CAEM_EFFA"
     excludedAreaName = "CAEM_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -41,6 +43,21 @@ class caemConstants(baseMetricConstants):
     coreField = ["", coreSuffix, gc.defaultDecimalFieldType, 6, 1]
     edgeField = ["", edgeSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [coreField, edgeField]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath, 
+        gc.metricsToRun,
+        gc.inEdgeWidth, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups, 
+        gc.clipLCGrid
+        ]
 
 class flcpConstants(baseMetricConstants):
     name = "FloodplainLandCoverProportions"
@@ -57,7 +74,7 @@ class flcpConstants(baseMetricConstants):
     totaPctSuffix = ""
     totaPctBase = "%sTOTA" % fieldPrefix
     totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -71,6 +88,21 @@ class flcpConstants(baseMetricConstants):
     fpTabAreaName = shortName+"_TabAreaFP"
     landcoverGridName = shortName+"_Landcover"
     zoneByRUName = shortName+"_FldplnByRU"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.inFloodplainGeodataset, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups, 
+        gc.clipLCGrid
+        ]
     
 class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
@@ -81,7 +113,7 @@ class flcvConstants(baseMetricConstants):
     totalAreaName = "FLCV_TOTA"
     effectiveAreaName = "FLCV_EFFA"
     excludedAreaName = "FLCV_EXCA"
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -108,6 +140,22 @@ class flcvConstants(baseMetricConstants):
     additionalSuffixes = [highSuffix]
     highField = ["", highSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [highField]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.inFacilityFeature, 
+        gc.viewRadius, 
+        gc.viewThreshold, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]
     
 class idConstants(baseMetricConstants):
     name = "IntersectionDensity"
@@ -118,7 +166,7 @@ class idConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
     fieldOverrideKey = ""
     prjRoadName = "Prj"
@@ -128,7 +176,20 @@ class idConstants(baseMetricConstants):
     roadIntersectName = "Intersections"
     gidrRoadLayer = shortName+"_Road"
     singlepartRoadName = "SglPrt"
-    dummyFieldName = shortName+"_dummy"    
+    dummyFieldName = shortName+"_dummy"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inLineFeature, 
+        gc.mergeLines, 
+        gc.mergeField, 
+        gc.mergeDistance, 
+        gc.outputCS, 
+        gc.cellSize, 
+        gc.searchRadius, 
+        gc.areaUnits, 
+        gc.outRaster, 
+        gc.optionalFieldGroups
+        ]    
 
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"
@@ -139,7 +200,7 @@ class lcccConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 7, 2]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6]
@@ -148,6 +209,19 @@ class lcccConstants(baseMetricConstants):
     fieldOverrideKey = ""
     perUnitAreaMetrics = ("NITROGEN", "PHOSPHORUS")
     percentageMetrics = ("IMPERVIOUS")
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName,
+        gc.lccFilePath, 
+        gc.metricsToRun, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster,
+        gc.optionalFieldGroups
+        ]
 
 class lcdConstants(baseMetricConstants):
     name = "LandCoverDiversity"
@@ -158,7 +232,7 @@ class lcdConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 8, 4]
     qaCheckFieldParameters = [
                               [overlapName, gc.defaultIntegerFieldType, 6]
@@ -166,6 +240,16 @@ class lcdConstants(baseMetricConstants):
     # Output field names are fixed. Field name override option is not available to the user.
     fieldOverrideKey = ""
     fixedMetricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]
 
 class lcospConstants(baseMetricConstants):
     name = "LandCoverOnSlopeProportions"
@@ -176,7 +260,7 @@ class lcospConstants(baseMetricConstants):
     totalAreaName = "LCOSP_TOTA"
     effectiveAreaName = "LCOSP_EFFA"
     excludedAreaName = "LCOSP_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -185,6 +269,22 @@ class lcospConstants(baseMetricConstants):
         [excludedAreaName, gc.defaultAreaFieldType, 15]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.inSlopeGrid, 
+        gc.inSlopeThresholdValue, 
+        gc.outTable, 
+        gc.processingCellSize,
+        gc.snapRaster, 
+        gc.optionalFieldGroups, 
+        gc.clipLCGrid
+        ]
 
 class lcpORIGINALConstants(baseMetricConstants):
     name = "LandCoverProportions"
@@ -195,7 +295,7 @@ class lcpORIGINALConstants(baseMetricConstants):
     totalAreaName = "LCP_TOTA"
     effectiveAreaName = "LCP_EFFA"
     excludedAreaName = "LCP_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -214,7 +314,7 @@ class lcpConstants(baseMetricConstants):
     totalAreaName = shortName+"_TOTA"
     effectiveAreaName = shortName+"_EFFA"
     excludedAreaName = shortName+"_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -231,6 +331,22 @@ class lcpConstants(baseMetricConstants):
     additionalFields = [perCapitaField, meterSquaredField]
     valueCountFieldNames =["RU_POP_C"]
     valueCountTableName = shortName+"_populationCnt"   
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.outTable, 
+        gc.perCapitaYN, 
+        gc.inCensusDataset, 
+        gc.inPopField, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]
 
 class npConstants(baseMetricConstants):
     name = "NeighborhoodProportions"
@@ -241,7 +357,7 @@ class npConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
     fieldOverrideKey = ""
     burnInGridName = "BurnIn"
@@ -249,11 +365,27 @@ class npConstants(baseMetricConstants):
     proxZoneRaserOutName = "_Zone"
     proxRasterOutName = "_Prox"
     proxFocalSumOutName = "_Cnt"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath, 
+        gc.metricsToRun, 
+        gc.inNeighborhoodSize,
+        gc.burnIn, 
+        gc.burnInValue, 
+        gc.minPatchSize, 
+        gc.createZones, 
+        gc.zoneBin_str, 
+        gc.overWrite,
+        gc.outWorkspace, 
+        gc.optionalFieldGroups
+        ]
     
 class nrlcpConstants(baseMetricConstants):
     name = "NearRoadLandCoverProportions"
     shortName = "nrlcp"
-    optionalFilter = [gc.intermediateDescription]    
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]    
     
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
@@ -264,7 +396,7 @@ class pdmConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
@@ -273,6 +405,18 @@ class pdmConstants(baseMetricConstants):
     populationChangeFieldName = "POPCHG"
     intersectOutputName = shortName+"_intersectOutput"
     summaryTableName = shortName+"_summaryTable"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inCensusFeature, 
+        gc.inPopField, 
+        gc.outTable,
+        gc.popChangeYN, 
+        gc.inCensusFeature2, 
+        gc.inPopField2, 
+        gc.optionalFieldGroups
+        ]
     
 class pifmConstants(baseMetricConstants):
     name = "PopulationInFloodplainMetrics"
@@ -283,7 +427,7 @@ class pifmConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = ["", "", gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
@@ -292,6 +436,16 @@ class pifmConstants(baseMetricConstants):
     populationCountFieldNames = ["RU_POP", "FP_POP_C"]
     popCntTableName = shortName+"_populationCnt"
     floodplainPopName = shortName+"_populationFP"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inCensusDataset, 
+        gc.inPopField, 
+        gc.inFloodplainDataset, 
+        gc.outTable, 
+        gc.optionalFieldGroups
+        ]
 
 class pmConstants(baseMetricConstants):
     name = "PatchMetrics"
@@ -302,7 +456,7 @@ class pmConstants(baseMetricConstants):
     totalAreaName = "PM_TOTA"
     effectiveAreaName = "PM_EFFA"
     excludedAreaName = "PM_EXCA"
-    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -333,6 +487,23 @@ class pmConstants(baseMetricConstants):
     classValue = 3
     excludedValue = -9999
     otherValue = 0
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath, 
+        gc.metricsToRun,
+        gc.inPatchSize, 
+        gc.inMaxSeparation, 
+        gc.outTable, 
+        gc.mdcpYN, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups, 
+        gc.clipLCGrid
+        ]
     
 class plcvConstants(baseMetricConstants):
     name = "PopulationLandCoverViews"
@@ -345,7 +516,7 @@ class plcvConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     # This metric is comprised of several output fields. Fieldname override option 
@@ -364,6 +535,22 @@ class plcvConstants(baseMetricConstants):
     areaValueCountTableName = "_ViewPopulationByRU"
     valueWhenNULL = 0
     patchGridName = "_ViewPatch"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.viewRadius, 
+        gc.minPatchSize, 
+        gc.inCensusRaster, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]
     
 class pnfeaConstants(baseMetricConstants):
     #prefix = "NAVTEQ"
@@ -372,9 +559,13 @@ class pnfeaConstants(baseMetricConstants):
     outNameRoadsIntDens = prefix+"_RdsIntDens"
     outNameRoadsIAC = prefix+"_RdsIAC"
     value0_LANES = prefix + "_RdsIAC_0Lanes"
+    optionalFilter = [gc.logDescription]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = []
     
 class pnhd24kConstants(baseMetricConstants):
     prefix = ""
+    optionalFilter = [gc.logDescription]
 
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"
@@ -391,7 +582,7 @@ class rlcpConstants(baseMetricConstants):
     totaPctSuffix = ""
     totaPctBase = "%sTOTA" % fieldPrefix
     totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -402,6 +593,22 @@ class rlcpConstants(baseMetricConstants):
         [pctBufferName, gc.defaultDecimalFieldType, 6, 1]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.inStreamFeatures, 
+        gc.inBufferDistance, 
+        gc.enforceBoundary, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster,
+        gc.optionalFieldGroups
+        ]
     
 class rdmConstants(baseMetricConstants):
     name = "RoadDensityMetrics"
@@ -412,7 +619,7 @@ class rdmConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
@@ -434,6 +641,19 @@ class rdmConstants(baseMetricConstants):
     roadsNearStreams = [shortName+"_RdsNrStrms","FeatureClass"]
     tmp1RNS = [shortName+"_TmpRdsInBuffer","FeatureClass"]
     tmp2RNS = [shortName+"_TmpRdsWithRUID","FeatureClass"]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inRoadFeature, 
+        gc.outTable, 
+        gc.roadClassField,
+        gc.streamRoadCrossings, 
+        gc.roadsNearStreams, 
+        gc.inStreamFeature, 
+        gc.inBufferDistance, 
+        gc.optionalFieldGroups
+        ]
 
 class sdmConstants(baseMetricConstants):
     name = "StreamDensityMetric"
@@ -444,7 +664,7 @@ class sdmConstants(baseMetricConstants):
     totalAreaName = ""
     effectiveAreaName = ""
     excludedAreaName = ""
-    optionalFilter = [gc.intermediateDescription]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
@@ -452,6 +672,15 @@ class sdmConstants(baseMetricConstants):
     lineLengthFieldName = "STRMKM"
     lineDensityFieldName = "STRMDENS"
     linesByReportingUnitName = [shortName+"_StrByRU","FeatureClass"]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLineFeature, 
+        gc.outTable, 
+        gc.strmOrderField, 
+        gc.optionalFieldGroups
+        ]
 
 class splcpConstants(baseMetricConstants):
     name = "SamplePointLandCoverProportions"
@@ -468,7 +697,7 @@ class splcpConstants(baseMetricConstants):
     totaPctSuffix = ""
     totaPctBase = "%sTOTA" % fieldPrefix
     totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
-    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription]
+    optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
@@ -479,5 +708,20 @@ class splcpConstants(baseMetricConstants):
         [pctBufferName, gc.defaultDecimalFieldType, 6, 1]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
-
-    
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inLandCoverGrid, 
+        gc._lccName, 
+        gc.lccFilePath,
+        gc.metricsToRun, 
+        gc.inPointFeatures, 
+        gc.ruLinkField, 
+        gc.inBufferDistance, 
+        gc.enforceBoundary, 
+        gc.outTable, 
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]

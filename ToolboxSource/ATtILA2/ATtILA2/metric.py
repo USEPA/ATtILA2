@@ -7,7 +7,6 @@ import time
 from arcpy.sa import Raster
 from . import errors
 from . import setupAndRestore
-#from pylet import lcc
 from .utils import lcc
 from .utils import polygons
 from .utils import fields
@@ -27,9 +26,8 @@ from .constants import globalConstants
 from .constants import errorConstants
 from . import utils
 from .utils.tabarea import TabulateAreaTable
-#from arcpy import ListFields, FieldInfo, FieldMap
+from datetime import datetime
 
-#from sympy.logic.boolalg import false
 
 class metricCalc:
     """ This class contains the basic steps to perform a land cover metric calculation.
@@ -48,20 +46,22 @@ class metricCalc:
 
     # Initialization
     def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, ignoreHighest=False):
+              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile, ignoreHighest=False):
         self.timer = DateTimer()
-        AddMsg(self.timer.start() + " Setting up environment variables")
+        self.logFile = logFile
+        AddMsg(self.timer.start() + " Setting up environment variables", 0, self.logFile)
         
         # Check to see if the user has specified a Processing cell size other than the cell size of the inLandCoverGrid
         inLandCoverGridCellSize = Raster(inLandCoverGrid).meanCellWidth
         if float(processingCellSize) != inLandCoverGridCellSize:
-            AddMsg("Processing cell size and the cell size for the input Land cover grid are not equal.\n"\
-                   "For the most accurate results, it is highly recommended to use the cell size of the input Land cover grid as the Processing cell size.", 1)
+            AddMsg("Processing cell size and the cell size for the input Land cover grid are not equal. "\
+                   "For the most accurate results, it is highly recommended to use the cell size of the input Land cover grid as the Processing cell size.", 1, self.logFile)
         
         # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
-                                                                                 [metricsToRun,optionalFieldGroups] )
+                                                                                 [metricsToRun,optionalFieldGroups],
+                                                                                 self.logFile)
 
         # XML Land Cover Coding file loaded into memory
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -118,7 +118,7 @@ class metricCalc:
 
 
     def _makeAttilaOutTable(self):
-        AddMsg(self.timer.now() + " Constructing the ATtILA metric output table")
+        AddMsg(self.timer.now() + " Constructing the ATtILA metric output table", 0, self.logFile)
         # Internal function to construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -126,13 +126,13 @@ class metricCalc:
                                                                                   self.metricConst, self.lccObj,
                                                                                   self.outIdField)
     def _makeTabAreaTable(self):
-        AddMsg(self.timer.now() + " Generating a zonal tabulate area table")
+        AddMsg(self.timer.now() + " Generating a zonal tabulate area table", 0, self.logFile)
         # Internal function to generate a zonal tabulate area table
         self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
                                               self.inLandCoverGrid, self.tableName, self.lccObj)
 
     def _calculateMetrics(self):
-        AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values")
+        AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values", 0, self.logFile)
         # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
         # Default calculation is land cover proportions.  this may be overridden by some metrics.
         calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList,
@@ -193,11 +193,33 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcpConstants()
         
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+                          outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, snapRaster, optionalFieldGroups]
+        
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
+        # processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)    
+        # if globalConstants.logName in processed:
+        #     # place current date and time into metric constants
+        #     metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
+        #     # create the log file in the appropriate folder
+        #     logFile = setupAndRestore.createLogFile(outTable, metricConst)
+        #     if logFile:
+        #         # start the log file by capturing the tool's parameters.
+        #         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+        #                           metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
+        #                           snapRaster, optionalFieldGroups]
+        #         labelsList = metricConst.parameterLabels
+        #         setupAndRestore.logWriteParameters(logFile, parametersList, labelsList)
+        # else:
+        #     logFile = None
+            
+        
         # Create new subclass of metric calculation
         class metricCalcLCP(metricCalc):        
         
             def _makeAttilaOutTable(self):
-                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table")
+                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table", 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 if perCapitaYN == "true":     
                     self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable, 
@@ -230,7 +252,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                     self.popTable = files.nameIntermediateFile([metricConst.valueCountTableName,'Dataset'],self.cleanupList)
 
                     # Generate table with population counts by reporting unit
-                    AddMsg(self.timer.now() + " Calculating population within each reporting unit") 
+                    AddMsg(self.timer.now() + " Calculating population within each reporting unit", 0, self.logFile) 
                     self.populationTable, self.populationField = table.createPolygonValueCountTable(self.inReportingUnitFeature,
                                                                          self.reportingUnitIdField,
                                                                          self.inCensusDataset,
@@ -246,7 +268,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                                                                    self.populationField)
 
                 
-                AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values")
+                AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values", 0, self.logFile)
                 # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
                 # Default calculation is land cover proportions.  this may be overridden by some metrics.
                 calculate.landCoverProportions(self.lccClassesDict, self.metricsBaseNameList, self.optionalGroupsList,
@@ -257,7 +279,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         
         # Create new instance of metricCalc class to contain parameters
         lcpCalc = metricCalcLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                             metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                             metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
         
         # Assign class attributes unique to this module.
         lcpCalc.perCapitaYN = perCapitaYN
@@ -275,7 +297,24 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
             raise errors.attilaException(errorConstants.linearUnitConversionError)
 
         # Set the conversion factor as a class attribute
-        lcpCalc.conversionFactor = conversionFactor        
+        lcpCalc.conversionFactor = conversionFactor
+        
+        # # Check to see if the user has opted to save a log file
+        # lcpCalc.makeLogFile = globalConstants.logName in lcpCalc.optionalGroupsList
+        # if lcpCalc.makeLogFile:
+        #     # place current date and time into metric constants
+        #     metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
+        #     # create the log file in the appropriate folder
+        #     lcpCalc.logFile = setupAndRestore.createLogFile(outTable, metricConst)
+        #     # start the log file by capturing the tool's parameters.
+        #     parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+        #                       metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
+        #                       snapRaster, optionalFieldGroups]
+        #     labelsList = metricConst.parameterLabels
+        #     setupAndRestore.logWriteParameters(lcpCalc.logFile, parametersList, labelsList)
+        # else:
+        #     lcpCalc.logFile = None 
+
         
         # Run Calculation
         lcpCalc.run()
@@ -287,6 +326,8 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
             for (function,arguments) in lcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        if lcpCalc.logFile:
+            lcpCalc.logFile.close()
         setupAndRestore.standardRestore()
         
 
@@ -300,6 +341,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         metricConst = metricConstants.lcospConstants()
         # append the slope threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
+        
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+                          inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
+        
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
         
         # # This block of code can be used if we want to change the Slope Threshold input to a double parameter type
         # # If we do that, we'd also have to change the tool validation property to comment out the inZeroAndAboveIntegerIndex = 7 line 
@@ -327,7 +373,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
 
         if clipLCGrid == "true":
             timer = DateTimer()
-            AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size...")
+            AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size", 0, logFile)
             pathRoot = os.path.splitext(inLandCoverGrid)[0]
             namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
             scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
@@ -355,7 +401,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         
         # Create new instance of metricCalc class to contain parameters
         lcspCalc = metricCalcLCOSP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, ignoreHighest)
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile, ignoreHighest)
 
         lcspCalc.inSlopeGrid = inSlopeGrid
         lcspCalc.inSlopeThresholdValue = inSlopeThresholdValue
@@ -756,6 +802,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caemConstants()
+        # grab the current date and time for log file
+        metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
         # append the edge width distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inEdgeWidth
         # for the core and edge fields, add the edge width to the  field suffix
@@ -905,6 +953,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         errors.standardErrorHandling(e)
 
     finally:
+        if caemCalc.logFile:
+            caemCalc.logFile.close()
         setupAndRestore.standardRestore()
         env.workspace = _tempEnvironment1
         
@@ -1218,7 +1268,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
 
 def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
-                             streamRoadCrossings="#", roadsNearStreams="#", inStreamFeature="#", bufferDistance="#",
+                             streamRoadCrossings="#", roadsNearStreams="#", inStreamFeature="#", inBufferDistance="#",
                              optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
@@ -1244,7 +1294,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
-            msg = "\nIntermediates are stored in this directory: {0}\n"
+            msg = "Intermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace)) 
             #AddMsg(msg.format(env.workspace))
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -1408,10 +1458,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             roadsNearStreams = files.nameIntermediateFile(metricConst.roadsNearStreams,cleanupList)
             
             # append the buffer distance to the rns field name base
-            distString = bufferDistance.split()[0]
+            distString = inBufferDistance.split()[0]
             rnsFieldName = metricConst.rnsFieldName+distString
 
-            vector.roadsNearStreams(inStreamFeature, mergedStreams, bufferDistance, inRoadFeature, inReportingUnitFeature, streamLengthFieldName,uIDField, streamBuffer, 
+            vector.roadsNearStreams(inStreamFeature, mergedStreams, inBufferDistance, inRoadFeature, inReportingUnitFeature, streamLengthFieldName,uIDField, streamBuffer, 
                                           tmp1RdsNearStrms, tmp2RdsNearStrms, roadsNearStreams, rnsFieldName,metricConst.roadLengthFieldName, roadClassField)
             # Transfer values to final output table.
             AddMsg(timer.now() + " Compiling calculated values into output table")
@@ -1433,7 +1483,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         env.parallelProcessingFactor = _tempEnvironment6
 
 
-def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, lineCategoryField="", 
+def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField="", 
                                optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
@@ -1459,7 +1509,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
-            msg = "\nIntermediates are stored in this directory: {0}\n"
+            msg = "Intermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace))
             #AddMsg(msg.format(env.workspace))
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -1524,20 +1574,20 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                                                                                  uIDField,unitArea,mergedInLines,
                                                                                  metricConst.lineDensityFieldName,
                                                                                  metricConst.lineLengthFieldName,
-                                                                                 lineCategoryField)
+                                                                                 strmOrderField)
 
         # Build and populate final output table.
         AddMsg(timer.now() + " Compiling calculated values into output table")
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         # Get a list of unique road class values
-        if lineCategoryField:
-            categoryValues = fields.getUniqueValues(mergedInLines,lineCategoryField)
+        if strmOrderField:
+            orderValues = fields.getUniqueValues(mergedInLines,strmOrderField)
         else:
-            categoryValues = []
+            orderValues = []
         # Compile a list of fields that will be transferred from the merged roads feature class into the output table
         fromFields = [lineLengthFieldName, metricConst.lineDensityFieldName]
         # Transfer the values to the output table, pivoting the class values into new fields if necessary.
-        table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,lineCategoryField,categoryValues)
+        table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,strmOrderField,orderValues)
         
     except Exception as e:
         errors.standardErrorHandling(e)
@@ -1673,7 +1723,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
-            msg = "\nIntermediates are stored in this directory: {0}\n"
+            msg = "Intermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace))
             #AddMsg(msg.format(env.workspace))
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -1786,7 +1836,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         # Strip the description from the "additional option" and determine whether intermediates are stored.
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
-            msg = "\nIntermediates are stored in this directory: {0}\n"
+            msg = "Intermediates are stored in this directory: {0}\n"
             arcpy.AddMessage(msg.format(env.workspace))
 
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -2366,72 +2416,6 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         setupAndRestore.standardRestore()
-        
-        
-# def runNeighborhoodProportionsQA(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
-#                       burnIn, burnInValue="", minPatchSize="#", createZones="", zoneBin_str="", overWrite="",
-#                       outWorkspace="#", optionalFieldGroups="#"):
-#     """ Interface for script executing Generate Proximity Polygons utility """
-#
-#     from arcpy import env
-#     from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
-#
-#     # process the inLandCoverGrid for the selected class
-#     AddMsg("Processing neighborhood proportions grid...")
-#
-#     # get output grid name. Add it to the list of features to add to the Contents pane
-#     namePrefix = "ProxGrid"
-#     proximityGridName = files.getRasterName(namePrefix)
-#
-#
-#     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
-#     reclassPairs = [[0, 0], [10, 0], [20, 0], [30, 0], [40, 1], [70, 1], [91, 1], [92, 1]]
-#
-#
-#     AddMsg("Reclassifying selected land cover class to 1. All other values = 0...")
-#     reclassGrid = arcpy.sa.Float(Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs)))
-#     namePrefix = "ClassGrid"
-#     reclassScratchName = files.getRasterName(namePrefix)
-#     reclassGrid.save(reclassScratchName)
-#
-#     AddMsg("Building raster attribute table...")
-#     arcpy.management.BuildRasterAttributeTable(reclassGrid, "Overwrite")
-#
-#     desc = arcpy.Describe(reclassGrid)
-#     AddMsg("baseNaem = "+desc.baseName)
-#     AddMsg("catalogPath = "+desc.catalogPath)
-#     AddMsg("file = "+desc.file)
-#     AddMsg("name = "+desc.name)
-#     AddMsg("path = "+desc.path)
-#
-#     env.snapRaster = reclassGrid
-#     AddMsg("setting cellSize")
-#     AddMsg("reclassScratchName = "+reclassScratchName)
-#     env.cellSize = reclassScratchName
-#     # arcpy.env.cellSizeProjectionMethod = "CONVERT_UNITS"
-#     # arcpy.env.cellAlignment = "DEFAULT"
-#
-#     AddMsg("Performing focal SUM on reclassified raster using cell neighborhood...")
-#     neighborhoodStr = "Rectangle 251 251 CELL"
-#     AddMsg("neighborhoodStr = "+neighborhoodStr)
-#
-#     fullPath = 'r"'+reclassScratchName+'"'
-#     AddMsg("reclassScratchName = "+fullPath)
-#
-#     nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid, neighborhoodStr, "SUM", "NODATA", 90)
-#     namePrefix = "CountGrid"
-#     nbrCntGridScratchName = files.getRasterName(namePrefix)  
-#     nbrCntGrid.save(nbrCntGridScratchName)
-#     AddMsg(" Save intermediate grid complete: "+os.path.basename(nbrCntGridScratchName))
-#
-#     AddMsg("Calculating the proportion of land cover class within cell neighborhood...")
-#     proximityGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / 63001) * 100') )
-#
-#
-#
-#
-#     proximityGrid.save(proximityGridName) 
-#     AddMsg("Save proportions grid complete")
           
 
 

@@ -4,7 +4,7 @@ This module contains tools for sending status messages to the command line and t
 import arcpy
 import datetime
 
-def AddMsg(msg, severity=0):
+def AddMsg(msg, severity=0, logFile=None):
     # Adds a Message (in case this is run as a tool)
     # and also prints the message to the screen (standard output)
     # 
@@ -18,10 +18,16 @@ def AddMsg(msg, severity=0):
             #
             if severity == 0:
                 arcpy.AddMessage(string)
+                logString = string
             elif severity == 1:
                 arcpy.AddWarning(string)
+                logString = "[WARNING] "+string
             elif severity == 2:
                 arcpy.AddError(string)
+                logString = "[ERROR] "+string
+                
+            if logFile:
+                logFile.write(logString+"\n")
     except:
         pass
     

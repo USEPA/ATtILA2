@@ -1,10 +1,12 @@
 ''' Tasks specific to setting up and restoring environments.
 '''
+import os
 import arcpy
 from arcpy import env
 #from pylet import utils
 from .utils import environment
 from .utils import parameters
+from .utils.messages import AddMsg
 
 
 from ATtILA2.constants import globalConstants
@@ -18,7 +20,7 @@ _tempEnvironment5 = ""
 _tempEnvironment6 = ""
 
 
-def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[]):
+def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[], logFile=None):
     """ Standard setup for executing metrics. """
     
     # Check out any necessary licenses
@@ -47,8 +49,9 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
         itemTuples.append(processed)
         
         if globalConstants.intermediateName in processed:
-            msg = "\nIntermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace))    
+            msg = "Intermediates are stored in this directory: {0}\n"
+            # arcpy.AddMessage(msg.format(env.workspace))
+            AddMsg(msg.format(env.workspace), 0, logFile)
     
     # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
     # Disable for the duration of the tool.
@@ -64,7 +67,8 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     else:
         # Advise the user that results when using parallel processing may be different from results obtained without its use.
         # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
-        arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+        # arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+        AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
         env.parallelProcessingFactor = None
     
     return itemTuples
@@ -87,4 +91,63 @@ def standardRestore():
         arcpy.CheckInExtension("spatial")
     except:
         pass
+
+
+# def createLogFile(inDataset, metricConst):
+def createLogFile(inDataset, dateTimeStamp):
+    """ Create log file to capture tool processing steps. """
     
+    inBaseName = os.path.basename(inDataset)
+    inRootName = os.path.splitext(inBaseName)[0]
+    # logBaseName = ('{0}_{1}').format(inRootName, metricConst.logTimeStamp)
+    logBaseName = ('{0}_{1}').format(inRootName, dateTimeStamp)
+    
+    odsc = arcpy.Describe(env.workspace)
+    
+    # determine where to create the log file
+    if odsc.DataType == "Folder":
+        logPathName = os.path.join(env.workspace, logBaseName)
+    else:
+        logPathName = os.path.join(os.path.dirname(env.workspace), logBaseName)
+    
+    try:
+        msg = "Created log file: {0}\n"
+        arcpy.AddMessage(msg.format(logPathName))
+        reportFile = open(logPathName, 'a')
+            
+        return reportFile
+    except:
+        arcpy.AddWarning("Unable to create log file. Continuing metric calculations.")
+        if reportFile:
+            reportFile.close()
+        
+        return None
+
+
+def logWriteParameters(logFile, parametersList, labelsList):
+    
+    for l, p in zip(labelsList, parametersList):
+        if p:
+            logFile.write('PARAMETER: {0}: {1}\n'.format(l, p.replace("'"," ")))
+    
+    logFile.write("\n\n")
+
+
+def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset):
+    from datetime import datetime
+    processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)    
+    if globalConstants.logName in processed:
+        # place current date and time into metric constants
+        # metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
+        logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
+        # create the log file in the appropriate folder
+        # logFile = createLogFile(outDataset, metricConst)
+        logFile = createLogFile(outDataset, logTimeStamp)
+        if logFile:
+            # start the log file by capturing the tool's parameters.
+            labelsList = metricConst.parameterLabels
+            logWriteParameters(logFile, parametersList, labelsList)
+    else:
+        logFile = None
+    
+    return logFile
