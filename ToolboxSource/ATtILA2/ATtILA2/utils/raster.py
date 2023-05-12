@@ -9,6 +9,7 @@ from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
 import arcpy as _arcpy
 from arcpy.sa.Functions import CreateConstantRaster
+from ATtILA2.constants.globalConstants import inReportingUnitFeature
 def getRasterPointFromRowColumn(raster, row, column):
     """ Get an arcpy `Point`_ object from an arcpy `Raster`_ object and zero based row and column indexes.
 
@@ -135,8 +136,41 @@ def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDist
     arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
     
     return clippedGrid
+
+
+def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile, inBufferDistance=None):
+    timer = DateTimer()
+    AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size", 0, logFile)
+    pathRoot = os.path.splitext(inRaster)[0]
+    namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
+    scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
     
-def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue, timer):            
+    if arcpy.Exists(scratchName):
+        arcpy.Delete_management(scratchName)
+        
+    if inBufferDistance:
+        # Buffering Reporting unit features...
+        cellSize = Raster(inRaster).meanCellWidth
+        linearUnits = arcpy.Describe(inRaster).spatialReference.linearUnitName
+        bufferFloat = cellSize * (int(inBufferDistance)+1)
+        bufferDistance = "%s %s" % (bufferFloat, linearUnits)
+        clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
+        clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
+        
+        # Clipping input grid to desired extent...
+        clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, clipBuffer, "", "NONE")
+        arcpy.Delete_management(clipBuffer)
+    else:
+        clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE")
+    
+    arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
+
+    AddMsg(timer.now() + " Reduction complete")
+    
+    return clippedGrid, scratchName
+            
+    
+def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdValue, timer, logFile=None):            
     # Generate the slope X land cover grid where:
     #   1) land cover codes are preserved for areas on steep slopes,
     #   2) areas below the slope threshold are coded with the AreaBelowThresholdValue (Maximum Land Cover Class Value + 1).
@@ -148,7 +182,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     addOne = True
     AreaBelowThresholdValue = getMaximumValue(LCGrid, lccObj, addOne)
 
-    AddMsg(timer.now() + " Generating land cover above slope threshold grid...")    
+    AddMsg(timer.now() + " Generating land cover above slope threshold grid", 0, logFile)    
     delimitedVALUE = arcpy.AddFieldDelimiters(SLPGrid,"VALUE")
     whereClause = delimitedVALUE+" >= " + inSlopeThresholdValue
     SLPxLCGrid = Con(SLPGrid, LCGrid, AreaBelowThresholdValue, whereClause)
@@ -157,7 +191,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     excludedValues = lccObj.values.getExcludedValueIds()
 
     if excludedValues:
-        AddMsg(timer.now() + " Inserting EXCLUDED values into areas below slope threshold...")
+        AddMsg(timer.now() + " Inserting EXCLUDED values into areas below slope threshold", 0, logFile)
         # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where excluded values occur on the land cover grid
         whereExcludedClause = buildWhereValueClause(SLPGrid, excludedValues)
         SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause) 
@@ -165,7 +199,7 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     return SLPxLCGrid
 
 
-def getSetNullGrid(inConditionalGrid, inReplacementGrid, nullValuesList):
+def getSetNullGrid(inConditionalGrid, inReplacementGrid, nullValuesList, logFile):
     # Identify inConditionalGrid grid cells whose values are in the nullValuesList and set them to NODATA. 
     # Replace the other cell values with values from the inLandCoverGrid.
     conditionalRaster = Raster(inConditionalGrid)   

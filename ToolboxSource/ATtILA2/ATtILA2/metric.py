@@ -27,6 +27,7 @@ from .constants import errorConstants
 from . import utils
 from .utils.tabarea import TabulateAreaTable
 from datetime import datetime
+import traceback
 
 
 class metricCalc:
@@ -99,11 +100,11 @@ class metricCalc:
         # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
 
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict)
+        settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict, self.logFile)
         # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj, self.ignoreHighest)
+        settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj, self.logFile, self.ignoreHighest)
         # alert user if the land cover grid cells are not square (default to size along x axis)
-        settings.checkGridCellDimensions(self.inLandCoverGrid)
+        settings.checkGridCellDimensions(self.inLandCoverGrid, self.logFile)
         # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
         self.outIdField = settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
 
@@ -287,6 +288,17 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         # Run Calculation
         lcpCalc.run()
     except Exception as e:
+        # COMPLETE LOGFILE
+        logFile.write("\nSomething went wrong.\n\n")
+        logFile.write("Python Traceback Message below:")
+        logFile.write(traceback.format_exc())
+        logFile.write("\nArcMap Error Messages below:")
+        logFile.write(arcpy.GetMessages(2))
+        logFile.write("\nArcMap Warning Messages below:")
+        logFile.write(arcpy.GetMessages(1))
+        logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+        logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
@@ -294,8 +306,10 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
             for (function,arguments) in lcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
-        if lcpCalc.logFile:
-            lcpCalc.logFile.close()
+        
+        if logFile:
+            logFile.close()
+        
         setupAndRestore.standardRestore()
         
 
@@ -310,9 +324,10 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         # append the slope threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
+        # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
-        
+        # create a log file if requested, otherwise logFile = None
         logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
         
         # # This block of code can be used if we want to change the Slope Threshold input to a double parameter type
@@ -340,14 +355,8 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
 
         if clipLCGrid == "true":
-            timer = DateTimer()
-            AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size", 0, logFile)
-            pathRoot = os.path.splitext(inLandCoverGrid)[0]
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
-            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
-            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
-            AddMsg(timer.now() + " Reduction complete")
-
+            inLandCoverGrid, scratchName = raster.clipRaster(inReportingUnitFeature, inLandCoverGrid, DateTimer, metricConst, logFile)
+            
         
         # Create new subclass of metric calculation
         class metricCalcLCOSP(metricCalc):
@@ -355,14 +364,14 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             def _replaceLCGrid(self):
                 # replace the inLandCoverGrid
                 self.inLandCoverGrid = raster.getIntersectOfGrids(self.lccObj, self.inLandCoverGrid, self.inSlopeGrid,
-                                                                   self.inSlopeThresholdValue,self.timer)
+                                                                   self.inSlopeThresholdValue,self.timer, self.logFile)
 
                 if self.saveIntermediates:
                     self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]+"_"
                     self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
                     #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
-                    AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+                    AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName), 0, self.logFile)
                     
         # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
         ignoreHighest = True
@@ -381,10 +390,26 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             arcpy.Delete_management(scratchName) 
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
+        
         env.workspace = _tempEnvironment1
         
         
@@ -398,6 +423,12 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.flcpConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+                          inFloodplainGeodataset, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
           
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
@@ -407,12 +438,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
 
         if clipLCGrid == "true":
-            AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size...")
-            pathRoot = os.path.splitext(inLandCoverGrid)[0]
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
-            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
-            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid)
-            AddMsg(timer.now() + " Reduction complete")
+            inLandCoverGrid, scratchName = raster.clipRaster(inReportingUnitFeature, inLandCoverGrid, DateTimer, metricConst, logFile)
   
           
         # Create new subclass of metric calculation
@@ -426,32 +452,32 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                     flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
                 
                 # replace the inLandCoverGrid
-                AddMsg(timer.now() + " Generating land cover in floodplain grid...")
-                self.inLandCoverGrid = raster.getSetNullGrid(self.inFloodplainGeodataset, self.inLandCoverGrid, self.nullValuesList)
+                AddMsg(timer.now() + " Generating land cover in floodplain grid", 0, self.logFile)
+                self.inLandCoverGrid = raster.getSetNullGrid(self.inFloodplainGeodataset, self.inLandCoverGrid, self.nullValuesList, self.logFile)
                     
                 if self.saveIntermediates:
                     self.namePrefix = self.metricConst.landcoverGridName
                     self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
-                    AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName))
+                    AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName), 0, self.logFile)
                     
                     
             def _housekeeping(self):
                 # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
             
                 # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-                settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict)
+                settings.checkExcludedValuesInClass(self.metricsBaseNameList, self.lccObj, self.lccClassesDict, self.logFile)
                 # alert user if the land cover grid has values undefined in the LCC XML file
-                settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj, self.ignoreHighest)
+                settings.checkGridValuesInLCC(self.inLandCoverGrid, self.lccObj, self.logFile, self.ignoreHighest)
                 # alert user if the land cover grid cells are not square (default to size along x axis)
-                settings.checkGridCellDimensions(self.inLandCoverGrid)
+                settings.checkGridCellDimensions(self.inLandCoverGrid, self.logFile)
                 # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
                 self.outIdField = settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
             
                 # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
                 self.zoneAreaDict = None
                 if self.addQAFields:
-                    AddMsg(self.timer.now() + " Tabulating the area of the floodplains within each reporting unit...")
+                    AddMsg(self.timer.now() + " Tabulating the area of the floodplains within each reporting unit", 0, self.logFile)
                     fpTabAreaTable = files.nameIntermediateFile([self.metricConst.fpTabAreaName, "Dataset"], self.cleanupList)   
             
                     arcpy.sa.TabulateArea(self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize)
@@ -479,7 +505,9 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                                                                                               self.reportingUnitIdField, 
                                                                                               self.inFloodplainGeodataset,
                                                                                               self.zonesName, 
-                                                                                              self.cleanupList, self.timer)
+                                                                                              self.cleanupList, 
+                                                                                              self.timer,
+                                                                                              self.logFile)
  
   
         # Do a Describe on the floodplain input to determine if it is a raster or polygon feature
@@ -488,11 +516,11 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         if desc.datasetType == "RasterDataset":
             # Create new instance of metricCalc class to contain parameters
             flcpCalc = metricCalcFLCPRaster(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
         else:
             # Create new instance of metricCalc class to contain parameters
             flcpCalc = metricCalcFLCPPolygon(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
          
         # Assign class attributes unique to this module.
         flcpCalc.inFloodplainGeodataset = inFloodplainGeodataset
@@ -521,7 +549,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
             excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
             
             if len(excludedValuesList) > 0:
-                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now())
+                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit" % timer.now(), 0, flcpCalc.logFile)
                 # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
                 if flcpCalc.saveIntermediates:
                     # name the table so that it will be saved
@@ -538,7 +566,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                     flcpCalc.reportingUnitAreaDict[key].append(area)
             
             else:
-                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now())
+                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas" % timer.now(), flcpCalc.logFile)
                 for aKey in flcpCalc.testAreaDict.keys():
                     area = flcpCalc.reportingUnitAreaDict[aKey]
                     # make the value of key a list
@@ -553,6 +581,18 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
             arcpy.Delete_management(scratchName) 
  
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
  
     finally:
@@ -560,7 +600,12 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
             for (function,arguments) in flcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+        
         setupAndRestore.standardRestore()
+        
         env.workspace = _tempEnvironment1
 
 
@@ -575,16 +620,23 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
     try:
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up initial environment variables")
+        
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.pmConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+                          inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
+        AddMsg(timer.start() + " Setting up initial environment variables", 0, logFile)
         
         # index the reportingUnitIdField to speed query results
         ruIdIndex = "ruIdIndex_ATtILA"
         indexNames = [indx.name for indx in arcpy.ListIndexes(inReportingUnitFeature)]
         if ruIdIndex not in indexNames:
             arcpy.AddIndex_management(inReportingUnitFeature, reportingUnitIdField, ruIdIndex)
-        
-        # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.pmConstants()
         
         # setup the appropriate metric fields to add to output table depending on if MDCP is selected or not
         if mdcpYN:
@@ -595,7 +647,8 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups] )
+                                                                                [metricsToRun,optionalFieldGroups], 
+                                                                                logFile )
         
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -624,16 +677,16 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             raise errors.attilaException(errorConstants.linearUnitConversionError)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         
         # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
         
         # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
          
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Creating output table")
+        AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   metricConst.additionalFields)
@@ -643,19 +696,11 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         #patch metrics) extend the clip envelope an adequate distance.
 
         if clipLCGrid == "true":
-            AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size...")
-            
-            # from . import utils
             from arcpy import env        
             _startingWorkSpace= env.workspace
             env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
-            pathRoot = os.path.splitext(inLandCoverGrid)[0]
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
-            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
-            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inMaxSeparation)
+            inLandCoverGrid, scratchName = raster.clipRaster(inReportingUnitFeature, inLandCoverGrid, DateTimer, metricConst, logFile)
             env.workspace = _startingWorkSpace
-            
-            AddMsg(timer.now() + " Reduction complete")
         
             
         # Run metric calculate for each metric in list
@@ -665,14 +710,14 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
 
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
-                    AddMsg(self.timer.now() + " Creating Patch Grid for Class:"+m)
+                    AddMsg(self.timer.now() + " Creating Patch Grid for Class:"+m, 0, self.logFile)
                     scratchNameReference = [""]
                     self.inLandCoverGrid = raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
                                                                           self.metricConst, self.maxSeparation,
                                                                           self.minPatchSize, processingCellSize, timer,
                                                                           scratchNameReference)
                     self.scratchNameToBeDeleted = scratchNameReference[0]
-                    AddMsg(self.timer.now() + " Patch Grid Completed for Class:"+m)
+                    AddMsg(self.timer.now() + " Patch Grid Completed for Class:"+m, 0, self.logFile)
 
                 #skip over make out table since it has already been made
                 def _makeAttilaOutTable(self):
@@ -687,26 +732,26 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                     # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
                     # Removed alert about lcc codes since the lcc values are not used in the Core/Edge calculations
                     # alert user if the land cover grid cells are not square (default to size along x axis)
-                    settings.checkGridCellDimensions(self.inLandCoverGrid)
+                    settings.checkGridCellDimensions(self.inLandCoverGrid, self.logFile)
                         
                 # Update calculateMetrics to populate Patch Metrics and MDCP
                 def _calculateMetrics(self):
                     
-                    AddMsg(self.timer.now() + " Calculating Patch Numbers by Reporting Unit for Class:" + m)
+                    AddMsg(self.timer.now() + " Calculating Patch Numbers by Reporting Unit for Class:" + m, 0, self.logFile)
                      
                     # calculate Patch metrics
                     self.pmResultsDict = calculate.getPatchNumbers(self.outIdField, self.newTable, self.reportingUnitIdField, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m, self.inReportingUnitFeature, 
                                                       self.inLandCoverGrid, processingCellSize, conversionFactor)
  
-                    AddMsg(timer.now() + " Patch analysis has been run for Class:" + m)
+                    AddMsg(timer.now() + " Patch analysis has been run for Class:" + m, 0, self.logFile)
                     
                     # get class name (may have been modified from LCC XML input by ATtILA)
                     outClassName = metricsFieldnameDict[m][1]
                     
                     if mdcpYN == "true": #calculate MDCP value
                     
-                        AddMsg(self.timer.now() + " Calculating MDCP for Class:" + m)
+                        AddMsg(self.timer.now() + " Calculating MDCP for Class:" + m, 0, self.logFile)
                         
                         # create and name intermediate data layers
                         rastoPolyFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.rastertoPoly))
@@ -725,7 +770,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
                         calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.optionalGroupsList,
                                                  outClassName)
                         
-                        AddMsg(self.timer.now() + " MDCP analysis has been run for Class:" + m)
+                        AddMsg(self.timer.now() + " MDCP analysis has been run for Class:" + m, 0, self.logFile)
                     
                     if self.saveIntermediates:
                         pass
@@ -734,7 +779,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
 
             # Create new instance of metricCalc class to contain parameters
             pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                      m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
             
             pmCalc.newTable = newtable
             pmCalc.metricsFieldnameDict = metricsFieldnameDict
@@ -752,14 +797,31 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             arcpy.Delete_management(scratchName)     
     
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
 
     finally:
+        if logFile:
+            logFile.close()
+        
         setupAndRestore.standardRestore()
+        
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
         arcpy.RemoveIndex_management(inReportingUnitFeature, ruIdIndex)
 
 
@@ -770,6 +832,13 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caemConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+                          inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         # grab the current date and time for log file
         metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
         # append the edge width distance value to the field suffix
@@ -780,7 +849,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups] )
+                                                                                [metricsToRun,optionalFieldGroups], 
+                                                                                logFile )
 
         lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
@@ -789,10 +859,10 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         
         # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
@@ -809,13 +879,8 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
 
 
         if clipLCGrid == "true":
-            timer = DateTimer()
-            AddMsg("%s Reducing input Land cover grid to smallest recommended size..." % timer.now())
-            pathRoot = os.path.splitext(inLandCoverGrid)[0]
-            namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
-            scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
-            inLandCoverGrid = raster.clipGridByBuffer(inReportingUnitFeature, scratchName, inLandCoverGrid, inEdgeWidth)
-            AddMsg("%s Reduction complete" % timer.now())
+            inLandCoverGrid, scratchName = raster.clipRaster(inReportingUnitFeature, inLandCoverGrid, DateTimer, metricConst, logFile, inEdgeWidth)
+        
         
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -862,7 +927,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     self.lccObj = None
                     
                     self.tabAreaTable = categoryTabAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
-                                              self.inLandCoverGrid, self.tableName, self.lccObj)
+                                              self.inLandCoverGrid, self.tableName, self.lccObj, self.logFile)
                     
                 # Update housekeeping. Moved checks for undefined grid values and excluded grid values in class definitions
                 # out of the for loop. Now they are only ran once at the beginning of the metric run
@@ -870,7 +935,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
                     # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
 
                     # alert user if the land cover grid cells are not square (default to size along x axis)
-                    settings.checkGridCellDimensions(self.inLandCoverGrid)
+                    settings.checkGridCellDimensions(self.inLandCoverGrid, self.logFile)
                     # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
                     self.outIdField = settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
                 
@@ -896,7 +961,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
 
             # Create new instance of metricCalc class to contain parameters
             caemCalc = metricCalcCAEM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                          m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                          m, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
     
             caemCalc.inEdgeWidth = inEdgeWidth
     
@@ -918,11 +983,24 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             arcpy.Delete_management(scratchName)
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
 
     finally:
-        if caemCalc.logFile:
-            caemCalc.logFile.close()
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
         env.workspace = _tempEnvironment1
         
@@ -935,6 +1013,13 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         timer = DateTimer()
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.rlcpConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+                          inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
         # append the buffer distance value to the percent buffer field
@@ -978,7 +1063,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
 
         # Assign class attributes unique to this module.
         rlcpCalc.inStreamFeatures = inStreamFeatures
@@ -1038,6 +1123,18 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         rlcpCalc.run()      
        
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
@@ -1045,7 +1142,12 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             for (function,arguments) in rlcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+        
         setupAndRestore.standardRestore()
+
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inPointFeatures, ruLinkField='', inBufferDistance='#', enforceBoundary='', outTable='', processingCellSize='', 
@@ -1056,6 +1158,13 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         timer = DateTimer()
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.splcpConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inPointFeatures, 
+                          ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
         # append the buffer distance value to the percent buffer field
@@ -1103,7 +1212,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
 
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                       metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
 
         # Assign class attributes unique to this module.
         splcpCalc.inPointFeatures = inPointFeatures
@@ -1171,6 +1280,18 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                 arcpy.Delete_management(splcpCalc.dissolveName)
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
@@ -1178,6 +1299,10 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
             for (function,arguments) in splcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+        
         setupAndRestore.standardRestore()
 
 
@@ -1189,6 +1314,12 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
     try:
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcccConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+                          metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
 
         # Create new LCC metric calculation subclass
         class metricCalcLCC(metricCalc):
@@ -1209,7 +1340,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
 
         # Instantiate LCC metric calculation subclass
         lccCalc = metricCalcLCC(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                      metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
 
         # see what linear units are used in the tabulate area table
         outputLinearUnits = settings.getOutputLinearUnits(inLandCoverGrid)
@@ -1228,11 +1359,25 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         lccCalc.run()
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
-
 
 
 def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
@@ -1250,6 +1395,13 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         AddMsg(timer.start() + " Setting up environment variables")
         # Get the metric constants
         metricConst = metricConstants.rdmConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField, streamRoadCrossings, 
+                          roadsNearStreams, inStreamFeature, inBufferDistance, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         # Set the output workspace
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -1263,8 +1415,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "Intermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace)) 
-            #AddMsg(msg.format(env.workspace))
+            AddMsg(msg.format(env.workspace), 0, logFile)
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -1438,6 +1589,18 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             table.transferField(roadsNearStreams,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
     
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
@@ -1445,6 +1608,10 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+            
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
         env.outputZFlag = _tempEnvironment5
@@ -1465,6 +1632,12 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         AddMsg(timer.start() + " Setting up environment variables")
         # Get the metric constants
         metricConst = metricConstants.sdmConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         # Set the output workspace
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -1478,8 +1651,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "Intermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace))
-            #AddMsg(msg.format(env.workspace))
+            AddMsg(msg.format(env.workspace), 0, logFile)
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -1558,6 +1730,18 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,strmOrderField,orderValues)
         
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+        
         errors.standardErrorHandling(e)
 
     finally:
@@ -1565,6 +1749,10 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+            
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
         env.outputZFlag = _tempEnvironment5
@@ -1589,7 +1777,8 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
                                                                                                   processingCellSize, 
                                                                                                   os.path.dirname(outTable), 
-                                                                                                  [metricsToRun,optionalFieldGroups])
+                                                                                                  [metricsToRun,optionalFieldGroups], 
+                                                                                                  logFile)
                 
                 # Save other input parameters as class attributes
                 self.outTable = outTable
@@ -1607,7 +1796,7 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                 
             def _housekeeping(self):
                 # alert user if the land cover grid cells are not square (default to size along x axis)
-                settings.checkGridCellDimensions(self.inLandCoverGrid)
+                settings.checkGridCellDimensions(self.inLandCoverGrid, self.logFile)
                 # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
                 self.outIdField = settings.getIdOutField(self.inReportingUnitFeature, self.reportingUnitIdField)
                 # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
@@ -1657,16 +1846,38 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
 
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.lcdConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
+                          snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         metricsToRun = metricConst.fixedMetricsToRun
         
         lcdCalc = metricLCDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, metricsToRun, outTable, 
-                                processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                                processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
         lcdCalc.run()
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
 
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
 
 
@@ -1684,6 +1895,13 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
 
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pdmConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
+                          popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
 
         # Set the output workspace
         _tempEnvironment1 = env.workspace
@@ -1692,8 +1910,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "Intermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace))
-            #AddMsg(msg.format(env.workspace))
+            AddMsg(msg.format(env.workspace), 0, logFile)
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
@@ -1761,6 +1978,18 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
 
         AddMsg(timer.now() + " Calculation complete")
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
 
     finally:
@@ -1768,6 +1997,10 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+            
         env.workspace = _tempEnvironment1
         env.parallelProcessingFactor = _tempEnvironment6
         
@@ -1805,7 +2038,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)
         if globalConstants.intermediateName in processed:
             msg = "Intermediates are stored in this directory: {0}\n"
-            arcpy.AddMessage(msg.format(env.workspace))
+            AddMsg(msg.format(env.workspace), 0, logFile)
 
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
@@ -1813,6 +2046,12 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.pifmConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         popCntFields = metricConst.populationCountFieldNames
             
         # Do a Describe on the population and floodplain inputs. Determine if they are raster or polygon
@@ -1925,7 +2164,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
                 try:
                     inFloodplainDataset = arcpy.RasterToPolygon_conversion(nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices)
                 except:
-                    arcpy.AddMessage("Converting raster to polygon with maximum vertices technique")
+                    AddMsg(timer.now() + " Converting raster to polygon with maximum vertices technique", 0, logFile)
                     maxVertices = maxVertices / 2
                     inFloodplainDataset = arcpy.RasterToPolygon_conversion(nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices)
                 
@@ -1995,6 +2234,18 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
 
         AddMsg(timer.now() + " Calculation complete")
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
 
     finally:
@@ -2002,6 +2253,10 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+            
         env.snapRaster = _tempEnvironment0
         env.workspace = _tempEnvironment1
         env.cellSize = _tempEnvironment2
@@ -2021,7 +2276,7 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
          
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups] )
+                                                                                [metricsToRun,optionalFieldGroups],logFile )
  
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2036,6 +2291,12 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
          
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.plcvConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, viewRadius, 
+                          minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
 
         # # append the view radius distance value to the field suffix
         # newSuffix = metricConst.fieldSuffix + viewRadius
@@ -2047,11 +2308,11 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
          
         ''' Housekeeping Steps ''' 
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
         # alert user if the land cover grid cells are not square (default to size along x axis)
-        settings.checkGridCellDimensions(inLandCoverGrid)
+        settings.checkGridCellDimensions(inLandCoverGrid, logFile)
         # if an OID type field is used for the Id field, create a new field; type integer. Otherwise copy the Id field
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
          
@@ -2203,9 +2464,24 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
                 arcpy.Delete_management("tempPoly")
                 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
  
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
@@ -2213,7 +2489,6 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
                 function(*arguments)
 
                 
-
 def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                      metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
                      snapRaster="", optionalFieldGroups=""):
@@ -2221,6 +2496,13 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
     try:
 
         metricConst = metricConstants.flcvConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+                          inFacilityFeature, viewRadius, viewThreshold, outTable, processingCellSize, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        
         # append the view threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + viewThreshold
         # for the high view field, add the view threshold to the  field suffix
@@ -2356,7 +2638,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                     
         # Create new instance of metricCalc class to contain parameters            
         flcvCalc = metricCalcFLCV(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
-                                  metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst)
+                                  metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
         
         # Assign class attributes unique to this module.
         flcvCalc.inFacilityFeature = inFacilityFeature
@@ -2376,6 +2658,18 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
         flcvCalc.run()
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
  
     finally:
@@ -2383,9 +2677,12 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
             for (function,arguments) in flcvCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+        
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
           
-
 
 def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
                       burnIn, burnInValue="", minPatchSize="#", createZones="", zoneBin_str="", overWrite="",
@@ -2399,6 +2696,12 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.npConstants()
         
+        # copy input parameters to pass to the log file routine
+        parametersList = [inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize, burnIn, burnInValue, 
+                          minPatchSize, createZones, zoneBin_str, overWrite, outWorkspace, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace)
+        
         ### Initialization
         # Start the timer
         timer = DateTimer()
@@ -2406,7 +2709,7 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
         processingCellSize = Raster(inLandCoverGrid).meanCellWidth
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                               [metricsToRun,optionalFieldGroups] )
+                                                                               [metricsToRun,optionalFieldGroups], logFile )
 
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2420,11 +2723,11 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
         # alert user if the land cover grid cells are not square (default to size along x axis)
-        settings.checkGridCellDimensions(inLandCoverGrid)
+        settings.checkGridCellDimensions(inLandCoverGrid, logFile)
         
         # Determine if the user wants to save the intermediate products
         saveIntermediates = globalConstants.intermediateName in optionalGroupsList
@@ -2610,9 +2913,24 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
                 AddMsg(("Adding {0} to {1} view").format(os.path.basename(aFeature), actvMap.name))
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
 
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
         env.overwriteOutput = tempEnvironment0
 
@@ -2627,6 +2945,12 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.idConstants()
         
+        # copy input parameters to pass to the log file routine
+        parametersList = [inLineFeature, mergeLines, mergeField, mergeDistance, outputCS, cellSize, 
+                          searchRadius, areaUnits, outRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster)
+        
         ### Initialization
         # Start the timer
         timer = DateTimer()
@@ -2639,7 +2963,7 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
         snapRaster = False
 
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSize,os.path.dirname(outRaster),
-                                                                              [metricsToRun,optionalFieldGroups] )  
+                                                                              [metricsToRun,optionalFieldGroups], logFile )  
 
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -2767,9 +3091,24 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
                 AddMsg(("Adding {0} to {1} view").format(os.path.basename(aFeature), actvMap.name))
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
  
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
@@ -2790,12 +3129,18 @@ def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lc
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.nrlcpConstants()
         
+        # copy input parameters to pass to the log file routine
+        parametersList = [inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption, widthLinearUnit, laneCntFld, 
+                          laneWidth, laneDistFld, bufferDist, removeLinesYN, cutoffLength, overWrite, outWorkspace,  processingCellSize, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace)
+        
         ### Initialization
         # Start the timer
         timer = DateTimer()
         AddMsg(timer.start() + " Setting up environment variables")
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                               [metricsToRun,optionalFieldGroups] )
+                                                                               [metricsToRun,optionalFieldGroups], logFile )
 
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2809,11 +3154,11 @@ def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lc
 #        excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
-        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict)
+        settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         # alert user if the land cover grid has values undefined in the LCC XML file
-        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj)
+        settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
         # alert user if the land cover grid cells are not square (default to size along x axis)
-        settings.checkGridCellDimensions(inLandCoverGrid)
+        settings.checkGridCellDimensions(inLandCoverGrid, logFile)
         
         # Determine if the user wants to save the intermediate products       
         if globalConstants.intermediateName in optionalGroupsList:
@@ -2960,9 +3305,24 @@ def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lc
         
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            logFile.write("\nArcMap Error Messages below:")
+            logFile.write(arcpy.GetMessages(2))
+            logFile.write("\nArcMap Warning Messages below:")
+            logFile.write(arcpy.GetMessages(1))
+            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
+            logFile.write("\n---End of Log File---\n")
+            
         errors.standardErrorHandling(e)
  
     finally:
+        if logFile:
+            logFile.close()
+            
         setupAndRestore.standardRestore()
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:

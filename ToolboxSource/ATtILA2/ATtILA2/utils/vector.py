@@ -614,7 +614,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
     finally:
         pass
     
-def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupList, timer):
+def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupList, timer, logFile=None):
     '''This function performs an intersection and dissolve function on a set of polygon features.
     **Description:**
         This function intersects the representative units with a second polygon feature, splitting the second polygon at unit 
@@ -635,7 +635,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     desc2 = arcpy.Describe(secondPoly)
     
     # Intersect the reporting unit features with the floodplain features
-    AddMsg(timer.now() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename)) 
+    AddMsg(timer.now() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename), 0, logFile) 
     intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
     intersection = arcpy.Intersect_analysis([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT")
      
@@ -643,7 +643,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
     #dissolveFields = uIDField.name
     dissolveFields = uIDField
-    AddMsg(timer.now() + " Dissolving %s zone features..." % (desc2.basename))  
+    AddMsg(timer.now() + " Dissolving %s zone features..." % (desc2.basename), 0, logFile)  
     arcpy.Dissolve_management(intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
     
     # Delete following intermediate datasets in order to reduce clutter if Intermediates are to be saved

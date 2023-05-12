@@ -4,6 +4,7 @@ from ..constants import globalConstants
 #from pylet import utils
 from . import fields
 from . import raster
+from .messages import AddMsg
 import arcpy
 
 
@@ -51,7 +52,7 @@ def getIdOutField(inFeature, inField):
     return (newField)
 
 
-def checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest=False):
+def checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile, ignoreHighest=False):
     """ Checks input grid values. Warns user if values are undefined in LCC XML file. """
 
     gridValuesList = raster.getRasterValues(inLandCoverGrid)
@@ -62,10 +63,10 @@ def checkGridValuesInLCC(inLandCoverGrid, lccObj, ignoreHighest=False):
     
     undefinedValues = [aVal for aVal in gridValuesList if aVal not in lccObj.getUniqueValueIdsWithExcludes()]     
     if undefinedValues:
-        arcpy.AddWarning("LCC XML file: grid value(s) %s undefined in LCC XML file - Please refer to the %s documentation regarding undefined values." % 
-                        (undefinedValues, globalConstants.titleATtILA))
+        AddMsg("LCC XML file: grid value(s) %s undefined in LCC XML file - Please refer to the %s documentation regarding undefined values." % 
+                        (undefinedValues, globalConstants.titleATtILA), 1, logFile)
 
-def checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict):
+def checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile):
     excludedValues = lccObj.values.getExcludedValueIds()
     
     for mBaseName in metricsBaseNameList: 
@@ -78,11 +79,11 @@ def checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict):
         else:
             excludedClassValues = [aVal for aVal in classGridCodesList if aVal in excludedValues]
             if excludedClassValues:
-                arcpy.AddWarning("LCC XML file: excluded value(s) %s in class %s definition - Please refer to the %s documentation regarding excluded values." % 
-                                (excludedClassValues, mBaseName.upper(), globalConstants.titleATtILA))
+                AddMsg("LCC XML file: excluded value(s) %s in class %s definition - Please refer to the %s documentation regarding excluded values." % 
+                       (excludedClassValues, mBaseName.upper(), globalConstants.titleATtILA), 1, logFile)
     
     
-def checkGridCellDimensions(inLandCoverGrid):
+def checkGridCellDimensions(inLandCoverGrid, logFile):
     """ Checks input raster cell dimensions. Warns user if the x and y values are different. """
     XBand = arcpy.GetRasterProperties_management(inLandCoverGrid, "CELLSIZEX" )
     YBand = arcpy.GetRasterProperties_management(inLandCoverGrid, "CELLSIZEY")
@@ -90,7 +91,7 @@ def checkGridCellDimensions(inLandCoverGrid):
     if int(float(str(XBand))) == int(float(str(YBand))):
         pass
     else:
-        arcpy.AddWarning(inLandCoverGrid+" is not square. Output calculations will be based on Processing Cell Size.")
+        AddMsg(inLandCoverGrid+" is not square. Output calculations will be based on Processing Cell Size.", 1, logFile)
         
         
 def processUIDField(inReportingUnitFeature, reportingUnitIdField):
