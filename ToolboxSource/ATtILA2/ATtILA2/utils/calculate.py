@@ -9,7 +9,7 @@ from . import messages
 from . import files
 from . import vector
 from . import table
-# from future.backports.test.pystone import FALSE
+from .messages import AddMsg
 
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum, excludedValues):
@@ -1232,7 +1232,7 @@ def belowValue(inTable, sourceField, threshold, addedField):
 
 
 def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,
-                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict, timer):
+                   reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict, timer, logFile):
 
     import os 
 
@@ -1243,7 +1243,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     aboveSuffix = metricConst.aboveFieldSuffix
     cntFldName = metricConst.facilityCountFieldName
 
-    arcpy.AddMessage("%s Finding facilities with views below threshold limit for selected class(es)..." % (timer.now()))
+    AddMsg("%s Finding facilities with views below threshold limit for selected class(es)..." % (timer.now()), 0, logFile)
     for mBaseName in metricsBaseNameList:
         # belowValue(inTable, sourceField, threshold, addedField)
         belowValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + belowSuffix)
@@ -1263,7 +1263,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
     arcpy.TableToTable_conversion(tableWithRUID, os.path.dirname(facilityLCPTable), os.path.basename(lcpTableWithRUID))
 
-    arcpy.AddMessage("%s Summarizing facilities with low views by Reporting Unit..." % (timer.now()))
+    AddMsg("%s Summarizing facilities with low views by Reporting Unit..." % (timer.now()), 0, logFile)
     stats = []
     for mBaseName in metricsBaseNameList:
         stats.append([mBaseName + belowSuffix, "Sum"])

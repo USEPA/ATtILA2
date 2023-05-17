@@ -114,7 +114,7 @@ def createLogFile(inDataset, dateTimeStamp):
             
         return reportFile
     except:
-        arcpy.AddWarning("Unable to create log file. Continuing metric calculations.")
+        AddMsg("Unable to create log file. Continuing metric calculations.", 1)
         if reportFile:
             reportFile.close()
         
