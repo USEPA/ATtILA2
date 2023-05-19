@@ -183,12 +183,12 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             try:
                 intersectResult = arcpy.Intersect_analysis([repUnits,inFC],firstIntersectionName,"ALL","","INPUT")
             except:
-                AddMsg("{0} No features of {1} intersect with features of {2}. Omitting {1} from further processing.".format(timer.now(), inFCName, arcpy.Describe(repUnits).baseName), 1, logFile)
+                AddMsg("No features of {0} intersect with features of {1}. Omitting {1} from further processing.".format(inFCName, arcpy.Describe(repUnits).baseName), 1, logFile)
                 continue
             
             # Check for empty intersect features
             if not arcpy.SearchCursor(firstIntersectionName).next():
-                AddMsg("{0} No features of {1} intersect with features of {2}. Omitting {1} from further processing.".format(timer.now(), inFCName, arcpy.Describe(repUnits).baseName), 1, logFile)
+                AddMsg("No features of {0} intersect with features of {1}. Omitting {1} from further processing.".format(inFCName, arcpy.Describe(repUnits).baseName), 1, logFile)
                 continue
 
             # We are later going to perform a second intersection with the reporting units layer, which will cause
@@ -543,7 +543,7 @@ def findIntersections(mergedRoads,inStreamFeature,mergedStreams,ruID,roadStreamM
     arcpy.JoinField_management(roadStreamSummary, ruID.name, mergedStreams, ruID.name, [streamLengthFieldName])
     # Set up a calculation expression for crossings per kilometer.
     calcExpression = "!FREQUENCY!/!" + streamLengthFieldName + "!"    
-    addCalculateField(roadStreamSummary,xingsPerKMFieldName,calcExpression)
+    addCalculateField(roadStreamSummary,xingsPerKMFieldName,"DOUBLE",calcExpression)
 
 def roadsNearStreams(inStreamFeature,mergedStreams,bufferDist,inRoadFeature,inReportingUnitFeature,streamLengthFieldName,ruID,streamBuffer,
                      tmp1RdsNearStrms,tmp2RdsNearStrms,roadsNearStreams,rnsFieldName,inLengthField, timer, logFile, roadClass=""):
@@ -582,7 +582,7 @@ def roadsNearStreams(inStreamFeature,mergedStreams,bufferDist,inRoadFeature,inRe
     # Set up a calculation expression for the roads near streams fraction
     calcExpression = "!" + roadLengthFieldName + "!/!" + streamLengthFieldName + "!"
     # Add a field for the roads near streams fraction
-    rnsFieldName = addCalculateField(roadsNearStreams,rnsFieldName,calcExpression)
+    rnsFieldName = addCalculateField(roadsNearStreams,rnsFieldName,"DOUBLE",calcExpression)
 
 
 def addAreaField(inAreaFeatures, areaFieldName):
@@ -599,7 +599,7 @@ def addAreaField(inAreaFeatures, areaFieldName):
     # Set up the calculation expression for area in square kilometers
     shapeFieldName = arcpy.Describe(inAreaFeatures).shapeFieldName
     calcExpression = "!{0}.AREA@SQUAREKILOMETERS!".format(shapeFieldName)
-    areaFieldName = addCalculateField(inAreaFeatures,areaFieldName,calcExpression)
+    areaFieldName = addCalculateField(inAreaFeatures,areaFieldName,"DOUBLE",calcExpression)
     return areaFieldName    
 
 def addLengthField(inLineFeatures,lengthFieldName):
@@ -620,10 +620,10 @@ def addLengthField(inLineFeatures,lengthFieldName):
     
     # Set up the calculation expression for length in kilometers
     calcExpression = "!{0}.LENGTH@KILOMETERS!".format(lineDescription.shapeFieldName)
-    lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,calcExpression)
+    lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,"DOUBLE",calcExpression)
     return lengthFieldName
 
-def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
+def addCalculateField(inFeatures,fieldName,fieldType,calcExpression,codeBlock='#'):
     '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
     using the given calculation expression
     **Description:**
@@ -632,6 +632,7 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
     **Arguments:**
         * *inFeatures* - the input feature class that will receive the field.
         * *fieldName* - field name string
+        ' 'fieldType' - field type string (e.g., "DOUBLE", "SHORT")
         * *calcExpression* - string calculation expression in python 
         * *codeBlock* - optional python code block expression       
     **Returns:**
@@ -643,36 +644,37 @@ def addCalculateField(inFeatures,fieldName,calcExpression,codeBlock='#'):
     # Check for existence of field.
     fieldList = arcpy.ListFields(inFeatures,fieldName)
     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
-        arcpy.AddField_management(inFeatures,fieldName,"DOUBLE")
+        arcpy.AddField_management(inFeatures,fieldName, fieldType)
     else: # Otherwise warn the user that the field will be recalculated.
         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
-    return fieldName      
-def addCalculateFieldInteger(inFeatures,fieldName,calcExpression,codeBlock='#'):
-    '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
-    using the given calculation expression
-    **Description:**
-        This function checks for the existence of the specified field and if it does
-        not exist, adds and populates it as appropriate.  The output field is assumed to be of type double.
-    **Arguments:**
-        * *inFeatures* - the input feature class that will receive the field.
-        * *fieldName* - field name string
-        * *calcExpression* - string calculation expression in python 
-        * *codeBlock* - optional python code block expression       
-    **Returns:**
-        * *fieldName* - validated fieldname      
-    '''
-    # Validate the desired field name for the dataset
-    fieldName = arcpy.ValidateFieldName(fieldName, arcpy.Describe(inFeatures).path)
-    
-    # Check for existence of field.
-    fieldList = arcpy.ListFields(inFeatures,fieldName)
-    if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
-        arcpy.AddField_management(inFeatures,fieldName,"SHORT")
-    else: # Otherwise warn the user that the field will be recalculated.
-        AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
-    arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
-    return fieldName      
+    return fieldName   
+   
+# def addCalculateFieldInteger(inFeatures,fieldName,calcExpression,codeBlock='#'):
+#     '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
+#     using the given calculation expression
+#     **Description:**
+#         This function checks for the existence of the specified field and if it does
+#         not exist, adds and populates it as appropriate.  The output field is assumed to be of type double.
+#     **Arguments:**
+#         * *inFeatures* - the input feature class that will receive the field.
+#         * *fieldName* - field name string
+#         * *calcExpression* - string calculation expression in python 
+#         * *codeBlock* - optional python code block expression       
+#     **Returns:**
+#         * *fieldName* - validated fieldname      
+#     '''
+#     # Validate the desired field name for the dataset
+#     fieldName = arcpy.ValidateFieldName(fieldName, arcpy.Describe(inFeatures).path)
+#
+#     # Check for existence of field.
+#     fieldList = arcpy.ListFields(inFeatures,fieldName)
+#     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
+#         arcpy.AddField_management(inFeatures,fieldName,"SHORT")
+#     else: # Otherwise warn the user that the field will be recalculated.
+#         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
+#     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
+#     return fieldName      
 
 def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, rastoPolyFeature, patchCentroidsFeature, 
                  patchDissolvedFeature, nearPatchTable, zoneAreaDict, timer, pmResultsDict, logFile):

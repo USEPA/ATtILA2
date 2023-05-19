@@ -6,9 +6,8 @@ from arcpy import env
 from .utils import environment
 from .utils import parameters
 from .utils.messages import AddMsg
-
-
 from ATtILA2.constants import globalConstants
+from datetime import datetime
 
 _tempEnvironment0 = ""
 _tempEnvironment1 = ""
@@ -73,8 +72,14 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     return itemTuples
 
     
-def standardRestore():
+def standardRestore(logFile=None):
     """ Standard restore for executing metrics. """
+    
+    # close the log file
+    if logFile:
+        logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        logFile.write("\n---End of Log File---\n")
+        logFile.close()
     
     # restore the environments
     env.snapRaster = _tempEnvironment0
@@ -131,15 +136,33 @@ def logWriteParameters(logFile, parametersList, labelsList):
 
 
 def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset):
-    from datetime import datetime
+    import platform
+    
     processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)    
+    
     if globalConstants.logName in processed:
         # capture current date and time
         logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
         # create the log file in the appropriate folder
         logFile = createLogFile(outDataset, logTimeStamp)
+        
         if logFile:
-            # start the log file by capturing the tool's parameters.
+            # start the log file by capturing ATtILA, ArcGIS, and System information
+            infoATtILA = '{0} v{1}'.format(globalConstants.titleATtILA, globalConstants.attilaVersion)
+            arcInstall = arcpy.GetInstallInfo()
+            infoArcGIS = '{0} {1}'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel'])
+            infoSystem = platform.platform()
+            logFile.write('SPECS: {0}, {1}, {2}\n\n'.format(infoATtILA, infoArcGIS, infoSystem))
+            
+            logFile.write('TOOL: {0} ({1})\n\n'.format(metricConst.name, metricConst.shortName.upper()))
+            
+            # logFile.write('SPECIFICATION: {0} {1}\n'.format(globalConstants.titleATtILA, globalConstants.attilaVersion))
+            # arcInstall = arcpy.GetInstallInfo()
+            # logFile.write('SPECIFICATION: {0} {1} {2}\n'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel']))
+            # logFile.write('SPECIFICATION: {0}\n\n'.format(platform.platform()))
+            
+            
+            # populate the log file by capturing the tool's parameters.
             labelsList = metricConst.parameterLabels
             logWriteParameters(logFile, parametersList, labelsList)
     else:

@@ -540,7 +540,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])
     # Set up a calculation expression for density.
     calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
-    densityField = vector.addCalculateField(outLines,densityField,calcExpression)
+    densityField = vector.addCalculateField(outLines,densityField,"DOUBLE",calcExpression)
 
     if iaField: # if a field has been specified for calculating total impervious area.
         # Calculate the road density linear regression for total impervious area:
@@ -553,7 +553,8 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
             return -1
         else:
             return pctia"""
-        iaField = vector.addCalculateField(outLines,iaField,calcExpression,codeblock)
+        
+        iaField = vector.addCalculateField(outLines,iaField,"DOUBLE",calcExpression,codeblock)
 
     return outLines, lineLengthFieldName
 
@@ -1091,7 +1092,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Set up a calculation expression for the density calculation
     calcExpression = "!" + inPopField + "!/!" + popArea + "!"
     # Calculate the population density
-    inPopDensityField = vector.addCalculateField(inCensusFeature,'popDens' + index,calcExpression)
+    inPopDensityField = vector.addCalculateField(inCensusFeature,'popDens' + index,"DOUBLE",calcExpression)
 
     # Intersect the reporting units with the population features.
     intersectOutput = files.nameIntermediateFile([metricConst.intersectOutputName + index + "_","FeatureClass"],cleanupList)
@@ -1104,7 +1105,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Set up a calculation expression for the density calculation
     calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
     # Calculate the population density
-    intPopField = vector.addCalculateField(intersectOutput,'intPop',calcExpression)
+    intPopField = vector.addCalculateField(intersectOutput,'intPop', "DOUBLE", calcExpression)
 
     # Intersect the reporting units with the population features.
     summaryTable = files.nameIntermediateFile([metricConst.summaryTableName + index + "_",'Dataset'],cleanupList)
@@ -1130,7 +1131,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Set up a calculation expression for the final density calculation
     calcExpression = "!" + toField + "!/!" + ruArea + "!"
     # Calculate the population density
-    vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,calcExpression)
+    vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,"DOUBLE",calcExpression)
 
 
 def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopField,classField,
@@ -1195,7 +1196,7 @@ def percentageValue(inTable, numeratorField, denominatorField, percentField):
                             return (n/d)*100"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateField(inTable, percentField, calcExpression, codeBlock)
+    vector.addCalculateField(inTable, percentField, "DOUBLE", calcExpression, codeBlock)
 
 def differenceValue(inTable, totalField, subtratorField, resultField):
     # Set up a calculate percentage expression 
@@ -1204,7 +1205,7 @@ def differenceValue(inTable, totalField, subtratorField, resultField):
                         return (n-d)"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateField(inTable, resultField, calcExpression, codeBlock)
+    vector.addCalculateField(inTable, resultField, "DOUBLE", calcExpression, codeBlock)
 
 def aboveValue(inTable, sourceField, threshold, addedField):
     # Set up a calculate percentage expression 
@@ -1216,7 +1217,7 @@ def aboveValue(inTable, sourceField, threshold, addedField):
                             return 1"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateFieldInteger(inTable, addedField, calcExpression, codeBlock)
+    vector.addCalculateField(inTable, addedField, "SHORT", calcExpression, codeBlock)
 
 def belowValue(inTable, sourceField, threshold, addedField):
     # Set up a calculate percentage expression 
@@ -1228,7 +1229,7 @@ def belowValue(inTable, sourceField, threshold, addedField):
                             return 0"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateFieldInteger(inTable, addedField, calcExpression, codeBlock)
+    vector.addCalculateField(inTable, addedField, "SHORT", calcExpression, codeBlock)
 
 
 def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,

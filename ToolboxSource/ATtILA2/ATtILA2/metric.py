@@ -125,7 +125,7 @@ class metricCalc:
                                                                                   self.metricsBaseNameList,
                                                                                   self.optionalGroupsList,
                                                                                   self.metricConst, self.lccObj,
-                                                                                  self.outIdField)
+                                                                                  self.outIdField, self.logFile)
     def _makeTabAreaTable(self):
         AddMsg(self.timer.now() + " Generating a zonal tabulate area table", 0, self.logFile)
         # Internal function to generate a zonal tabulate area table
@@ -213,6 +213,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                                                                                         self.metricConst, 
                                                                                         self.lccObj, 
                                                                                         self.outIdField, 
+                                                                                        self.logFile,
                                                                                         self.metricConst.additionalFields)
                 else:
                     self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
@@ -220,7 +221,8 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                                                                                         self.optionalGroupsList,
                                                                                         self.metricConst, 
                                                                                         self.lccObj,
-                                                                                        self.outIdField)     
+                                                                                        self.outIdField,
+                                                                                        self.logFile)     
         
             def _calculateMetrics(self):
                 # Initiate our flexible cleanuplist
@@ -292,12 +294,6 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         logFile.write("\nSomething went wrong.\n\n")
         logFile.write("Python Traceback Message below:")
         logFile.write(traceback.format_exc())
-        logFile.write("\nArcMap Error Messages below:")
-        logFile.write(arcpy.GetMessages(2))
-        logFile.write("\nArcMap Warning Messages below:")
-        logFile.write(arcpy.GetMessages(1))
-        logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-        logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
@@ -307,10 +303,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         
-        if logFile:
-            logFile.close()
-        
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         
 
 def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -395,20 +388,11 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         
         env.workspace = _tempEnvironment1
         
@@ -586,12 +570,6 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
  
@@ -601,10 +579,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         
-        if logFile:
-            logFile.close()
-        
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         
         env.workspace = _tempEnvironment1
 
@@ -688,7 +663,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                  metricConst, lccObj, outIdField, 
+                                                                                  metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
                 
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
@@ -802,20 +777,11 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
 
     finally:
-        if logFile:
-            logFile.close()
-        
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
@@ -830,6 +796,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
     """ Interface for script executing Core/Edge Metrics """
 
     try:
+        timer = DateTimer()
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.caemConstants()
         
@@ -865,8 +832,9 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
+        AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
-                                                                                  metricConst, lccObj, outIdField, 
+                                                                                  metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
  
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
@@ -988,20 +956,11 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
 
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         env.workspace = _tempEnvironment1
         
 
@@ -1128,12 +1087,6 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
@@ -1143,10 +1096,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         
-        if logFile:
-            logFile.close()
-        
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
 
 
 def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -1286,12 +1236,6 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
@@ -1301,10 +1245,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         
-        if logFile:
-            logFile.close()
-        
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
 
 
 def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName,
@@ -1331,7 +1272,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
                                                                                                 self.metricsBaseNameList,
                                                                                                 self.optionalGroupsList,
                                                                                                 self.metricConst, self.lccObj,
-                                                                                                self.outIdField)
+                                                                                                self.outIdField, self.logFile)
             def _calculateMetrics(self):
                 # process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
                 calculate.landCoverCoefficientCalculator(self.lccObj.values, self.metricsBaseNameList,
@@ -1365,20 +1306,11 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
 
 
 def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
@@ -1596,12 +1528,6 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
@@ -1612,6 +1538,8 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
                 function(*arguments)
         
         if logFile:
+            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write("\n---End of Log File---\n")
             logFile.close()
             
         env.workspace = _tempEnvironment1
@@ -1738,12 +1666,6 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
         
         errors.standardErrorHandling(e)
 
@@ -1754,6 +1676,8 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
                 function(*arguments)
         
         if logFile:
+            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write("\n---End of Log File---\n")
             logFile.close()
             
         env.workspace = _tempEnvironment1
@@ -1819,7 +1743,8 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
                                                                                         self.metricsBaseNameList,
                                                                                         self.optionalGroupsList,
                                                                                         self.metricConst,
-                                                                                        self.outIdField)
+                                                                                        self.outIdField,
+                                                                                        self.logFile)
                 
             def _makeTabAreaTable(self):
                 AddMsg(self.timer.now() + " Generating a zonal tabulate area table", 0, self.logFile)
@@ -1869,20 +1794,11 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
 
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
 
 
 def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
@@ -1978,7 +1894,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         return ((pop2-pop1)/pop1)*100"""
             
             # Calculate the population density
-            vector.addCalculateField(outTable,metricConst.populationChangeFieldName,calcExpression,codeBlock)       
+            vector.addCalculateField(outTable,metricConst.populationChangeFieldName,"DOUBLE",calcExpression,codeBlock)       
 
         AddMsg(timer.now() + " Calculation complete")
     except Exception as e:
@@ -1987,12 +1903,6 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
 
@@ -2003,6 +1913,8 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
                 function(*arguments)
         
         if logFile:
+            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write("\n---End of Log File---\n")
             logFile.close()
             
         env.workspace = _tempEnvironment1
@@ -2243,7 +2155,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
                                 return (pop2/pop1)*100"""
             
         # Calculate the percent population within floodplain
-        vector.addCalculateField(outTable,metricConst.populationProportionFieldName,calcExpression,codeBlock)   
+        vector.addCalculateField(outTable,metricConst.populationProportionFieldName,"DOUBLE",calcExpression,codeBlock)   
 
         AddMsg(timer.now() + " Calculation complete")
     except Exception as e:
@@ -2252,12 +2164,6 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
 
@@ -2268,6 +2174,8 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
                 function(*arguments)
         
         if logFile:
+            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write("\n---End of Log File---\n")
             logFile.close()
             
         env.snapRaster = _tempEnvironment0
@@ -2344,9 +2252,10 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
  
         ''' Make ATtILA Output Table '''
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
+        AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
-                                                                                  metricConst.additionalFields)
+                                                                                  logFile, metricConst.additionalFields)
 
         # Newtable is unnecessary. It will be reconstructed later in the script via the metricsFieldnameDict. Need to
         # remove the table for now as it will cause an error if overwriting Geoprocessing outputs is not allowed.
@@ -2483,20 +2392,11 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
  
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
@@ -2595,7 +2495,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                                                                                     self.metricsBaseNameList,
                                                                                     self.facilityOptionsList,
                                                                                     self.metricConst, self.lccObj,
-                                                                                    self.facilityIdField)
+                                                                                    self.facilityIdField, self.logFile)
                 # Restore the output metric field name parameters 
                 self.metricConst.fieldParameters = self.oldFieldParameters
                 
@@ -2606,7 +2506,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                                                                                   self.metricsBaseNameList,
                                                                                   self.optionalGroupsList,
                                                                                   self.metricConst, self.lccObj,
-                                                                                  self.outIdField,
+                                                                                  self.outIdField, self.logFile,
                                                                                   self.metricConst.additionalFields)
                 
                 # Add an additional field for the facility counts within each reporting unit. Used AddFields so that the 
@@ -2677,12 +2577,6 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
  
@@ -2692,10 +2586,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
         
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
           
 
 def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
@@ -2934,20 +2825,11 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
 
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         env.overwriteOutput = tempEnvironment0
 
 
@@ -3001,10 +2883,10 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
         nonSpecificExtents = ["NONE", "MAXOF", "MINOF"]
         envExtent = str(env.extent).upper()
         if envExtent in nonSpecificExtents:
-            AddMsg(("Using {0}'s extent for geoprocessing steps.").format(inBaseName), 0, logFile)
+            AddMsg(("{0} Using {1}'s extent for geoprocessing steps.").format(timer.now(), inBaseName), 0, logFile)
             env.extent = descInLines.extent
         else:
-            AddMsg("Extent set in Geoprocessing environment used for processing.", 0, logFile)
+            AddMsg("{0} Extent found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
             
         ### Computations
         
@@ -3112,20 +2994,11 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
  
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
@@ -3326,20 +3199,11 @@ def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lc
             logFile.write("\nSomething went wrong.\n\n")
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
-            logFile.write("\nArcMap Error Messages below:")
-            logFile.write(arcpy.GetMessages(2))
-            logFile.write("\nArcMap Warning Messages below:")
-            logFile.write(arcpy.GetMessages(1))
-            logFile.write( "\n\nEnded at " + time.asctime() + '\n')
-            logFile.write("\n---End of Log File---\n")
             
         errors.standardErrorHandling(e)
  
     finally:
-        if logFile:
-            logFile.close()
-            
-        setupAndRestore.standardRestore()
+        setupAndRestore.standardRestore(logFile)
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.

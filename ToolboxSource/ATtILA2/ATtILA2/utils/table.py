@@ -7,13 +7,16 @@
 import os
 
 import arcpy
-#from .. import utils
 
 from . import fields
 from ATtILA2.constants import globalConstants
+from ATtILA2.datetimeutil import DateTimer
+from .messages import AddMsg
+
+timer = DateTimer()
 
 def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFieldnameDict, metricFieldParams, 
-                            qaCheckFlds=None, addAreaFldParams=None, additionalFields=None):
+                            qaCheckFlds=None, addAreaFldParams=None, additionalFields=None, logFile=None):
     """ Returns new empty table for ATtILA metric generation output with appropriate fields for selected metric
     
     **Description:**
@@ -53,25 +56,37 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     # tool's Field Type keywords. This addresses that issue
     outIdFieldType = fields.convertFieldTypeKeyword(outIdField)
     
+    AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(), outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale), 0, logFile)
     arcpy.AddField_management(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale)
     
     # add metric fields to the output table.
     [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
                                metricFieldParams[4])for mBaseName in metricsBaseNameList]
+    
+    [AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(), metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
+                               metricFieldParams[4]), 0, logFile) for mBaseName in metricsBaseNameList]
 
     # add any metric specific additional fields to the output table
     if additionalFields:
         for aFldParams in additionalFields:
             [arcpy.AddField_management(newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
                                        aFldParams[3], aFldParams[4])for mBaseName in metricsBaseNameList]
+            
+            [AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(), aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
+                                       aFldParams[3], aFldParams[4]), 0, logFile) for mBaseName in metricsBaseNameList]
 
     # add any optional fields to the output table
     if qaCheckFlds:
         [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
         
+        [AddMsg("{0} Added field -- {1}, {2}, {3}".format(timer.now(), qaFld[0], qaFld[1], qaFld[2]), 0, logFile) for qaFld in qaCheckFlds]
+        
     if addAreaFldParams:
         [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
                                    addAreaFldParams[2], addAreaFldParams[3])for mBaseName in metricsBaseNameList]
+        
+        [AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(),metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
+                                   addAreaFldParams[2], addAreaFldParams[3]), 0, logFile) for mBaseName in metricsBaseNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
     fields.deleteFields(newTable, ["field1"])
@@ -329,7 +344,7 @@ def baseNameTruncation(outputFldName, metricFieldParams, maxFieldNameSize, mBase
    
     return outputFldName, outClassName
 
-def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, additionalFields=None):
+def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, logFile, additionalFields=None):
     """ Processes tool dialog parameters and options for output table generation. Class metrics option.
         
     **Description:**
@@ -433,12 +448,12 @@ def tableWriterByClass(outTable, metricsBaseNameList, optionalGroupsList, metric
             
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict,metricFieldParams, 
-                                       qaCheckFlds,addAreaFldParams,additionalFields)
+                                       qaCheckFlds,addAreaFldParams,additionalFields,logFile)
     
     return newTable, metricsFieldnameDict
 
 
-def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField):
+def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, metricConst, lccObj, outIdField, logFile):
     """ Processes tool dialog parameters and options for output table generation. Coefficient metrics option.
         
     **Description:**
@@ -504,12 +519,12 @@ def tableWriterByCoefficient(outTable, metricsBaseNameList, optionalGroupsList, 
               
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                           metricFieldParams, qaCheckFields)
+                                       metricFieldParams, qaCheckFields, None, None, logFile)
     
     return newTable, metricsFieldnameDict
 
 
-def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricConst, outIdField):
+def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricConst, outIdField, logFile):
     """ Processes tool dialog parameters and options for output table generation. Non LCC metrics option.
         
     **Description:**
@@ -579,7 +594,7 @@ def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricCo
                 
     # create the specified output table
     newTable = createMetricOutputTable(outTable,outIdField,metricsBaseNameList,metricsFieldnameDict, 
-                                                           metricFieldParams, qaCheckFlds, addAreaFldParams)
+                                       metricFieldParams, qaCheckFlds, addAreaFldParams, None, logFile)
     
     return newTable, metricsFieldnameDict
 

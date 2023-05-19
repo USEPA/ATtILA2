@@ -309,10 +309,10 @@ class lcpConstants(baseMetricConstants):
     shortName = "lcp"
     fieldPrefix = "p"
     fieldSuffix = ""
-    overlapName = shortName+"_OVER"
-    totalAreaName = shortName+"_TOTA"
-    effectiveAreaName = shortName+"_EFFA"
-    excludedAreaName = shortName+"_EXCA"
+    overlapName = shortName.upper()+"_OVER"
+    totalAreaName = shortName.upper()+"_TOTA"
+    effectiveAreaName = shortName.upper()+"_EFFA"
+    excludedAreaName = shortName.upper()+"_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -516,7 +516,7 @@ class plcvConstants(baseMetricConstants):
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultIntegerFieldType, 10, 0]
     qaCheckFieldParameters = []
     # This metric is comprised of several output fields. Fieldname override option 
     # is not available to the user  
@@ -524,7 +524,7 @@ class plcvConstants(baseMetricConstants):
     pctSuffix = "_PV_P"
     wovPctSuffix = "_MV_P"
     additionalSuffixes = [pctSuffix]
-    cntField = [fieldPrefix, pctSuffix, "LONG", 10, 0]
+    cntField = [fieldPrefix, pctSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [cntField]
     valueCountFieldNames =["RU_POP"]
     valueCountTableName = shortName+"_populationCnt"
