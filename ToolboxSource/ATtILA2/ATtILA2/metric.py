@@ -68,6 +68,10 @@ class metricCalc:
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
         self.lccClassesDict = self.lccObj.classes
+        
+        if self.logFile:
+            # write the metric class grid values to the log file
+            setupAndRestore.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccClassesDict, metricConst)
 
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
         self.tableName = None
@@ -185,7 +189,7 @@ def runLandCoverProportionsORIGINAL(inReportingUnitFeature, reportingUnitIdField
         setupAndRestore.standardRestore()
 
 
-def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                                      metricsToRun, outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, 
                                      snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Proportion Metrics and Population Density Metrics """
@@ -198,7 +202,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None.
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # Create new subclass of metric calculation
         class metricCalcLCP(metricCalc):        
@@ -306,7 +310,7 @@ def runLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLand
         setupAndRestore.standardRestore(logFile)
         
 
-def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                                    metricsToRun, inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize,
                                    snapRaster, optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Land Cover on Slope Proportions (Land Cover Slope Overlap)"""
@@ -321,7 +325,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # # This block of code can be used if we want to change the Slope Threshold input to a double parameter type
         # # If we do that, we'd also have to change the tool validation property to comment out the inZeroAndAboveIntegerIndex = 7 line 
@@ -397,7 +401,7 @@ def runLandCoverOnSlopeProportions(inReportingUnitFeature, reportingUnitIdField,
         env.workspace = _tempEnvironment1
         
         
-def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                                    metricsToRun, inFloodplainGeodataset, outTable, processingCellSize, snapRaster, 
                                    optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Floodplain Land Cover Proportions """
@@ -412,7 +416,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inFloodplainGeodataset, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
           
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
@@ -584,7 +588,7 @@ def runFloodplainLandCoverProportions(inReportingUnitFeature, reportingUnitIdFie
         env.workspace = _tempEnvironment1
 
 
-def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, 
                           optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Patch Metrics """
@@ -603,7 +607,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         AddMsg(timer.start() + " Setting up initial environment variables", 0, logFile)
         
@@ -791,7 +795,7 @@ def runPatchMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGri
         arcpy.RemoveIndex_management(inReportingUnitFeature, ruIdIndex)
 
 
-def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Core/Edge Metrics """
 
@@ -804,7 +808,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # grab the current date and time for log file
         metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
@@ -964,7 +968,7 @@ def runCoreAndEdgeMetrics(inReportingUnitFeature, reportingUnitIdField, inLandCo
         env.workspace = _tempEnvironment1
         
 
-def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster,
                             optionalFieldGroups):
     """ Interface for script executing Riparian Land Cover Proportion Metrics """
@@ -977,7 +981,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
@@ -1099,7 +1103,7 @@ def runRiparianLandCoverProportions(inReportingUnitFeature, reportingUnitIdField
         setupAndRestore.standardRestore(logFile)
 
 
-def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                             metricsToRun, inPointFeatures, ruLinkField='', inBufferDistance='#', enforceBoundary='', outTable='', processingCellSize='', 
                             snapRaster='', optionalFieldGroups=''):
     """ Interface for script executing Sample Point Land Cover Proportion Metrics """
@@ -1113,7 +1117,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inPointFeatures, 
                           ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
@@ -1248,7 +1252,7 @@ def runSamplePointLandCoverProportions(inReportingUnitFeature, reportingUnitIdFi
         setupAndRestore.standardRestore(logFile)
 
 
-def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName,
+def runLandCoverCoefficientCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName,
                                       lccFilePath, metricsToRun, outTable, processingCellSize, snapRaster,
                                       optionalFieldGroups):
     """Interface for script executing Land Cover Coefficient Calculator"""
@@ -1261,7 +1265,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                           metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
 
         # Create new LCC metric calculation subclass
         class metricCalcLCC(metricCalc):
@@ -1313,7 +1317,7 @@ def runLandCoverCoefficientCalculator(inReportingUnitFeature, reportingUnitIdFie
         setupAndRestore.standardRestore(logFile)
 
 
-def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
+def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField="",
                              streamRoadCrossings="#", roadsNearStreams="#", inStreamFeature="#", inBufferDistance="#",
                              optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
@@ -1333,7 +1337,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField, streamRoadCrossings, 
                           roadsNearStreams, inStreamFeature, inBufferDistance, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
@@ -1548,7 +1552,7 @@ def runRoadDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inRoa
         env.parallelProcessingFactor = _tempEnvironment6
 
 
-def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField="", 
+def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField="", 
                                optionalFieldGroups="#"):
     """Interface for script executing Road Density Calculator"""
     from arcpy import env
@@ -1566,7 +1570,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
@@ -1686,7 +1690,7 @@ def runStreamDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inL
         env.parallelProcessingFactor = _tempEnvironment6
         
 
-def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
+def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
                           snapRaster, optionalFieldGroups):
     """ Interface for script executing Land Cover Diversity Metrics """
 
@@ -1780,7 +1784,7 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
                           snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         metricsToRun = metricConst.fixedMetricsToRun
         
@@ -1801,7 +1805,7 @@ def runLandCoverDiversity(inReportingUnitFeature, reportingUnitIdField, inLandCo
         setupAndRestore.standardRestore(logFile)
 
 
-def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
+def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
                                    popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups):
     """ Interface for script executing Population Density Metrics """
     from arcpy import env
@@ -1819,7 +1823,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
                           popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
 
         # Set the output workspace
@@ -1921,7 +1925,7 @@ def runPopulationDensityCalculator(inReportingUnitFeature, reportingUnitIdField,
         env.parallelProcessingFactor = _tempEnvironment6
         
 
-def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
+def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
                                      outTable, optionalFieldGroups):
     """ Interface for script executing Population In Floodplain Metrics """
     from arcpy import env
@@ -1938,7 +1942,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
         _tempEnvironment0 = env.snapRaster
@@ -1968,14 +1972,6 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
-        
-        # # retrieve the attribute constants associated with this metric
-        # metricConst = metricConstants.pifmConstants()
-        #
-        # # copy input parameters to pass to the log file routine
-        # parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
-        # # create a log file if requested, otherwise logFile = None
-        # logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
         
         popCntFields = metricConst.populationCountFieldNames
             
@@ -2184,7 +2180,7 @@ def runPopulationInFloodplainMetrics(inReportingUnitFeature, reportingUnitIdFiel
         env.parallelProcessingFactor = _tempEnvironment6
         
 
-def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                     metricsToRun, viewRadius, minPatchSize="", inCensusRaster="", outTable="", processingCellSize="", 
                     snapRaster="", optionalFieldGroups=""):
     """ Interface for script executing Population With Potential Views Metrics """
@@ -2201,7 +2197,7 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, viewRadius, 
                           minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
          
@@ -2219,6 +2215,10 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
         landCoverValues = raster.getRasterValues(inLandCoverGrid)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+        
+        if logFile:
+            # write the metric class grid values to the log file
+            setupAndRestore.logWriteClassValues(logFile, metricsBaseNameList, lccClassesDict, metricConst)
 
         # # append the view radius distance value to the field suffix
         # newSuffix = metricConst.fieldSuffix + viewRadius
@@ -2403,7 +2403,7 @@ def runPopulationLandCoverViews(inReportingUnitFeature, reportingUnitIdField, in
                 function(*arguments)
 
                 
-def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
+def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
                      metricsToRun, inFacilityFeature, viewRadius, viewThreshold, outTable="", processingCellSize="", 
                      snapRaster="", optionalFieldGroups=""):
     #""" Interface for script executing Facility Land Cover Views Metrics """
@@ -2415,7 +2415,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inFacilityFeature, viewRadius, viewThreshold, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # append the view threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + viewThreshold
@@ -2589,7 +2589,7 @@ def runFacilityLandCoverViews(inReportingUnitFeature, reportingUnitIdField, inLa
         setupAndRestore.standardRestore(logFile)
           
 
-def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
+def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize,
                       burnIn, burnInValue="", minPatchSize="#", createZones="", zoneBin_str="", overWrite="",
                       outWorkspace="#", optionalFieldGroups="#"):
     """ Interface for script executing Generate Proximity Polygons utility """
@@ -2606,7 +2606,7 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
                           minPatchSize, createZones, zoneBin_str, overWrite, outWorkspace, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         outTable = os.path.join(str(outWorkspace), metricConst.name)
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         ### Initialization
         # Start the timer
@@ -2627,6 +2627,10 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
         landCoverValues = raster.getRasterValues(inLandCoverGrid)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
+        
+        if logFile:
+            # write the metric class grid values to the log file
+            setupAndRestore.logWriteClassValues(logFile, metricsBaseNameList, lccClassesDict, metricConst)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
@@ -2833,7 +2837,7 @@ def runNeighborhoodProportions(inLandCoverGrid, _lccName, lccFilePath, metricsTo
         env.overwriteOutput = tempEnvironment0
 
 
-def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outputCS="#", cellSize="#", 
+def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", mergeDistance='#', outputCS="#", cellSize="#", 
                            searchRadius="#", areaUnits="#", outRaster="#", optionalFieldGroups="#"):
     """ Interface for script executing Intersection Density utility """
     from arcpy import env
@@ -2847,7 +2851,7 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
         parametersList = [inLineFeature, mergeLines, mergeField, mergeDistance, outputCS, cellSize, 
                           searchRadius, areaUnits, outRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
         
         ### Initialization
         # Start the timer
@@ -3005,7 +3009,7 @@ def runIntersectionDensity(inLineFeature, mergeLines, mergeField="#", mergeDista
                 function(*arguments)
                 
                 
-def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
+def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
                       widthLinearUnit="", laneCntFld="#", laneWidth="#", laneDistFld="#", bufferDist="#", removeLinesYN="",
                       cutoffLength="#", overWrite="", outWorkspace='#',  processingCellSize="#", snapRaster="#", optionalFieldGroups="#"):
     """ Interface for script executing Near Road Land Cover Proportions tool """
@@ -3022,7 +3026,7 @@ def runNearRoadLandCoverProportions(inRoadFeature, inLandCoverGrid, _lccName, lc
         parametersList = [inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption, widthLinearUnit, laneCntFld, 
                           laneWidth, laneDistFld, bufferDist, removeLinesYN, cutoffLength, overWrite, outWorkspace,  processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace)
+        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace, toolPath)
         
         ### Initialization
         # Start the timer

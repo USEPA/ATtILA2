@@ -126,16 +126,32 @@ def createLogFile(inDataset, dateTimeStamp):
         return None
 
 
+def logWriteClassValues(logFile, metricsBaseNameList, lccClassesDict, metricConst):
+    ''' Write grid values for selected metric classes to log file. '''
+    
+    if metricConst.shortName in globalConstants.allGridValuesTools:
+        pass
+    else:
+        logFile.write("\n")
+        for mBaseName in metricsBaseNameList:
+            # get the grid codes for this specified metric
+            metricGridCodesList = lccClassesDict[mBaseName].uniqueValueIds
+            logFile.write('CLASS: {0} = {1}\n'.format(mBaseName, str(list(metricGridCodesList))))
+        
+        logFile.write("\n")
+
+
 def logWriteParameters(logFile, parametersList, labelsList):
+    ''' Write tool parameter inputs to log file. '''
     
     for l, p in zip(labelsList, parametersList):
         if p:
-            logFile.write('PARAMETER: {0}: {1}\n'.format(l, p.replace("'"," ")))
+            logFile.write('PARAMETER: {0} = {1}\n'.format(l, p.replace("'"," ")))
     
-    logFile.write("\n\n")
+    logFile.write("\n")
 
 
-def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset):
+def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset, toolPath=None):
     import platform
     
     processed = parameters.splitItemsAndStripDescriptions(optionalFieldGroups, globalConstants.descriptionDelim)    
@@ -150,17 +166,11 @@ def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset):
             # start the log file by capturing ATtILA, ArcGIS, and System information
             infoATtILA = '{0} v{1}'.format(globalConstants.titleATtILA, globalConstants.attilaVersion)
             arcInstall = arcpy.GetInstallInfo()
-            infoArcGIS = '{0} {1}'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel'])
+            infoArcGIS = '{0} {1} License={2} Build={3}'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel'], arcInstall['BuildNumber'])
             infoSystem = platform.platform()
-            logFile.write('SPECS: {0}, {1}, {2}\n\n'.format(infoATtILA, infoArcGIS, infoSystem))
+            logFile.write('SPECS: {0} ; {1} ; {2}\n\n'.format(infoATtILA, infoArcGIS, infoSystem))
             
-            logFile.write('TOOL: {0} ({1})\n\n'.format(metricConst.name, metricConst.shortName.upper()))
-            
-            # logFile.write('SPECIFICATION: {0} {1}\n'.format(globalConstants.titleATtILA, globalConstants.attilaVersion))
-            # arcInstall = arcpy.GetInstallInfo()
-            # logFile.write('SPECIFICATION: {0} {1} {2}\n'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel']))
-            # logFile.write('SPECIFICATION: {0}\n\n'.format(platform.platform()))
-            
+            logFile.write('TOOL: {0} ; {1} ; {2}\n\n'.format(metricConst.name, metricConst.shortName.upper(), toolPath))
             
             # populate the log file by capturing the tool's parameters.
             labelsList = metricConst.parameterLabels

@@ -14,6 +14,9 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0, 2, 8])
     
+    tbxPath = __file__.split("#")[0]
+    inputArguments.insert(0, tbxPath)
+    
     metric.runPopulationLandCoverViews(*inputArguments)
 
 if __name__ == "__main__":

@@ -15,6 +15,9 @@ def main(_argv):
     # Script arguments
     inputArguments = parameters.getParametersAsText([0, 1])
     
+    tbxPath = __file__.split("#")[0]
+    inputArguments.insert(0, tbxPath)
+    
     metric.runNearRoadLandCoverProportions(*inputArguments)
     
     

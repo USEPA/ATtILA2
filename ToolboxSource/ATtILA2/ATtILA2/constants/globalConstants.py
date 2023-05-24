@@ -25,6 +25,7 @@ metricNameTooLong = "Provided metric name too long for output location. Truncate
 tabulateAreaTableAbbv = "_TabArea"
 ruTabulateAreaTableAbbv = "_TabAreaRU"
 scratchGDBFilename = "attilaScratchWorkspace.gdb"
+allGridValuesTools = ["lccc", "lcd"]
 # These are the extensions Esri recognizes as rasters. They may not all be acceptable when saving a calculated grid. Tools
 # such as Intersection Density can only save its output with ".img", or ".tif" extensions when saving to a folder. An 
 # extension in this case, however, is not required and may be omitted. No extensions are permitted inside a geodatabase.
