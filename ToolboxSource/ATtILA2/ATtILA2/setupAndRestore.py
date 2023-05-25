@@ -126,6 +126,44 @@ def createLogFile(inDataset, dateTimeStamp):
         return None
 
 
+def logWriteOutputTableInfo(newTable, logFile):
+    
+    import pandas
+    from arcgis.features import GeoAccessor, GeoSeriesAccessor
+
+    
+    logFile.write("\n")
+    logFile.write("Table Field Attributes: NAME, ALIAS, TYPE, LENGTH, PRECISION, SCALE \n")
+    
+    newFields = arcpy.ListFields(newTable)
+    
+    for f in newFields:
+        logFile.write("Field: {0}, {1}, {2}, {3}, {4}, {5} \n".format(f.name, f.aliasName, f.type, f.length, f.precision, f.scale))
+    
+    stat_Fields = arcpy.ListFields(newTable)[2:]  # if we start at position 2 we’ll drop OBJECTID and RU ID Field
+    in_fields  = ';'.join([f.name for f in stat_Fields]) 
+    outTables = "ALL ATtILA_TmpStats"
+    
+    arcpy.management.FieldStatisticsToTable(newTable,
+                                            in_fields,
+                                            env.workspace,
+                                            outTables,
+                                            None,
+                                            "ALIAS Alias;FIELDNAME FieldName;FIELDTYPE FieldType;MAXIMUM Maximum;MINIMUM Minimum"
+                                            )
+    
+    outTable = "ATtILA_TmpStats"
+    sdf = pandas.DataFrame.spatial.from_table(outTable)
+    out_columns = ['FieldName', 'FieldType', 'Minimum', 'Maximum']
+    
+    AddMsg(sdf[out_columns].to_csv(index=None, header=None))
+    logFile.write(sdf[out_columns].to_csv(index=None, header=None))
+    
+    if arcpy.Exists(outTable):
+        arcpy.Delete_management(outTable)
+
+        
+
 def logWriteClassValues(logFile, metricsBaseNameList, lccClassesDict, metricConst):
     ''' Write grid values for selected metric classes to log file. '''
     

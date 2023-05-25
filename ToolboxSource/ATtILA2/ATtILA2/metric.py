@@ -144,6 +144,13 @@ class metricCalc:
                                              self.metricConst, self.outIdField, self.newTable, self.tabAreaTable,
                                              self.metricsFieldnameDict, self.zoneAreaDict, self.reportingUnitAreaDict)
 
+    def _summarizeOutTable(self):
+        if self.logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            # Internal function to analyze the output table fields for the log file. This may be overridden by some metrics
+            setupAndRestore.logWriteOutputTableInfo(self.newTable, self.logFile)
+    
+    
     # Function to run all the steps in the calculation process
     def run(self):
         # Replace LandCover Grid, if necessary
@@ -163,6 +170,10 @@ class metricCalc:
 
         # Run final metric calculation
         self._calculateMetrics()
+        
+        # Record Output Table info to log file
+        if self.logFile:
+            self._summarizeOutTable()
         
         # ensure cleanup occurs.
         if self.tabAreaTable != None:
@@ -306,6 +317,7 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
             for (function,arguments) in lcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
         
@@ -582,6 +594,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
             for (function,arguments) in flcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
         
@@ -755,6 +768,10 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                         pass
                     else:
                         arcpy.Delete_management(pmCalc.scratchNameToBeDeleted)
+                
+                #skip over output table statistics routine as it will be performed later
+                def _summarizeOutTable(self):
+                    pass
 
             # Create new instance of metricCalc class to contain parameters
             pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -773,7 +790,11 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             pmCalc.metricsBaseNameList = metricsBaseNameList
 
         if clipLCGrid == "true":
-            arcpy.Delete_management(scratchName)     
+            arcpy.Delete_management(scratchName)  
+        
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)   
     
     except Exception as e:
         if logFile:
@@ -791,6 +812,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
         
         arcpy.RemoveIndex_management(inReportingUnitFeature, ruIdIndex)
 
@@ -929,6 +951,10 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                     calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m)
                     AddMsg("%s Core/Edge Ratio calculations are complete for class: %s" % (self.timer.now(), m.upper()), self.logFile)
+                
+                #skip over output table statistics routine as it will be performed later
+                def _summarizeOutTable(self):
+                    pass
 
 
             # Create new instance of metricCalc class to contain parameters
@@ -953,6 +979,10 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)
+        
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
 
     except Exception as e:
         if logFile:
@@ -1099,6 +1129,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
             for (function,arguments) in rlcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
 
@@ -1248,6 +1279,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
             for (function,arguments) in splcpCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
 
@@ -1525,6 +1557,10 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             fromFields = [rnsFieldName]
             # Transfer the values to the output table, pivoting the class values into new fields if necessary.
             table.transferField(roadsNearStreams,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
+        
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
     
     except Exception as e:
         if logFile:
@@ -1540,6 +1576,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
         
         if logFile:
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -1664,6 +1701,10 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # Transfer the values to the output table, pivoting the class values into new fields if necessary.
         table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,strmOrderField,orderValues)
         
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+        
     except Exception as e:
         if logFile:
             # COMPLETE LOGFILE
@@ -1678,6 +1719,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
         
         if logFile:
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -1762,6 +1804,12 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 calculate.landCoverDiversity(self.metricConst, self.outIdField, 
                                                    self.newTable, self.tabAreaTable, self.zoneAreaDict)
                 
+            def _summarizeOutTable(self):
+                if self.logFile:
+                    AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+                    # Internal function to analyze the output table fields for the log file. This may be overridden by some metrics
+                    setupAndRestore.logWriteOutputTableInfo(self.newTable, self.logFile)
+                    
             # Function to run all the steps in the calculation process
             def run(self):
                 # Perform additional housekeeping
@@ -1775,6 +1823,9 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 
                 # Run final metric calculation
                 self._calculateMetrics()
+                
+                # Summarize the ATtILA metric output table to log file
+                self._summarizeOutTable()
                 
 
         # retrieve the attribute constants associated with this metric
@@ -1901,6 +1952,11 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             vector.addCalculateField(outTable,metricConst.populationChangeFieldName,"DOUBLE",calcExpression,codeBlock)       
 
         AddMsg(timer.now() + " Calculation complete")
+        
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)   
+            
     except Exception as e:
         if logFile:
             # COMPLETE LOGFILE
@@ -1915,6 +1971,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
         
         if logFile:
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -2154,6 +2211,11 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         vector.addCalculateField(outTable,metricConst.populationProportionFieldName,"DOUBLE",calcExpression,codeBlock)   
 
         AddMsg(timer.now() + " Calculation complete")
+        
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+            
     except Exception as e:
         if logFile:
             # COMPLETE LOGFILE
@@ -2168,6 +2230,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
         
         if logFile:
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -2385,6 +2448,10 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             # delete temporary features
             if arcpy.Exists("tempPoly"):
                 arcpy.Delete_management("tempPoly")
+            
+        if logFile:
+            AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
                 
     except Exception as e:
         if logFile:
@@ -2401,6 +2468,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
 
                 
 def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -2585,6 +2653,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
             for (function,arguments) in flcvCalc.cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
           
@@ -3007,6 +3076,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
                 
                 
 def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
@@ -3212,6 +3282,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             for (function,arguments) in cleanupList:
                 # Flexibly executes any functions added to cleanup array.
                 function(*arguments)
+            AddMsg("Clean up complete")
                 
                 
 # def runNearRoadLandCoverProportionsNEW(inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
