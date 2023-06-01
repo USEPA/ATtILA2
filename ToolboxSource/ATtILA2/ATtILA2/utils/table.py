@@ -11,7 +11,7 @@ import arcpy
 from . import fields
 from ATtILA2.constants import globalConstants
 from ATtILA2.datetimeutil import DateTimer
-from .messages import AddMsg
+from ATtILA2.utils.log import logArcpy
 
 timer = DateTimer()
 
@@ -50,23 +50,21 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
         
     # need to strip the dbf extension if the outpath is a geodatabase; 
     # should control this in the validate step or with an arcpy.ValidateTableName call
+    logArcpy("arcpy.CreateTable_management",(outTablePath, outTableName), logFile)
     newTable = arcpy.CreateTable_management(outTablePath, outTableName)
     
     # Field objects in ArcGIS 10 service pack 0 have a type property that is incompatible with some of the AddField 
     # tool's Field Type keywords. This addresses that issue
     outIdFieldType = fields.convertFieldTypeKeyword(outIdField)
     
-    # AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(), outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale), 0, logFile)
-    AddMsg("{0} Added field -- {1}".format(timer.now(), outIdField.name), 0, logFile)
+    logArcpy("arcpy.AddField_management",(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale), logFile)
     arcpy.AddField_management(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale)
     
     # add metric fields to the output table.
+    [logArcpy("arcpy.AddField_management",(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
+                                           metricFieldParams[4]), logFile) for mBaseName in metricsBaseNameList]
     [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
                                metricFieldParams[4])for mBaseName in metricsBaseNameList]
-    
-    # [AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(), metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
-    #                            metricFieldParams[4]), 0, logFile) for mBaseName in metricsBaseNameList]
-    [AddMsg("{0} Added field -- {1}".format(timer.now(), metricsFieldnameDict[mBaseName][0]), 0, logFile) for mBaseName in metricsBaseNameList]
 
     # add any metric specific additional fields to the output table
     if additionalFields:
@@ -74,24 +72,21 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
             [arcpy.AddField_management(newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
                                        aFldParams[3], aFldParams[4])for mBaseName in metricsBaseNameList]
             
-            # [AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(), aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
-            #                            aFldParams[3], aFldParams[4]), 0, logFile) for mBaseName in metricsBaseNameList]
-            [AddMsg("{0} Added field -- {1}".format(timer.now(), aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1]), 0, logFile) for mBaseName in metricsBaseNameList]
+            [logArcpy("arcpy.AddField_management",(newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
+                                       aFldParams[3], aFldParams[4]), logFile) for mBaseName in metricsBaseNameList]
 
     # add any optional fields to the output table
     if qaCheckFlds:
         [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
-        
-        # [AddMsg("{0} Added field -- {1}, {2}, {3}".format(timer.now(), qaFld[0], qaFld[1], qaFld[2]), 0, logFile) for qaFld in qaCheckFlds]
-        [AddMsg("{0} Added field -- {1}".format(timer.now(), qaFld[0]), 0, logFile) for qaFld in qaCheckFlds]
+
+        [logArcpy("arcpy.AddField_management",(newTable, qaFld[0], qaFld[1], qaFld[2]), logFile) for qaFld in qaCheckFlds]
         
     if addAreaFldParams:
         [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
                                    addAreaFldParams[2], addAreaFldParams[3])for mBaseName in metricsBaseNameList]
         
-        # [AddMsg("{0} Added field -- {1}, {2}, {3}, {4}".format(timer.now(),metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
-        #                            addAreaFldParams[2], addAreaFldParams[3]), 0, logFile) for mBaseName in metricsBaseNameList]
-        [AddMsg("{0} Added field -- {1}".format(timer.now(),metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0]), 0, logFile) for mBaseName in metricsBaseNameList]
+        [logArcpy("arcpy.AddField_management",(newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
+                                   addAreaFldParams[2], addAreaFldParams[3]), logFile) for mBaseName in metricsBaseNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
     fields.deleteFields(newTable, ["field1"])

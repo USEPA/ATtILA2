@@ -3,6 +3,7 @@
 """
 titleATtILA = "ATtILA"
 attilaVersion = "3.0"
+toolboxAlias = "ATtILAv3"
 descriptionDelim = "  -  "
 areaFieldParameters = ["_A","DOUBLE",15,0]
 tbxFileSuffix = ".tbx"

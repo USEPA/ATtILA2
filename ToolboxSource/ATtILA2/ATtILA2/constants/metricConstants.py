@@ -4,6 +4,7 @@ class baseMetricConstants():
     """  """
     name = ''
     shortName = ''
+    metricFUNC = ''
     fieldPrefix = ''
     fieldSuffix = ''
     overlapName = ''
@@ -21,6 +22,7 @@ class baseMetricConstants():
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
     shortName = "caem"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     fieldSuffix = "_E2A"
     overlapName = "CAEM_OVER"
@@ -61,6 +63,7 @@ class caemConstants(baseMetricConstants):
 class flcpConstants(baseMetricConstants):
     name = "FloodplainLandCoverProportions"
     shortName = "flcp"
+    metricFUNC = 'metric.run'+name
     fieldSuffix = ""
     fieldPrefix = "f"
     overlapName = "FLCP_OVER"
@@ -106,6 +109,7 @@ class flcpConstants(baseMetricConstants):
 class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
     shortName = "flcv"
+    metricFUNC = 'metric.run'+name
     fieldSuffix = "_Low"
     fieldPrefix = ""
     overlapName = "FLCV_OVER"
@@ -159,6 +163,7 @@ class flcvConstants(baseMetricConstants):
 class idConstants(baseMetricConstants):
     name = "IntersectionDensity"
     shortName = "id"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     fieldSuffix = "IntDen"
     overlapName = ""
@@ -193,6 +198,7 @@ class idConstants(baseMetricConstants):
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"
     shortName = "lccc"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = "LCCC_OVER"
@@ -225,6 +231,7 @@ class lcccConstants(baseMetricConstants):
 class lcdConstants(baseMetricConstants):
     name = "LandCoverDiversity"
     shortName = "lcd"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = "LCD_OVER"
@@ -253,6 +260,7 @@ class lcdConstants(baseMetricConstants):
 class lcospConstants(baseMetricConstants):
     name = "LandCoverOnSlopeProportions"
     shortName = "lcosp"
+    metricFUNC = 'metric.run'+name
     fieldSuffix = "_SL"
     fieldPrefix = ""
     overlapName = "LCOSP_OVER"
@@ -307,6 +315,7 @@ class lcpORIGINALConstants(baseMetricConstants):
 class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"
     shortName = "lcp"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = "p"
     fieldSuffix = ""
     overlapName = shortName.upper()+"_OVER"
@@ -350,6 +359,7 @@ class lcpConstants(baseMetricConstants):
 class npConstants(baseMetricConstants):
     name = "NeighborhoodProportions"
     shortName = "np"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     fieldSuffix = "_Prox"
     overlapName = ""
@@ -389,6 +399,7 @@ class nrlcpConstants(baseMetricConstants):
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
     shortName = "pdm"
+    metricFUNC = 'metric.runPopulationDensityCalculator'
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
@@ -420,6 +431,7 @@ class pdmConstants(baseMetricConstants):
 class pifmConstants(baseMetricConstants):
     name = "PopulationInFloodplainMetrics"
     shortName = "pifm"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ["RU_", "FP_"]
     fieldSuffix = ["_RU", "_FP"]
     overlapName = ""
@@ -449,6 +461,7 @@ class pifmConstants(baseMetricConstants):
 class pmConstants(baseMetricConstants):
     name = "PatchMetrics"
     shortName = "pm"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     fieldSuffix = "_PLGP"
     overlapName = "PM_OVER"
@@ -507,6 +520,7 @@ class pmConstants(baseMetricConstants):
 class plcvConstants(baseMetricConstants):
     name = "PopulationLandCoverViews"
     shortName = "plcv"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = ""
     mvFieldPrefix = ""
     fieldSuffix = "_PV_C"
@@ -569,6 +583,7 @@ class pnhd24kConstants(baseMetricConstants):
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"
     shortName = "rlcp"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = "r"
     fieldSuffix = ""
     overlapName = "RLCP_OVER"
@@ -612,6 +627,7 @@ class rlcpConstants(baseMetricConstants):
 class rdmConstants(baseMetricConstants):
     name = "RoadDensityMetrics"
     shortName = "rdm"
+    metricFUNC = 'metric.runRoadDensityCalculator'
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
@@ -657,6 +673,7 @@ class rdmConstants(baseMetricConstants):
 class sdmConstants(baseMetricConstants):
     name = "StreamDensityMetric"
     shortName = "sdm"
+    metricFUNC = 'metric.runStreamDensityCalculator'
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
@@ -684,6 +701,7 @@ class sdmConstants(baseMetricConstants):
 class splcpConstants(baseMetricConstants):
     name = "SamplePointLandCoverProportions"
     shortName = "splcp"
+    metricFUNC = 'metric.run'+name
     fieldPrefix = "s"
     fieldSuffix = ""
     overlapName = "SPLCP_OVER"

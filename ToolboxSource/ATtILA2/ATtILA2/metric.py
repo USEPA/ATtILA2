@@ -19,6 +19,7 @@ from .utils import environment
 from .utils import parameters
 from .utils import raster
 from .utils import conversion
+from .utils import log
 from .utils.messages import AddMsg
 from .datetimeutil import DateTimer
 from .constants import metricConstants
@@ -71,7 +72,8 @@ class metricCalc:
         
         if self.logFile:
             # write the metric class grid values to the log file
-            setupAndRestore.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccClassesDict, metricConst)
+            # log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccClassesDict, metricConst)
+            log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, metricConst)
 
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
         self.tableName = None
@@ -123,7 +125,7 @@ class metricCalc:
 
 
     def _makeAttilaOutTable(self):
-        AddMsg(self.timer.now() + " Constructing the ATtILA metric output table", 0, self.logFile)
+        AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
         # Internal function to construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -148,7 +150,7 @@ class metricCalc:
         if self.logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             # Internal function to analyze the output table fields for the log file. This may be overridden by some metrics
-            setupAndRestore.logWriteOutputTableInfo(self.newTable, self.logFile)
+            log.logWriteOutputTableInfo(self.newTable, self.logFile)
     
     
     # Function to run all the steps in the calculation process
@@ -213,13 +215,13 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None.
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # Create new subclass of metric calculation
         class metricCalcLCP(metricCalc):        
         
             def _makeAttilaOutTable(self):
-                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table", 0, self.logFile)
+                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 if perCapitaYN == "true":     
                     self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable, 
@@ -337,7 +339,7 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # # This block of code can be used if we want to change the Slope Threshold input to a double parameter type
         # # If we do that, we'd also have to change the tool validation property to comment out the inZeroAndAboveIntegerIndex = 7 line 
@@ -428,7 +430,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inFloodplainGeodataset, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
           
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
@@ -620,7 +622,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         AddMsg(timer.start() + " Setting up initial environment variables", 0, logFile)
         
@@ -678,7 +680,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
          
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
+        AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -794,7 +796,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)   
+            log.logWriteOutputTableInfo(outTable, logFile)   
     
     except Exception as e:
         if logFile:
@@ -830,7 +832,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # grab the current date and time for log file
         metricConst.logTimeStamp = datetime.now().strftime(globalConstants.logFileExtension)
@@ -858,7 +860,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
+        AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -982,7 +984,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+            log.logWriteOutputTableInfo(outTable, logFile)
 
     except Exception as e:
         if logFile:
@@ -1011,7 +1013,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
@@ -1148,7 +1150,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inPointFeatures, 
                           ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
@@ -1297,7 +1299,7 @@ def runLandCoverCoefficientCalculator(toolPath, inReportingUnitFeature, reportin
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                           metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
 
         # Create new LCC metric calculation subclass
         class metricCalcLCC(metricCalc):
@@ -1369,7 +1371,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField, streamRoadCrossings, 
                           roadsNearStreams, inStreamFeature, inBufferDistance, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
@@ -1560,7 +1562,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+            log.logWriteOutputTableInfo(outTable, logFile)
     
     except Exception as e:
         if logFile:
@@ -1607,7 +1609,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
@@ -1703,7 +1705,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+            log.logWriteOutputTableInfo(outTable, logFile)
         
     except Exception as e:
         if logFile:
@@ -1783,7 +1785,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                     self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
                     
             def _makeAttilaOutTable(self):
-                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table", 0, self.logFile)
+                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 self.newTable, self.metricsFieldnameDict = table.tableWriterNoLcc(self.outTable,
                                                                                         self.metricsBaseNameList,
@@ -1808,7 +1810,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 if self.logFile:
                     AddMsg("Summarizing the ATtILA metric output table to log file", 0)
                     # Internal function to analyze the output table fields for the log file. This may be overridden by some metrics
-                    setupAndRestore.logWriteOutputTableInfo(self.newTable, self.logFile)
+                    log.logWriteOutputTableInfo(self.newTable, self.logFile)
                     
             # Function to run all the steps in the calculation process
             def run(self):
@@ -1835,7 +1837,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
                           snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         metricsToRun = metricConst.fixedMetricsToRun
         
@@ -1874,7 +1876,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
                           popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
 
         # Set the output workspace
@@ -1955,7 +1957,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)   
+            log.logWriteOutputTableInfo(outTable, logFile)   
             
     except Exception as e:
         if logFile:
@@ -1999,7 +2001,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
         _tempEnvironment0 = env.snapRaster
@@ -2214,7 +2216,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+            log.logWriteOutputTableInfo(outTable, logFile)
             
     except Exception as e:
         if logFile:
@@ -2260,7 +2262,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, viewRadius, 
                           minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
          
@@ -2281,7 +2283,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         
         if logFile:
             # write the metric class grid values to the log file
-            setupAndRestore.logWriteClassValues(logFile, metricsBaseNameList, lccClassesDict, metricConst)
+            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
 
         # # append the view radius distance value to the field suffix
         # newSuffix = metricConst.fieldSuffix + viewRadius
@@ -2315,7 +2317,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
  
         ''' Make ATtILA Output Table '''
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Constructing the ATtILA metric output table", 0, logFile)
+        AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   logFile, metricConst.additionalFields)
@@ -2451,7 +2453,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            setupAndRestore.logWriteOutputTableInfo(outTable, logFile)
+            log.logWriteOutputTableInfo(outTable, logFile)
                 
     except Exception as e:
         if logFile:
@@ -2483,7 +2485,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inFacilityFeature, viewRadius, viewThreshold, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # append the view threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + viewThreshold
@@ -2568,7 +2570,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 self.metricConst.fieldParameters = self.oldFieldParameters
                 
                 # Construct the ATtILA metric output table
-                AddMsg("%s Constructing the ATtILA metric output table: %s" % (self.timer.now(), os.path.basename(self.outTable)), 0, self.logFile)
+                AddMsg("{0} Constructing the ATtILA metric output table: {1}".format(self.timer.now(), self.outTable), 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -2675,7 +2677,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                           minPatchSize, createZones, zoneBin_str, overWrite, outWorkspace, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         outTable = os.path.join(str(outWorkspace), metricConst.name)
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         ### Initialization
         # Start the timer
@@ -2699,7 +2701,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         
         if logFile:
             # write the metric class grid values to the log file
-            setupAndRestore.logWriteClassValues(logFile, metricsBaseNameList, lccClassesDict, metricConst)
+            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
@@ -2920,7 +2922,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         parametersList = [inLineFeature, mergeLines, mergeField, mergeDistance, outputCS, cellSize, 
                           searchRadius, areaUnits, outRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
         
         ### Initialization
         # Start the timer
@@ -3096,7 +3098,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         parametersList = [inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption, widthLinearUnit, laneCntFld, 
                           laneWidth, laneDistFld, bufferDist, removeLinesYN, cutoffLength, overWrite, outWorkspace,  processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
-        logFile = setupAndRestore.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace, toolPath)
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace, toolPath)
         
         ### Initialization
         # Start the timer
