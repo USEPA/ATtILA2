@@ -620,7 +620,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         
         # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
-                          inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
+                          inPatchSize, inMaxSeparation, outTable, mdcpYN, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
@@ -889,8 +889,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                     # replace the inLandCoverGrid
                     AddMsg("%s Generating core and edge grid for Class: %s" % (self.timer.now(), m.upper()), 0, self.logFile)
                     scratchNameReference =  [""];
-                    self.inLandCoverGrid = raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, 
-                                                                        self.inEdgeWidth, processingCellSize,
+                    self.inLandCoverGrid = raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, self.inEdgeWidth,
                                                                         self.timer, metricConst.shortName, scratchNameReference, self.logFile)
                     self.scratchNameToBeDeleted = scratchNameReference[0]
                     AddMsg("%s Core and edge grid complete for Class: %s" % (self.timer.now(), m.upper()), 0, self.logFile)

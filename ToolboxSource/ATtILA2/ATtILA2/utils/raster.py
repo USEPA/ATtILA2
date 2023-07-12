@@ -159,22 +159,14 @@ def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
         clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
         
-        # # logArcpy("arcpy.Buffer_analysis", (inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL"), logFile)
-        # # clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
         clipBuffer = arcpyLog(arcpy.Buffer_analysis, (inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL"), 'arcpy.Buffer_analysis', logFile)
         
         # Clipping input grid to desired extent...
-        # # logArcpy("arcpy.Clip_management", (inRaster, "#", scratchName, clipBuffer, "", "NONE"), logFile)
-        # # clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, clipBuffer, "", "NONE")
         clippedGrid = arcpyLog(arcpy.Clip_management, (inRaster, "#", scratchName, clipBuffer, "", "NONE"), 'arcpy.Clip_management', logFile)
         arcpy.Delete_management(clipBuffer)
     else:
-        # # logArcpy("arcpy.Clip_management", (inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE"), logFile)
-        # # clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE")
         clippedGrid = arcpyLog(arcpy.Clip_management, (inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE"), 'arcpy.Clip_management', logFile)
     
-    # # logArcpy("arcpy.BuildRasterAttributeTable_management", (clippedGrid, "Overwrite"), logFile)
-    # # arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
     arcpyLog(arcpy.BuildRasterAttributeTable_management, (clippedGrid, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
 
     AddMsg(timer.now() + " Reduction complete")
@@ -306,7 +298,7 @@ def getMaximumValue(inRaster, lccObj, addOne=False):
     return maxValue
 
 
-def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, processingCellSize_str, timer, shortName, scratchNameReference, logFile):
+def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_str, timer, shortName, scratchNameReference, logFile):
     # create grid where cover type of interest (e.g., forest) is coded 3, excluded values are coded 1, everything else is coded 2
     
     # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area calculation    
@@ -332,23 +324,18 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
     AddMsg(timer.now() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1", 0, logFile)
-    # # reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
     reclassGrid = arcpyLog(Reclassify, (inLandCoverGrid,"VALUE", RemapValue(reclassPairs)), 'Reclassify', logFile)
     
     AddMsg(timer.now() + " Step 2 of 4: Setting Class areas to Null", 0, logFile)
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
-    # # otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
     otherGrid = arcpyLog(SetNull, (reclassGrid, 1, delimitedVALUE+" = 3"), 'SetNull', logFile)
     
     AddMsg(timer.now() + " Step 3 of 4: Finding distance from Other", 0, logFile)
-    # # distGrid = EucDistance(otherGrid)
     distGrid = arcpyLog(EucDistance, (otherGrid,), 'EucDistance', logFile)
     
     AddMsg(timer.now() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4", 0, logFile)
-    # edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
     edgeDist = (float(PatchEdgeWidth_str) + 0.5) * Raster(inLandCoverGrid).meanCellWidth
 
-    # # zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
     zonesGrid = arcpyLog(Con, ((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid), 'Con', logFile)
     
     # it appears that ArcGIS cannot process the BuildRasterAttributeTable request without first saving the raster.
@@ -357,42 +344,20 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
     scratchNameReference[0] = scratchName
     zonesGrid.save(scratchName)
-            
-    # # arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite")  
+             
     arcpyLog(arcpy.BuildRasterAttributeTable_management, (zonesGrid, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
-    # # arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
     arcpyLog(arcpy.AddField_management, (zonesGrid, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
     
     # Use categoryDict to pass on labels; should be in the format {gridValue1 : "category1 string", gridValue2: "category2 string", etc}
     categoryDict = {1:"Excluded", 2:"Other", 3:"Edge", 4:"Core"}
     updateCategoryLabels(zonesGrid, categoryDict)
             
-    return zonesGrid
-
-# def updateCoreEdgeCategoryLabels(Raster):
-#     #Updates the CATEGORY field in the ForestCoreEdge with "Core" and "Edge" values
-#     rows = arcpy.UpdateCursor(Raster)
-#     row = rows.next()
-#
-#     while row:
-#         #VALUE = 1 indicates a Core cell, Value = 3 is an Edge cell
-#         v = row.getValue("Value")
-#         if v == 4:
-#             row.CATEGORY = "Core"
-#         elif v == 3:
-#             row.CATEGORY = "Edge"
-#         elif v == 2:
-#             row.CATEGORY = "Other"
-#         elif v == 1:
-#             row.CATEGORY = "Excluded"
-#         rows.updateRow(row)
-#         row = rows.next()  
+    return zonesGrid 
     
     
 def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
-                         processingCellSize_str, timer, scratchNameReference, logFile):
+                      timer, scratchNameReference, logFile):
     # create a list of all the grid values in the selected landcover grid
-    #landCoverValues = raster.getRasterValues(inLandCoverGrid)
     landCoverValues = getRasterValues(inLandCoverGrid)
     
     # for the selected land cover class, get the class codes found in the input landcover grid
@@ -430,8 +395,6 @@ def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, ma
         regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
     else:
         AddMsg(timer.now() + " Connecting clusters of Class:"+m+" within maximum separation distance...", 0, logFile)
-        # fltProcessingCellSize = float(processingCellSize_str)
-        # maxSep = intMaxSeparation * float(processingCellSize_str)
         fltProcessingCellSize = Raster(inLandCoverGrid).meanCellWidth
         maxSep = intMaxSeparation * Raster(inLandCoverGrid).meanCellWidth
         delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
@@ -531,123 +494,6 @@ def getRemapBinsByPercentStep(maxValue, pctStep):
     
     return reclassBins
 
-# def getProximityWithBurnInGrid(classValuesList,excludedValuesList,inLandCoverGrid,landCoverValues,neighborhoodSize_str,
-#                      burnIn,burnInGrid,timer,rngRemap,zoneBin_str,proximityGridName):
-#
-#     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
-#     # define the reclass values
-#     classValue = 1
-#     excludedValue = 0
-#     otherValue = 0
-#     newValuesList = [classValue, excludedValue, otherValue]
-#
-#     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
-#     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
-#
-#     AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.now()))
-#     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
-#
-#     AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.now(), neighborhoodSize_str))
-#     neighborhood = arcpy.sa.NbrRectangle(int(neighborhoodSize_str), int(neighborhoodSize_str), "CELL")
-#     focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
-#
-#     AddMsg(("{0} Reclassifying focal SUM results into {1}% breaks...").format(timer.now(), zoneBin_str))
-#     proximityGrid = Reclassify(focalGrid, "VALUE", rngRemap)
-#
-#     # Delete output grid if it already exists in the GDB. This prevents errors caused by lingering locks and such
-#     try:
-#         arcpy.Delete_management(proximityGridName)
-#     except:
-#         pass
-#
-#     if burnIn == "true":
-#         AddMsg(("{0} Burning excluded areas into proximity grid...").format(timer.now()))
-#         delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
-#         whereClause = delimitedVALUE+" = 0"
-#         proximityGrid = Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
-#     else:
-#         # pare back the extent of the proximityGrid to the edges of the input land cover grid
-#         AddMsg(("{0} Trimming proximity raster to Land cover grid extent...").format(timer.now()))
-#         proximityGrid = SetNull(IsNull(reclassGrid) == 1, proximityGrid)
-#
-#     proximityGrid.save(proximityGridName)
-#
-#     return proximityGrid, focalGrid
-
-
-# def getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList, excludedValuesList,
-#                                    inLandCoverGrid, burnIn, burnInGrid, timer):
-#     # Determine the maximum sum for the neighborhood
-#     maxCellCount = pow(int(inNeighborhoodSize), 2)
-#
-#     # radiusCnt = int(inNeighborhoodSize)
-#     # AddMsg("Calculating maximum cell count  %s" % timer.start())
-#     # testCellCount = getCircleCellCount(inLandCoverGrid, radiusCnt)
-#     # AddMsg("Max Cell Count = %s  %s" % (testCellCount, timer.split()))
-#     # # AddMsg("Looking up dictionary cell count  %s" % timer.start())
-#     # dictCellCount = lookupCircleCellCount(radiusCnt)
-#     # AddMsg("Dict Cell Count = %s  %s" % (dictCellCount, timer.split()))
-#
-#
-#     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
-#     # define the reclass values
-#     classValue = 1
-#     excludedValue = 0
-#     otherValue = 0
-#     newValuesList = [classValue, excludedValue, otherValue]
-#
-#     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
-#     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
-#
-#     AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.now()))
-#     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
-#
-#     AddMsg(("{0} Performing focal SUM on reclassified raster using {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
-#     neighborhood = arcpy.sa.NbrRectangle(int(inNeighborhoodSize), int(inNeighborhoodSize), "CELL")
-#     nbrCntGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM", "NODATA")
-#
-#     AddMsg(("{0} Calculating the proportion of land cover class within {1} x {1} cell neighborhood...").format(timer.now(), inNeighborhoodSize))
-#     proportionsGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (' (x / '+str(maxCellCount)+') * 100') )
-#
-#     if burnIn == "true":
-#         AddMsg(("{0} Burning excluded areas into proportions grid...").format(timer.now()))
-#         delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
-#         whereClause = delimitedVALUE+" = 0"
-#         proportionsGrid = Con(burnInGrid, proportionsGrid, burnInGrid, whereClause)
-#
-#     # ArcGIS Pro version 2.9 allows the reclassification of a floating point raster using remap techniques.
-#     # No need to convert the proportions grid to an integer grid
-#     #proportionsIntGrid = arcpy.sa.Int(proportionsGrid)
-#
-#     return proportionsGrid, nbrCntGrid
-
-
-# def getViewGrid(classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, timer):
-#     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
-#     # define the reclass values
-#     classValue = 1
-#     excludedValue = 0
-#     otherValue = 0
-#     newValuesList = [classValue, excludedValue, otherValue]
-#
-#     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
-#     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
-#
-#     AddMsg(("{0} Reclassifying selected land cover class to 1. All other values = 0...").format(timer.now()))
-#     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
-#
-#     AddMsg(("{0} Performing focal SUM on reclassified raster using {1} cell radius neighborhood...").format(timer.now(), viewRadius))
-#     neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
-#     focalGrid = arcpy.sa.FocalStatistics(reclassGrid == classValue, neighborhood, "SUM")
-#
-#     AddMsg(("{0} Reclassifying focal SUM results into view = 0 and no-view = 1 binary raster...").format(timer.now()))
-# #    delimitedVALUE = arcpy.AddFieldDelimiters(focalGrid,"VALUE")
-# #    whereClause = delimitedVALUE+" = 0"
-# #    viewGrid = Con(focalGrid, 1, 0, whereClause)
-#     whereValue = conValues[0]
-#     trueValue = conValues[1]
-#     viewGrid = Con(Raster(focalGrid) == whereValue, trueValue)
-#     return viewGrid
 
 def getPatchViewGrid(m, classValuesList, excludedValuesList, inLandCoverGrid, landCoverValues, viewRadius, conValues, minimumPatchSize, timer, saveIntermediates, metricConst, logFile):
     # create class (value = 1) / other (value = 0) / excluded grid (value = 0) raster
