@@ -137,8 +137,6 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     **Returns:**
         * *outFeatures* - output feature class 
     """
-    from arcpy import env
-    import os
     
     try:
         toolShortName = outFeatures[:outFeatures.find("_")]
@@ -472,7 +470,6 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
      
     # Dissolve the intersected lines on the unit ID fields.
     outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
-    #dissolveFields = uIDField.name
     dissolveFields = uIDField
     AddMsg(timer.now() + " Dissolving %s zone features..." % (desc2.basename), 0, logFile)  
     arcpy.Dissolve_management(intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES")
@@ -498,12 +495,9 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,inLengthField,lineCla
         * *mergedLines* - name of the output feature class.
         * *lengthFieldName* - validated name of the field in the output feature class containing length values
     '''
-    # Intersect the lines and the areal units
-    # intersection = arcpy.Intersect_analysis([repUnits, lines],r"in_memory/intersect","ALL","","INPUT")
-    # using previous technique of an output layer stored in memory is not dependable for large input datasets
-
     # Get a unique name with full path for the output features - will default to current workspace:
     intersectFeatures = arcpy.CreateScratchName("tmpIntersect","","FeatureClass")
+    # Intersect the lines and the areal units
     intersection = arcpy.Intersect_analysis([repUnits, lines],intersectFeatures,"ALL","","INPUT")
     dissolveFields = uIDField.name
     if lineClass != '':
@@ -615,8 +609,6 @@ def addLengthField(inLineFeatures,lengthFieldName):
     '''
     # Get a describe object
     lineDescription = arcpy.Describe(inLineFeatures)
-    # Set a default for the length fieldName
-    #lengthFieldName = "LenKM" + lineDescription.baseName
     
     # Set up the calculation expression for length in kilometers
     calcExpression = "!{0}.LENGTH@KILOMETERS!".format(lineDescription.shapeFieldName)
@@ -649,37 +641,10 @@ def addCalculateField(inFeatures,fieldName,fieldType,calcExpression,codeBlock='#
         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
     return fieldName   
-   
-# def addCalculateFieldInteger(inFeatures,fieldName,calcExpression,codeBlock='#'):
-#     '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
-#     using the given calculation expression
-#     **Description:**
-#         This function checks for the existence of the specified field and if it does
-#         not exist, adds and populates it as appropriate.  The output field is assumed to be of type double.
-#     **Arguments:**
-#         * *inFeatures* - the input feature class that will receive the field.
-#         * *fieldName* - field name string
-#         * *calcExpression* - string calculation expression in python 
-#         * *codeBlock* - optional python code block expression       
-#     **Returns:**
-#         * *fieldName* - validated fieldname      
-#     '''
-#     # Validate the desired field name for the dataset
-#     fieldName = arcpy.ValidateFieldName(fieldName, arcpy.Describe(inFeatures).path)
-#
-#     # Check for existence of field.
-#     fieldList = arcpy.ListFields(inFeatures,fieldName)
-#     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
-#         arcpy.AddField_management(inFeatures,fieldName,"SHORT")
-#     else: # Otherwise warn the user that the field will be recalculated.
-#         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
-#     arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
-#     return fieldName      
+
 
 def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, rastoPolyFeature, patchCentroidsFeature, 
                  patchDissolvedFeature, nearPatchTable, zoneAreaDict, timer, pmResultsDict, logFile):
-    #from pylet import utils
-    #from . import calculate, conversion, environment, fields, files, messages, parameters, polygons, raster, settings, tabarea, table, vector
     resultDict = {}
     
     # put the proper field delimiters around the ID field name for SQL expressions
@@ -748,7 +713,6 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             arcpy.SelectLayerByLocation_management(patchDissolvedLayer, "INTERSECT", patchCentroidsLayer)
             
             # Clip the selected patches to the reporting unit boundary
-            # clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, clipPolyDiss)
             if arcpy.Exists("clipPolyDiss"):
                 # delete the layer in case the geoprocessing overwrite output option is turned off
                 arcpy.Delete_management("clipPolyDiss")    
