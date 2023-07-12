@@ -1,4 +1,6 @@
 import arcpy
+#from ATtILA2.utils.log import logArcpy
+from ATtILA2.utils.log import arcpyLog
 
 
 class TabulateAreaTable(object):
@@ -18,7 +20,7 @@ class TabulateAreaTable(object):
     _destroyTable = True
     
 
-    def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, tableName=None, lccObj=None):
+    def __init__(self, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, logFile, tableName=None, lccObj=None):
         """ Constructor - Called when created 
         
             If tableName is None, the table will be deleted, otherwise it persists
@@ -29,6 +31,7 @@ class TabulateAreaTable(object):
         self._reportingUnitIdField = reportingUnitIdField
         self._inLandCoverGrid = inLandCoverGrid
         self._tableName = tableName
+        self._logFile = logFile
         
         if lccObj:
             self._excludedValues = lccObj.values.getExcludedValueIds()
@@ -47,9 +50,12 @@ class TabulateAreaTable(object):
         else:
             self._tableName = arcpy.CreateScratchName(self._tempTableName, "", self._datasetType)
             
-        
-        arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
-                                 self._value, self._tableName)
+        # # logArcpy("arcpy.gp.TabulateArea_sa",(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+        # #                                      self._value, self._tableName), self._logFile)
+        # # arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+        # #                          self._value, self._tableName)
+        arcpyLog(arcpy.gp.TabulateArea_sa, (self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+                                 self._value, self._tableName), 'arcpy.gp.TabulateArea_sa', self._logFile)
         
         self._tabAreaTableRows = arcpy.SearchCursor(self._tableName)        
         self._tabAreaValueFields = arcpy.ListFields(self._tableName, self._valueFieldPrefix + "*" )

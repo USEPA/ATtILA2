@@ -3,13 +3,16 @@
 """
 import arcpy
 import os
-from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull,Extent
+from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,Extent, IsNull
 from . import *
 from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
 import arcpy as _arcpy
 from arcpy.sa.Functions import CreateConstantRaster
-from ATtILA2.constants.globalConstants import inReportingUnitFeature
+from . import files
+from .log import arcpyLog
+
+
 def getRasterPointFromRowColumn(raster, row, column):
     """ Get an arcpy `Point`_ object from an arcpy `Raster`_ object and zero based row and column indexes.
 
@@ -155,15 +158,24 @@ def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile
         bufferFloat = cellSize * (int(inBufferDistance)+1)
         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
         clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
-        clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
+        
+        # # logArcpy("arcpy.Buffer_analysis", (inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL"), logFile)
+        # # clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
+        clipBuffer = arcpyLog(arcpy.Buffer_analysis, (inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL"), 'arcpy.Buffer_analysis', logFile)
         
         # Clipping input grid to desired extent...
-        clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, clipBuffer, "", "NONE")
+        # # logArcpy("arcpy.Clip_management", (inRaster, "#", scratchName, clipBuffer, "", "NONE"), logFile)
+        # # clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, clipBuffer, "", "NONE")
+        clippedGrid = arcpyLog(arcpy.Clip_management, (inRaster, "#", scratchName, clipBuffer, "", "NONE"), 'arcpy.Clip_management', logFile)
         arcpy.Delete_management(clipBuffer)
     else:
-        clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE")
+        # # logArcpy("arcpy.Clip_management", (inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE"), logFile)
+        # # clippedGrid = arcpy.Clip_management(inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE")
+        clippedGrid = arcpyLog(arcpy.Clip_management, (inRaster, "#", scratchName, inReportingUnitFeature, "", "NONE"), 'arcpy.Clip_management', logFile)
     
-    arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
+    # # logArcpy("arcpy.BuildRasterAttributeTable_management", (clippedGrid, "Overwrite"), logFile)
+    # # arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
+    arcpyLog(arcpy.BuildRasterAttributeTable_management, (clippedGrid, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
 
     AddMsg(timer.now() + " Reduction complete")
     
@@ -319,21 +331,25 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
-    AddMsg(timer.now() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1...", 0, logFile)
-    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    AddMsg(timer.now() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1", 0, logFile)
+    # # reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    reclassGrid = arcpyLog(Reclassify, (inLandCoverGrid,"VALUE", RemapValue(reclassPairs)), 'Reclassify', logFile)
     
-    AddMsg(timer.now() + " Step 2 of 4: Setting Class areas to Null...", 0, logFile)
+    AddMsg(timer.now() + " Step 2 of 4: Setting Class areas to Null", 0, logFile)
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
-    otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
+    # # otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
+    otherGrid = arcpyLog(SetNull, (reclassGrid, 1, delimitedVALUE+" = 3"), 'SetNull', logFile)
     
-    AddMsg(timer.now() + " Step 3 of 4: Finding distance from Other...", 0, logFile)
-    distGrid = EucDistance(otherGrid)
+    AddMsg(timer.now() + " Step 3 of 4: Finding distance from Other", 0, logFile)
+    # # distGrid = EucDistance(otherGrid)
+    distGrid = arcpyLog(EucDistance, (otherGrid,), 'EucDistance', logFile)
     
-    AddMsg(timer.now() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4...", 0, logFile)
+    AddMsg(timer.now() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4", 0, logFile)
     # edgeDist = (float(PatchEdgeWidth_str) + 0.5) * float(processingCellSize_str) 
     edgeDist = (float(PatchEdgeWidth_str) + 0.5) * Raster(inLandCoverGrid).meanCellWidth
 
-    zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
+    # # zonesGrid = Con((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid)
+    zonesGrid = arcpyLog(Con, ((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid), 'Con', logFile)
     
     # it appears that ArcGIS cannot process the BuildRasterAttributeTable request without first saving the raster.
     # This step wasn't the case earlier. Either ESRI changed things, or I altered something in ATtILA that unwittingly caused this. -DE
@@ -342,8 +358,10 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     scratchNameReference[0] = scratchName
     zonesGrid.save(scratchName)
             
-    arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite")  
-    arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
+    # # arcpy.BuildRasterAttributeTable_management(zonesGrid, "Overwrite")  
+    arcpyLog(arcpy.BuildRasterAttributeTable_management, (zonesGrid, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
+    # # arcpy.AddField_management(zonesGrid, "CATEGORY", "TEXT", "#", "#", "10")
+    arcpyLog(arcpy.AddField_management, (zonesGrid, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
     
     # Use categoryDict to pass on labels; should be in the format {gridValue1 : "category1 string", gridValue2: "category2 string", etc}
     categoryDict = {1:"Excluded", 2:"Other", 3:"Edge", 4:"Core"}
@@ -847,3 +865,93 @@ def lookupCircleCellCount(radiusInCells):
     circleCellCount = radiusCellCountDict.get(radiusInCells, 0)
 
     return circleCellCount
+
+
+def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellSize, cleanupList, timer, logFile):
+    """ Get an arcpy `Raster`.
+
+        **Description:**
+        
+        The row and column are zero-based and start in the upper left corner.  The arcpy `Point`_ object returned has
+        X and Y coordinates representing the cell identified by the specified row and column.
+        
+        
+        **Arguments:**
+        
+        * *vectorFeatures* - 
+        * *inValue* - 
+        * *inBaseValue* - 
+        * *fileNameBase* -
+        * *cellSize* -
+        * *cleanupList* -
+        * *timer* -
+        * *logFile* -
+        
+        
+        
+        **Returns:** 
+        
+        * arcpy `Raster` 
+
+        
+    """    
+    
+    rasterList = ['No Polygon @&?$#', 'No Line @&?$#']
+    
+    # # add a value field and calculate its value equal to inValue
+    # if isinstance(inValue, float):
+    #     fieldType = "DOUBLE"
+    # else:
+    #     fieldType = "SHORT"
+        
+    for fc in vectorFeatures:
+        # valueField = fileNameBase
+        # AddMsg(("{0} Adding a new field, {1}, to {2} and assigning {3} to all records").format(timer.now(), valueField, arcpy.Describe(fc).baseName, inValue), 0, logFile)
+        # arcpyLog(arcpy.AddField_management, (fc, valueField, fieldType), 'arcpy.AddField_management', logFile)
+        # arcpyLog(arcpy.CalculateField_management, (fc, valueField, inValue), 'arcpy.CalculateField_management', logFile)
+    
+        # find the OID field
+        oidFields = [aFld for aFld in arcpy.ListFields(fc) if aFld.type == 'OID']
+        firstOIDField = oidFields[0]
+        valueField = firstOIDField.name
+    
+    
+        # determine how to proceed by using the shape type of the feature class
+        fcDesc = arcpy.Describe(fc) 
+        fcType = fcDesc.shapeType
+        fcName = fcDesc.baseName
+        
+        if fcType == "Polygon":
+            namePrefix = fileNameBase+"_Raster_Polygon_"
+            rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
+            AddMsg("{0} Converting {1} to raster: {2}".format(timer.now(), fcName, os.path.basename(rasterName)), 0, logFile)
+            polygonRaster = arcpyLog(arcpy.conversion.PolygonToRaster, (fc, valueField, rasterName, "MAXIMUM_AREA", "NONE", cellSize, "BUILD"), 'arcpy.conversion.PolygonToRaster', logFile)
+            rasterList[0] = polygonRaster
+        elif fcType == "Polyline":
+            namePrefix = fileNameBase+"_Raster_Line_"
+            rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
+            AddMsg("{0} Converting {1} to raster: {2}".format(timer.now(), fcName, os.path.basename(rasterName)), 0, logFile)
+            lineRaster = arcpyLog(arcpy.conversion.PolylineToRaster, (fc, valueField, rasterName, "MAXIMUM_LENGTH", "NONE", cellSize, "BUILD"), 'arcpy.conversion.PolylineToRaster', logFile)
+            rasterList[1] = lineRaster
+
+    # trim the list of rasters to process based on what rasters were generated above
+    rastersToMerge = [item for item in rasterList if arcpy.Exists(item)]
+    
+    # Start generation of the result raster    
+    namePrefix = fileNameBase+"_Raster_"
+    resultRasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
+    
+    rasterOne = Raster(rastersToMerge[0])
+    if len(rastersToMerge) == 1: # inputs features were either polyline or polygon, not both
+        AddMsg("{0} Setting converted raster cell values to {1} where features exist. Everywhere else will be set to {2}: {3}".format(timer.now(), inValue, inBaseValue, os.path.basename(resultRasterName)), 0, logFile)
+        resultRaster = arcpyLog(arcpy.sa.Con, (IsNull(rasterOne), inBaseValue, inValue), 'arcpy.sa.Con', logFile)
+
+    elif len(rastersToMerge) == 2: # inputs were a combination of polyline and polygon features
+        AddMsg("{0} Combining converted rasters and setting output cell values to {1} where features exist. Everywhere else will be set to {2}: {3}".format(timer.now(), inValue, inBaseValue, os.path.basename(resultRasterName)), 0, logFile)
+        rasterTwo = Raster(rastersToMerge[1])
+        conOne = arcpyLog(arcpy.sa.Con, (IsNull(rasterOne), inBaseValue, inValue), 'arcpy.sa.Con', logFile)
+        resultRaster = arcpyLog(arcpy.sa.Con, (IsNull(rasterTwo), conOne, inValue), 'arcpy.sa.Con', logFile)
+        
+    resultRaster.save(resultRasterName)
+    
+    return resultRaster, cleanupList

@@ -25,6 +25,7 @@ fieldOverrideName = "Field"
 metricNameTooLong = "Provided metric name too long for output location. Truncated {0} to {1} "
 tabulateAreaTableAbbv = "_TabArea"
 ruTabulateAreaTableAbbv = "_TabAreaRU"
+dummyFieldName = "_dummy"
 scratchGDBFilename = "attilaScratchWorkspace.gdb"
 allGridValuesTools = ["lccc", "lcd"]
 # These are the extensions Esri recognizes as rasters. They may not all be acceptable when saving a calculated grid. Tools
@@ -103,6 +104,11 @@ inStreamFeature = "Stream feature"
 strmOrderField = "Stream order field"
 inPointFeatures = "Sample point features"
 ruLinkField = "Reporting unit link field"
+inWalkFeatures = "Walkable features"
+inImpassableFeatures = "Impassable features"
+maxWalkDist = "Maximum walking distance" 
+walkValue = "Walk value" 
+baseValue = "Base value"
 
 paramLabelDict = {
     "inReportingUnitFeature": "Reporting unit feature",
@@ -163,5 +169,10 @@ paramLabelDict = {
     "inStreamFeature": "Stream feature",
     "strmOrderField": "Stream order field",
     "inPointFeatures": "Sample point features",
-    "ruLinkField": "Reporting unit link field"
+    "ruLinkField": "Reporting unit link field",
+    "inWalkFeatures": "Walkable features",
+    "inImpassableFeatures": "Impassable features",
+    "maxWalkDist": "Maximum walking distance", 
+    "walkValue": "Walk value", 
+    "baseValue": "Base value"
     }

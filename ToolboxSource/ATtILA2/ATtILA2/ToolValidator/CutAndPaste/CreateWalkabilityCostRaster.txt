@@ -1,0 +1,187 @@
+﻿import os
+import sys
+tbxPath = __file__.split("#")[0]
+sourceName = "ToolboxSource" 
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
+sys.path.append(srcDirPath)
+import ATtILA2
+from ATtILA2.constants import validatorConstants
+from ATtILA2.constants import globalConstants
+import arcpy
+
+class ToolValidator:
+    """Class for validating a tool's parameter values and controlling
+    the behavior of the tool's dialog."""
+
+    def __init__(self):
+        """Setup the list of tool parameters."""
+        self.params = arcpy.GetParameterInfo()
+        self.inMultiWalkable = self.params[0]
+        self.inMultiImpassable = self.params[1]
+        self.maxDistanceParameter = self.params[2]
+        self.walkValueParameter = self.params[3]
+        self.baseValueParameter = self.params[4]
+        self.outRasterParameter = self.params[5]
+        self.inCellSizeParameter = self.params[6]
+        self.snapRasterParameter = self.params[7]
+        
+        self.initialized = False
+        self.noSpatialReferenceMessage = validatorConstants.noSpatialReferenceMessage
+        self.invalidTableNameMessage = validatorConstants.invalidTableNameMessage
+        self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
+        self.greaterThanZeroMessage = validatorConstants.greaterThanZeroMessage
+        self.noSpatialReferenceMessageMulti = validatorConstants.noSpatialReferenceMessageMulti
+        self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
+    
+    def initializeParameters(self):
+        """Refine the properties of a tool's parameters.  This method is
+        called when the tool is opened."""
+        # self.params[1].enabled = True
+        # self.initialized = True
+        return
+
+    def updateParameters(self):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parmater
+        has been changed."""
+        return
+
+    def updateMessages(self):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        
+        # Check input walkable features for a spatial reference
+        if self.inMultiWalkable.value:
+            multiWalkFeatures = self.inMultiWalkable.value
+            rowCount = multiWalkFeatures.rowCount
+            for row in range(0, rowCount):
+                value = multiWalkFeatures.getValue(row, 0)
+                if value:
+                    # check to see if it has a spatial reference
+                    d = arcpy.Describe(value)
+                    if d.spatialReference.name.lower() == "unknown":
+                        self.inMultiWalkable.setErrorMessage(self.noSpatialReferenceMessageMulti)
+        
+
+        # Check input impassable features for a spatial reference
+        if self.inMultiImpassable.value:
+            multiPassFeatures = self.inMultiImpassable.value
+            rowCount = multiPassFeatures.rowCount
+            for row in range(0, rowCount):
+                value = multiPassFeatures.getValue(row, 0)
+                if value:
+                    # check to see if it has a spatial reference
+                    d = arcpy.Describe(value)
+                    if d.spatialReference.name.lower() == "unknown":
+                        self.inMultiImpassable.setErrorMessage(self.noSpatialReferenceMessageMulti)
+        
+
+        # Check if maximum walking distance parameter is a positive number
+        if self.maxDistanceParameter.value:
+            maxDistanceValue = self.maxDistanceParameter.value
+            # strDistance = str(maxDistanceValue).split()[0]
+            # if float(strDistance) <= 0.0
+            if maxDistanceValue <= 0.0:
+                self.maxDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
+        else: # an entered value of '0' will not present as TRUE and trigger the conditional
+            self.maxDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
+        
+ 
+        # Check if cell size parameter is a positive number           
+        if self.inCellSizeParameter.value:
+            cellsizeValue = self.inCellSizeParameter.value
+            if cellsizeValue <= 0.0:
+                self.inCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage)
+        else: # an entered value of '0' will not present as TRUE and trigger the conditional
+            self.inCellSizeParameter.setErrorMessage(self.greaterThanZeroMessage)
+        
+        
+        # Check if walk value parameter is a positive number           
+        if self.walkValueParameter.value:
+            walkValue = self.walkValueParameter.value
+            if walkValue <= 0.0:
+                self.walkValueParameter.setErrorMessage(self.greaterThanZeroMessage)
+            elif self.baseValueParameter.value:
+                base2Value = self.baseValueParameter.value
+                if base2Value < walkValue:
+                    self.walkValueParameter.setErrorMessage("Walk value must be less than Base value")
+        else: # an entered value of '0' will not present as TRUE and trigger the conditional
+            self.walkValueParameter.setErrorMessage(self.greaterThanZeroMessage)
+        
+        
+        # Check if base value parameter is a positive number           
+        if self.baseValueParameter.value:
+            baseValue = self.baseValueParameter.value
+            if baseValue <= 0.0:
+                self.baseValueParameter.setErrorMessage(self.greaterThanZeroMessage)
+            elif self.walkValueParameter.value:
+                walk2Value = self.walkValueParameter.value
+                if baseValue < walk2Value:
+                    self.baseValueParameter.setErrorMessage("Base value must be larger than Walk value")
+        else: # an entered value of '0' will not present as TRUE and trigger the conditional
+            self.baseValueParameter.setErrorMessage(self.greaterThanZeroMessage)
+        
+        ####
+        
+        # Check if base value parameter is less than the calculated impass value  
+        if self.inMultiImpassable.value:         
+            if self.baseValueParameter.value and self.maxDistanceParameter.value and self.inCellSizeParameter.value:
+                lowValue = self.baseValueParameter.value
+                cellValue = self.inCellSizeParameter.value
+                maxDistValue = self.maxDistanceParameter.value
+                maxDist = float(str(maxDistValue).split()[0])
+                impassValue = maxDist / cellValue
+                theMsg = 'Base value must be lower than the Maximum walking distance divided by the Processing cell size. With the current inputs, an acceptable number would be less than {}'.format(impassValue)
+                if impassValue <= baseValue:
+                    self.baseValueParameter.setErrorMessage(theMsg)
+            else:
+                pass
+        ####
+
+
+        # Check if output raster has a valid filename; it contains no invalid characters, has no extension other than 
+        # those found in globalConstants.rasterExtensions if the output location is in a folder, and has no extension 
+        # if the output is to be placed in a geodatabase.
+        if self.outRasterParameter.value:
+            self.outRasterName = self.outRasterParameter.valueAsText
+        
+            # get the directory path and the filename
+            self.outRasterWorkspace = os.path.split(self.outRasterName)[0]
+            self.rasterFilename = os.path.split(self.outRasterName)[1]
+            
+            # break the filename into its root and extension
+            self.rasterFileRoot = os.path.splitext(self.rasterFilename)[0]
+            self.rasterFileExt = os.path.splitext(self.rasterFilename)[1]
+            
+            # substitue valid characters into the filename root if any invalid characters are present
+            self.validRasterFileRoot = arcpy.ValidateTableName(self.rasterFileRoot,self.outRasterWorkspace)
+            
+            # alert the user if invalid characters are present in the output table name.
+            if self.rasterFileRoot != self.validRasterFileRoot:
+                self.outRasterParameter.setErrorMessage(self.invalidTableNameMessage)
+                
+            elif self.rasterFileExt: # check on file extensions. None are allowed in geodatabases and only certain extensions are allowed in folders.
+                self.rasterWorkspaceExt = os.path.splitext(self.outRasterWorkspace)[1]
+                
+                # if the workspace is a geodatabase
+                if self.rasterWorkspaceExt.upper() == ".GDB":
+                    # alert user that file names cannot contain an extension in a GDB
+                    self.outRasterParameter.setErrorMessage(self.invalidExtensionMessage)               
+                else:                    
+                    # get the list of acceptable filename extentions for folder locations
+                    self.rasterExtensions = [".img", ".tif"]
+                    
+                    if self.rasterFileExt not in self.rasterExtensions:
+                        self.outRasterParameter.setErrorMessage("Valid extensions for rasters in folders for this tool are: %s." % str(self.rasterExtensions))           
+
+        return
+
+    # def isLicensed(self):
+    #     # set tool isLicensed.
+    # return True
+
+    # def postExecute(self):
+    #     # This method takes place after outputs are processed and
+    #     # added to the display.
+    # return

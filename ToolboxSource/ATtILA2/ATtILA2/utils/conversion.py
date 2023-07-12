@@ -251,3 +251,13 @@ def getTransformMethod(inDataset1,inDataset2):
         transformMethod = transformList[0]
 
     return transformMethod
+
+
+def convertNumStringToNumber(numString):
+    # assumes the numString is a string representation of an integer or floating-point number.
+    if '.' in numString:
+        outNumber = float(numString)
+    else:
+        outNumber = int(numString)
+    
+    return outNumber

@@ -4,7 +4,7 @@
 import os
 import arcpy
 import time
-from arcpy.sa import Raster
+from arcpy.sa import Raster, Con, IsNull
 from . import errors
 from . import setupAndRestore
 from .utils import lcc
@@ -136,7 +136,7 @@ class metricCalc:
         AddMsg(self.timer.now() + " Generating a zonal tabulate area table", 0, self.logFile)
         # Internal function to generate a zonal tabulate area table
         self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
-                                              self.inLandCoverGrid, self.tableName, self.lccObj)
+                                              self.inLandCoverGrid, self.logFile, self.tableName, self.lccObj)
 
     def _calculateMetrics(self):
         AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values", 0, self.logFile)
@@ -558,7 +558,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
                     ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
                 else:
                     ruTableName = None
-                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, flcpCalc.lccObj)
+                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, logFile, ruTableName, flcpCalc.lccObj)
                 
                 for ruAreaTableRow in ruAreaTable:
                     key = ruAreaTableRow.zoneIdValue
@@ -816,7 +816,9 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                 function(*arguments)
             AddMsg("Clean up complete")
         
-        arcpy.RemoveIndex_management(inReportingUnitFeature, ruIdIndex)
+        indexNames = [indx.name for indx in arcpy.ListIndexes(inReportingUnitFeature)]
+        if ruIdIndex in indexNames:
+            arcpy.RemoveIndex_management(inReportingUnitFeature, ruIdIndex)
 
 
 def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
@@ -912,8 +914,12 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                             else:
                                 self._tableName = arcpy.CreateScratchName(self._tempTableName+m.upper()+inEdgeWidth+"_", "", self._datasetType)
 
-                            arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
-                                 self._value, self._tableName)
+                            # # log.logArcpy("arcpy.gp.TabulateArea_sa",(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+                            # #                  self._value, self._tableName), self._logFile)
+                            # # arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+                            # #      self._value, self._tableName)
+                            log.arcpyLog(arcpy.gp.TabulateArea_sa, (self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
+                                  self._value, self._tableName), 'arcpy.gp.TabulateArea_sa', logFile)
                             
                             self._tabAreaTableRows = arcpy.SearchCursor(self._tableName)        
                             self._tabAreaValueFields = arcpy.ListFields(self._tableName, "", "DOUBLE")
@@ -1096,7 +1102,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                     ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
                 else:
                     ruTableName = None
-                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, rlcpCalc.lccObj)
+                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, logFile, ruTableName, rlcpCalc.lccObj)
                 
                 for ruAreaTableRow in ruAreaTable:
                     key = ruAreaTableRow.zoneIdValue
@@ -1238,7 +1244,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                     ruTableName = metricConst.shortName + globalConstants.ruTabulateAreaTableAbbv
                 else:
                     ruTableName = None
-                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, ruTableName, splcpCalc.lccObj)
+                ruAreaTable = TabulateAreaTable(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, logFile, ruTableName, splcpCalc.lccObj)
                 
                 for ruAreaTableRow in ruAreaTable:
                     key = ruAreaTableRow.zoneIdValue
@@ -1798,7 +1804,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 AddMsg(self.timer.now() + " Generating a zonal tabulate area table", 0, self.logFile)
                 # Internal function to generate a zonal tabulate area table
                 self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
-                                                      self.inLandCoverGrid, self.tableName)
+                                                      self.inLandCoverGrid, self.logFile, self.tableName)
                 
             def _calculateMetrics(self):
                 AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values", 0, self.logFile)
@@ -2589,7 +2595,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 # Make a tabulate area table. Use the facility id field as the Zone field to calculate values for each
                 # facility buffer area instead of the reporting unit as a whole. 
                 self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.facilityIdField.name,
-                                                      self.inLandCoverGrid, self.tableName, self.lccObj)
+                                                      self.inLandCoverGrid, self.logFile, self.tableName, self.lccObj)
                 
 
                 tabTableName = os.path.basename(self.tabAreaTable._tableName)
@@ -3081,6 +3087,159 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             AddMsg("Clean up complete")
                 
                 
+def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeatures='', maxWalkDist='', walkValueStr='', baseValueStr='',
+                                   outRaster='', cellSizeStr='', snapRaster='', optionalFieldGroups=''):
+    """ Interface for script executing Create Walkability Cost Raster utility """
+
+    from arcpy import env
+    import math
+    
+
+    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+    try:
+        ### Setup
+        
+        # retrieve the attribute constants associated with this metric
+        metricConst = metricConstants.cwcrConstants()
+    
+        # copy input parameters to pass to the log file routine
+        parametersList = [inWalkFeatures, inImpassableFeatures, maxWalkDist, walkValueStr, baseValueStr,
+                          outRaster, cellSizeStr, snapRaster, optionalFieldGroups]
+        # create a log file if requested, otherwise logFile = None
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
+    
+        ### Initialization
+        # Start the timer
+        timer = DateTimer()
+        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+    
+        # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
+        # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
+        # metricsBaseNameList is not used for this tool.
+        metricsToRun = 'item1  -  description1;item2  -  description2'
+    
+        metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSizeStr,os.path.dirname(outRaster),
+                                                                              [metricsToRun,optionalFieldGroups], logFile )  
+    
+        if globalConstants.intermediateName in optionalGroupsList:
+            cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
+        else:
+            cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
+        
+        # Do a Describe on the Snap Raster input and get the file's basename.
+        descSnapRaster = arcpy.Describe(snapRaster)
+        snapBaseName = descSnapRaster.baseName
+        
+        # Check to see if the user has specified a Processing cell size other than the cell size of the inLandCoverGrid
+        cellSize = conversion.convertNumStringToNumber(cellSizeStr)
+        x = cellSize
+        y = Raster(snapRaster).meanCellWidth
+        
+        if x%y == 0 or y%x == 0:
+            pass
+        else:
+            AddMsg("The Processing cell size and the input Snap raster's cell size are not equal to each other nor are they multiples or factors of each other. "\
+                   "To best use the output of this tool with the Walkable Parks Tool, it is highly recommended that the Processing cell size is set "\
+                   "as either equal to the Snap raster's cell size, a factor of the Snap raster's cell size, or a multiple of the Snap raster's cell size.", 1, logFile)
+        
+        # if no specific geoprocessing environment extent is set, temporarily set it to match the snapRaster. It will be reset during the standardRestore
+        nonSpecificExtents = ["NONE", "MAXOF", "MINOF"]
+        envExtent = str(env.extent).upper()
+        if envExtent in nonSpecificExtents:
+            AddMsg(("{0} Using {1}'s extent for geoprocessing steps.").format(timer.now(), snapBaseName), 0, logFile)
+            env.extent = descSnapRaster.extent
+        else:
+            AddMsg("{0} Extent found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+        
+        # if no specific geoprocessing environment outputCoodinateSystem is set, temporarily set it to match the snapRaster. It will be reset during the standardRestore
+        nonSpecificOCS = ["NONE"]
+        envOCS = str(env.outputCoordinateSystem).upper()
+        if envOCS in nonSpecificOCS:
+            outSR = descSnapRaster.spatialReference
+            AddMsg(("{0} Using {1}'s spatial reference for geoprocessing steps: {2}").format(timer.now(), snapBaseName, outSR.name), 0, logFile)
+            env.outputCoordinateSystem = outSR
+        else:
+            AddMsg("{0} OutputCoordinateSystem found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+    
+        
+        ### Computations
+        
+        # Convert number strings to either floating-point or integer numbers. ATtILA converts input parameters to text.
+        walkNumber = conversion.convertNumStringToNumber(walkValueStr)
+        baseNumber = conversion.convertNumStringToNumber(baseValueStr)
+        distValue = maxWalkDist.split(' ')[0]
+        distNumber = conversion.convertNumStringToNumber(distValue) 
+        
+                
+        ## convert all input walkable features to a single raster
+        
+        AddMsg("{0} Processing Walkability features".format(timer.now()), 0, logFile)
+        walkName = "{0}_Walk".format(metricConst.shortName)
+        # merge all input Walkability features into separate line and polygon feature classes
+        mergedWalkFeatures, cleanupList = vector.mergeVectorsByType(inWalkFeatures, walkName, cleanupList, timer, logFile)
+        
+        # mergedWalkFeatures is a list of feature class catalog paths and possible nonsense strings with invalid catalog path characters. 
+        # Create a list of just the catalog paths.  
+        vectorsToRaster = [fc for fc in mergedWalkFeatures if arcpy.Exists(fc)]
+        
+        # create the Walkable raster. 
+        walkRaster, cleanupList = raster.getWalkabilityGrid(vectorsToRaster, walkNumber, baseNumber, walkName, cellSize, cleanupList, timer, logFile)
+        
+        
+        ## if applicable, convert all input impassable features to a single raster and combine with walkable raster
+        if inImpassableFeatures:
+            # auto calculate the impass value and inform the user. Consider changing this to an input parameter.
+            impassNumber = math.ceil(distNumber / cellSize)
+            AddMsg("{} Impass Value = {}. Calculated as (Maximum walking distance / Processing cell size) rounded up to the nearest integer".format(timer.now(), impassNumber), 0, logFile)
+            
+            AddMsg("{0} Processing Impassable features".format(timer.now()), 0, logFile)
+            impassName = "{0}_Impass".format(metricConst.shortName)
+            # merge all input Impassable features into separate line and polygon feature classes
+            mergedImpassFeatures, cleanupList = vector.mergeVectorsByType(inImpassableFeatures, impassName, cleanupList, timer, logFile)
+            
+            # mergedWalkFeatures is a list of feature class catalog paths and possible nonsense strings with invalid catalog path characters. 
+            # Create a list of just the catalog paths.    
+            vectorsToRaster = [fc for fc in mergedImpassFeatures if arcpy.Exists(fc)]
+            
+            # create the Impassable raster
+            impassRaster, cleanupList = raster.getWalkabilityGrid(vectorsToRaster, impassNumber, baseNumber, impassName, cellSize, cleanupList, timer, logFile)
+            
+            # combine the Walkable and Impassable rasters. 
+            AddMsg("{0} Combining the Walkable raster with the Impassable raster".format(timer.now()), 0, logFile)
+            costRaster = Con((walkRaster == baseNumber), impassRaster, walkRaster)
+            
+            categoryDict = {walkNumber: "Walkable", baseNumber: "Base", impassNumber: "Impassable"}
+        else:
+            AddMsg("{0} Creating a copy of the Walkable raster for the Cost Raster".format(timer.now()), 0, logFile)
+            costRaster = walkRaster
+            
+            categoryDict = {walkNumber: "Walkable", baseNumber: "Base"}
+        
+        costRaster.save(outRaster)
+        
+        # add category labels to the raster
+        log.arcpyLog(arcpy.BuildRasterAttributeTable_management, (costRaster, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
+        log.arcpyLog(arcpy.AddField_management, (costRaster, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
+        raster.updateCategoryLabels(costRaster, categoryDict)
+    
+    except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+    
+        errors.standardErrorHandling(e)
+    
+    finally:
+        setupAndRestore.standardRestore(logFile)
+        if not cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+            AddMsg("Clean up complete")
+            
+
 def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
                       widthLinearUnit="", laneCntFld="#", laneWidth="#", laneDistFld="#", bufferDist="#", removeLinesYN="",
                       cutoffLength="#", overWrite="", outWorkspace='#',  processingCellSize="#", snapRaster="#", optionalFieldGroups="#"):

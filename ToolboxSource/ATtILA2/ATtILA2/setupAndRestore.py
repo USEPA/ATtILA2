@@ -16,6 +16,7 @@ _tempEnvironment3 = ""
 _tempEnvironment4 = ""
 _tempEnvironment5 = ""
 _tempEnvironment6 = ""
+_tempEnvironment7 = ""
 
 
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[], logFile=None):
@@ -32,24 +33,15 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     _tempEnvironment4 = env.outputMFlag
     _tempEnvironment5 = env.outputZFlag
     _tempEnvironment6 = env.parallelProcessingFactor
+    _tempEnvironment7 = env.outputCoordinateSystem
 
     env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, fallBackDirectory)
     
     # set the raster environments so the rasterized polygon theme aligns with land cover grid cell boundaries
     if snapRaster:
-        env.snapRaster = snapRaster        
+        env.snapRaster = snapRaster
     if processingCellSize:
         env.cellSize = processingCellSize
-    
-    itemTuples = []
-    for itemDescriptionPair in itemDescriptionPairList:
-        processed = parameters.splitItemsAndStripDescriptions(itemDescriptionPair, globalConstants.descriptionDelim)
-        itemTuples.append(processed)
-        
-        if globalConstants.intermediateName in processed:
-            msg = "Intermediates are stored in this directory: {0}\n"
-            # arcpy.AddMessage(msg.format(env.workspace))
-            AddMsg(msg.format(env.workspace), 0, logFile)
     
     # Streams and road crossings script fails in certain circumstances when M (linear referencing dimension) is enabled.
     # Disable for the duration of the tool.
@@ -69,6 +61,26 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
         AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
         env.parallelProcessingFactor = None
     
+    itemTuples = []
+    for itemDescriptionPair in itemDescriptionPairList:
+        processed = parameters.splitItemsAndStripDescriptions(itemDescriptionPair, globalConstants.descriptionDelim)
+        itemTuples.append(processed)
+        
+        if globalConstants.intermediateName in processed:
+            msg = "Intermediates are stored in this directory: {0}\n"
+            AddMsg(msg.format(env.workspace), 0, logFile)
+    
+    if logFile:
+        if snapRaster:
+            logFile.write('ENVIROMENT: Snap Raster = {0}\n'.format(env.snapRaster))
+        if processingCellSize:
+            logFile.write('ENVIROMENT: Cell Size = {0}\n'.format(env.cellSize))
+        logFile.write('ENVIROMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
+        logFile.write('ENVIROMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
+        logFile.write('ENVIROMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
+        
+        logFile.write('\n')
+        
     return itemTuples
 
     
@@ -89,6 +101,7 @@ def standardRestore(logFile=None):
     env.outputMFlag = _tempEnvironment4
     env.outputZFlag = _tempEnvironment5
     env.parallelProcessingFactor = _tempEnvironment6
+    env.outputCoordinateSystem = _tempEnvironment7
     
     # return the spatial analyst license    
     try:

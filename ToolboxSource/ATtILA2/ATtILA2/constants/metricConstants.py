@@ -60,6 +60,25 @@ class caemConstants(baseMetricConstants):
         gc.clipLCGrid
         ]
 
+class cwcrConstants(baseMetricConstants):
+    name = "CreateWalkabilityCostRaster"
+    shortName = "cwcr"
+    metricFUNC = 'metric.run'+name
+    prefix = ""
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inWalkFeatures, 
+        gc.inImpassableFeatures, 
+        gc.maxWalkDist, 
+        gc.walkValue, 
+        gc.baseValue,
+        gc.outRaster, 
+        gc.cellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]
+
 class flcpConstants(baseMetricConstants):
     name = "FloodplainLandCoverProportions"
     shortName = "flcp"

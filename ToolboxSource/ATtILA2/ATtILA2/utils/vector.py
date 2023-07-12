@@ -2,15 +2,15 @@
 
 """
 
+import os
 import arcpy
-#from .. import utils
 from . import files
 from . import messages
-#from . import fields
 from .messages import AddMsg
 from .fields import valueDelimiter
 from arcpy.sa.Functions import SetNull
-#from arcpy import FieldMap
+from .log import arcpyLog
+from arcpy import env
 
 
 def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField, ruLinkField, timer, logFile):
@@ -847,6 +847,113 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
               
     return resultDict
 
+
+def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
+    """Returns a list of merged feature classes. List item one is polygon features, item two is polyline features, and item three is point features.
+    **Description:**
+        This tool accepts the parameterAsText string of feature layers from a multiple value input parameter. It separates those layers
+        by shape type, and merges them into three new possible feature classes (polygon, polyline, and/or point) projected to the environment's 
+        Output coordinate system. Before the merge operation, ATtILA attempts to determine if a datum transformation is needed and selects a suitable
+        transformation method. If no feature layer of a particular class is found, a string with invalid filename characters is returned
+        in the list position for that shape type. Using that string with the arcpy function Exists(), a boolean FALSE will be returned. If a 
+        FALSE is returned, further feature class operations can be ignored for that feature class type.
+
+    **Arguments:**
+        * *inFeatures* - one or more feature class that will be merged
+        * *fileNameBase* - a string (without full path) that will be used as the filename prefix to create the outputs of this tool
+        * *cleanupList* - a list object for tracking intermediate datasets for cleanup at the user's request
+        ' 'logFile' - optional file used to record processing steps 
+        
+    **Returns:**
+        * *mergedOutputs* - list of merged output feature classes. Item one is polygon features, item two is polyline features, and item three is point features 
+        * *cleanupList* - a list object for tracking intermediate datasets for cleanup at the user's request
+    """
+    
+    try:
+        
+        # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
+        # it appears that long directory paths in the multivalue input box causes the delimiter to be quote-semicolon-quote
+        # instead of just semicolon
+        if "';'" in inFeatures:
+            inFeatures = inFeatures.replace("';'",";")    
+        if '";"' in inFeatures:
+            inFeatures = inFeatures.replace('";"',";")
+            
+        inFeaturesList = inFeatures.split(";") 
+        
+        lineList = []
+        polyList = []
+        pointList = []
+        
+        for inFC in inFeaturesList:           
+            fcDesc = arcpy.Describe(inFC) 
+            fcType = fcDesc.shapeType
+            fcSR = fcDesc.spatialReference
+            fcName = fcDesc.baseName
+            fcExtent = fcDesc.extent
+            
+            outCS = env.outputCoordinateSystem
+            
+            transformList = arcpy.ListTransformations(fcSR, outCS, fcExtent)
+            
+            if len(transformList) != 0:
+                # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+                transformMethod = transformList[0]
+                AddMsg("A transformation method was needed to project {0} to the Output coordinate system. ATtILA selected "\
+                       "{1}. If a more accurate transformation method is needed, please rerun this tool after converting all of the "\
+                       "input data to the same projection.".format(fcName, transformMethod), 1, logFile)
+                namePrefix = fcName+"_Prj_"
+                prjFC = files.nameIntermediateFile([namePrefix, "FeatureClass"], cleanupList)
+                AddMsg("{0} Projecting {1} to {2}".format(timer.now(), fcName, os.path.basename(prjFC)), 0, logFile)
+                arcpyLog(arcpy.management.Project, (inFC, prjFC, outCS, transformMethod), 'arcpy.management.Project', logFile)    
+            else:
+                prjFC = inFC
+            
+            if fcType == "Polygon":
+                polyList.append(prjFC)
+            elif fcType == "Polyline":
+                lineList.append(prjFC)
+            elif fcType == "Point":
+                pointList.append(prjFC)
+            
+        
+        # merge features from all input feature classes into a single feature class.
+        
+        mergedOutputs = ['No Polygon @&?$#', 'No PolyLine @&?$#', 'No Point @&?$#']
+        
+        if len(lineList) > 1:
+            namePrefix = fileNameBase+"_Line_Merge_"
+            mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg("{0} Merging line features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            mergeOutput = arcpyLog(arcpy.Merge_management, (lineList,mergeName), 'arcpy.Merge_management', logFile)
+            mergedOutputs[0] = mergeOutput
+        elif len(lineList) == 1:
+            mergedOutputs[0] = lineList[0]
+
+        if len(polyList) > 1:
+            namePrefix = fileNameBase+"_Poly_Merge_"
+            mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg("{0} Merging polygon features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            mergeOutput = arcpyLog(arcpy.Merge_management, (polyList,mergeName), 'arcpy.Merge_management', logFile)
+            mergedOutputs[1] = mergeOutput
+        elif len(polyList) == 1:
+            mergedOutputs[1] = polyList[0]
+        
+        if len(pointList) > 1:
+            AddMsg("{0} Merging point features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            namePrefix = fileNameBase+"_Point_Merge_"
+            mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg("{0} Merging point features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            mergeOutput = arcpyLog(arcpy.Merge_management, (pointList,mergeName), 'arcpy.Merge_management', logFile)
+            mergedOutputs[2] = mergeOutput
+        elif len(pointList) == 1:
+            mergedOutputs[2] = pointList[0]
+        
+        # mergedOutputs is a list [mergedLines, mergedPolygons, mergedPoints]
+        return mergedOutputs, cleanupList 
+    finally:
+        pass
+                    
 
 # def nearRoadsBuffer(inRoadFeature,metricConst,cleanupList,timer,inRoadWidthOption,widthLinearUnit="",laneCntFld="",laneWidth="",laneDistFld="",
 #                     removeLinesYN,cutoffLength,bufferDist,roadClass=""):
