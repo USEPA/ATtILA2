@@ -355,7 +355,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     return zonesGrid 
     
     
-def createPatchRaster(m,lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
+def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
                       timer, scratchNameReference, logFile):
     # create a list of all the grid values in the selected landcover grid
     landCoverValues = getRasterValues(inLandCoverGrid)

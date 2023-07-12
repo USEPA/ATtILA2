@@ -620,7 +620,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         
         # copy input parameters to pass to the log file routine
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
-                          inPatchSize, inMaxSeparation, outTable, mdcpYN, snapRaster, optionalFieldGroups, clipLCGrid]
+                          inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
@@ -707,9 +707,8 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                     AddMsg(self.timer.now() + " Creating Patch Grid for Class:"+m, 0, self.logFile)
                     scratchNameReference = [""]
                     self.inLandCoverGrid = raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
-                                                                          self.metricConst, self.maxSeparation,
-                                                                          self.minPatchSize, processingCellSize, timer,
-                                                                          scratchNameReference, self.logFile)
+                                                                    self.metricConst, self.maxSeparation, self.minPatchSize, 
+                                                                    timer, scratchNameReference, self.logFile)
                     self.scratchNameToBeDeleted = scratchNameReference[0]
                     AddMsg(self.timer.now() + " Patch Grid Completed for Class:"+m, 0, self.logFile)
 
