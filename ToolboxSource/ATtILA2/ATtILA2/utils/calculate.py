@@ -160,7 +160,11 @@ def landCoverProportions(lccClassesDict, metricsBaseNameList, optionalGroupsList
                         zoneValue = zoneValueDict[tabAreaTableRow.zoneIdValue]
 
                         # calculate the per capita value
-                        if zoneValue != 0:
+                        
+                        # Need to go zoneValue >= 1 as dividing with values below 1 assigns more land cover to the individual 
+                        # than exists in the reporting unit. In addition, if the zoneValue is very, very small (e.g. 0.000009),
+                        # the perValueCalc value can be so large that it will not fit in the output field
+                        if zoneValue >= 1:
                             perValueCalc = classSqM / zoneValue
                         else:
                             # set a null value for areas with a count value of zero
