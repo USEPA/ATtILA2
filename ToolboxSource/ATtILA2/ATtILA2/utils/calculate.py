@@ -851,7 +851,6 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, outClassName):
 
 def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldnameDict, zoneAreaDict, metricConst, m, 
                     inReportingUnitFeature, inLandCoverGrid, processingCellSize, conversionFactor):
-    # from . import calculate, conversion, environment, fields, files, messages, parameters, polygons, raster, settings, tabarea, table, vector
     from arcpy import env
     resultsDict={}
 
@@ -1072,7 +1071,6 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
         * None
 
     """
-    #from ATtILA2 import utils
     import os
     # If the user specified an index, add an underscore as prefix.
     if index != "":
@@ -1113,8 +1111,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
 
     # Intersect the reporting units with the population features.
     summaryTable = files.nameIntermediateFile([metricConst.summaryTableName + index + "_",'Dataset'],cleanupList)
+    
     # Sum population for each reporting unit.
-
     """ If the reportingUnitIdField field is not found, it is assumed that
     the original field was an object ID field that was lost in a format conversion, and the code switches to the new
     objectID field."""
