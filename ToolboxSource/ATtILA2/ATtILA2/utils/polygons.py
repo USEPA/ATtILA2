@@ -98,7 +98,6 @@ def findOverlaps(polyFc):
          **Returns:** 
          * set - A set of OID field values, a dictionary of overlaps, and OID field name
 """ 
-#    from . import calculate, conversion, environment, fields, files, messages, parameters, raster, settings, tabarea, table, vector
     overlapSet = set()
     overlapDict = {}
     
@@ -185,7 +184,6 @@ def findNonOverlapGroups(overlapDict):
         group = group + 1
     print(nonoverlapGroupDict)
 
-#    arcpy.AddMessage("Creating non overlapping polygons,new data layers are being created")
     return nonoverlapGroupDict
 
 def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, outputLoc, ext):
@@ -246,9 +244,6 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
     values = ",".join(strlist)
     arcpy.MakeFeatureLayer_management(inputLayer, "No Polygons Overlap",OID + " NOT IN (" + values + ")")
     if int(str(arcpy.GetCount_management("No Polygons Overlap"))) != 0:
-#        arcpy.AddMessage("There are no polygons that do not overlap")
-#    else:
-        #arcpy.FeatureClassToFeatureClass_conversion("No Polygons Overlap", outputLoc, outname + "_0" + ext)
         arcpy.FeatureClassToFeatureClass_conversion("No Polygons Overlap", outputLoc, outname + "_0" + ext, field_mapping=fieldmappings)
         flist.append(outname + "_0" + ext)
 
@@ -266,11 +261,9 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
     values = ",".join(hlist)
     arcpy.MakeFeatureLayer_management(inputLayer,  "NoOverlap"+ str(h), OID + " IN (" + values + ")")
     if int(str(arcpy.GetCount_management("No Polygons Overlap"))) == 0:
-        #arcpy.FeatureClassToFeatureClass_conversion("NoOverlap"+ str(h), outputLoc, outname + "_0" + ext)
         arcpy.FeatureClassToFeatureClass_conversion("NoOverlap"+ str(h), outputLoc, outname + "_0" + ext, field_mapping=fieldmappings)
         flist.append(outname + "_0" +ext)
     else:
-        #arcpy.Append_management("NoOverlap" + str(h), outputLoc + "//" + outname + "_0" + ext)
         arcpy.Append_management("NoOverlap" + str(h), outputLoc + "//" + outname + "_0" + ext, field_mapping=fieldmappings, schema_type = "NO_TEST")
 
     #remove key with most polygons from nonoverlapGroupDict
@@ -284,7 +277,6 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
             olist.append(str(o))
         values = ",".join(olist)
         arcpy.MakeFeatureLayer_management(inputLayer, "NoOverlap" + str(k), OID + " IN (" + values + ")")
-        #arcpy.FeatureClassToFeatureClass_conversion("NoOverlap" + str(k), outputLoc, outname + "_" + str(num) + ext)
         arcpy.FeatureClassToFeatureClass_conversion("NoOverlap" + str(k), outputLoc, outname + "_" + str(num) + ext, field_mapping=fieldmappings)
         flist.append(outname + "_" +str(num) +ext)
         num = num + 1
@@ -295,7 +287,6 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         #For each layer in flist add them to ArcMap
         for f in flist:
             p = arcpy.mp.ArcGISProject("CURRENT")
-            # m = p.listMaps()[0]
             m = p.activeMap
             m.addDataFromPath(outputLoc + "\\"+f)
 
