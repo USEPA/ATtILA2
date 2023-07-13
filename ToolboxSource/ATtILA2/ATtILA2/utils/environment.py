@@ -46,8 +46,6 @@ def getWorkspaceForIntermediates(gdbFilename, fallBackWorkspace=None):
 
     # User supplied directory or default None
     if spaceCheck(fallBackWorkspace):
-  
-        #if string.upper(fallBackWorkspace[len(fallBackWorkspace)-4:]) == ".GDB":
         if fallBackWorkspace[len(fallBackWorkspace)-4:].upper() == ".GDB":
             return fallBackWorkspace
         else:
@@ -76,14 +74,6 @@ def getWorkspaceForIntermediates(gdbFilename, fallBackWorkspace=None):
         Please set the ScratchWorkspace geoprocessing environment setting to a directory or file geodatabase whose full path contains no spaces."""
         arcpy.AddMessage(msg)
       
-        
-
-#def spaceCheck(path):
-#    """Returns true if path is not null and does not contain spaces, otherwise returns false"""
-#    if path and not " " in path:
-#        return True
-#    else: 
-#        return False
 
 def spaceCheck(path):
     if path:
@@ -205,7 +195,6 @@ def getIntersectionOfExtents(datasetList):
 
     extentsList = []
     [extentsList.append(arcpy.Describe(dSet).extent) for dSet in datasetList]
-#    [arcpy.AddMessage(aExt.XMin) for aExt in extentsList]
 
     intersectLLX = max([aExt.XMin for aExt in extentsList])
     intersectLLY = max([aExt.YMin for aExt in extentsList])
