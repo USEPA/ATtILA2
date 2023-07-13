@@ -1,7 +1,6 @@
 """ Tasks specific to checking and retrieving settings 
 """
 from ..constants import globalConstants
-#from pylet import utils
 from . import fields
 from . import raster
 from .messages import AddMsg
