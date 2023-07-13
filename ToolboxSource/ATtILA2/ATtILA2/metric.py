@@ -4,7 +4,7 @@
 import os
 import arcpy
 import time
-from arcpy.sa import Raster, Con, IsNull
+from arcpy.sa import Raster, Con
 from . import errors
 from . import setupAndRestore
 from .utils import lcc
@@ -72,7 +72,6 @@ class metricCalc:
         
         if self.logFile:
             # write the metric class grid values to the log file
-            # log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccClassesDict, metricConst)
             log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, metricConst)
 
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
@@ -381,7 +380,6 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
                     self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]+"_"
                     self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
-                    #arcpy.CopyRaster_management(self.inLandCoverGrid, self.scratchName)
                     AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName), 0, self.logFile)
                     
         # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
@@ -484,8 +482,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
             
                     arcpy.sa.TabulateArea(self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize)
             
-                    # self.zoneAreaDict = table.getIdValueDict(fpTabAreaTable, self.reportingUnitIdField, "VALUE_1")
-                    # This new techniques allows the use of all non-zero values in a grid to designate floodplain areas instead of just '1'. 
+                    # This technique allows the use of all non-zero values in a grid to designate floodplain areas instead of just '1'. 
                     self.excludedValueFields = ["VALUE_0"]
                     self.zoneAreaDict = table.getZoneSumValueDict(fpTabAreaTable, self.reportingUnitIdField, self.excludedValueFields)
                                     
@@ -607,8 +604,6 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, 
                           optionalFieldGroups, clipLCGrid):
     """ Interface for script executing Patch Metrics """
-    
-    #from .utils import settings
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     try:
@@ -912,10 +907,6 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                             else:
                                 self._tableName = arcpy.CreateScratchName(self._tempTableName+m.upper()+inEdgeWidth+"_", "", self._datasetType)
 
-                            # # log.logArcpy("arcpy.gp.TabulateArea_sa",(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
-                            # #                  self._value, self._tableName), self._logFile)
-                            # # arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
-                            # #      self._value, self._tableName)
                             log.arcpyLog(arcpy.gp.TabulateArea_sa, (self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
                                   self._value, self._tableName), 'arcpy.gp.TabulateArea_sa', logFile)
                             
@@ -1028,7 +1019,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
         class metricCalcRLCP(metricCalc):
             """ Subclass that overrides buffering function for the RiparianLandCoverProportions calculation """
             def _replaceRUFeatures(self):
-                # check for duplicate ID entries in reportng unit feature. Perform dissolve if found
+                # check for duplicate ID entries in reporting unit feature. Perform dissolve if found
                 self.duplicateIds = fields.checkForDuplicateValues(self.inReportingUnitFeature, self.reportingUnitIdField)
                 # Initiate our flexible cleanuplist
                 if rlcpCalc.saveIntermediates:
@@ -1403,7 +1394,6 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             pass
         else:
             # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
             env.parallelProcessingFactor = None
         
@@ -1641,7 +1631,6 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             pass
         else:
             # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
             env.parallelProcessingFactor = None
         
@@ -2019,7 +2008,6 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             pass
         else:
             # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
             env.parallelProcessingFactor = None
         
@@ -2670,7 +2658,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
     """ Interface for script executing Generate Proximity Polygons utility """
     
     from arcpy import env
-    from arcpy.sa import Con,Reclassify,RegionGroup,RemapValue,RemapRange
+    from arcpy.sa import Reclassify,RegionGroup,RemapValue,RemapRange
 
     try:
         # retrieve the attribute constants associated with this metric
@@ -2762,7 +2750,6 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                     AddMsg(("{0} Calculating size of excluded area patches").format(timer.now()), 0, logFile)
                     regionGrid = RegionGroup(excludedBinary,"EIGHT","WITHIN","ADD_LINK")
                 
-                    #AddMsg(("{0} Assigning {1} to patches >= minimum size threshold...").format(timer.now(), burnInValue))
                     AddMsg(("{0} Assigning {1} to excluded area patches >= {2} cells in size").format(timer.now(), burnInValue, minPatchSize), 0, logFile)
                     delimitedCOUNT = arcpy.AddFieldDelimiters(regionGrid,"COUNT")
                     whereClause = delimitedCOUNT+" >= " + minPatchSize + " AND LINK = 1"
@@ -2799,9 +2786,6 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
  
             # process the inLandCoverGrid for the selected class
             AddMsg(("{0} Processing neighborhood proportions grid for {1}").format(timer.now(), m.upper()), 0, logFile)
-
-            # proximityGrid, nbrCntGrid = raster.getNbrPctWithBurnInGrid(inNeighborhoodSize, landCoverValues, classValuesList, 
-            #                                                         excludedValuesList, inLandCoverGrid, burnIn, burnInGrid, timer)
             
             maxCellCount = pow(int(inNeighborhoodSize), 2)
                  
@@ -3085,7 +3069,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             AddMsg("Clean up complete")
                 
                 
-def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeatures='', maxWalkDist='', walkValueStr='', baseValueStr='',
+def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeatures='', maxWalkDistStr='', walkValueStr='', baseValueStr='',
                                    outRaster='', cellSizeStr='', snapRaster='', optionalFieldGroups=''):
     """ Interface for script executing Create Walkability Cost Raster utility """
 
@@ -3101,7 +3085,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         metricConst = metricConstants.cwcrConstants()
     
         # copy input parameters to pass to the log file routine
-        parametersList = [inWalkFeatures, inImpassableFeatures, maxWalkDist, walkValueStr, baseValueStr,
+        parametersList = [inWalkFeatures, inImpassableFeatures, maxWalkDistStr, walkValueStr, baseValueStr,
                           outRaster, cellSizeStr, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
@@ -3165,10 +3149,8 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         # Convert number strings to either floating-point or integer numbers. ATtILA converts input parameters to text.
         walkNumber = conversion.convertNumStringToNumber(walkValueStr)
         baseNumber = conversion.convertNumStringToNumber(baseValueStr)
-        distValue = maxWalkDist.split(' ')[0]
-        distNumber = conversion.convertNumStringToNumber(distValue) 
+        distNumber = conversion.convertNumStringToNumber(maxWalkDistStr) 
         
-                
         ## convert all input walkable features to a single raster
         
         AddMsg("{0} Processing Walkability features".format(timer.now()), 0, logFile)
