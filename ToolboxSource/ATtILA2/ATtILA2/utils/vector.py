@@ -653,161 +653,179 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     #Convert Final Patch Raster to polygon
     AddMsg(timer.now() + " Converting raster patches to polygons...", 0, logFile)
     patchOnlyRaster = SetNull(inPatchRaster, inPatchRaster, "VALUE <= 0")
-    arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE")
     
-    #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-    AddMsg(timer.now() + " Dissolving patch polygons by value field...", 0, logFile)
-    arcpy.Dissolve_management(rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
-      
-    #Create a feature layer of the FinalPatch_poly_diss
-    patchDissolvedLayer = arcpy.MakeFeatureLayer_management(patchDissolvedFeature, "patchDissolvedLayer")
-     
-    #Convert Final Patch Raster to points to get the cell centroids
-    AddMsg(timer.now() + " Converting raster patch cells to centroid points...", 0, logFile)
-    arcpy.RasterToPoint_conversion(patchOnlyRaster, patchCentroidsFeature, "VALUE")
-     
-    #Create a feature layer of the FinalPatch_centroids
-    patchCentroidsLayer = arcpy.MakeFeatureLayer_management(patchCentroidsFeature, "patchCentroidsLayer")
     
-    # Initialize custom progress indicator
-    totalRUs = len(zoneAreaDict)
-    mdcpLoopProgress = messages.loopProgress(totalRUs)
+    # Check to see if all values are NULL (ALLNODATA: 0 = no, 1 = yes)
+    dataResult = arcpy.management.GetRasterProperties(patchOnlyRaster, 'ALLNODATA')
+    anyPatches = (dataResult.getOutput(0))
     
-    noPatches = 0
-    singlePatch = 0
-   
-    #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
-    AddMsg(timer.now() + " Analyzing MDCP by reporting unit...", 0, logFile)
-    for aZone in zoneAreaDict.keys():
-        pwnCount = 0
-        pwonCount = 0
-        meanDist = 0
+    if anyPatches == '0':
+    
+        arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE")
+        
+        #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+        AddMsg(timer.now() + " Dissolving patch polygons by value field...", 0, logFile)
+        arcpy.Dissolve_management(rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+          
+        #Create a feature layer of the FinalPatch_poly_diss
+        patchDissolvedLayer = arcpy.MakeFeatureLayer_management(patchDissolvedFeature, "patchDissolvedLayer")
+         
+        #Convert Final Patch Raster to points to get the cell centroids
+        AddMsg(timer.now() + " Converting raster patch cells to centroid points...", 0, logFile)
+        arcpy.RasterToPoint_conversion(patchOnlyRaster, patchCentroidsFeature, "VALUE")
+         
+        #Create a feature layer of the FinalPatch_centroids
+        patchCentroidsLayer = arcpy.MakeFeatureLayer_management(patchCentroidsFeature, "patchCentroidsLayer")
+        
+        # Initialize custom progress indicator
+        totalRUs = len(zoneAreaDict)
+        mdcpLoopProgress = messages.loopProgress(totalRUs)
+        
+        noPatches = 0
+        singlePatch = 0
+       
+        #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
+        AddMsg(timer.now() + " Analyzing MDCP by reporting unit...", 0, logFile)
+        for aZone in zoneAreaDict.keys():
+            pwnCount = 0
+            pwonCount = 0
+            meanDist = 0
+                
+            if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
+                squery = "%s = %s" % (delimitedField, str(aZone))
+            else: # reporting unit id is a string - enclose it in single quotes for SQL expression
+                squery = "%s = '%s'" % (delimitedField, str(aZone))
             
-        if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
-            squery = "%s = %s" % (delimitedField, str(aZone))
-        else: # reporting unit id is a string - enclose it in single quotes for SQL expression
-            squery = "%s = '%s'" % (delimitedField, str(aZone))
-        
-        #Create a feature layer of the single reporting unit
-        if arcpy.Exists("inaReportingUnitLayer"):
-            # delete the layer in case the geoprocessing overwrite output option is turned off
-            arcpy.Delete_management("inaReportingUnitLayer")
-            
-        aReportingUnitLayer = arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"inaReportingUnitLayer",squery,"#")
-        
-        #Select the centroids that are in the "subwatersheds_Layer"
-        arcpy.SelectLayerByLocation_management(patchCentroidsLayer,"INTERSECT", aReportingUnitLayer)
-
-        centroidCount = int(arcpy.GetCount_management(patchCentroidsLayer).getOutput(0))
-        
-        # Check to see if any patches exist within reporting unit
-        if centroidCount == 0:
-            # arcpy.AddWarning("No patches found in %s. MDCP set to -9999" % (str(aZone)))
-            meanDist = -9999
-            pwnCount = -9999
-            pwonCount = -9999
-            noPatches += 1
-        
-        else:
-            # Select the patches that have selected centroids within them
-            arcpy.SelectLayerByLocation_management(patchDissolvedLayer, "INTERSECT", patchCentroidsLayer)
-            
-            # Clip the selected patches to the reporting unit boundary
-            if arcpy.Exists("clipPolyDiss"):
+            #Create a feature layer of the single reporting unit
+            if arcpy.Exists("inaReportingUnitLayer"):
                 # delete the layer in case the geoprocessing overwrite output option is turned off
-                arcpy.Delete_management("clipPolyDiss")    
-            clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, "clipPolyDiss")
-
-            # Determine the number of patches found in this reporting unit using this script's methodology
-            totalNumPatches = int(arcpy.GetCount_management(clipPolyDissFeature).getOutput(0))
+                arcpy.Delete_management("inaReportingUnitLayer")
+                
+            aReportingUnitLayer = arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"inaReportingUnitLayer",squery,"#")
             
-            # Get the number of patches found in this reporting unit from the Patch Metric methodology
-            pmPatches = pmResultsDict[aZone][1]
+            #Select the centroids that are in the "subwatersheds_Layer"
+            arcpy.SelectLayerByLocation_management(patchCentroidsLayer,"INTERSECT", aReportingUnitLayer)
+    
+            centroidCount = int(arcpy.GetCount_management(patchCentroidsLayer).getOutput(0))
             
-            if totalNumPatches == pmPatches:
-                #Calculate Near Distances for each watershed
-                arcpy.GenerateNearTable_analysis(clipPolyDissFeature,[clipPolyDissFeature], nearPatchTable,
-                                             "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
-            
-            else:
-                # Disagreement in patch numbers possibly caused by imperfect dissolve operation. 
-                # Try to correct with a second dissolve using only the clipped polygons within the reporting unit
-                
-                #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-                if arcpy.Exists("wshed_Polygons_Diss"):
-                    arcpy.Delete_management("wshed_Polygons_Diss")
-                arcpy.Dissolve_management(clipPolyDissFeature, "wshed_Polygons_Diss","gridcode","#", "MULTI_PART","DISSOLVE_LINES")
-                 
-                #Create a feature layer of the newly dissolved patches
-                arcpy.MakeFeatureLayer_management("wshed_Polygons_Diss", "FinalPatch_diss_Layer")
-                
-                # Re-evaluate the number of patches within the reporting unit
-                totalNumPatches = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
-                
-                # Generate the Near Distance table for newly dissolved patches
-                arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], nearPatchTable,
-                                                 "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
-                
-                if totalNumPatches != pmPatches:
-                    # Alert the user that the problem was not corrected
-                    AddMsg("Possible error in the number of patches found in " + str(aZone) +" \n" + \
-                                     "Calculated value for MDCP for this reporting unit is suspect", 1, logFile)
-             
-            #Get total number of patches and calculate the mean distance
-            try:
-                # see if only one patch exists in reporting unit
-                if totalNumPatches == 1:
-                    # arcpy.AddWarning("Single patch in %s. MDCP = 0" % (str(aZone)))
-                    pwonCount = totalNumPatches
-                    meanDist = 0
-                    singlePatch += 1
-                     
-                else: # found neighboring patches
-                    rows = arcpy.SearchCursor(nearPatchTable)
-                    distlist = []
-                    for row in rows:
-                        distance = row.getValue("NEAR_DIST")
-                        distlist.append(distance)
-                    del row, rows
-                    
-                    pwnCount = len(distlist)
-                    totalDist = sum(distlist)
-                    meanDist = totalDist/pwnCount
-                    pwonCount = totalNumPatches - pwnCount
-                 
-            except:
-                AddMsg("Near Distance routine failed in %s" % (str(aZone)), 1, logFile)
+            # Check to see if any patches exist within reporting unit
+            if centroidCount == 0:
+                # arcpy.AddWarning("No patches found in %s. MDCP set to -9999" % (str(aZone)))
                 meanDist = -9999
                 pwnCount = -9999
                 pwonCount = -9999
+                noPatches += 1
+            
+            else:
+                # Select the patches that have selected centroids within them
+                arcpy.SelectLayerByLocation_management(patchDissolvedLayer, "INTERSECT", patchCentroidsLayer)
                 
-            finally:
-                arcpy.Delete_management(nearPatchTable)
-
-                              
-        resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
-        
-        # delete the single reporting unit layer
-        arcpy.Delete_management(aReportingUnitLayer)
-        
-        # clean up temporary files
-        if arcpy.Exists(clipPolyDissFeature):
-            arcpy.Delete_management(clipPolyDissFeature)
-        if arcpy.Exists("wshed_Polygons_Diss"):
-            arcpy.Delete_management("wshed_Polygons_Diss")
-        if arcpy.Exists("FinalPatch_diss_Layer"):
-            arcpy.Delete_management("FinalPatch_diss_Layer")
-        
-        mdcpLoopProgress.update()
-        
-    if noPatches > 0:
-        AddMsg("%s reporting units contained no patches. MDCP was set to -9999 for these units." % (str(noPatches)), 1, logFile)
+                # Clip the selected patches to the reporting unit boundary
+                if arcpy.Exists("clipPolyDiss"):
+                    # delete the layer in case the geoprocessing overwrite output option is turned off
+                    arcpy.Delete_management("clipPolyDiss")    
+                clipPolyDissFeature = arcpy.Clip_analysis(patchDissolvedLayer, aReportingUnitLayer, "clipPolyDiss")
     
-    if singlePatch > 0:
-        AddMsg("%s reporting units contained a single patch. MDCP was set to 0 for these units." % (str(singlePatch)), 1, logFile)
+                # Determine the number of patches found in this reporting unit using this script's methodology
+                totalNumPatches = int(arcpy.GetCount_management(clipPolyDissFeature).getOutput(0))
+                
+                # Get the number of patches found in this reporting unit from the Patch Metric methodology
+                pmPatches = pmResultsDict[aZone][1]
+                
+                if totalNumPatches == pmPatches:
+                    #Calculate Near Distances for each watershed
+                    arcpy.GenerateNearTable_analysis(clipPolyDissFeature,[clipPolyDissFeature], nearPatchTable,
+                                                 "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+                
+                else:
+                    # Disagreement in patch numbers possibly caused by imperfect dissolve operation. 
+                    # Try to correct with a second dissolve using only the clipped polygons within the reporting unit
+                    
+                    #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
+                    if arcpy.Exists("wshed_Polygons_Diss"):
+                        arcpy.Delete_management("wshed_Polygons_Diss")
+                    arcpy.Dissolve_management(clipPolyDissFeature, "wshed_Polygons_Diss","gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+                     
+                    #Create a feature layer of the newly dissolved patches
+                    arcpy.MakeFeatureLayer_management("wshed_Polygons_Diss", "FinalPatch_diss_Layer")
+                    
+                    # Re-evaluate the number of patches within the reporting unit
+                    totalNumPatches = int(arcpy.GetCount_management("FinalPatch_diss_Layer").getOutput(0))
+                    
+                    # Generate the Near Distance table for newly dissolved patches
+                    arcpy.GenerateNearTable_analysis("FinalPatch_diss_Layer",["FinalPatch_diss_Layer"], nearPatchTable,
+                                                     "","NO_LOCATION","NO_ANGLE","CLOSEST","0")
+                    
+                    if totalNumPatches != pmPatches:
+                        # Alert the user that the problem was not corrected
+                        AddMsg("Possible error in the number of patches found in " + str(aZone) +" \n" + \
+                                         "Calculated value for MDCP for this reporting unit is suspect", 1, logFile)
+                 
+                #Get total number of patches and calculate the mean distance
+                try:
+                    # see if only one patch exists in reporting unit
+                    if totalNumPatches == 1:
+                        # arcpy.AddWarning("Single patch in %s. MDCP = 0" % (str(aZone)))
+                        pwonCount = totalNumPatches
+                        meanDist = 0
+                        singlePatch += 1
+                         
+                    else: # found neighboring patches
+                        rows = arcpy.SearchCursor(nearPatchTable)
+                        distlist = []
+                        for row in rows:
+                            distance = row.getValue("NEAR_DIST")
+                            distlist.append(distance)
+                        del row, rows
+                        
+                        pwnCount = len(distlist)
+                        totalDist = sum(distlist)
+                        meanDist = totalDist/pwnCount
+                        pwonCount = totalNumPatches - pwnCount
+                     
+                except:
+                    AddMsg("Near Distance routine failed in %s" % (str(aZone)), 1, logFile)
+                    meanDist = -9999
+                    pwnCount = -9999
+                    pwonCount = -9999
+                    
+                finally:
+                    arcpy.Delete_management(nearPatchTable)
+    
+                                  
+            resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
+            
+            # delete the single reporting unit layer
+            arcpy.Delete_management(aReportingUnitLayer)
+            
+            # clean up temporary files
+            if arcpy.Exists(clipPolyDissFeature):
+                arcpy.Delete_management(clipPolyDissFeature)
+            if arcpy.Exists("wshed_Polygons_Diss"):
+                arcpy.Delete_management("wshed_Polygons_Diss")
+            if arcpy.Exists("FinalPatch_diss_Layer"):
+                arcpy.Delete_management("FinalPatch_diss_Layer")
+            
+            mdcpLoopProgress.update()
+            
+        if noPatches > 0:
+            AddMsg("%s reporting units contained no patches. MDCP was set to -9999 for these units." % (str(noPatches)), 1, logFile)
         
-    arcpy.Delete_management(patchCentroidsLayer)
-    arcpy.Delete_management(patchDissolvedLayer)
+        if singlePatch > 0:
+            AddMsg("%s reporting units contained a single patch. MDCP was set to 0 for these units." % (str(singlePatch)), 1, logFile)
+            
+        arcpy.Delete_management(patchCentroidsLayer)
+        arcpy.Delete_management(patchDissolvedLayer)
+    
+    else:
+        AddMsg("No reporting units contained patches. Setting MDCP to -9999 for all units.", 1, logFile)
+        
+        for aZone in zoneAreaDict.keys():
+            meanDist = -9999
+            pwnCount = -9999
+            pwonCount = -9999
+            
+            resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
               
     return resultDict
 

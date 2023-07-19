@@ -851,7 +851,9 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, outClassName):
 
 def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldnameDict, zoneAreaDict, metricConst, m, 
                     inReportingUnitFeature, inLandCoverGrid, processingCellSize, conversionFactor):
+    import numpy as np
     from arcpy import env
+    
     resultsDict={}
 
     try:
@@ -874,6 +876,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             excludedArea = 0
             lrgpatch = 0
             avepatch = 0
+            mdnpatch = 0
             proportion = 0
             patchdensity = 0
 
@@ -936,6 +939,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                         numpatch = len(patchAreaList)
                         patchArea = sum(patchAreaList)
                         lrgpatch = max(patchAreaList)
+                        mdnpatch = np.median(patchAreaList)
                         avepatch = patchArea/numpatch
                         proportion = (lrgpatch/patchArea) * 100
 
@@ -946,7 +950,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
 
                     row = rows.next()
 
-            resultsDict[aZone] = (proportion,numpatch,avepatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
+            resultsDict[aZone] = (proportion,numpatch,avepatch,mdnpatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
 
             if arcpy.Exists(selectedRUName):
                 arcpy.Delete_management(selectedRUName)
@@ -978,6 +982,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
         outClassName = metricsFieldnameDict[m][1]
         numFieldName = metricConst.numField[0]+outClassName+metricConst.numField[1]
         avgFieldName = metricConst.avgField[0]+outClassName+metricConst.avgField[1]
+        mdnFieldName = metricConst.mdnField[0]+outClassName+metricConst.mdnField[1]
         densFieldName = metricConst.densField[0]+outClassName+metricConst.densField[1]
         lrgFieldName = metricConst.lrgField[0]+outClassName+metricConst.lrgField[1]
 
@@ -995,12 +1000,15 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                 outTableRow.setValue(metricsFieldnameDict[m][0], resultsDict[uid][0])
                 outTableRow.setValue(numFieldName, resultsDict[uid][1])
                 outTableRow.setValue(avgFieldName, resultsDict[uid][2])
-                outTableRow.setValue(densFieldName, resultsDict[uid][3])
-                outTableRow.setValue(lrgFieldName, resultsDict[uid][4])
+                outTableRow.setValue(mdnFieldName, resultsDict[uid][3])
+                outTableRow.setValue(densFieldName, resultsDict[uid][4])
+                outTableRow.setValue(lrgFieldName, resultsDict[uid][5])
+                
             else:
                 outTableRow.setValue(metricsFieldnameDict[m][0], 0)
                 outTableRow.setValue(numFieldName, 0)
                 outTableRow.setValue(avgFieldName, 0)
+                outTableRow.setValue(mdnFieldName, 0)
                 outTableRow.setValue(densFieldName, 0)
                 outTableRow.setValue(lrgFieldName, 0)
 
@@ -1008,9 +1016,9 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             if QAFields:
 
                 qaCheckFlds = metricConst.qaCheckFieldParameters
-                effectiveArea = resultsDict[uid][5] + resultsDict[uid][6]
-                excludedArea = resultsDict[uid][7]
-                vectorRUArea = resultsDict[uid][8]
+                effectiveArea = resultsDict[uid][6] + resultsDict[uid][7]
+                excludedArea = resultsDict[uid][8]
+                vectorRUArea = resultsDict[uid][9]
                 rasterRUArea = effectiveArea + excludedArea
                 overlapCalc = (rasterRUArea/ vectorRUArea) * 100
 
