@@ -714,24 +714,25 @@ def lookupCircleCellCount(radiusInCells):
 
 
 def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellSize, cleanupList, timer, logFile):
-    """ Get an arcpy `Raster`.
+    """ Generate a binary raster with one value for where vector features exist, and another for everywhere else.
 
         **Description:**
         
-        The row and column are zero-based and start in the upper left corner.  The arcpy `Point`_ object returned has
-        X and Y coordinates representing the cell identified by the specified row and column.
+        This function takes a list of polyline and polygon feature layers, and converts them to a single binary raster.
+        The binary raster will have the inValue where vector features exist, and the inBaseValue for everywhere else. 
+        Based on the input value parameters, the output raster can be either an integer or a floating-point grid.
         
         
         **Arguments:**
         
-        * *vectorFeatures* - 
-        * *inValue* - 
-        * *inBaseValue* - 
-        * *fileNameBase* -
-        * *cellSize* -
-        * *cleanupList* -
-        * *timer* -
-        * *logFile* -
+        * *vectorFeatures* - one or more feature class that will be rasterized. Can be polyline and/or polygon shape types
+        * *inValue* - integer or floating-point number
+        * *inBaseValue* - integer or floating point number
+        * *fileNameBase* - string
+        * *cellSize* - integer or floating-point number
+        * *cleanupList* - object containing commands and parameters to perform at cleanup time
+        * *timer* - an instance of ATtILA's DateTimer class from datetimeutil 
+        * *logFile* - catalog path and name of an existing and open text file to write processing steps to
         
         
         

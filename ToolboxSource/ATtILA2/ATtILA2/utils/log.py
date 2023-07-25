@@ -1,7 +1,7 @@
 import os
 import arcpy
 from arcpy import env
-from arcpy.sa import *
+# from arcpy.sa import *
 from . import parameters
 from ATtILA2.constants import globalConstants
 from datetime import datetime
@@ -167,7 +167,6 @@ def logArcpy(commandStr, paramsTuple, logFile):
 
     paramStr = '(' + ', '.join([str(item) for item in paramsTuple]) + ')'
     
-    # AddMsg("{0} {1}{2}".format(timer.now(), commandStr, paramStr), 0, logFile)
     AddMsg('    {0}{1}'.format(commandStr, paramStr), 0, logFile)
     
 

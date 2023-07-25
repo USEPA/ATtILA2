@@ -816,8 +816,8 @@ def getMDCP(outIdField, newTable, mdcpDict, optionalGroupsList, outClassName):
             del outTableRows, outTableRow
         # If QA fields are selected, add fields for pwn (patches w/ neighbors) and pwon (patches w/o) for the class
         if globalConstants.qaCheckName in optionalGroupsList:
-            arcpy.AddField_management(newTable, outClassName+"_PWN", "Double")
-            arcpy.AddField_management(newTable, outClassName+"_PWON", "Double")
+            arcpy.AddField_management(newTable, outClassName+"_PWN", "LONG")
+            arcpy.AddField_management(newTable, outClassName+"_PWON", "LONG")
 
         mdcpFieldName = outClassName+"_MDCP"
 

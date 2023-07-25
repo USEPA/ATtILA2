@@ -628,7 +628,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             arcpy.AddIndex_management(inReportingUnitFeature, reportingUnitIdField, ruIdIndex)
         
         # setup the appropriate metric fields to add to output table depending on if MDCP is selected or not
-        if mdcpYN:
+        if mdcpYN == "true":
             metricConst.additionalFields = metricConst.additionalFields + metricConst.mdcpFields
         else:
             metricConst.additionalFields = metricConst.additionalFields
