@@ -106,9 +106,15 @@ inPointFeatures = "Sample point features"
 ruLinkField = "Reporting unit link field"
 inWalkFeatures = "Walkable features"
 inImpassableFeatures = "Impassable features"
-maxWalkDist = "Maximum walking distance" 
+maxTravelDist = "Maximum travel distance" 
 walkValue = "Walk value" 
 baseValue = "Base value"
+inParkFeature = "Park feature"
+dissolveParkYN = "Dissolve parks"
+inCostSurface = "Cost surface raster"
+inZoneDataset = "Zone raster or polygon feature"
+groupByZoneYN = "Group by zone"
+zoneIdField = "Zone ID field"
 
 paramLabelDict = {
     "inReportingUnitFeature": "Reporting unit feature",
@@ -172,7 +178,13 @@ paramLabelDict = {
     "ruLinkField": "Reporting unit link field",
     "inWalkFeatures": "Walkable features",
     "inImpassableFeatures": "Impassable features",
-    "maxWalkDist": "Maximum walking distance", 
+    "maxTravelDist": "Maximum travel distance", 
     "walkValue": "Walk value", 
-    "baseValue": "Base value"
+    "baseValue": "Base value",
+    "inParkFeature": "Park feature",
+    "dissolveParkYN": "Dissolve parks",
+    "inCostSurface": "Cost surface raster",
+    "inZoneDataset": "Zone raster or polygon feature",
+    "groupByZoneYN": "Group by zone",
+    "zoneIdField": "Zone ID field"
     }

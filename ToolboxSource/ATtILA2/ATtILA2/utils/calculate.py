@@ -5,11 +5,14 @@ from ATtILA2.constants import globalConstants
 
 import arcpy
 from ATtILA2.setupAndRestore import _tempEnvironment3
+from ATtILA2 import errors
+from ATtILA2.constants import errorConstants
 from . import messages
 from . import files
 from . import vector
 from . import table
 from .messages import AddMsg
+from .log import arcpyLog
 
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum, excludedValues):
@@ -1145,7 +1148,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
 
 
 def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopField,classField,
-                  outTable,metricConst,index=""):
+                  outTable,metricConst,index="", logFile=None):
     """ Performs a transfer of population from input census features to input polygon features using simple
         areal weighting.  
 
@@ -1174,11 +1177,14 @@ def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopFi
 
     """
     # Construct a table with a field containing the area weighted population count for each input polygon unit
-    arcpy.TabulateIntersection_analysis(inPolygonFeature,[inPolygonIdField],inCensusFeature,outTable,[classField],[inPopField])
+    try:
+        arcpyLog(arcpy.TabulateIntersection_analysis, (inPolygonFeature,[inPolygonIdField],inCensusFeature,outTable,[classField],[inPopField]), 'arcpy.TabulateIntersection_analysis', logFile)
+    except:
+        raise errors.attilaException(errorConstants.tabulateIntersectionError)
 
     # Rename the population count field.
     outPopField = metricConst.populationCountFieldNames[index]
-    arcpy.AlterField_management(outTable, inPopField, outPopField, outPopField)
+    arcpyLog(arcpy.AlterField_management, (outTable, inPopField, outPopField, outPopField), 'arcpy.AlterField_management', logFile)
 
 def replaceNullValues(inTable,inField,newValue):
     # Replace NULL values in a field with the supplied value

@@ -85,6 +85,11 @@ def getRasterValues(inRaster):
     del rows
         
     return valuesList
+
+    ### New Method
+    # valueList = [row[0] for row in arcpy.da.SearchCursor(inRaster, ['Value'])]
+    # return valueList
+    
 ## end of the code copied from pylet-master\pylet\arcpyutil\raster.py
 
 

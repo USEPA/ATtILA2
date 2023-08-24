@@ -22,6 +22,8 @@ greaterThanZeroMessage = "Input requires a positive number greater than zero."
 greaterThanZeroIntegerMessage = "Input requires an integer value greater than zero."
 zeroOrGreaterIntegerMessage = "Input requires an integer value of zero or greater."
 polygonOrIntegerGridMessage = "Non-polygon dataset selected. Input requires a polygon dataset or an integer grid."
+vectorOrIntegerGridMessage = "Non-polygon, -polyline, or -point dataset selected. Input requires a polygon dataset or an integer grid."
+integerGridOrVectorMessage = "Non-integer grid selected. Input requires an integer grid or an appropriate vector dataset."
 integerGridOrPolgonMessage = "Non-integer grid selected. Input requires an integer grid or polygon dataset."
 invalidTableNameMessage = "Output filename is invalid. It may contain invalid characters or symbols, such as ., *, ?, \
  ', <, >, |, and space or has an invalid starting character such as a number."

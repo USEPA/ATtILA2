@@ -58,3 +58,15 @@ Try running the ATtILA tool again with the same parameters, often this error wil
 or try selecting a new geodatabase to write the output to.
 
 '''
+
+
+tabulateIntersectionError = '''
+
+An error occurred while attempting to perform a tabulate intersection.
+
+This error has been observed when a conflict occurs between the topologies of the two feature layers input into the function.
+
+If a buffer distance was used by the ATtILA tool, try marginally increasing or decreasing the buffer distance and rerunning the 
+tool to see if this error can be avoided.
+
+'''

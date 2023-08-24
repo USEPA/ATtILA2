@@ -70,7 +70,7 @@ class cwcrConstants(baseMetricConstants):
     parameterLabels = [
         gc.inWalkFeatures, 
         gc.inImpassableFeatures, 
-        gc.maxWalkDist, 
+        gc.maxTravelDist, 
         gc.walkValue, 
         gc.baseValue,
         gc.outRaster, 
@@ -415,6 +415,26 @@ class nrlcpConstants(baseMetricConstants):
     shortName = "nrlcp"
     optionalFilter = [gc.intermediateDescription, gc.logDescription]    
     
+class pamConstants(baseMetricConstants):
+    name = "PedestrianAccessMetrics"
+    shortName = "pam"
+    metricFUNC = 'metric.runPedestrianAccessMetrics'
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inParkFeature, 
+        gc.dissolveParkYN, 
+        gc.inCostSurface, 
+        gc.inCensusDataset, 
+        gc.inPopField,
+        gc.maxTravelDist, 
+        gc.outRaster,
+        gc.processingCellSize, 
+        gc.snapRaster, 
+        gc.optionalFieldGroups
+        ]
+    
+    
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
     shortName = "pdm"
@@ -603,6 +623,34 @@ class pnfeaConstants(baseMetricConstants):
 class pnhd24kConstants(baseMetricConstants):
     prefix = ""
     optionalFilter = [gc.logDescription]
+
+class pwzmConstants(baseMetricConstants):
+    name = "PopulationWithinZoneMetrics"
+    shortName = "pwzm"
+    metricFUNC = 'metric.run'+name
+    fieldPrefix = ["RU_", "FP_"]
+    fieldSuffix = ["_RU", "_FP"]
+    optionalFilter = [gc.intermediateDescription, gc.logDescription]
+    fieldParameters = ["", "", gc.defaultDecimalFieldType, 6, 1]
+    qaCheckFieldParameters = []
+    fieldOverrideKey = ""
+    populationProportionFieldName = "ZN_POP_P"
+    populationCountFieldNames = ["RU_POP", "ZN_POP_C"]
+    popCntTableName = shortName+"_populationCnt"
+    zonePopName = shortName+"_populationZN"
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inCensusDataset, 
+        gc.inPopField, 
+        gc.inZoneDataset,
+        gc.inBufferDistance, 
+        gc.groupByZoneYN,
+        gc.zoneIdField,
+        gc.outTable, 
+        gc.optionalFieldGroups
+        ]
 
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"

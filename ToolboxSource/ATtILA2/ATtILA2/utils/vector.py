@@ -615,18 +615,19 @@ def addLengthField(inLineFeatures,lengthFieldName):
     lengthFieldName = addCalculateField(inLineFeatures,lengthFieldName,"DOUBLE",calcExpression)
     return lengthFieldName
 
-def addCalculateField(inFeatures,fieldName,fieldType,calcExpression,codeBlock='#'):
+def addCalculateField(inFeatures,fieldName,fieldType,calcExpression,codeBlock='#',logFile=None):
     '''This function checks for the existence of the desired field, and if it does not exist, adds and populates it
     using the given calculation expression
     **Description:**
         This function checks for the existence of the specified field and if it does
-        not exist, adds and populates it as appropriate.  The output field is assumed to be of type double.
+        not exist, adds and populates it as appropriate.
     **Arguments:**
         * *inFeatures* - the input feature class that will receive the field.
         * *fieldName* - field name string
         ' 'fieldType' - field type string (e.g., "DOUBLE", "SHORT")
         * *calcExpression* - string calculation expression in python 
         * *codeBlock* - optional python code block expression       
+        * *logFile' - optional file used to record processing steps
     **Returns:**
         * *fieldName* - validated fieldname      
     '''
@@ -636,10 +637,10 @@ def addCalculateField(inFeatures,fieldName,fieldType,calcExpression,codeBlock='#
     # Check for existence of field.
     fieldList = arcpy.ListFields(inFeatures,fieldName)
     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
-        arcpy.AddField_management(inFeatures,fieldName, fieldType)
+        arcpyLog(arcpy.AddField_management, (inFeatures,fieldName, fieldType), 'arcpy.AddField_management', logFile)
     else: # Otherwise warn the user that the field will be recalculated.
         AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
-    arcpy.CalculateField_management(inFeatures,fieldName,calcExpression,"PYTHON",codeBlock)
+    arcpyLog(arcpy.CalculateField_management, (inFeatures,fieldName,calcExpression,"PYTHON",codeBlock), 'arcpy.CalculateField_management', logFile)
     return fieldName   
 
 

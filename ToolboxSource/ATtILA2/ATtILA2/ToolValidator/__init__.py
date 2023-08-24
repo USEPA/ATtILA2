@@ -126,6 +126,12 @@ class lcdToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = lcdConstants.fieldPrefix
     fieldSuffix = lcdConstants.fieldSuffix
     metricShortName = lcdConstants.shortName
+
+class pamToolValidator(BaseValidators.NoLccFileValidator):
+    """ ToolValidator for Pedestrian Access Metrics """
+    
+    filterList = pamConstants.optionalFilter
+    metricShortName = pamConstants.shortName
    
     
 class pdmToolValidator(BaseValidators.NoLccFileValidator):
@@ -143,6 +149,14 @@ class pifmToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = pdmConstants.fieldPrefix
     fieldSuffix = pdmConstants.fieldSuffix
     metricShortName = pdmConstants.shortName
+
+class pwzmToolValidator(BaseValidators.NoLccFileValidator):
+    """ ToolValidator for PopulationWithinZones """
+    
+    filterList = pwzmConstants.optionalFilter
+    fieldPrefix = pwzmConstants.fieldPrefix
+    fieldSuffix = pwzmConstants.fieldSuffix
+    metricShortName = pwzmConstants.shortName
     
 class rdmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for RoadDensityMetrics """

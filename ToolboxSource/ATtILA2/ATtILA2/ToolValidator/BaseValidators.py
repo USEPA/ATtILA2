@@ -448,8 +448,8 @@ class ProportionsValidator(object):
         if self.inRasterParameter.value:
            
             if hasattr(self.inRasterParameter.value, "dataSource"):
-                self.inRasterParameter.Value = str(self.inRasterParameter.value.dataSource)
-                self.parameters[self.inRasterIndex].value = self.inRasterParameter.Value
+                self.inRasterParameter.value = str(self.inRasterParameter.value.dataSource)
+                self.parameters[self.inRasterIndex].value = self.inRasterParameter.value
             # Check for is input raster layer has spatial reference
             #self.spRefCheck(self.inRasterParameter)
             if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
@@ -928,8 +928,11 @@ class NoLccFileValidator(object):
     inVector3Index = 0
     inAnyRasterOrPolyIndex = 0
     inIntRasterOrPolyIndex = 0
+    inIntRasterOrVectorIndex = 0
     inputFields2Index = 0
+    inIntRasterOrVectorFieldsIndex = 0
     inDistanceIndex = 0
+    inZeroDistanceIndex = 0
     inIntegerDistanceIndex = 0
     inWholeNumIndex = 0
     inPositiveIntegerIndex = 0
@@ -970,6 +973,8 @@ class NoLccFileValidator(object):
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
         self.integerPercentageMessage = validatorConstants.integerPercentageMessage
+        self.integerGridOrVectorMessage = validatorConstants.integerGridOrVectorMessage
+        self.vectorOrIntegerGridMessage = validatorConstants.vectorOrIntegerGridMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -1011,6 +1016,9 @@ class NoLccFileValidator(object):
             
         if self.inDistanceIndex:
             self.inDistanceParameter = self.parameters[self.inDistanceIndex]
+        
+        if self.inZeroDistanceIndex:
+            self.inZeroDistanceParameter = self.parameters[self.inZeroDistanceIndex]
             
         if self.inIntegerDistanceIndex:
             self.inIntegerDistanceParameter = self.parameters[self.inIntegerDistanceIndex]
@@ -1038,13 +1046,19 @@ class NoLccFileValidator(object):
             
         if self.inIntRasterOrPolyIndex:
             self.inIntRasterOrPolyParameter = self.parameters[self.inIntRasterOrPolyIndex]
+        
+        if self.inIntRasterOrVectorIndex:
+            self.inIntRasterOrVectorParameter = self.parameters[self.inIntRasterOrVectorIndex]
             
         if self.inAnyRasterOrPolyIndex:
             self.inAnyRasterOrPolyParameter = self.parameters[self.inAnyRasterOrPolyIndex]
             
         if self.inputFields2Index:
             self.inputFields2Parameter = self.parameters[self.inputFields2Index]
-            
+        
+        if self.inIntRasterOrVectorFieldsIndex:
+            self.inIntRasterOrVectorFieldsParameter = self.parameters[self.inIntRasterOrVectorFieldsIndex]
+        
         if self.outWorkspaceIndex:
             self.outWorkspaceParameter = self.parameters[self.outWorkspaceIndex]
             
@@ -1205,7 +1219,8 @@ class NoLccFileValidator(object):
             
             # alert the user if invalid characters are present in the output table name.
             if self.fileRoot != self.validFileRoot:
-                self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
+                # self.outTableParameter.setErrorMessage(self.invalidTableNameMessage)
+                self.outTableParameter.setErrorMessage(self.integerPercentageMessage)
                 
             else: # check on file extensions. None are allowed in geodatabases and only ".dbf" is allowed in folders.
                 self.workspaceExt = os.path.splitext(self.outWorkspace)[1]
@@ -1237,8 +1252,8 @@ class NoLccFileValidator(object):
         if self.inRasterIndex:
             if self.inRasterParameter.value:
                 if hasattr(self.inRasterParameter.value, "dataSource"):
-                    self.inRasterParameter.Value = str(self.inRasterParameter.value.dataSource)
-                    self.parameters[self.inRasterIndex].value = self.inRasterParameter.Value
+                    self.inRasterParameter.value = str(self.inRasterParameter.value.dataSource)
+                    self.parameters[self.inRasterIndex].value = self.inRasterParameter.value
                 # Check for is input raster layer has spatial reference
                 #self.spRefCheck(self.inRasterParameter)
                 if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
@@ -1379,6 +1394,34 @@ class NoLccFileValidator(object):
                     if desc.shapeType.lower() != "polygon":
                         self.inIntRasterOrPolyParameter.setErrorMessage(self.polygonOrIntegerGridMessage)                        
 
+        # Check if a secondary intRasterOrVector input feature is indicated. Use this for requiring an integer raster or vector dataset.
+        if self.inIntRasterOrVectorIndex:
+            # if provided, check if input geodataset is defined
+            if self.inIntRasterOrVectorParameter.value:
+                # query for a dataSource attribute, if one exists, it is a lyr file. Get the lyr's data source to do a Describe
+                if hasattr(self.inIntRasterOrVectorParameter.value, "dataSource"):
+                    desc = arcpy.Describe(self.inIntRasterOrVectorParameter.value.dataSource)
+                else:
+                    desc = arcpy.Describe(self.inIntRasterOrVectorParameter.value)
+                
+                if desc.spatialReference.name.lower() == "unknown":
+                    self.inIntRasterOrVectorParameter.setErrorMessage(self.noSpatialReferenceMessage) 
+                
+                if desc.datasetType == "RasterDataset":
+                    # Check if input raster is an integer grid
+                    inRaster = arcpy.Raster(str(self.inIntRasterOrVectorParameter.value))
+                    if inRaster.isInteger:
+                        self.inIntRasterOrVectorFieldsParameter.clearMessage()
+                        self.inIntRasterOrVectorFieldsParameter.value = ""
+                        self.inIntRasterOrVectorFieldsParameter.value = "Value"
+                    else:
+                        self.inIntRasterOrVectorParameter.setErrorMessage(self.integerGridOrVectorMessage)
+                
+                else:
+                    acceptedVectors = ["polygon", "polyline", "point"]
+                    if desc.shapeType.lower() not in acceptedVectors:
+                        self.inIntRasterOrVectorParameter.setErrorMessage(self.vectorOrIntegerGridMessage)
+        
         # Check if processingCellSize is a value greater than zero   
         if self.processingCellSizeIndex:        
             if self.processingCellSizeParameter.value:
@@ -1403,6 +1446,18 @@ class NoLccFileValidator(object):
                 else:
                     # need the else condition as a 0 value won't trigger the if clause 
                     self.inDistanceParameter.setErrorMessage(self.greaterThanZeroMessage)
+        
+        # Check if linear distance input (e.g., buffer width, edge width) is a value greater than or equal to zero            
+        if self.inZeroDistanceIndex:
+            if not self.inZeroDistanceParameter.enabled:
+                self.inZeroDistanceParameter.clearMessage()
+            else:
+                if self.inZeroDistanceParameter.value:
+                    distanceValue = self.inZeroDistanceParameter.value
+                    # use the split function so this routine can be used for both long and linear unit data types
+                    strNumber = str(distanceValue).split()[0]
+                    if float(strNumber) < 0.0:
+                        self.inZeroDistanceParameter.setErrorMessage(self.zeroOrGreaterNumberMessage)
 
         # Check if distance input (e.g., buffer width, edge width) is a positive number and an integer            
         if self.inIntegerDistanceIndex:
@@ -2026,8 +2081,8 @@ class NoReportingUnitValidator(object):
         if self.inRasterParameter.value:
            
             if hasattr(self.inRasterParameter.value, "dataSource"):
-                self.inRasterParameter.Value = str(self.inRasterParameter.value.dataSource)
-                self.parameters[self.inRasterIndex].value = self.inRasterParameter.Value
+                self.inRasterParameter.value = str(self.inRasterParameter.value.dataSource)
+                self.parameters[self.inRasterIndex].value = self.inRasterParameter.value
             # Check for is input raster layer has spatial reference
             #self.spRefCheck(self.inRasterParameter)
             if arcpy.Describe(self.inRasterParameter.value).spatialReference.name.lower() == "unknown":
