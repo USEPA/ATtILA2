@@ -115,6 +115,7 @@ inCostSurface = "Cost surface raster"
 inZoneDataset = "Zone raster or polygon feature"
 groupByZoneYN = "Group by zone"
 zoneIdField = "Zone ID field"
+expandAreaDist = "Expand area served"
 
 paramLabelDict = {
     "inReportingUnitFeature": "Reporting unit feature",
@@ -186,5 +187,6 @@ paramLabelDict = {
     "inCostSurface": "Cost surface raster",
     "inZoneDataset": "Zone raster or polygon feature",
     "groupByZoneYN": "Group by zone",
-    "zoneIdField": "Zone ID field"
+    "zoneIdField": "Zone ID field",
+    "expandAreaDist": "Expand area served"
     }

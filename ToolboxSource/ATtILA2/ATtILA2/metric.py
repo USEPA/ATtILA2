@@ -20,6 +20,7 @@ from .utils import parameters
 from .utils import raster
 from .utils import conversion
 from .utils import log
+from .utils import messages
 from .utils.messages import AddMsg
 from .datetimeutil import DateTimer
 from .constants import metricConstants
@@ -32,6 +33,8 @@ import traceback
 import random
 import string
 from os.path import basename as bn
+
+from .utils import pandasutil
 
 
 class metricCalc:
@@ -3232,11 +3235,16 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             AddMsg("Clean up complete")
 
 
+def proc_park(parkIDStr, logFile=None):
+    AddMsg("parkIDStr = {0}".format(parkIDStr))
+    
+    
 def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCostSurface='', inCensusDataset='', inPopField='', 
-                               maxTravelDist='', outRaster='', processingCellSize='', snapRaster='', optionalFieldGroups=''):
+                               maxTravelDist='', expandAreaDist='', outRaster='', processingCellSize='', snapRaster='', optionalFieldGroups=''):
     """ Interface for script executing Pedestrian Access Metrics tool """
-
+   
     from arcpy import env
+    from multiprocessing import Process, Lock
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
@@ -3247,7 +3255,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         metricConst = metricConstants.pamConstants()
 
         # copy input parameters to pass to the log file routine
-        parametersList = [inParkFeature, dissolveParkYN, inCostSurface, inCensusDataset, inPopField, maxTravelDist, outRaster, processingCellSize, snapRaster, optionalFieldGroups]
+        parametersList = [inParkFeature, dissolveParkYN, inCostSurface, inCensusDataset, inPopField, maxTravelDist, expandAreaDist, outRaster, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
 
@@ -3306,9 +3314,142 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
 
 
         ### Computations
-
-
-
+        
+        # Create a copy of the park feature class that we can add new fields to for calculations.  This 
+        # is more appropriate than altering the user's input data. 
+        desc = arcpy.Describe(inParkFeature)
+        tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
+        tempParkFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+        AddMsg("{} Creating temporary copy of {}. Intermediate: {}".format(timer.now(), desc.name, bn(tempParkFeature)), 0, logFile)
+        
+        if dissolveParkYN == 'true':
+            inParkFeature = log.arcpyLog(arcpy.Dissolve_management, (inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES"), 'arcpy.Dissolve_management', logFile)
+        else:
+            inParkFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inParkFeature, env.workspace, bn(tempParkFeature)), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
+        
+        # use the OID for identifying Parks
+        idFlds = [aFld for aFld in arcpy.ListFields(inParkFeature) if aFld.type == "OID"]
+        oidFld = idFlds[0].name
+        AddMsg(f"{timer.now()} Collecting id values from {oidFld} for each park", 0, logFile)
+        parksDF = pandasutil.fc_to_pd_df(inParkFeature, oidFld)
+        parkList = parksDF[oidFld].to_list()
+        
+        # Calculate the park area in square meters using the coordinate system set in the spatial analysis environment
+        AddMsg("{} Calculating park area in square meters".format(timer.now()), 0, logFile)
+        calcAreaFld = 'CalcAreaM2'
+        fieldAndGeometry = 'CalcAreaM2 AREA'
+        log.arcpyLog(arcpy.management.CalculateGeometryAttributes, (inParkFeature, fieldAndGeometry, "", "SQUARE_METERS"), 'arcpy.management.CalculateGeometryAttributes', logFile)
+        
+        # Get a count of the number of reporting units to give an accurate progress estimate.
+        n = len(parkList)
+        # Initialize custom progress indicator
+        loopProgress = messages.loopProgress(n)
+        
+        AddMsg("{} Calculating access and availability for {} areas".format(timer.now(), str(n)))
+        
+        
+        AddMsg(    
+        '''The following steps are performed for each park:
+        
+            1) Select park by its id value and create a feature layer
+            2) Create a buffer around the park extending 5% beyond the maximum travel distance
+            3) Create Cost Distance raster to the Maximum travel distance with the buffer area as the processing extent
+            4) Designate the accessible area by setting all cell values to 1 for any cell in the Cost Distance raster with a value >= 0
+            4) Expand the accessible area if indicated by the Expand area served parameter
+            5) Determine Population within accessible area
+                a) if Population parameter is a raster:
+                    1) Set the geoprocessing snap raster and processing cell size environments to match the population raster 
+                    2) Zonal Statistics As Table with the SUM option is used to calculate the surrounding population
+                b) if Population parameter is a polygon feature:
+                    1) the accessible area raster is converted to a polygon
+                    2) Tabulate Intersection is used with this polygon and the Population polygon feature to get 
+                       an area-weighted estimate of the surrounding population
+            6) Determine Availability (Cost distance value to park area divided by surrounding population)
+            
+        ''', 0, logFile)
+        
+        AddMsg("Starting calculations per park...", 0, logFile)
+        
+        # Create a list to keep track of any park that did not rasterize
+        nullRaster = []
+    
+        # Create a list to keep track of any park where the surrounding population is none
+        popNone = []
+    
+        # Create a list to keep track of any park where the surrounding population is 0
+        popZero = []
+        
+        # Create a list to keep track of the calculated park/population rasters to mosaic
+        mosaicRasters = []
+        
+        
+        for parkID in parkList:
+            try:
+                # # # lock = Lock()
+                # # # p = Process(target=proc_park, args=(str(parkID), logFile))
+                # # # p.start()
+                # # #
+                # # # p.join()
+                
+                distNumber = conversion.convertNumStringToNumber(maxTravelDist)
+                expandNumber = conversion.convertNumStringToNumber(expandAreaDist)
+                buffDist = distNumber * 1.05
+                
+                parkRaster, nullRaster, popNone, popZero = raster.getParkRaster(metricConst,
+                                                                                inParkFeature,
+                                                                                oidFld,
+                                                                                str(parkID),
+                                                                                buffDist,
+                                                                                inCostSurface,
+                                                                                distNumber,
+                                                                                expandNumber,
+                                                                                calcAreaFld,
+                                                                                inCensusDataset,
+                                                                                inPopField,
+                                                                                nullRaster,
+                                                                                popNone,
+                                                                                popZero,
+                                                                                cleanupList)
+                
+                # add the park raster to the mosaic rasters list
+                if parkRaster == None:
+                    pass
+                else:
+                    mosaicRasters.append(parkRaster)
+                
+                loopProgress.update()
+                
+            except:
+                AddMsg("Failed while processing Park ID: {0}".format(parkID), 2)
+                
+        AddMsg("Finished last park", 0, logFile)
+        
+        if len(nullRaster) > 0:
+            AddMsg(f"Number of areas which did not rasterize: {len(nullRaster)}", 1, logFile)
+            AddMsg("  Ids for these areas can be found in the log file if the LOGFILE Additional option was selected.", 1)
+            if logFile:
+                logFile.write(f"    Non-rasterized Area Ids: {str(nullRaster)}\n\n")
+        
+        if len(popNone) > 0:
+            AddMsg(f"Number of areas where the surrounding population is none: {len(popNone)}", 1, logFile)
+            AddMsg("  Ids for these areas can be found in the log file if the LOGFILE Additional option was selected.", 1)
+            if logFile:
+                logFile.write(f"    Population NONE Area Ids: {str(popNone)}\n\n")
+        
+        if len(popZero) > 0:    
+            AddMsg(f"Number of areas where the surrounding population is zero: {len(popZero)}", 1, logFile)
+            AddMsg("  Ids for these areas can be found in the log file if the LOGFILE Additional option was selected.", 1)
+            if logFile:
+                logFile.write(f"    Population ZERO Area Ids: {str(popZero)}\n\n")
+        
+        
+        # mosaic the produced park/populations rasters
+        if len(mosaicRasters) == 0:
+            AddMsg(f"No individual park population access rasters were generated. Exiting...", 1, logFile)
+        else:
+            AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {bn(outRaster)}.", 0, logFile)
+            outWS = env.workspace
+            log.arcpyLog(arcpy.management.MosaicToNewRaster, (mosaicRasters, outWS, bn(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST"), 'arcpy.management.MosaicToNewRaster', logFile)   
 
 
     except Exception as e:
@@ -3321,6 +3462,13 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         errors.standardErrorHandling(e)
 
     finally:
+        if arcpy.Exists("in_memory/oneParkBuff"):
+            arcpy.Delete_management("in_memory/oneParkBuff")
+    
+        if arcpy.Exists("in_memory/oneParkDasy"):
+            arcpy.Delete_management("in_memory/oneParkDasy")
+        
+        
         setupAndRestore.standardRestore(logFile)
         if not cleanupList[0] == "KeepIntermediates":
             for (function,arguments) in cleanupList:

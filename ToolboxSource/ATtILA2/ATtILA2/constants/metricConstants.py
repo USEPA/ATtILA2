@@ -428,6 +428,7 @@ class pamConstants(baseMetricConstants):
         gc.inCensusDataset, 
         gc.inPopField,
         gc.maxTravelDist, 
+        gc.expandAreaDist,
         gc.outRaster,
         gc.processingCellSize, 
         gc.snapRaster, 
