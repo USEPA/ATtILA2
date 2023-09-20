@@ -3465,8 +3465,8 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         if arcpy.Exists("in_memory/oneParkBuff"):
             arcpy.Delete_management("in_memory/oneParkBuff")
     
-        if arcpy.Exists("in_memory/oneParkDasy"):
-            arcpy.Delete_management("in_memory/oneParkDasy")
+        if arcpy.Exists("in_memory/oneParkPop"):
+            arcpy.Delete_management("in_memory/oneParkPop")
         
         
         setupAndRestore.standardRestore(logFile)
