@@ -30,7 +30,7 @@ class caemConstants(baseMetricConstants):
     effectiveAreaName = "CAEM_EFFA"
     excludedAreaName = "CAEM_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -41,8 +41,8 @@ class caemConstants(baseMetricConstants):
     coreSuffix = "_COR"
     edgeSuffix = "_EDG"
     additionalSuffixes = [coreSuffix, edgeSuffix]
-    coreField = ["", coreSuffix, gc.defaultDecimalFieldType, 6, 1]
-    edgeField = ["", edgeSuffix, gc.defaultDecimalFieldType, 6, 1]
+    coreField = ["", coreSuffix, gc.defaultPercentFieldType, 6, 1]
+    edgeField = ["", edgeSuffix, gc.defaultPercentFieldType, 6, 1]
     additionalFields = [coreField, edgeField]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
@@ -96,14 +96,14 @@ class flcpConstants(baseMetricConstants):
     totaPctBase = "%sTOTA" % fieldPrefix
     totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15],
-        [totaPctName, gc.defaultDecimalFieldType, 6, 1],
-        [pctBufferName, gc.defaultDecimalFieldType, 6, 1]
+        [totaPctName, gc.defaultPercentFieldType, 6, 1],
+        [pctBufferName, gc.defaultPercentFieldType, 6, 1]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
     fpTabAreaName = shortName+"_TabAreaFP"
@@ -136,7 +136,7 @@ class flcvConstants(baseMetricConstants):
     effectiveAreaName = "FLCV_EFFA"
     excludedAreaName = "FLCV_EXCA"
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -146,7 +146,7 @@ class flcvConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     lcpFieldSuffix = ""
     lcpFieldPrefix = "p"
-    lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultPercentFieldType, 6, 1]
     belowFieldSuffix = "_Below"
     aboveFieldSuffix = "_Above"
     facilityCopyName = shortName+"_Facility"
@@ -160,7 +160,7 @@ class flcvConstants(baseMetricConstants):
     singleFields = [facilityCountField]
     highSuffix = "_High"
     additionalSuffixes = [highSuffix]
-    highField = ["", highSuffix, gc.defaultDecimalFieldType, 6, 1]
+    highField = ["", highSuffix, gc.defaultIntegerFieldType, 6]
     additionalFields = [highField]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
@@ -190,7 +190,7 @@ class idConstants(baseMetricConstants):
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultPercentFieldType, 6, 1] 
     fieldOverrideKey = ""
     prjRoadName = "Prj"
     intersectDensityGridName = shortName+"_IntDen"
@@ -287,7 +287,7 @@ class lcospConstants(baseMetricConstants):
     effectiveAreaName = "LCOSP_EFFA"
     excludedAreaName = "LCOSP_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType,6,1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType,6,1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -342,7 +342,7 @@ class lcpConstants(baseMetricConstants):
     effectiveAreaName = shortName.upper()+"_EFFA"
     excludedAreaName = shortName.upper()+"_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -386,7 +386,7 @@ class npConstants(baseMetricConstants):
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 6, 1] 
+    fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultPercentFieldType, 6, 1] 
     fieldOverrideKey = ""
     burnInGridName = "BurnIn"
     proxPolygonOutputName = "_ProxPoly"
@@ -509,7 +509,7 @@ class pmConstants(baseMetricConstants):
     effectiveAreaName = "PM_EFFA"
     excludedAreaName = "PM_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
@@ -632,7 +632,7 @@ class pwzmConstants(baseMetricConstants):
     fieldPrefix = ["RU_", "FP_"]
     fieldSuffix = ["_RU", "_FP"]
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = ["", "", gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = ["", "", gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
     populationProportionFieldName = "ZN_POP_P"
@@ -670,14 +670,14 @@ class rlcpConstants(baseMetricConstants):
     totaPctBase = "%sTOTA" % fieldPrefix
     totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15],
-        [totaPctName, gc.defaultDecimalFieldType, 6, 1],
-        [pctBufferName, gc.defaultDecimalFieldType, 6, 1]                                        
+        [totaPctName, gc.defaultPercentFieldType, 6, 1],
+        [pctBufferName, gc.defaultPercentFieldType, 6, 1]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
@@ -708,7 +708,7 @@ class rdmConstants(baseMetricConstants):
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
     areaFieldname = "AREAKM2"
@@ -754,7 +754,7 @@ class sdmConstants(baseMetricConstants):
     effectiveAreaName = ""
     excludedAreaName = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = []
     fieldOverrideKey = ""
     areaFieldname = "AREAKM2"
@@ -788,14 +788,14 @@ class splcpConstants(baseMetricConstants):
     totaPctBase = "%sTOTA" % fieldPrefix
     totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
-    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultDecimalFieldType, 6, 1]
+    fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
         [overlapName, gc.defaultIntegerFieldType, 6],
         [totalAreaName, gc.defaultAreaFieldType, 15],
         [effectiveAreaName, gc.defaultAreaFieldType, 15],
         [excludedAreaName, gc.defaultAreaFieldType, 15],
-        [totaPctName, gc.defaultDecimalFieldType, 6, 1],
-        [pctBufferName, gc.defaultDecimalFieldType, 6, 1]                                        
+        [totaPctName, gc.defaultPercentFieldType, 6, 1],
+        [pctBufferName, gc.defaultPercentFieldType, 6, 1]                                        
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
