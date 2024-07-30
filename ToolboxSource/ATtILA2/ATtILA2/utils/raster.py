@@ -749,24 +749,12 @@ def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellS
     """    
     
     rasterList = ['No Polygon @&?$#', 'No Line @&?$#']
-    
-    # # add a value field and calculate its value equal to inValue
-    # if isinstance(inValue, float):
-    #     fieldType = "DOUBLE"
-    # else:
-    #     fieldType = "SHORT"
-        
-    for fc in vectorFeatures:
-        # valueField = fileNameBase
-        # AddMsg(("{0} Adding a new field, {1}, to {2} and assigning {3} to all records").format(timer.now(), valueField, arcpy.Describe(fc).baseName, inValue), 0, logFile)
-        # arcpyLog(arcpy.AddField_management, (fc, valueField, fieldType), 'arcpy.AddField_management', logFile)
-        # arcpyLog(arcpy.CalculateField_management, (fc, valueField, inValue), 'arcpy.CalculateField_management', logFile)
-    
+            
+    for fc in vectorFeatures:    
         # find the OID field
         oidFields = [aFld for aFld in arcpy.ListFields(fc) if aFld.type == 'OID']
         firstOIDField = oidFields[0]
         valueField = firstOIDField.name
-    
     
         # determine how to proceed by using the shape type of the feature class
         fcDesc = arcpy.Describe(fc) 
