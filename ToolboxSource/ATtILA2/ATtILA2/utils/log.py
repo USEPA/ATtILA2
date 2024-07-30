@@ -47,6 +47,14 @@ def createLogFile(inDataset, dateTimeStamp):
     inRootName = os.path.splitext(inBaseName)[0]
     logBaseName = ('{0}_{1}').format(inRootName, dateTimeStamp)
     
+    # Because ATtILA outputs do not exist at the start of the log file creation
+    # process, we use the ArcGIS project workspace as the starting point to determine
+    # where to create the log file. In ArcGIS Pro, the default value for the Current 
+    # Workspace environments is the project default geodatabase. This can be changed
+    # via the Analysis -> Environments -> Current workspace. If the workspace is a 
+    # geodatabase, the log file is created in the folder that contains the geodatabase.
+    # If the workspace is a folder, the log file is created in that folder.
+    
     odsc = arcpy.Describe(env.workspace)
     
     # determine where to create the log file
