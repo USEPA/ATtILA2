@@ -3340,6 +3340,10 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         fieldAndGeometry = 'CalcAreaM2 AREA'
         log.arcpyLog(arcpy.management.CalculateGeometryAttributes, (inParkFeature, fieldAndGeometry, "", "SQUARE_METERS"), 'arcpy.management.CalculateGeometryAttributes', logFile)
         
+        if globalConstants.intermediateName in optionalGroupsList:
+            # Add additional fields for population with access counts and square meters of park accessible per person calculation.  
+            arcpy.management.AddFields(inParkFeature, metricConst.parkCalculationFields)
+        
         # Get a count of the number of reporting units to give an accurate progress estimate.
         n = len(parkList)
         # Initialize custom progress indicator
@@ -3368,7 +3372,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
             
         ''', 0, logFile)
         
-        AddMsg("Starting calculations per park...", 0, logFile)
+        AddMsg(f"{timer.now()} Starting calculations per park...", 0, logFile)
         
         # Create a list to keep track of any park that did not rasterize
         nullRaster = []
@@ -3382,6 +3386,8 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         # Create a list to keep track of the calculated park/population rasters to mosaic
         mosaicRasters = []
         
+        # create an Accessibility and Availability dictionary to capture the calculated values for each park
+        aaaDict = {}
         
         for parkID in parkList:
             try:
@@ -3395,7 +3401,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
                 expandNumber = conversion.convertNumStringToNumber(expandAreaDist)
                 buffDist = distNumber * 1.05
                 
-                parkRaster, nullRaster, popNone, popZero = raster.getParkRaster(metricConst,
+                parkRaster, nullRaster, popNone, popZero, valuesList = raster.getParkRaster(metricConst,
                                                                                 inParkFeature,
                                                                                 oidFld,
                                                                                 str(parkID),
@@ -3416,13 +3422,40 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
                     pass
                 else:
                     mosaicRasters.append(parkRaster)
+                                             
+                if globalConstants.intermediateName in optionalGroupsList:
+                    # add the accessibility and access calculations to the dictionary for future use
+                    aaaDict[parkID] = valuesList
                 
                 loopProgress.update()
                 
             except:
                 AddMsg("Failed while processing Park ID: {0}".format(parkID), 2)
                 
-        AddMsg("Finished last park", 0, logFile)
+        AddMsg(f"{timer.now()} Finished last park", 0, logFile)
+        
+        if globalConstants.intermediateName in optionalGroupsList:
+        # create the cursor to add data to the output table
+            outTableRows = arcpy.UpdateCursor(inParkFeature)        
+            outTableRow = outTableRows.next()
+            while outTableRow:
+                uid = outTableRow.getValue(oidFld)
+                # add the population with access and the square meters available per person values to the copied parks features
+                if (uid in aaaDict):
+                    outTableRow.setValue(metricConst.calcFieldNames[0], aaaDict[uid][0])
+                    outTableRow.setValue(metricConst.calcFieldNames[1], aaaDict[uid][1])
+                else:
+                    AddMsg("Park ID not found.")
+                    
+                # commit the row to the output table
+                outTableRows.updateRow(outTableRow)
+                outTableRow = outTableRows.next()
+                
+            try:
+                del outTableRows
+                del outTableRow
+            except:
+                pass
         
         if len(nullRaster) > 0:
             AddMsg(f"Number of areas which did not rasterize: {len(nullRaster)}", 1, logFile)
@@ -3462,12 +3495,12 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         errors.standardErrorHandling(e)
 
     finally:
-        if arcpy.Exists("in_memory/oneParkBuff"):
-            arcpy.Delete_management("in_memory/oneParkBuff")
-    
-        if arcpy.Exists("in_memory/oneParkPop"):
-            arcpy.Delete_management("in_memory/oneParkPop")
+        arcpy.Delete_management("in_memory")
         
+        AddMsg(f"{timer.now()} Deleting temporary park rasters...", 0, logFile)
+        if len(mosaicRasters) > 0:
+            [arcpy.Delete_management(p) for p in mosaicRasters]
+        AddMsg(f"{timer.now()} Temporary park rasters deletion complete", 0, logFile)
         
         setupAndRestore.standardRestore(logFile)
         if not cleanupList[0] == "KeepIntermediates":

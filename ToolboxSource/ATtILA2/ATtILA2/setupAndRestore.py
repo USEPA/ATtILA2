@@ -72,12 +72,12 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     
     if logFile:
         if snapRaster:
-            logFile.write('ENVIROMENT: Snap Raster = {0}\n'.format(env.snapRaster))
+            logFile.write('ENVIRONMENT: Snap Raster = {0}\n'.format(env.snapRaster))
         if processingCellSize:
-            logFile.write('ENVIROMENT: Cell Size = {0}\n'.format(env.cellSize))
-        logFile.write('ENVIROMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
-        logFile.write('ENVIROMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
-        logFile.write('ENVIROMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
+            logFile.write('ENVIRONMENT: Cell Size = {0}\n'.format(env.cellSize))
+        logFile.write('ENVIRONMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
+        logFile.write('ENVIRONMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
+        logFile.write('ENVIRONMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
         
         logFile.write('\n')
         

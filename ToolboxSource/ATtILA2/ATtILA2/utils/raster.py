@@ -827,10 +827,12 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
                 Area = row[0]
         
         if costDist.maximum is None:
+            outPop = -88888
+            sqm_person = -99999
             nullRaster.append(parkID)
             rasterName = None
         elif costDist.maximum is not None:
-            #Expand walkable distance identified by three pixels (captures buildigs alongside roads)
+            #Expand walkable distance identified by three pixels (captures buildings alongside roads)
             con_raster = Con(costDist, 1, None, "VALUE >= 0")
             # namePrefix = f"{metricConst.shortName}_Con_Id{parkID}_"
             # conRasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
@@ -859,13 +861,18 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
         
             else:
                 # create a polygon feature from the expand_raster
-                # arcpy.conversion.RasterToPolygon(expand_raster, "in_memory/expandPoly","NO_SIMPLIFY","Value","MULTIPLE_OUTER_PART",None)
-                namePrefix = metricConst.shortName+"_Poly_Id{}_".format(parkID)
-                oneParkPolyName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-                arcpy.conversion.RasterToPolygon(expand_raster, oneParkPolyName,"NO_SIMPLIFY","Value","MULTIPLE_OUTER_PART",None)
+                arcpy.conversion.RasterToPolygon(expand_raster, "in_memory/expandPoly","NO_SIMPLIFY","Value","MULTIPLE_OUTER_PART",None)
+                
+                
+                # # # namePrefix = metricConst.shortName+"_Poly_Id{}_".format(parkID)
+                # # # oneParkPolyName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+                # # # arcpy.conversion.RasterToPolygon(expand_raster, oneParkPolyName,"NO_SIMPLIFY","Value","MULTIPLE_OUTER_PART",None)
                 
                 # Perform population count calculation
-                arcpy.analysis.TabulateIntersection(os.path.basename(oneParkPolyName),["gridcode"],inCensusDataset,"in_memory/oneParkPop",None,[inPopField])
+                arcpy.analysis.TabulateIntersection("in_memory/expandPoly",["gridcode"],inCensusDataset,"in_memory/oneParkPop",None,[inPopField])
+                # arcpy.analysis.TabulateIntersection(os.path.basename(oneParkPolyName),["gridcode"],inCensusDataset,"in_memory/oneParkPop",None,[inPopField])
+                
+                
                 # namePrefix = f"{metricConst.shortName}_Population_Id{parkID}_"
                 # popTable = files.nameIntermediateFile([namePrefix,'Dataset'],cleanupList)  
                 # arcpy.analysis.TabulateIntersection(os.path.basename(oneParkPolyName),[classField],inCensusDataset,popTable,None,[inPopField])
@@ -883,9 +890,13 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
             except NameError: Pop = None
             
             if Pop is None:
+                outPop = -99999
+                sqm_person = -99999
                 popNone.append(parkID)
                 rasterName = None
             elif float(Pop) == 0:
+                outPop = 0
+                sqm_person = 0
                 popZero.append(parkID)
                 rasterName = None
             
@@ -900,5 +911,8 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
                 rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
                 cost_con.save(rasterName)
 
+        valuesList = [outPop, sqm_person]
+        
+        arcpy.Delete_management("in_memory")
     
-    return rasterName, nullRaster, popNone, popZero
+    return rasterName, nullRaster, popNone, popZero, valuesList

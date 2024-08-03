@@ -963,7 +963,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
 
             loopProgress.update()
 
-        # Restore the original enviroment extent
+        # Restore the original environment extent
         env.extent = _tempEnvironment3
 
         # Check to see if newTable has already been set up

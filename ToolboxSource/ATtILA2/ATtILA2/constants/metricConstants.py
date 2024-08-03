@@ -420,6 +420,12 @@ class pamConstants(baseMetricConstants):
     shortName = "pam"
     metricFUNC = 'metric.runPedestrianAccessMetrics'
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
+    accessCountFieldName = "Pop_Access"
+    accessCountField = [accessCountFieldName,gc.defaultDecimalFieldType,None, 15]
+    countPerAreaFieldName = "SQM_Avail"
+    countPerAreaField = [countPerAreaFieldName,gc.defaultDecimalFieldType,None,15]
+    parkCalculationFields = [accessCountField, countPerAreaField]
+    calcFieldNames = [accessCountFieldName, countPerAreaFieldName]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inParkFeature, 
