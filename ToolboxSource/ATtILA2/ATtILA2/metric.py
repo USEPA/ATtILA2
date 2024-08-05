@@ -3244,7 +3244,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
     """ Interface for script executing Pedestrian Access Metrics tool """
    
     from arcpy import env
-    from multiprocessing import Process, Lock
+    # from multiprocessing import Process, Lock
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
@@ -3277,6 +3277,11 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
 
+        # Check if a population field is selected if the inCensusDataset is a polygon feature
+        descCensus = arcpy.Describe(inCensusDataset)
+        if descCensus.datasetType != "RasterDataset" and inPopField == '':
+            raise errors.attilaException(errorConstants.missingFieldError) 
+        
         # Do a Describe on the Snap Raster input and get the file's basename.
         descSnapRaster = arcpy.Describe(snapRaster)
         snapBaseName = descSnapRaster.baseName
@@ -3483,6 +3488,10 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
             AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {bn(outRaster)}.", 0, logFile)
             outWS = env.workspace
             log.arcpyLog(arcpy.management.MosaicToNewRaster, (mosaicRasters, outWS, bn(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST"), 'arcpy.management.MosaicToNewRaster', logFile)   
+            
+            AddMsg(f"{timer.now()} Deleting individual park rasters...", 0, logFile)
+            [arcpy.Delete_management(p) for p in mosaicRasters]
+            AddMsg(f"{timer.now()} Individual park rasters deletion complete", 0, logFile)   
 
 
     except Exception as e:
@@ -3496,11 +3505,6 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
 
     finally:
         arcpy.Delete_management("in_memory")
-        
-        AddMsg(f"{timer.now()} Deleting temporary park rasters...", 0, logFile)
-        if len(mosaicRasters) > 0:
-            [arcpy.Delete_management(p) for p in mosaicRasters]
-        AddMsg(f"{timer.now()} Temporary park rasters deletion complete", 0, logFile)
         
         setupAndRestore.standardRestore(logFile)
         if not cleanupList[0] == "KeepIntermediates":

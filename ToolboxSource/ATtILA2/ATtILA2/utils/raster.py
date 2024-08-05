@@ -809,17 +809,11 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
 
     onePark = arcpy.management.SelectLayerByAttribute("selectedLayer", 'NEW_SELECTION', whereClause, None)
     
-    # namePrefix = metricConst.shortName+"_Buffer_Id{}_".format(parkID)
-    # oneParkBuffName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-    # arcpy.Buffer_analysis(onePark, oneParkBuffName, f'{buffDist} Meters', dissolve_option='NONE')
     arcpy.Buffer_analysis(onePark, "in_memory/oneParkBuff", f'{buffDist} Meters', dissolve_option='NONE')
     
     # with arcpy.EnvManager(extent = oneParkBuffName):
     with arcpy.EnvManager(extent = "in_memory/oneParkBuff"):
         costDist = arcpy.sa.CostDistance(onePark, costRaster, distNumber)
-        # namePrefix = metricConst.shortName+"_CostDist_Id{}_".format(parkID)
-        # costDistName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
-        # costDist.save(costDistName)
         
         # Identify park area in square meters (value already determined in parks prep process step)
         with arcpy.da.SearchCursor(onePark,calcAreaFld) as cursor:
@@ -832,17 +826,12 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
             nullRaster.append(parkID)
             rasterName = None
         elif costDist.maximum is not None:
-            #Expand walkable distance identified by three pixels (captures buildings alongside roads)
+            #Expand walkable distance identified by user-specified distance (captures buildings alongside roads)
             con_raster = Con(costDist, 1, None, "VALUE >= 0")
-            # namePrefix = f"{metricConst.shortName}_Con_Id{parkID}_"
-            # conRasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
-            # con_raster.save(conRasterName)
             
             if expandNumber > 0:
                 expand_raster = arcpy.sa.Expand(con_raster, expandNumber, [1], "DISTANCE")
-                # namePrefix = f"{metricConst.shortName}_Expand_Id{parkID}_"
-                # expandRasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
-                # expand_raster.save(expandRasterName)
+
             else:
                 expand_raster = con_raster
             
@@ -852,10 +841,6 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
             
                 with arcpy.EnvManager(snapRaster = inCensusDataset, cellSize = inCensusDataset):
                     arcpy.sa.ZonalStatisticsAsTable(expand_raster, "Value", inCensusDataset, "in_memory/oneParkPop", "DATA", "SUM", "CURRENT_SLICE", 90, "AUTO_DETECT")
-                # with arcpy.EnvManager(snapRaster = inCensusDataset, cellSize = inCensusDataset):
-                #     namePrefix = f"{metricConst.shortName}_Pop_Id{parkID}_"
-                #     oneParkPop = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
-                #     arcpy.sa.ZonalStatisticsAsTable(expand_raster, "Value", inCensusDataset, oneParkPop, "DATA", "SUM")
                 
                 sumField = "SUM"
         
@@ -863,20 +848,9 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
                 # create a polygon feature from the expand_raster
                 arcpy.conversion.RasterToPolygon(expand_raster, "in_memory/expandPoly","NO_SIMPLIFY","Value","MULTIPLE_OUTER_PART",None)
                 
-                
-                # # # namePrefix = metricConst.shortName+"_Poly_Id{}_".format(parkID)
-                # # # oneParkPolyName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-                # # # arcpy.conversion.RasterToPolygon(expand_raster, oneParkPolyName,"NO_SIMPLIFY","Value","MULTIPLE_OUTER_PART",None)
-                
                 # Perform population count calculation
                 arcpy.analysis.TabulateIntersection("in_memory/expandPoly",["gridcode"],inCensusDataset,"in_memory/oneParkPop",None,[inPopField])
-                # arcpy.analysis.TabulateIntersection(os.path.basename(oneParkPolyName),["gridcode"],inCensusDataset,"in_memory/oneParkPop",None,[inPopField])
-                
-                
-                # namePrefix = f"{metricConst.shortName}_Population_Id{parkID}_"
-                # popTable = files.nameIntermediateFile([namePrefix,'Dataset'],cleanupList)  
-                # arcpy.analysis.TabulateIntersection(os.path.basename(oneParkPolyName),[classField],inCensusDataset,popTable,None,[inPopField])
-                
+
                 sumField = inPopField
                     
             # with arcpy.da.SearchCursor(oneParkPop,sumField) as cursor:
