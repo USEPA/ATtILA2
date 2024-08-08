@@ -69,7 +69,7 @@ class metricCalc:
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
                                                                                  [metricsToRun,optionalFieldGroups],
-                                                                                 self.logFile)
+                                                                                 self.logFile, inReportingUnitFeature)
 
         # XML Land Cover Coding file loaded into memory
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -644,7 +644,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
                                                                                 [metricsToRun,optionalFieldGroups], 
-                                                                                logFile )
+                                                                                logFile, inReportingUnitFeature )
         
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -849,7 +849,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
                                                                                 [metricsToRun,optionalFieldGroups], 
-                                                                                logFile )
+                                                                                logFile, inReportingUnitFeature )
 
         lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
@@ -1758,7 +1758,8 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                                                                                                   processingCellSize, 
                                                                                                   os.path.dirname(outTable), 
                                                                                                   [metricsToRun,optionalFieldGroups], 
-                                                                                                  self.logFile)
+                                                                                                  self.logFile,
+                                                                                                  inReportingUnitFeature)
                 
                 # Save other input parameters as class attributes
                 self.outTable = outTable
@@ -2042,6 +2043,11 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # Do a Describe on the population and floodplain inputs. Determine if they are raster or polygon
         descCensus = arcpy.Describe(inCensusDataset)
         descFldpln = arcpy.Describe(inFloodplainDataset)   
+        
+        # Check if a population field is selected if the inCensusDataset is a polygon feature
+        descCensus = arcpy.Describe(inCensusDataset)
+        if descCensus.datasetType != "RasterDataset" and inPopField == '':
+            raise errors.attilaException(errorConstants.missingFieldError) 
 
         # Create an index value to keep track of intermediate outputs and field names.
         index = 0
@@ -2105,9 +2111,9 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             arcpy.AlterField_management(popTable_FP, "SUM", outPopField, outPopField)
 
         else: # census features are polygons
-            # Check that the user supplied a population field
-            if len(inPopField) == 0:
-                raise errors.attilaException(errorConstants.missingFieldError)
+            # # Check that the user supplied a population field
+            # if len(inPopField) == 0:
+            #     raise errors.attilaException(errorConstants.missingFieldError)
                 
             
             # Create a copy of the census feature class that we can add new fields to for calculations.
@@ -2274,7 +2280,8 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
          
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups],logFile )
+                                                                                [metricsToRun,optionalFieldGroups],logFile,
+                                                                                inReportingUnitFeature)
  
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2693,7 +2700,8 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         processingCellSize = Raster(inLandCoverGrid).meanCellWidth
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                               [metricsToRun,optionalFieldGroups], logFile )
+                                                                               [metricsToRun,optionalFieldGroups], logFile,
+                                                                               inLandCoverGrid)
 
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2939,7 +2947,8 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         snapRaster = False
 
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSize,os.path.dirname(outRaster),
-                                                                              [metricsToRun,optionalFieldGroups], logFile )  
+                                                                              [metricsToRun,optionalFieldGroups], logFile,
+                                                                              inLineFeature)  
 
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -3116,7 +3125,8 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         metricsToRun = 'item1  -  description1;item2  -  description2'
     
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSizeStr,os.path.dirname(outRaster),
-                                                                              [metricsToRun,optionalFieldGroups], logFile )  
+                                                                              [metricsToRun,optionalFieldGroups], logFile,
+                                                                              inWalkFeatures)  
     
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -3270,7 +3280,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         metricsToRun = 'item1  -  description1;item2  -  description2'
 
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, os.path.dirname(outRaster),
-                                                                              [metricsToRun, optionalFieldGroups], logFile )  
+                                                                              [metricsToRun, optionalFieldGroups], logFile, inParkFeature)  
 
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -3573,6 +3583,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         descCensus = arcpy.Describe(inCensusDataset)
         descZone = arcpy.Describe(inZoneDataset)   
         
+        # Check if a population field is selected if the inCensusDataset is a polygon feature
+        descCensus = arcpy.Describe(inCensusDataset)
+        if descCensus.datasetType != "RasterDataset" and inPopField == '':
+            raise errors.attilaException(errorConstants.missingFieldError) 
+        
         fileNameBase = descZone.baseName
         
         # Create an index value to keep track of intermediate outputs and field names.
@@ -3764,9 +3779,9 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         ### End census features are raster ###
         
         else: # census features are polygons
-            # Check that the user supplied a population field
-            if len(inPopField) == 0:
-                raise errors.attilaException(errorConstants.missingFieldError)
+            # # Check that the user supplied a population field
+            # if len(inPopField) == 0:
+            #     raise errors.attilaException(errorConstants.missingFieldError)
         
             # Create a copy of the census feature class that we can add new fields to for calculations.
             fieldMappings = arcpy.FieldMappings()
@@ -4039,7 +4054,8 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         timer = DateTimer()
         AddMsg(timer.start() + " Setting up environment variables")
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                               [metricsToRun,optionalFieldGroups], logFile )
+                                                                               [metricsToRun,optionalFieldGroups], logFile,
+                                                                               inRoadFeature)
 
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
