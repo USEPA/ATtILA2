@@ -160,7 +160,7 @@ class flcvConstants(baseMetricConstants):
     singleFields = [facilityCountField]
     highSuffix = "_High"
     additionalSuffixes = [highSuffix]
-    highField = ["", highSuffix, gc.defaultIntegerFieldType, 6]
+    highField = ["", highSuffix, gc.defaultIntegerFieldType, 6, 0]
     additionalFields = [highField]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [

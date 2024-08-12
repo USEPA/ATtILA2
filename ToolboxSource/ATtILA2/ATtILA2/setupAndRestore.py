@@ -19,7 +19,7 @@ _tempEnvironment6 = ""
 _tempEnvironment7 = ""
 
 
-def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[], logFile=None, extentFeature=None):
+def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[], logFile=None):
     """ Standard setup for executing metrics. """
     
     # Check out any necessary licenses
@@ -70,45 +70,45 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
             msg = "Intermediates are stored in this directory: {0}\n"
             AddMsg(msg.format(env.workspace), 0, logFile)
     
-    if logFile:
-        if extentFeature:
-            try:
-                desc = arcpy.Describe(extentFeature)
-                inExt = desc.extent
-                inSR = inExt.spatialReference
-                logFile.write(f'ENVIRONMENT: Reporting Extent ({inSR.name}) = {inExt.XMax}, {inExt.YMax}, {inExt.XMin}, {inExt.YMin}\n')
-                
-                wgs84SR = arcpy.SpatialReference(4326)
-                transformList = arcpy.ListTransformations(inSR, wgs84SR, inExt)
-                if len(transformList) == 0:
-                    # if no list is returned; no transformation is required
-                    transformMethod = ""
-                else:
-                    # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
-                    transformMethod = transformList[0]
-                
-                if transformMethod != "":
-                    prjExt = inExt.projectAs(wgs84SR, transformMethod)
-                else:
-                    prjExt = inExt.projectAs(wgs84SR)
-                    
-                logFile.write(f'ENVIRONMENT: Extent (WGS 1984) = {prjExt.XMax}, {prjExt.YMax}, {prjExt.XMin}, {prjExt.YMin}\n')
-                                
-            except:
-                logFile.write('ENVIRONMENT: Extent error encountered\n'.format(env.snapRaster))
-                pass
-        else:
-            logFile.write('ENVIRONMENT: Extent not captured\n'.format(env.snapRaster))
-
-        if snapRaster:
-            logFile.write('ENVIRONMENT: Snap Raster = {0}\n'.format(env.snapRaster))
-        if processingCellSize:
-            logFile.write('ENVIRONMENT: Cell Size = {0}\n'.format(env.cellSize))
-        logFile.write('ENVIRONMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
-        logFile.write('ENVIRONMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
-        logFile.write('ENVIRONMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
-        
-        logFile.write('\n')
+    # if logFile:
+    #     if extentFeature:
+    #         try:
+    #             desc = arcpy.Describe(extentFeature)
+    #             inExt = desc.extent
+    #             inSR = inExt.spatialReference
+    #             logFile.write(f'ENVIRONMENT: Reporting Extent ({inSR.name}) = {inExt.XMax}, {inExt.YMax}, {inExt.XMin}, {inExt.YMin}\n')
+    #
+    #             wgs84SR = arcpy.SpatialReference(4326)
+    #             transformList = arcpy.ListTransformations(inSR, wgs84SR, inExt)
+    #             if len(transformList) == 0:
+    #                 # if no list is returned; no transformation is required
+    #                 transformMethod = ""
+    #             else:
+    #                 # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+    #                 transformMethod = transformList[0]
+    #
+    #             if transformMethod != "":
+    #                 prjExt = inExt.projectAs(wgs84SR, transformMethod)
+    #             else:
+    #                 prjExt = inExt.projectAs(wgs84SR)
+    #
+    #             logFile.write(f'ENVIRONMENT: Reporting Extent (WGS 1984) = {prjExt.XMax}, {prjExt.YMax}, {prjExt.XMin}, {prjExt.YMin}\n')
+    #
+    #         except:
+    #             logFile.write('ENVIRONMENT: Reporting Extent error encountered\n'.format(env.snapRaster))
+    #             pass
+    #     else:
+    #         logFile.write('ENVIRONMENT: Reporting Extent not captured\n'.format(env.snapRaster))
+    #
+    #     if snapRaster:
+    #         logFile.write('ENVIRONMENT: Snap Raster = {0}\n'.format(env.snapRaster))
+    #     if processingCellSize:
+    #         logFile.write('ENVIRONMENT: Cell Size = {0}\n'.format(env.cellSize))
+    #     logFile.write('ENVIRONMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
+    #     logFile.write('ENVIRONMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
+    #     logFile.write('ENVIRONMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
+    #
+    #     logFile.write('\n')
         
     return itemTuples
 

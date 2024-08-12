@@ -66,19 +66,25 @@ class metricCalc:
                    "For the most accurate results, it is highly recommended to use the cell size of the input Land cover grid as the Processing cell size.", 1, self.logFile)
         
         # Run the setup
+        
+        # self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
+        #                                                                          os.path.dirname(outTable),
+        #                                                                          [metricsToRun,optionalFieldGroups],
+        #                                                                          self.logFile, inReportingUnitFeature)
+        
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
-                                                                                 [metricsToRun,optionalFieldGroups],
-                                                                                 self.logFile, inReportingUnitFeature)
+                                                                                 [metricsToRun,optionalFieldGroups])
+
 
         # XML Land Cover Coding file loaded into memory
         self.lccObj = lcc.LandCoverClassification(lccFilePath)
         # get the dictionary with the LCC CLASSES attributes
         self.lccClassesDict = self.lccObj.classes
         
-        if self.logFile:
-            # write the metric class grid values to the log file
-            log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, metricConst)
+        # if self.logFile:
+        #     # write the metric class grid values to the log file
+        #     log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, metricConst)
 
         # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
         self.tableName = None
@@ -95,6 +101,8 @@ class metricCalc:
         self.reportingUnitIdField = reportingUnitIdField
         self.metricConst = metricConst
         self.inLandCoverGrid = inLandCoverGrid
+        self.snapRaster = snapRaster
+        self.processingCellSize = processingCellSize
         self.ignoreHighest = ignoreHighest
         self.scratchNameToBeDeleted =  ""
         self.reportingUnitAreaDict = None
@@ -106,7 +114,7 @@ class metricCalc:
     def _replaceRUFeatures(self):
         # Placeholder for internal function for buffer calculations - most calculations don't require this step.
         pass
-
+    
     def _housekeeping(self):
         # Perform additional housekeeping steps - this must occur after any LCGrid or inRUFeature replacement
 
@@ -158,6 +166,13 @@ class metricCalc:
             log.logWriteOutputTableInfo(self.newTable, self.logFile)
             AddMsg("Summary complete", 0)
     
+    def _logEnvironments(self):
+        if self.logFile:
+            # write environment settings
+            log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.inReportingUnitFeature)
+            
+            # write the metric class grid values to the log file
+            log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, self.metricConst)
     
     # Function to run all the steps in the calculation process
     def run(self):
@@ -180,8 +195,10 @@ class metricCalc:
         self._calculateMetrics()
         
         # Record Output Table info to log file
-        if self.logFile:
-            self._summarizeOutTable()
+        self._summarizeOutTable()
+               
+        # Write Environment settings to the log file
+        self._logEnvironments()
         
         # ensure cleanup occurs.
         if self.tabAreaTable != None:
@@ -643,8 +660,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups], 
-                                                                                logFile, inReportingUnitFeature )
+                                                                                [metricsToRun,optionalFieldGroups])
         
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -671,6 +687,10 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             conversionFactor = conversion.getSqMeterConversionFactor(outputLinearUnits)
         except:
             raise errors.attilaException(errorConstants.linearUnitConversionError)
+        
+        # if logFile:
+        #     # write to the log file some of the environment settings before any user alerts
+        #     log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
@@ -775,6 +795,9 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                 #skip over output table statistics routine as it will be performed later
                 def _summarizeOutTable(self):
                     pass
+                
+                def _logEnvironments(self):
+                    pass
 
             # Create new instance of metricCalc class to contain parameters
             pmCalc = metricCalcPM(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -799,6 +822,13 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)   
+            
+            # write to the log file some of the environment settings
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            
+            # write the class definitions to the log file
+            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
+            
     
     except Exception as e:
         if logFile:
@@ -848,15 +878,19 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups], 
-                                                                                logFile, inReportingUnitFeature )
+                                                                                [metricsToRun,optionalFieldGroups])
 
         lccObj = lcc.LandCoverClassification(lccFilePath)
+        
+        if logFile:
+            # write the metric class grid values to the log file
+            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
+        
         # get the dictionary with the LCC CLASSES attributes
         lccClassesDict = lccObj.classes
         
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
-        
+                
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         
@@ -887,14 +921,19 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         
             class metricCalcCAEM(metricCalc):
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
-                def _replaceLCGrid(self):
+                def _replaceLCGrid(self):                      
                     # replace the inLandCoverGrid
                     AddMsg("%s Generating core and edge grid for Class: %s" % (self.timer.now(), m.upper()), 0, self.logFile)
+                    
+                    # if self.logFile:
+                    #     # write the metric class grid values to the log file
+                    #     log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, self.metricConst)
+                    
                     scratchNameReference =  [""];
                     self.inLandCoverGrid = raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, self.inEdgeWidth,
                                                                         self.timer, metricConst.shortName, scratchNameReference, self.logFile)
                     self.scratchNameToBeDeleted = scratchNameReference[0]
-                    AddMsg("%s Core and edge grid complete for Class: %s" % (self.timer.now(), m.upper()), 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Class {m.upper()} core and edge grid complete. Intermediate: {os.path.basename(self.scratchNameToBeDeleted)}", 0, self.logFile)
                     
                     #Moved the save intermediate grid to the calcMetrics function so it would be one of the last steps to be performed
 
@@ -960,6 +999,9 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                 #skip over output table statistics routine as it will be performed later
                 def _summarizeOutTable(self):
                     pass
+                
+                def _logEnvironments(self):
+                    pass
 
 
             # Create new instance of metricCalc class to contain parameters
@@ -989,6 +1031,8 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
+            
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
 
     except Exception as e:
         if logFile:
@@ -1710,6 +1754,9 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
+            
+            # write to the log file some of the environment settings
+            log.writeEnvironments(logFile, None, None, inReportingUnitFeature)
         
     except Exception as e:
         if logFile:
@@ -1757,9 +1804,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
                                                                                                   processingCellSize, 
                                                                                                   os.path.dirname(outTable), 
-                                                                                                  [metricsToRun,optionalFieldGroups], 
-                                                                                                  self.logFile,
-                                                                                                  inReportingUnitFeature)
+                                                                                                  [metricsToRun,optionalFieldGroups])
                 
                 # Save other input parameters as class attributes
                 self.outTable = outTable
@@ -1767,14 +1812,20 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 self.reportingUnitIdField = reportingUnitIdField
                 self.metricConst = metricConst
                 self.inLandCoverGrid = inLandCoverGrid
+                self.snapRaster = snapRaster
+                self.processingCellSize = processingCellSize
 
                 # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
                 self.tableName = None
                 self.saveIntermediates = globalConstants.intermediateName in self.optionalGroupsList
                 if self.saveIntermediates:
                     self.tableName = metricConst.shortName + globalConstants.tabulateAreaTableAbbv
+                                    
+            def _logEnvironments(self):
+                if self.logFile:
+                    # write environment settings
+                    log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.inReportingUnitFeature)
                     
-                
             def _housekeeping(self):
                 # alert user if the land cover grid cells are not square (default to size along x axis)
                 settings.checkGridCellDimensions(self.inLandCoverGrid, self.logFile)
@@ -1820,6 +1871,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                     
             # Function to run all the steps in the calculation process
             def run(self):
+            
                 # Perform additional housekeeping
                 self._housekeeping()
                 
@@ -1834,6 +1886,9 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 
                 # Summarize the ATtILA metric output table to log file
                 self._summarizeOutTable()
+                
+                # Write Environment settings to the log file
+                self._logEnvironments()
                 
 
         # retrieve the attribute constants associated with this metric
@@ -2700,8 +2755,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         processingCellSize = Raster(inLandCoverGrid).meanCellWidth
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
-                                                                               [metricsToRun,optionalFieldGroups], logFile,
-                                                                               inLandCoverGrid)
+                                                                               [metricsToRun,optionalFieldGroups])
 
         # Process the Land Cover Classification XML
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2714,9 +2768,11 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
         
-        if logFile:
-            # write the metric class grid values to the log file
-            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
+        # if logFile:
+        #     log.writeEnvironments(logFile, snapRaster, processingCellSize, inLandCoverGrid)
+        #
+        #     # write the metric class grid values to the log file
+        #     log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
         
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
@@ -2899,6 +2955,12 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 addToActiveMap.append(scratchName)
  
      
+        if logFile:
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, inLandCoverGrid)
+        
+            # write the metric class grid values to the log file
+            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
+        
         # add outputs to the active map
         if actvMap != None:
             for aFeature in addToActiveMap:

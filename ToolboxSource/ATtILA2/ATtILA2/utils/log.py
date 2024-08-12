@@ -114,7 +114,53 @@ def logWriteOutputTableInfo(newTable, logFile):
     # if arcpy.Exists(outTable):
     #     arcpy.Delete_management(outTable)
 
+def writeExtents(logFile, inExt):
+    inSR = inExt.spatialReference
+    logFile.write(f'ENVIRONMENT: Reporting Extent ({inSR.name}) = {inExt.XMax}, {inExt.YMax}, {inExt.XMin}, {inExt.YMin}\n')
+    
+    wgs84SR = arcpy.SpatialReference(4326)
+    transformList = arcpy.ListTransformations(inSR, wgs84SR, inExt)
+    if len(transformList) == 0:
+        # if no list is returned; no transformation is required
+        transformMethod = ""
+    else:
+        # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+        transformMethod = transformList[0]
+    
+    if transformMethod != "":
+        prjExt = inExt.projectAs(wgs84SR, transformMethod)
+    else:
+        prjExt = inExt.projectAs(wgs84SR)
         
+    logFile.write(f'ENVIRONMENT: Reporting Extent (WGS 1984) = {prjExt.XMax}, {prjExt.YMax}, {prjExt.XMin}, {prjExt.YMin}\n')
+
+
+def writeEnvironments(logFile, snapRaster, processingCellSize, extentDataset=None):
+    
+    logFile.write('\n')
+    
+    try:
+        if extentDataset:
+            desc = arcpy.Describe(extentDataset)
+            inExt = desc.extent
+        else:
+            inExt = env.extent
+            
+        writeExtents(logFile, inExt)
+                                        
+    except:
+        logFile.write('ENVIRONMENT: Reporting Extent error encountered\n'.format(env.snapRaster))
+
+
+    if snapRaster:
+        logFile.write('ENVIRONMENT: Snap Raster = {0}\n'.format(env.snapRaster))
+    if processingCellSize:
+        logFile.write('ENVIRONMENT: Cell Size = {0}\n'.format(env.cellSize))
+    logFile.write('ENVIRONMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
+    logFile.write('ENVIRONMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
+    logFile.write('ENVIRONMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
+    
+    logFile.write('\n')       
 
 def logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst):
     ''' Write grid values for selected metric classes to log file. '''
@@ -125,14 +171,14 @@ def logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst):
         lccClassesDict = lccObj.classes
         excludedValuesList = lccObj.values.getExcludedValueIds()
         
-        logFile.write('\n')
+        #logFile.write('\n')
         for mBaseName in metricsBaseNameList:
             # get the grid codes for this specified metric
             metricGridCodesList = lccClassesDict[mBaseName].uniqueValueIds
             logFile.write('CLASS: {0} = {1}\n'.format(mBaseName, str(list(metricGridCodesList))))
         
         if len(excludedValuesList) > 0:
-            logFile.write('\n')
+            # logFile.write('\n')
             logFile.write('CLASS: Excluded = {0}\n'.format(str(list(excludedValuesList))))
         
         logFile.write('\n')
