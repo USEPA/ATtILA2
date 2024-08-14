@@ -823,8 +823,12 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)   
             
-            # write to the log file some of the environment settings
+            # write the standard environment settings to the log file
             log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
             
             # write the class definitions to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
@@ -1032,7 +1036,12 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
             
+            # write the standard environment settings to the log file
             log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
 
     except Exception as e:
         if logFile:
@@ -1611,6 +1620,9 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
+            
+            # write to the log file some of the environment settings
+            log.writeEnvironments(logFile, None, None, inReportingUnitFeature)
     
     except Exception as e:
         if logFile:
@@ -1755,8 +1767,12 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
             
-            # write to the log file some of the environment settings
+            # write the standard environment settings to the log file
             log.writeEnvironments(logFile, None, None, inReportingUnitFeature)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
         
     except Exception as e:
         if logFile:
@@ -1970,7 +1986,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
+        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {bn(tempReportingUnitFeature)}", 0, logFile)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
                                                            reportingUnitIdField,"","MULTI_PART")
 
@@ -1978,10 +1994,10 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
         
         # Build the final output table.
-        AddMsg(timer.now() + " Creating output table", 0, logFile)
+        AddMsg(f"{timer.now()} Creating output table", 0, logFile)
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         
-        AddMsg(timer.now() + " Calculating population density", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating population density", 0, logFile)
         # Create an index value to keep track of intermediate outputs and fieldnames.
         index = ""
         #if popChangeYN is checked:
@@ -1989,17 +2005,17 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             index = "1"
         # Perform population density calculation for first (only?) population feature class
         calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
-                                      env.workspace,outTable,metricConst,cleanupList,index)
+                                      env.workspace,outTable,metricConst,cleanupList,index,timer,logFile)
 
         #if popChangeYN is checked:
         if popChangeYN == "true":
             index = "2"
-            AddMsg(timer.now() + " Calculating population density for second feature class", 0, logFile)
+            AddMsg(f"{timer.now()} Calculating population density for second feature class", 0, logFile)
             # Perform population density calculation for second population feature class
             calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature2,inPopField2,
-                                          env.workspace,outTable,metricConst,cleanupList,index)
+                                          env.workspace,outTable,metricConst,cleanupList,index,timer,logFile)
             
-            AddMsg(timer.now() + " Calculating population change", 0, logFile)
+            AddMsg(f"{timer.now()} Calculating population change", 0, logFile)
             # Set up a calculation expression for population change
             calcExpression = "getPopChange(!popCnt_T1!,!popCnt_T2!)"
             codeBlock = """def getPopChange(pop1,pop2):
@@ -2014,13 +2030,20 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             # Calculate the population density
             vector.addCalculateField(outTable,metricConst.populationChangeFieldName,"DOUBLE",calcExpression,codeBlock)       
 
-        AddMsg(timer.now() + " Calculation complete")
+        AddMsg(f"{timer.now()} Calculation complete", 0, logFile)
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
-            AddMsg("Summary complete", 0)   
+            AddMsg("Summary complete", 0)
             
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, None, None, inReportingUnitFeature)   
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
+    
     except Exception as e:
         if logFile:
             # COMPLETE LOGFILE
@@ -2114,10 +2137,19 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         ### Metric Calculation
         AddMsg(timer.now() + " Calculating population within each reporting unit", 0, logFile)        
          
+        # tool gui does not have a snapRaster parameter. When the census dataset is a raster, the snapRaster will
+        # be set to the census raster. To record this correctly in the log file, set up the snapRaster variable.
+        snapRaster = None
+        processingCellSize = None
+        
         if descCensus.datasetType == "RasterDataset":
             # set the raster environments so the raster operations align with the census grid cell boundaries
             env.snapRaster = inCensusDataset
             env.cellSize = descCensus.meanCellWidth
+            
+            # setting variables so they can be reported in the log file
+            snapRaster = inCensusDataset
+            processingCellSize = str(descCensus.meanCellWidth)
             
             # calculate the population for the reporting unit using zonal statistics as table
             arcpy.sa.ZonalStatisticsAsTable(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_RU, "DATA", "SUM")
@@ -2160,7 +2192,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             # calculate the population for the reporting unit using zonal statistics as table
             # The snap raster, and cell size have been set to match the census raster
             arcpy.sa.ZonalStatisticsAsTable(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_FP, "DATA", "SUM")
-                
+            
             # Rename the population count field.
             outPopField = metricConst.populationCountFieldNames[index]
             arcpy.AlterField_management(popTable_FP, "SUM", outPopField, outPopField)
@@ -2169,7 +2201,6 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             # # Check that the user supplied a population field
             # if len(inPopField) == 0:
             #     raise errors.attilaException(errorConstants.missingFieldError)
-                
             
             # Create a copy of the census feature class that we can add new fields to for calculations.
             fieldMappings = arcpy.FieldMappings()
@@ -2285,6 +2316,13 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
             
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
+            
     except Exception as e:
         if logFile:
             # COMPLETE LOGFILE
@@ -2335,8 +2373,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
          
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
-                                                                                [metricsToRun,optionalFieldGroups],logFile,
-                                                                                inReportingUnitFeature)
+                                                                                [metricsToRun,optionalFieldGroups])
  
         # XML Land Cover Coding file loaded into memory
         lccObj = lcc.LandCoverClassification(lccFilePath)
@@ -2348,10 +2385,6 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         landCoverValues = raster.getRasterValues(inLandCoverGrid)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
-        
-        if logFile:
-            # write the metric class grid values to the log file
-            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
 
         # # append the view radius distance value to the field suffix
         # newSuffix = metricConst.fieldSuffix + viewRadius
@@ -2523,6 +2556,16 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
+            
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
+
+            # write the metric class grid values to the log file
+            log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
                 
     except Exception as e:
         if logFile:
@@ -2956,7 +2999,12 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
  
      
         if logFile:
+            # write the standard environment settings to the log file
             log.writeEnvironments(logFile, snapRaster, processingCellSize, inLandCoverGrid)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
         
             # write the metric class grid values to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
@@ -3009,8 +3057,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         snapRaster = False
 
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSize,os.path.dirname(outRaster),
-                                                                              [metricsToRun,optionalFieldGroups], logFile,
-                                                                              inLineFeature)  
+                                                                              [metricsToRun,optionalFieldGroups])  
 
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -3136,6 +3183,14 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             for aFeature in addToActiveMap:
                 actvMap.addDataFromPath(aFeature)
                 AddMsg(("Adding {0} to {1} view").format(os.path.basename(aFeature), actvMap.name))
+        
+        if logFile:
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, None, None, None)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
 
     except Exception as e:
         if logFile:
@@ -3187,8 +3242,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         metricsToRun = 'item1  -  description1;item2  -  description2'
     
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,cellSizeStr,os.path.dirname(outRaster),
-                                                                              [metricsToRun,optionalFieldGroups], logFile,
-                                                                              inWalkFeatures)  
+                                                                              [metricsToRun,optionalFieldGroups])  
     
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -3288,6 +3342,14 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         log.arcpyLog(arcpy.BuildRasterAttributeTable_management, (costRaster, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
         log.arcpyLog(arcpy.AddField_management, (costRaster, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
         raster.updateCategoryLabels(costRaster, categoryDict)
+        
+        if logFile:
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, snapRaster, cellSizeStr, None)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
     
     except Exception as e:
         if logFile:
@@ -3308,7 +3370,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
 
 
 def proc_park(parkIDStr, logFile=None):
-    AddMsg("parkIDStr = {0}".format(parkIDStr))
+    AddMsg(f"parkIDStr = {parkIDStr}")
     
     
 def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCostSurface='', inCensusDataset='', inPopField='', 
@@ -3342,7 +3404,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         metricsToRun = 'item1  -  description1;item2  -  description2'
 
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize, os.path.dirname(outRaster),
-                                                                              [metricsToRun, optionalFieldGroups], logFile, inParkFeature)  
+                                                                              [metricsToRun, optionalFieldGroups])  
 
         if globalConstants.intermediateName in optionalGroupsList:
             cleanupList.append("KeepIntermediates")  # add this string as the first item in the cleanupList to prevent cleanups
@@ -3354,40 +3416,40 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         if descCensus.datasetType != "RasterDataset" and inPopField == '':
             raise errors.attilaException(errorConstants.missingFieldError) 
         
-        # Do a Describe on the Snap Raster input and get the file's basename.
-        descSnapRaster = arcpy.Describe(snapRaster)
-        snapBaseName = descSnapRaster.baseName
+        # Do a Describe on the Cost Surface Raster input and get the file's basename.
+        descCSR = arcpy.Describe(inCostSurface)
+        csrBaseName = descCSR.baseName
 
-        # Check to see if the user has specified a Processing cell size other than the cell size of the inLandCoverGrid
+        # Check to see if the user has specified a Processing cell size other than the cell size of the inCostSurface
         cellSize = conversion.convertNumStringToNumber(processingCellSize)
         x = cellSize
-        y = Raster(snapRaster).meanCellWidth
+        y = Raster(inCostSurface).meanCellWidth
 
         if x%y == 0 or y%x == 0:
             pass
         else:
-            AddMsg("The Processing cell size and the input Snap raster's cell size are not equal to each other nor are they multiples or factors of each other. "\
+            AddMsg("The Processing cell size and the input Cost surface raster's cell size are not equal to each other nor are they multiples or factors of each other. "\
                    "To best use the output of this tool with the Walkable Parks Tool, it is highly recommended that the Processing cell size is set "\
-                   "as either equal to the Snap raster's cell size, a factor of the Snap raster's cell size, or a multiple of the Snap raster's cell size.", 1, logFile)
+                   "as either equal to the Cost surface raster's cell size, a factor of the Snap raster's cell size, or a multiple of the Cost surface raster's cell size.", 1, logFile)
 
-        # if no specific geoprocessing environment extent is set, temporarily set it to match the snapRaster. It will be reset during the standardRestore
+        # if no specific geoprocessing environment extent is set, temporarily set it to match the inCostSurface. It will be reset during the standardRestore
         nonSpecificExtents = ["NONE", "MAXOF", "MINOF"]
         envExtent = str(env.extent).upper()
         if envExtent in nonSpecificExtents:
-            AddMsg(("{0} Using {1}'s extent for geoprocessing steps.").format(timer.now(), snapBaseName), 0, logFile)
-            env.extent = descSnapRaster.extent
+            AddMsg(f"{timer.now()} Using {csrBaseName}'s extent for geoprocessing steps.", 0, logFile)
+            env.extent = descCSR.extent
         else:
-            AddMsg("{0} Extent found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Extent found in Geoprocessing environment settings used for processing.", 0, logFile)
 
-        # if no specific geoprocessing environment outputCoodinateSystem is set, temporarily set it to match the snapRaster. It will be reset during the standardRestore
+        # if no specific geoprocessing environment outputCoodinateSystem is set, temporarily set it to match the inCostSurface. It will be reset during the standardRestore
         nonSpecificOCS = ["NONE"]
         envOCS = str(env.outputCoordinateSystem).upper()
         if envOCS in nonSpecificOCS:
-            outSR = descSnapRaster.spatialReference
-            AddMsg(("{0} Using {1}'s spatial reference for geoprocessing steps: {2}").format(timer.now(), snapBaseName, outSR.name), 0, logFile)
+            outSR = descCSR.spatialReference
+            AddMsg(f"{timer.now()} Using {csrBaseName}'s spatial reference for geoprocessing steps: {outSR.name}", 0, logFile)
             env.outputCoordinateSystem = outSR
         else:
-            AddMsg("{0} OutputCoordinateSystem found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} OutputCoordinateSystem found in Geoprocessing environment settings used for processing.", 0, logFile)
 
 
         ### Computations
@@ -3397,7 +3459,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         desc = arcpy.Describe(inParkFeature)
         tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
         tempParkFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg("{} Creating temporary copy of {}. Intermediate: {}".format(timer.now(), desc.name, bn(tempParkFeature)), 0, logFile)
+        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {bn(tempParkFeature)}", 0, logFile)
         
         if dissolveParkYN == 'true':
             inParkFeature = log.arcpyLog(arcpy.Dissolve_management, (inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES"), 'arcpy.Dissolve_management', logFile)
@@ -3412,7 +3474,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         parkList = parksDF[oidFld].to_list()
         
         # Calculate the park area in square meters using the coordinate system set in the spatial analysis environment
-        AddMsg("{} Calculating park area in square meters".format(timer.now()), 0, logFile)
+        AddMsg(f"{timer.now()} Calculating park area in square meters", 0, logFile)
         calcAreaFld = 'CalcAreaM2'
         fieldAndGeometry = 'CalcAreaM2 AREA'
         log.arcpyLog(arcpy.management.CalculateGeometryAttributes, (inParkFeature, fieldAndGeometry, "", "SQUARE_METERS"), 'arcpy.management.CalculateGeometryAttributes', logFile)
@@ -3426,7 +3488,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         # Initialize custom progress indicator
         loopProgress = messages.loopProgress(n)
         
-        AddMsg("{} Calculating access and availability for {} areas".format(timer.now(), str(n)))
+        AddMsg(f"{timer.now()} Calculating access and availability for {n} areas", 0, logFile)
         
         
         AddMsg(    
@@ -3534,6 +3596,20 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
             except:
                 pass
         
+        
+        # mosaic the produced park/populations rasters
+        if len(mosaicRasters) == 0:
+            AddMsg(f"No individual park population access rasters were generated. Exiting...\n", 1, logFile)
+        else:
+            AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {bn(outRaster)}.", 0, logFile)
+            outWS = env.workspace
+            log.arcpyLog(arcpy.management.MosaicToNewRaster, (mosaicRasters, outWS, bn(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST"), 'arcpy.management.MosaicToNewRaster', logFile)   
+            
+            AddMsg(f"{timer.now()} Deleting individual park rasters...", 0, logFile)
+            [arcpy.Delete_management(p) for p in mosaicRasters]
+            AddMsg(f"{timer.now()} Individual park rasters deletion complete\n", 0, logFile)   
+        
+        # report anomalies to the user
         if len(nullRaster) > 0:
             AddMsg(f"Number of areas which did not rasterize: {len(nullRaster)}", 1, logFile)
             AddMsg("  Ids for these areas can be found in the log file if the LOGFILE Additional option was selected.", 1)
@@ -3552,19 +3628,13 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
             if logFile:
                 logFile.write(f"    Population ZERO Area Ids: {str(popZero)}\n\n")
         
-        
-        # mosaic the produced park/populations rasters
-        if len(mosaicRasters) == 0:
-            AddMsg(f"No individual park population access rasters were generated. Exiting...", 1, logFile)
-        else:
-            AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {bn(outRaster)}.", 0, logFile)
-            outWS = env.workspace
-            log.arcpyLog(arcpy.management.MosaicToNewRaster, (mosaicRasters, outWS, bn(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST"), 'arcpy.management.MosaicToNewRaster', logFile)   
-            
-            AddMsg(f"{timer.now()} Deleting individual park rasters...", 0, logFile)
-            [arcpy.Delete_management(p) for p in mosaicRasters]
-            AddMsg(f"{timer.now()} Individual park rasters deletion complete", 0, logFile)   
-
+        if logFile:
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, None)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
 
     except Exception as e:
         if logFile:
@@ -3702,11 +3772,20 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         ### Metric Calculation
         AddMsg("{0} Calculating population within each reporting unit. Intermediate: {1}".format(timer.now(), bn(popTable_RU)), 0, logFile)        
         
+        # tool gui does not have a snapRaster parameter. When the census dataset is a raster, the snapRaster will
+        # be set to the census raster. To record this correctly in the log file, set up the snapRaster variable.
+        snapRaster = None
+        processingCellSize = None
+        
         ## if census data are a raster
         if descCensus.datasetType == "RasterDataset":
             # set the raster environments so the raster operations align with the census grid cell boundaries
             env.snapRaster = inCensusDataset
             env.cellSize = descCensus.meanCellWidth
+            
+            # setting variables so they can be reported in the log file
+            snapRaster = inCensusDataset
+            processingCellSize = str(descCensus.meanCellWidth)
         
             # calculate the population for the reporting unit using zonal statistics as table
             log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_RU, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
@@ -4062,6 +4141,13 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             log.logWriteOutputTableInfo(outTable, logFile)
             AddMsg("Summary complete", 0)
+            
+            # write the standard environment settings to the log file
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+            # if extentDataset is set to None, the env.extent setting will reported.
+            # for snapRaster and processingCellSize, if the parameter is None, no entry will
+            # will be recorded in the log for that parameter
     
     except Exception as e:
         if logFile:
