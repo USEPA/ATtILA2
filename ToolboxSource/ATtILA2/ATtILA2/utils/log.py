@@ -149,16 +149,16 @@ def writeEnvironments(logFile, snapRaster, processingCellSize, extentDataset=Non
         writeExtents(logFile, inExt)
                                         
     except:
-        logFile.write('ENVIRONMENT: Reporting Extent error encountered\n'.format(env.snapRaster))
+        logFile.write('ENVIRONMENT: Reporting Extent error encountered\n')
 
 
     if snapRaster:
-        logFile.write('ENVIRONMENT: Snap Raster = {0}\n'.format(env.snapRaster))
+        logFile.write(f'ENVIRONMENT: Snap Raster = {env.snapRaster}\n')
     if processingCellSize:
-        logFile.write('ENVIRONMENT: Cell Size = {0}\n'.format(env.cellSize))
-    logFile.write('ENVIRONMENT: Output M Flag = {0}\n'.format(env.outputMFlag))
-    logFile.write('ENVIRONMENT: Output Z Flag = {0}\n'.format(env.outputZFlag))
-    logFile.write('ENVIRONMENT: Parallel Processing Factor = {0}\n'.format(env.parallelProcessingFactor))
+        logFile.write(f'ENVIRONMENT: Cell Size = {env.cellSize}\n')
+    logFile.write(f'ENVIRONMENT: Output M Flag = {env.outputMFlag}\n')
+    logFile.write(f'ENVIRONMENT: Output Z Flag = {env.outputZFlag}\n')
+    logFile.write(f'ENVIRONMENT: Parallel Processing Factor = {env.parallelProcessingFactor}\n')
     
     logFile.write('\n')       
 
@@ -201,18 +201,23 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
         l = l.replace(' ','_')
         p = p.replace('\\','\\\\')
         if l == 'Select_options':
-            p = ("'{0}'".format(p))
+            p = (f"'{p}'")
 
-        toolParameters.append('{0}="{1}"'.format(l,p))
+        toolParameters.append(f'{l}="{p}"')
     
     outString = ', \n    '.join(toolParameters)    
-    logFile.write('{0}(\n    {1}\n    ) \n\n'.format(metricConst.metricFUNC, outString))
+    logFile.write(f'{metricConst.metricFUNC}(\n    {outString}\n    ) \n\n')
     
     logFile.write('SCRIPT END:\n\n')
     
     for l, p in zip(labelsList, parametersList):
         if p:
-            logFile.write('PARAMETER: {0} = {1}\n'.format(l, p.replace("'"," ")))
+            p = p.replace("'"," ")
+            # need to strip off any directory path information from the filename
+            x = p.rfind('\\')
+            if x != -1: p = p[x+1:]
+                
+            logFile.write(f'PARAMETER: {l} = {p}\n')
     
     logFile.write('\n')
 

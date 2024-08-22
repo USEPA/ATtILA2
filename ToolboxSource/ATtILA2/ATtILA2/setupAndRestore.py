@@ -121,6 +121,7 @@ def standardRestore(logFile=None):
         logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         logFile.write("\n---End of Log File---\n")
         logFile.close()
+        AddMsg('Log file closed')
     
     # restore the environments
     env.snapRaster = _tempEnvironment0

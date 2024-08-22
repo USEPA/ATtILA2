@@ -138,7 +138,7 @@ class metricCalc:
 
 
     def _makeAttilaOutTable(self):
-        AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
+        AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {os.path.basename(self.outTable)}", 0, self.logFile)
         # Internal function to construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -244,7 +244,8 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         class metricCalcLCP(metricCalc):        
         
             def _makeAttilaOutTable(self):
-                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
+                #AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
+                AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {os.path.basename(self.outTable)}", 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 if perCapitaYN == "true":     
                     self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable, 
@@ -702,7 +703,8 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
          
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
+        #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, self.logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -902,7 +904,8 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
+        #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, self.logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -1644,6 +1647,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             logFile.write("\n---End of Log File---\n")
             logFile.close()
+            AddMsg('Log file closed')
             
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
@@ -1794,6 +1798,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             logFile.write("\n---End of Log File---\n")
             logFile.close()
+            AddMsg('Log file closed')
             
         env.workspace = _tempEnvironment1
         env.outputMFlag = _tempEnvironment4
@@ -1857,7 +1862,8 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                     self.zoneAreaDict = polygons.getMultiPartIdAreaDict(self.inReportingUnitFeature, self.reportingUnitIdField, self.outputSpatialRef)
                     
             def _makeAttilaOutTable(self):
-                AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
+                #AddMsg(self.timer.now() + " Constructing the ATtILA metric output table: "+self.outTable, 0, self.logFile)
+                AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {os.path.basename(self.outTable)}", 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 self.newTable, self.metricsFieldnameDict = table.tableWriterNoLcc(self.outTable,
                                                                                         self.metricsBaseNameList,
@@ -2064,6 +2070,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             logFile.write("\n---End of Log File---\n")
             logFile.close()
+            AddMsg('Log file closed')
             
         env.workspace = _tempEnvironment1
         env.parallelProcessingFactor = _tempEnvironment6
@@ -2343,6 +2350,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             logFile.write("\n---End of Log File---\n")
             logFile.close()
+            AddMsg('Log file closed')
             
         env.snapRaster = _tempEnvironment0
         env.workspace = _tempEnvironment1
@@ -2418,7 +2426,8 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
  
         ''' Make ATtILA Output Table '''
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
+        #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, self.logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   logFile, metricConst.additionalFields)
@@ -2682,7 +2691,8 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 self.metricConst.fieldParameters = self.oldFieldParameters
                 
                 # Construct the ATtILA metric output table
-                AddMsg("{0} Constructing the ATtILA metric output table: {1}".format(self.timer.now(), self.outTable), 0, self.logFile)
+                #AddMsg("{0} Constructing the ATtILA metric output table: {1}".format(self.timer.now(), self.outTable), 0, self.logFile)
+                AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {os.path.basename(self.outTable)}", 0, self.logFile)
                 # Internal function to construct the ATtILA metric output table
                 self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -4170,6 +4180,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             logFile.write("\n---End of Log File---\n")
             logFile.close()
+            AddMsg('Log file closed')
         
         env.snapRaster = _tempEnvironment0
         env.workspace = _tempEnvironment1
