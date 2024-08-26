@@ -590,8 +590,8 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
                     flcpCalc.reportingUnitAreaDict[key].append(area)
             
             else:
-                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas" % timer.now(), flcpCalc.logFile)
-                for aKey in flcpCalc.testAreaDict.keys():
+                AddMsg(f"{timer.now()} No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas", flcpCalc.logFile)
+                for aKey in flcpCalc.reportingUnitAreaDict.keys():
                     area = flcpCalc.reportingUnitAreaDict[aKey]
                     # make the value of key a list
                     flcpCalc.reportingUnitAreaDict[aKey] = [flcpCalc.reportingUnitAreaDict[aKey]]
@@ -1166,8 +1166,8 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                     rlcpCalc.reportingUnitAreaDict[key].append(area)
             
             else:
-                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now(), 0, logFile)
-                for aKey in rlcpCalc.testAreaDict.keys():
+                AddMsg(f"{timer.now()} No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas...", 0, logFile)
+                for aKey in rlcpCalc.reportingUnitAreaDict.keys():
                     area = rlcpCalc.reportingUnitAreaDict[aKey]
                     # make the value of key a list
                     rlcpCalc.reportingUnitAreaDict[aKey] = [rlcpCalc.reportingUnitAreaDict[aKey]]
@@ -1308,8 +1308,8 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                     splcpCalc.reportingUnitAreaDict[key].append(area)
             
             else:
-                AddMsg("%s No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas..." % timer.now(), 0, logFile)
-                for aKey in splcpCalc.testAreaDict.keys():
+                AddMsg(f"{timer.now()} No excluded values found in the land cover grid. Reporting unit effective area equals total reporting unit area. Recording reporting unit areas...", 0, logFile)
+                for aKey in splcpCalc.reportingUnitAreaDict.keys():
                     area = splcpCalc.reportingUnitAreaDict[aKey]
                     # make the value of key a list
                     splcpCalc.reportingUnitAreaDict[aKey] = [splcpCalc.reportingUnitAreaDict[aKey]]
@@ -3321,7 +3321,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         if inImpassableFeatures:
             # auto calculate the impass value and inform the user. Consider changing this to an input parameter.
             impassNumber = math.ceil(distNumber / cellSize)
-            AddMsg("{} Impass Value = {}. Calculated as (Maximum walking distance / Processing cell size) rounded up to the nearest integer".format(timer.now(), impassNumber), 0, logFile)
+            AddMsg("{} Impass Value = {}. Calculated as (Maximum walking distance / Cost raster cell size) rounded up to the nearest integer".format(timer.now(), impassNumber), 0, logFile)
             
             AddMsg("{0} Processing Impassable features".format(timer.now()), 0, logFile)
             impassName = "{0}_Impass".format(metricConst.shortName)
