@@ -907,7 +907,7 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
         if len(lineList) > 1:
             namePrefix = fileNameBase+"_Line_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg("{0} Merging line features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            AddMsg(f"{timer.now()} Merging {len(lineList)} line features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
             mergeOutput = arcpyLog(arcpy.Merge_management, (lineList,mergeName), 'arcpy.Merge_management', logFile)
             mergedOutputs[0] = mergeOutput
         elif len(lineList) == 1:
@@ -916,17 +916,16 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
         if len(polyList) > 1:
             namePrefix = fileNameBase+"_Poly_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg("{0} Merging polygon features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            AddMsg(f"{timer.now()} Merging {len(polyList)} polygon features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
             mergeOutput = arcpyLog(arcpy.Merge_management, (polyList,mergeName), 'arcpy.Merge_management', logFile)
             mergedOutputs[1] = mergeOutput
         elif len(polyList) == 1:
             mergedOutputs[1] = polyList[0]
         
         if len(pointList) > 1:
-            AddMsg("{0} Merging point features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
             namePrefix = fileNameBase+"_Point_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg("{0} Merging point features from all input features: {1}".format(timer.now(), os.path.basename(mergeName)), 0, logFile)
+            AddMsg(f"{timer.now()} Merging {len(pointList)} point features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
             mergeOutput = arcpyLog(arcpy.Merge_management, (pointList,mergeName), 'arcpy.Merge_management', logFile)
             mergedOutputs[2] = mergeOutput
         elif len(pointList) == 1:

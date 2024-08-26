@@ -3327,10 +3327,10 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         if inImpassableFeatures:
             # auto calculate the impass value and inform the user. Consider changing this to an input parameter.
             impassNumber = math.ceil(distNumber / cellSize)
-            AddMsg("{} Impass Value = {}. Calculated as (Maximum walking distance / Cost raster cell size) rounded up to the nearest integer".format(timer.now(), impassNumber), 0, logFile)
+            AddMsg(f"{timer.now()} Impass Value = {impassNumber}. Calculated as (Maximum walking distance / Cost raster cell size) rounded up to the nearest integer", 0, logFile)
             
-            AddMsg("{0} Processing Impassable features".format(timer.now()), 0, logFile)
-            impassName = "{0}_Impass".format(metricConst.shortName)
+            AddMsg(f"{timer.now()} Processing Impassable features", 0, logFile)
+            impassName = f"{metricConst.shortName}_Impass"
             # merge all input Impassable features into separate line and polygon feature classes
             mergedImpassFeatures, cleanupList = vector.mergeVectorsByType(inImpassableFeatures, impassName, cleanupList, timer, logFile)
             
@@ -3342,12 +3342,12 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             impassRaster, cleanupList = raster.getWalkabilityGrid(vectorsToRaster, impassNumber, baseNumber, impassName, cellSize, cleanupList, timer, logFile)
             
             # combine the Walkable and Impassable rasters. 
-            AddMsg("{0} Combining the Walkable raster with the Impassable raster".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Combining the Walkable raster with the Impassable raster for final output", 0, logFile)
             costRaster = Con((walkRaster == baseNumber), impassRaster, walkRaster)
             
             categoryDict = {walkNumber: "Walkable", baseNumber: "Base", impassNumber: "Impassable"}
         else:
-            AddMsg("{0} Creating a copy of the Walkable raster for the Cost Raster".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Creating a copy of the Walkable raster for the final output", 0, logFile)
             costRaster = walkRaster
             
             categoryDict = {walkNumber: "Walkable", baseNumber: "Base"}
