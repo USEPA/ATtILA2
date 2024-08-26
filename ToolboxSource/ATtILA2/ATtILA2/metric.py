@@ -2838,8 +2838,11 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         saveIntermediates = globalConstants.intermediateName in optionalGroupsList
         
         # determine the active map to add the output raster/features    
-        currentProject = arcpy.mp.ArcGISProject("CURRENT")
-        actvMap = currentProject.activeMap
+        try:
+            currentProject = arcpy.mp.ArcGISProject("CURRENT")
+            actvMap = currentProject.activeMap
+        except:
+            actvMap = None
         
         # Save the current environment settings, then set to desired condition  
         tempEnvironment0 = env.overwriteOutput
@@ -3075,8 +3078,11 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # determine the active map to add the output raster/features    
-        currentProject = arcpy.mp.ArcGISProject("CURRENT")
-        actvMap = currentProject.activeMap    
+        try:
+            currentProject = arcpy.mp.ArcGISProject("CURRENT")
+            actvMap = currentProject.activeMap    
+        except:
+            actvMap = None
         
         # create list of layers to add to the active Map
         addToActiveMap = []
@@ -4243,8 +4249,11 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
         # determine the active map to add the output raster/features    
-#        currentProject = arcpy.mp.ArcGISProject("CURRENT")
-#        actvMap = currentProject.activeMap
+#        try:
+#            currentProject = arcpy.mp.ArcGISProject("CURRENT")
+#            actvMap = currentProject.activeMap
+#        except:
+#            actvMap = None
         
         ### Computations
         
