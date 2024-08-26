@@ -213,7 +213,7 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
     for l, p in zip(labelsList, parametersList):
         if p:
             p = p.replace("'"," ")
-            # need to strip off any directory path information from the filename
+            # strip off any directory path information from the filename
             x = p.rfind('\\')
             if x != -1: p = p[x+1:]
                 

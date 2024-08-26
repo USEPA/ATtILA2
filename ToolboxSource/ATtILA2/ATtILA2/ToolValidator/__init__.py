@@ -127,11 +127,11 @@ class lcdToolValidator(BaseValidators.NoLccFileValidator):
     fieldSuffix = lcdConstants.fieldSuffix
     metricShortName = lcdConstants.shortName
 
-class pamToolValidator(BaseValidators.NoLccFileValidator):
+class paaaToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for Pedestrian Access Metrics """
     
-    filterList = pamConstants.optionalFilter
-    metricShortName = pamConstants.shortName
+    filterList = paaaConstants.optionalFilter
+    metricShortName = paaaConstants.shortName
    
     
 class pdmToolValidator(BaseValidators.NoLccFileValidator):

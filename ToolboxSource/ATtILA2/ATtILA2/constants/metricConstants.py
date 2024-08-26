@@ -415,10 +415,10 @@ class nrlcpConstants(baseMetricConstants):
     shortName = "nrlcp"
     optionalFilter = [gc.intermediateDescription, gc.logDescription]    
     
-class pamConstants(baseMetricConstants):
-    name = "PedestrianAccessMetrics"
-    shortName = "pam"
-    metricFUNC = 'metric.runPedestrianAccessMetrics'
+class paaaConstants(baseMetricConstants):
+    name = "PedestrianAccessAndAvailability"
+    shortName = "paaa"
+    metricFUNC = 'metric.run'+name
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
     accessCountFieldName = "Pop_Access"
     accessCountField = [accessCountFieldName,gc.defaultDecimalFieldType,None, 15]

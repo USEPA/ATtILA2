@@ -3383,7 +3383,7 @@ def proc_park(parkIDStr, logFile=None):
     AddMsg(f"parkIDStr = {parkIDStr}")
     
     
-def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCostSurface='', inCensusDataset='', inPopField='', 
+def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='', inCostSurface='', inCensusDataset='', inPopField='', 
                                maxTravelDist='', expandAreaDist='', outRaster='', processingCellSize='', snapRaster='', optionalFieldGroups=''):
     """ Interface for script executing Pedestrian Access Metrics tool """
    
@@ -3396,7 +3396,7 @@ def runPedestrianAccessMetrics(toolPath, inParkFeature, dissolveParkYN='', inCos
         ### Setup
 
         # retrieve the attribute constants associated with this metric
-        metricConst = metricConstants.pamConstants()
+        metricConst = metricConstants.paaaConstants()
 
         # copy input parameters to pass to the log file routine
         parametersList = [inParkFeature, dissolveParkYN, inCostSurface, inCensusDataset, inPopField, maxTravelDist, expandAreaDist, outRaster, processingCellSize, snapRaster, optionalFieldGroups]

@@ -18,7 +18,7 @@ def main(_argv):
     tbxPath = __file__.split("#")[0]
     inputArguments.insert(0, tbxPath)
     
-    metric.runPedestrianAccessMetrics(*inputArguments)
+    metric.runPedestrianAccessAndAvailability(*inputArguments)
     
 if __name__ == "__main__":
     main(sys.argv)
