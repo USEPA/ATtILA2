@@ -435,7 +435,8 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
     finally:
         setupAndRestore.standardRestore(logFile)
         
-        env.workspace = _tempEnvironment1
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
+            env.workspace = _tempEnvironment1
         
         
 def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -622,7 +623,8 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
         
         setupAndRestore.standardRestore(logFile)
         
-        env.workspace = _tempEnvironment1
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
+            env.workspace = _tempEnvironment1
 
 
 def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
@@ -1057,7 +1059,9 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
 
     finally:
         setupAndRestore.standardRestore(logFile)
-        env.workspace = _tempEnvironment1
+        
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
+            env.workspace = _tempEnvironment1
         
 
 def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -1648,11 +1652,12 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
-            
-        env.workspace = _tempEnvironment1
-        env.outputMFlag = _tempEnvironment4
-        env.outputZFlag = _tempEnvironment5
-        env.parallelProcessingFactor = _tempEnvironment6
+        
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
+            env.workspace = _tempEnvironment1
+            env.outputMFlag = _tempEnvironment4
+            env.outputZFlag = _tempEnvironment5
+            env.parallelProcessingFactor = _tempEnvironment6
 
 
 def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField="", 
@@ -1799,11 +1804,12 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
-            
-        env.workspace = _tempEnvironment1
-        env.outputMFlag = _tempEnvironment4
-        env.outputZFlag = _tempEnvironment5
-        env.parallelProcessingFactor = _tempEnvironment6
+        
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
+            env.workspace = _tempEnvironment1
+            env.outputMFlag = _tempEnvironment4
+            env.outputZFlag = _tempEnvironment5
+            env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
@@ -2071,9 +2077,10 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
-            
-        env.workspace = _tempEnvironment1
-        env.parallelProcessingFactor = _tempEnvironment6
+        
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
+            env.workspace = _tempEnvironment1
+            env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
@@ -2351,11 +2358,12 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
-            
-        env.snapRaster = _tempEnvironment0
-        env.workspace = _tempEnvironment1
-        env.cellSize = _tempEnvironment2
-        env.parallelProcessingFactor = _tempEnvironment6
+        
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
+            env.snapRaster = _tempEnvironment0
+            env.workspace = _tempEnvironment1
+            env.cellSize = _tempEnvironment2
+            env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath,
@@ -3697,10 +3705,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         timer = DateTimer()
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
         
-        _tempEnvironment0 = env.snapRaster
-        _tempEnvironment1 = env.workspace
-        _tempEnvironment2 = env.cellSize
-        _tempEnvironment6 = env.parallelProcessingFactor
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
+            _tempEnvironment0 = env.snapRaster
+            _tempEnvironment1 = env.workspace
+            _tempEnvironment2 = env.cellSize
+            _tempEnvironment6 = env.parallelProcessingFactor
         
         # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
         currentFactor = str(env.parallelProcessingFactor)
@@ -4188,10 +4197,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             logFile.close()
             AddMsg('Log file closed')
         
-        env.snapRaster = _tempEnvironment0
-        env.workspace = _tempEnvironment1
-        env.cellSize = _tempEnvironment2
-        env.parallelProcessingFactor = _tempEnvironment6 
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
+            env.snapRaster = _tempEnvironment0
+            env.workspace = _tempEnvironment1
+            env.cellSize = _tempEnvironment2
+            env.parallelProcessingFactor = _tempEnvironment6 
 
         
 

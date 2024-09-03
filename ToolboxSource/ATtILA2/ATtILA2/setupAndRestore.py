@@ -22,8 +22,8 @@ _tempEnvironment7 = ""
 def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescriptionPairList=[], logFile=None):
     """ Standard setup for executing metrics. """
     
-    # Check out any necessary licenses
-    arcpy.CheckOutExtension("spatial")
+    # # Check out any necessary licenses
+    # arcpy.CheckOutExtension("spatial")
     
     # get current snap environment to restore at end of script
     _tempEnvironment0 = env.snapRaster
@@ -84,17 +84,18 @@ def standardRestore(logFile=None):
         AddMsg('Log file closed')
     
     # restore the environments
-    env.snapRaster = _tempEnvironment0
-    env.workspace = _tempEnvironment1
-    env.cellSize = _tempEnvironment2
-    env.extent = _tempEnvironment3
-    env.outputMFlag = _tempEnvironment4
-    env.outputZFlag = _tempEnvironment5
-    env.parallelProcessingFactor = _tempEnvironment6
-    env.outputCoordinateSystem = _tempEnvironment7
+    if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
+        env.snapRaster = _tempEnvironment0
+        env.workspace = _tempEnvironment1
+        env.cellSize = _tempEnvironment2
+        env.extent = _tempEnvironment3
+        env.outputMFlag = _tempEnvironment4
+        env.outputZFlag = _tempEnvironment5
+        env.parallelProcessingFactor = _tempEnvironment6
+        env.outputCoordinateSystem = _tempEnvironment7
     
-    # return the spatial analyst license    
-    try:
-        arcpy.CheckInExtension("spatial")
-    except:
-        pass
+    # # return the spatial analyst license    
+    # try:
+    #     arcpy.CheckInExtension("spatial")
+    # except:
+    #     pass

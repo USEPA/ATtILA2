@@ -4,6 +4,7 @@
 titleATtILA = "ATtILA"
 attilaVersion = "3.0"
 toolboxAlias = "ATtILAv3"
+arcExecutable = "ArcGISPro.exe"
 descriptionDelim = "  -  "
 areaFieldParameters = ["_A","DOUBLE",15,0]
 tbxFileSuffix = ".tbx"
