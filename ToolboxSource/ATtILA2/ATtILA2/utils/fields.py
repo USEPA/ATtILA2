@@ -361,3 +361,36 @@ def checkForDuplicateValues(inFeatures, inField):
             
         except:
             pass
+
+def checkForEmptyField(inFeatures, inField):
+    """Returns True if only NULL or whitespace values are found in the input field 
+    
+    **Description:**
+
+    **Arguments:**
+        * *inFeatures* - feature class containing the field to be checked
+        * *inField* - input field to check for values
+        
+    **Returns:**
+        * *boolean* - True if only NULL or whitespace values are found
+    """
+    # set up variables to keep track of the total number of rows and empty rows found in the table.
+    num_rows = 0
+    empty_rows = 0
+
+    with arcpy.da.SearchCursor(inFeatures, inField) as cursor:
+        for row in cursor:
+            # Add 1 to the total number of rows found in the table
+            num_rows += 1
+            
+            # Check if the field value for this row is NULL or whitespace.
+            # If it is, add 1 to the number of empty rows found.
+            for i, value in enumerate(row):
+                if value is None:
+                    empty_rows += 1 
+                elif str(value).isspace():
+                    empty_rows += 1
+    
+    if empty_rows == num_rows:
+        return True
+        

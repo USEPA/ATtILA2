@@ -315,6 +315,12 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         lcpCalc.inPopField = inPopField
         lcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
+        # if the tool requires Spatial Analyst, check to see if it is available
+        if metricConst.spatialNeeded:
+            if arcpy.CheckExtension("Spatial") != "Available":
+                raise errors.attilaException(errorConstants.spatialAnalystNeededError)
+
+
         # see what linear units are used in the tabulate area table
         outputLinearUnits = settings.getOutputLinearUnits(inLandCoverGrid)
 
@@ -331,19 +337,21 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         # Run Calculation
         lcpCalc.run()
     except Exception as e:
-        # COMPLETE LOGFILE
-        logFile.write("\nSomething went wrong.\n\n")
-        logFile.write("Python Traceback Message below:")
-        logFile.write(traceback.format_exc())
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
         
         errors.standardErrorHandling(e)
 
     finally:
-        if not lcpCalc.cleanupList[0] == "KeepIntermediates":
-            for (function,arguments) in lcpCalc.cleanupList:
-                # Flexibly executes any functions added to cleanup array.
-                function(*arguments)
-            AddMsg("Clean up complete", 0)
+        if lcpCalc.cleanupList:
+            if not lcpCalc.cleanupList[0] == "KeepIntermediates":
+                for (function,arguments) in lcpCalc.cleanupList:
+                    # Flexibly executes any functions added to cleanup array.
+                    function(*arguments)
+                AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
         
@@ -3703,7 +3711,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         
         if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
             _tempEnvironment0 = env.snapRaster
@@ -3750,7 +3758,13 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         # Create an index value to keep track of intermediate outputs and field names.
         index = 0
         
-        
+        # if Group by zone is checked, see if zoneIdField is empty. turn off the Group by zone option if it is.
+        if groupByZoneYN == "true":
+            fieldIsEmpty = fields.checkForEmptyField(inZoneDataset, zoneIdField)
+            if fieldIsEmpty:
+                groupByZoneYN = "false"
+                AddMsg("The Zone ID field contains only NULL values or whitespace. The Group by zone option will not be performed.", 1, logFile)        
+    
         ### Is there an optional buffer
         if descZone.datasetType == "RasterDataset":
             if float(inBufferDistance.split()[0]) > 0:

@@ -18,6 +18,7 @@ class baseMetricConstants():
     additionalFields = []
     pctBufferName = ''
     parameterLabels = []
+    spatialNeeded = True
 
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
@@ -623,6 +624,18 @@ class pnfeaConstants(baseMetricConstants):
     outNameRoadsIntDens = prefix+"_RdsIntDens"
     outNameRoadsIAC = prefix+"_RdsIAC"
     value0_LANES = prefix + "_RdsIAC_0Lanes"
+    optionalFilter = [gc.logDescription]
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = []
+
+class prfeaConstants(baseMetricConstants):
+    name = "ProcessRoadsforEnviroAtlasAnalyses"
+    prefix = ""
+    outNameRoadsWalkable = prefix+"_RdsWalkable"
+    outNameRoadsIntDens = prefix+"_RdsIntDens"
+    outNameRoadsIAC = prefix+"_RdsIAC"
+    value0_LANES = prefix + "_RdsIAC_0Lanes"
+    nullFields = ["FROM_REF_NUM_LANES", "TO_REF_NUM_LANES"]
     optionalFilter = [gc.logDescription]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = []

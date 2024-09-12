@@ -70,3 +70,6 @@ If a buffer distance was used by the ATtILA tool, try marginally increasing or d
 tool to see if this error can be avoided.
 
 '''
+
+
+spatialAnalystNeededError = '''This tool requires the Spatial Analyst extension.'''
