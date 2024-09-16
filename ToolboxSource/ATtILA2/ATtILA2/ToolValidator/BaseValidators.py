@@ -1424,6 +1424,19 @@ class NoLccFileValidator(object):
                     acceptedVectors = ["polygon", "polyline", "point"]
                     if desc.shapeType.lower() not in acceptedVectors:
                         self.inIntRasterOrVectorParameter.setErrorMessage(self.vectorOrIntegerGridMessage)
+                    
+                    ### check to see if the id field has any values
+                    if self.inIntRasterOrVectorParameter.value:
+                        self.tableName = self.inIntRasterOrVectorParameter.valueAsText
+                        self.fieldName = self.inIntRasterOrVectorFieldsParameter.valueAsText
+                    
+                        # get the directory path and the filename
+                        self.aWorkspace = os.path.split(self.tableName)[0]
+                        self.aTableFilename = os.path.split(self.tableName)[1]
+                        
+                        self.whereClause = f"{self.fieldName} IS NOT NULL"
+                        if not arcpy.SearchCursor(self.tableName, self.whereClause).next():
+                            self.inIntRasterOrVectorFieldsParameter.setErrorMessage(self.noFeaturesMessage)
         
         # Check if processingCellSize is a value greater than zero   
         if self.processingCellSizeIndex:        

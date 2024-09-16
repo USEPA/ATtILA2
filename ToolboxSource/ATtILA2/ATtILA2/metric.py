@@ -3762,8 +3762,10 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         if groupByZoneYN == "true":
             fieldIsEmpty = fields.checkForEmptyField(inZoneDataset, zoneIdField)
             if fieldIsEmpty:
+                # raise errors.attilaException(errorConstants.emptyFieldError)
                 groupByZoneYN = "false"
-                AddMsg("The Zone ID field contains only NULL values or whitespace. The Group by zone option will not be performed.", 1, logFile)        
+                AddMsg("The Zone ID field contains only NULL values or whitespace. The Group by zone option will not be performed.", 2, logFile)
+                raise errors.attilaException(errorConstants.emptyFieldError)     
     
         ### Is there an optional buffer
         if descZone.datasetType == "RasterDataset":
@@ -4175,6 +4177,19 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         vector.addCalculateField(outTable,metricConst.populationProportionFieldName + suffix, "FLOAT", calcExpression, codeBlock, logFile)   
         
         AddMsg(timer.now() + " Calculation complete")
+        
+        # check for NULL values in output table
+        num_NULL = 0
+        with arcpy.da.UpdateCursor(outTable, popCntFields[0]) as cursor:
+            for row in cursor:
+                for i, value in enumerate(row):
+                    if value is None:
+                        num_NULL += 1 
+                        cursor.deleteRow()
+        
+        if num_NULL > 0:
+            AddMsg(f"{num_NULL} records had NULL values in {popCntFields[0]}. These typically represent zone areas that occur outside of Reporting unit features. They have been deleted from the Output table.", 1, logFile)
+        
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)

@@ -72,4 +72,16 @@ tool to see if this error can be avoided.
 '''
 
 
-spatialAnalystNeededError = '''This tool requires the Spatial Analyst extension.'''
+spatialAnalystNeededError = '''
+
+This tool requires the Spatial Analyst extension.
+
+'''
+
+emptyFieldError = '''
+
+A required field contains only NULL values or whitespace. 
+
+Please inspect all fields selected for the tool inputs and verify their contents.
+
+'''
