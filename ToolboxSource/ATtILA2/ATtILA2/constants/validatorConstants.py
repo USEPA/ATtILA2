@@ -34,3 +34,4 @@ missingNHDFilesMessage = "Required files were not found in the geodatabase/folde
 NHDFlowline, NHDWaterbody, and NHDArea are required for this tool."
 missingFilesMessage = "Required files were not found in this {0}. {1} are required for this tool."
 integerPercentageMessage = "Input requires an integer value between 1 and 100."
+noSpatialAnalystMessage = "This tool requires the Spatial Analyst extension."

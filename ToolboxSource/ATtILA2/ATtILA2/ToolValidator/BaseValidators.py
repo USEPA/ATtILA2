@@ -120,6 +120,7 @@ class ProportionsValidator(object):
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
         self.integerPercentageMessage = validatorConstants.integerPercentageMessage
+        self.noSpatialAnalystMessage = validatorConstants.noSpatialAnalystMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -419,6 +420,12 @@ class ProportionsValidator(object):
             This method is called after internal validation.
             
         """
+        
+        if self.spatialNeeded and arcpy.CheckExtension("Spatial") != "Available":
+            self.parameters[0].setErrorMessage(self.noSpatialAnalystMessage)
+            # for self.p in self.parameters:
+            #     self.p.setErrorMessage(self.noSpatialAnalystMessage)
+
 
         # Set lcc file parameter required only if user-defined is set
         if self.lccSchemeParameter.value != self.lccSchemeUserOption:
@@ -975,6 +982,7 @@ class NoLccFileValidator(object):
         self.integerPercentageMessage = validatorConstants.integerPercentageMessage
         self.integerGridOrVectorMessage = validatorConstants.integerGridOrVectorMessage
         self.vectorOrIntegerGridMessage = validatorConstants.vectorOrIntegerGridMessage
+        self.noSpatialAnalystMessage = validatorConstants.noSpatialAnalystMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -1183,6 +1191,9 @@ class NoLccFileValidator(object):
             This method is called after internal validation.
             
         """
+        
+        if self.spatialNeeded and arcpy.CheckExtension("Spatial") != "Available":
+            self.parameters[0].setErrorMessage(self.noSpatialAnalystMessage)
         
         # Remove required on optional fields
         self.optionsParameter.clearMessage()
@@ -1425,18 +1436,18 @@ class NoLccFileValidator(object):
                     if desc.shapeType.lower() not in acceptedVectors:
                         self.inIntRasterOrVectorParameter.setErrorMessage(self.vectorOrIntegerGridMessage)
                     
-                    ### check to see if the id field has any values
-                    if self.inIntRasterOrVectorParameter.value:
-                        self.tableName = self.inIntRasterOrVectorParameter.valueAsText
-                        self.fieldName = self.inIntRasterOrVectorFieldsParameter.valueAsText
-                    
-                        # get the directory path and the filename
-                        self.aWorkspace = os.path.split(self.tableName)[0]
-                        self.aTableFilename = os.path.split(self.tableName)[1]
-                        
-                        self.whereClause = f"{self.fieldName} IS NOT NULL"
-                        if not arcpy.SearchCursor(self.tableName, self.whereClause).next():
-                            self.inIntRasterOrVectorFieldsParameter.setErrorMessage(self.noFeaturesMessage)
+                    # ### check to see if the id field has any values
+                    # if self.inIntRasterOrVectorParameter.value:
+                    #     self.tableName = self.inIntRasterOrVectorParameter.valueAsText
+                    #     self.fieldName = self.inIntRasterOrVectorFieldsParameter.valueAsText
+                    #
+                    #     # get the directory path and the filename
+                    #     self.aWorkspace = os.path.split(self.tableName)[0]
+                    #     self.aTableFilename = os.path.split(self.tableName)[1]
+                    #
+                    #     self.whereClause = f"{self.fieldName} IS NOT NULL"
+                    #     if not arcpy.SearchCursor(self.tableName, self.whereClause).next():
+                    #         self.inIntRasterOrVectorFieldsParameter.setErrorMessage(self.noFeaturesMessage)
         
         # Check if processingCellSize is a value greater than zero   
         if self.processingCellSizeIndex:        
@@ -1745,6 +1756,7 @@ class NoReportingUnitValidator(object):
         self.invalidNumberMessage = validatorConstants.invalidNumberMessage
         self.invalidExtensionMessage = validatorConstants.invalidExtensionMessage
         self.integerPercentageMessage = validatorConstants.integerPercentageMessage
+        self.noSpatialAnalystMessage = validatorConstants.noSpatialAnalystMessage
         
         # Load global constants
         self.optionalFieldsName = validatorConstants.optionalFieldsName
@@ -2068,6 +2080,9 @@ class NoReportingUnitValidator(object):
             This method is called after internal validation.
             
         """
+        
+        if self.spatialNeeded and arcpy.CheckExtension("Spatial") != "Available":
+            self.parameters[0].setErrorMessage(self.noSpatialAnalystMessage)
 
         # Set lcc file parameter required only if user-defined is set
         if self.lccSchemeParameter.value != self.lccSchemeUserOption:

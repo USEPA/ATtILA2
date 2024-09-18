@@ -474,6 +474,7 @@ class pdmConstants(baseMetricConstants):
         gc.inPopField2, 
         gc.optionalFieldGroups
         ]
+    spatialNeeded = False
     
 class pifmConstants(baseMetricConstants):
     name = "PopulationInFloodplainMetrics"
@@ -627,6 +628,7 @@ class pnfeaConstants(baseMetricConstants):
     optionalFilter = [gc.logDescription]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = []
+    spatialNeeded = False
 
 class prfeaConstants(baseMetricConstants):
     name = "ProcessRoadsforEnviroAtlasAnalyses"
@@ -639,10 +641,26 @@ class prfeaConstants(baseMetricConstants):
     optionalFilter = [gc.logDescription]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = []
+    spatialNeeded = False
+    typeCodesSM = (
+                   '509998',  #Beach
+                   '900108',  #Military Base
+                   '1900403', #Airports
+                   '2000123', #Golf Course
+                   '2000124', #Shopping Center
+                   '2000200', #Industrial Complex
+                   '2000408', #Hospital
+                   '2000420', #Cemetery
+                   '2000460', #Amusement Park
+                   '9997007'  #Railyard
+                   )
+    idSelectBySM = "SpeedCat = 8"
+    idSelectByN11 = "SPEED_CAT IN ('8')"
     
 class pnhd24kConstants(baseMetricConstants):
     prefix = ""
     optionalFilter = [gc.logDescription]
+    spatialNeeded = False
 
 class pwzmConstants(baseMetricConstants):
     name = "PopulationWithinZoneMetrics"
@@ -761,6 +779,7 @@ class rdmConstants(baseMetricConstants):
         gc.inBufferDistance, 
         gc.optionalFieldGroups
         ]
+    spatialNeeded = False
 
 class sdmConstants(baseMetricConstants):
     name = "StreamDensityMetric"
@@ -789,6 +808,7 @@ class sdmConstants(baseMetricConstants):
         gc.strmOrderField, 
         gc.optionalFieldGroups
         ]
+    spatialNeeded = False
 
 class splcpConstants(baseMetricConstants):
     name = "SamplePointLandCoverProportions"

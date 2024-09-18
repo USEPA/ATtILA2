@@ -23,6 +23,7 @@ class caemToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = caemConstants.fieldPrefix
     fieldSuffix = caemConstants.fieldSuffix    
     metricShortName = caemConstants.shortName
+    spatialNeeded = caemConstants.spatialNeeded
 
 class flcpToolValidator(BaseValidators.ProportionsValidator):
     """ToolValidator for FloodplainLandCoverProportion"""
@@ -32,6 +33,7 @@ class flcpToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = flcpConstants.fieldPrefix
     fieldSuffix = flcpConstants.fieldSuffix
     metricShortName = flcpConstants.shortName 
+    spatialNeeded = flcpConstants.spatialNeeded
     
 class flcvToolValidator(BaseValidators.ProportionsValidator):
     """ToolValidator for Facility Land Cover Views"""
@@ -41,6 +43,7 @@ class flcvToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = flcvConstants.fieldPrefix
     fieldSuffix = flcvConstants.fieldSuffix
     metricShortName = flcvConstants.shortName 
+    spatialNeeded = flcvConstants.spatialNeeded
     
 class lcospToolValidator(BaseValidators.ProportionsValidator):
     """ToolValidator for LandCoverSlopeOverlap"""
@@ -50,6 +53,7 @@ class lcospToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = lcospConstants.fieldPrefix
     fieldSuffix = lcospConstants.fieldSuffix
     metricShortName = lcospConstants.shortName
+    spatialNeeded = lcospConstants.spatialNeeded
     
 class lcpORIGINALToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
@@ -59,6 +63,7 @@ class lcpORIGINALToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = lcpConstants.fieldPrefix
     fieldSuffix = lcpConstants.fieldSuffix    
     metricShortName = lcpConstants.shortName 
+    spatialNeeded = lcpConstants.spatialNeeded
     
 class lcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for LandCoverProportions """
@@ -68,6 +73,7 @@ class lcpToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = lcpConstants.fieldPrefix
     fieldSuffix = lcpConstants.fieldSuffix    
     metricShortName = lcpConstants.shortName 
+    spatialNeeded = lcpConstants.spatialNeeded
 
 class pmToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for PatchMetrics """
@@ -77,6 +83,7 @@ class pmToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = pmConstants.fieldPrefix
     fieldSuffix = pmConstants.fieldSuffix
     metricShortName = pmConstants.shortName
+    spatialNeeded = pmConstants.spatialNeeded
     
 class plcvToolValidator(BaseValidators.ProportionsValidator):
     filterList = plcvConstants.optionalFilter
@@ -84,6 +91,7 @@ class plcvToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = plcvConstants.fieldPrefix
     fieldSuffix = plcvConstants.fieldSuffix    
     metricShortName = plcvConstants.shortName
+    spatialNeeded = plcvConstants.spatialNeeded
 
 class rlcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for RiparianLandCoverProportions"""
@@ -93,6 +101,7 @@ class rlcpToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = rlcpConstants.fieldPrefix
     fieldSuffix = rlcpConstants.fieldSuffix
     metricShortName = rlcpConstants.shortName
+    spatialNeeded = rlcpConstants.spatialNeeded
     
 class splcpToolValidator(BaseValidators.ProportionsValidator):
     """ ToolValidator for SamplePointLandCoverProportions"""
@@ -102,6 +111,7 @@ class splcpToolValidator(BaseValidators.ProportionsValidator):
     fieldPrefix = splcpConstants.fieldPrefix
     fieldSuffix = splcpConstants.fieldSuffix
     metricShortName = splcpConstants.shortName
+    spatialNeeded = splcpConstants.spatialNeeded
 
 
 
@@ -114,6 +124,7 @@ class lcccToolValidator(BaseValidators.CoefficientValidator):
     fieldPrefix = lcccConstants.fieldPrefix
     fieldSuffix = lcccConstants.fieldSuffix    
     metricShortName = lcccConstants.shortName  
+    spatialNeeded = lcccConstants.spatialNeeded
 
     
 
@@ -126,12 +137,14 @@ class lcdToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = lcdConstants.fieldPrefix
     fieldSuffix = lcdConstants.fieldSuffix
     metricShortName = lcdConstants.shortName
+    spatialNeeded = lcdConstants.spatialNeeded
 
 class paaaToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for Pedestrian Access Metrics """
     
     filterList = paaaConstants.optionalFilter
     metricShortName = paaaConstants.shortName
+    spatialNeeded = paaaConstants.spatialNeeded
    
     
 class pdmToolValidator(BaseValidators.NoLccFileValidator):
@@ -141,14 +154,16 @@ class pdmToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = pdmConstants.fieldPrefix
     fieldSuffix = pdmConstants.fieldSuffix
     metricShortName = pdmConstants.shortName
+    spatialNeeded = pdmConstants.spatialNeeded
     
 class pifmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for PopulationInFloodplainMetrics """
     
-    filterList = pdmConstants.optionalFilter
-    fieldPrefix = pdmConstants.fieldPrefix
+    filterList = pifmConstants.optionalFilter
+    fieldPrefix = pifmConstants.fieldPrefix
     fieldSuffix = pdmConstants.fieldSuffix
-    metricShortName = pdmConstants.shortName
+    metricShortName = pifmConstants.shortName
+    spatialNeeded = pifmConstants.spatialNeeded
 
 class pwzmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for PopulationWithinZones """
@@ -157,6 +172,7 @@ class pwzmToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = pwzmConstants.fieldPrefix
     fieldSuffix = pwzmConstants.fieldSuffix
     metricShortName = pwzmConstants.shortName
+    spatialNeeded = pwzmConstants.spatialNeeded
     
 class rdmToolValidator(BaseValidators.NoLccFileValidator):
     """ ToolValidator for RoadDensityMetrics """
@@ -165,6 +181,7 @@ class rdmToolValidator(BaseValidators.NoLccFileValidator):
     fieldPrefix = rdmConstants.fieldPrefix
     fieldSuffix = rdmConstants.fieldSuffix    
     metricShortName = rdmConstants.shortName 
+    spatialNeeded = rdmConstants.spatialNeeded
 
 
 
@@ -175,6 +192,7 @@ class idToolValidator(BaseValidators.NoReportingUnitValidator):
     
     filterList = idConstants.optionalFilter
     metricShortName = idConstants.shortName
+    spatialNeeded = idConstants.spatialNeeded
     
 # class idoToolValidator(BaseValidators.NoReportingUnitValidator):
 #     """ ToolValidator for GenerateIntersectionDensityRaster Utility """
@@ -188,11 +206,13 @@ class npToolValidator(BaseValidators.NoReportingUnitValidator):
     filterList = npConstants.optionalFilter
     fieldSuffix = npConstants.fieldSuffix
     metricShortName = npConstants.shortName
+    spatialNeeded = npConstants.spatialNeeded
     
 class nrlcpToolValidator(BaseValidators.NoReportingUnitValidator):
     """ ToolValidator for Near Road Land Cover Proportions """
     
     filterList = nrlcpConstants.optionalFilter
     metricShortName = nrlcpConstants.shortName
+    spatialNeeded = nrlcpConstants.spatialNeeded
 
 

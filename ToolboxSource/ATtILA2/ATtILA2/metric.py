@@ -315,12 +315,6 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         lcpCalc.inPopField = inPopField
         lcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
-        # if the tool requires Spatial Analyst, check to see if it is available
-        if metricConst.spatialNeeded:
-            if arcpy.CheckExtension("Spatial") != "Available":
-                raise errors.attilaException(errorConstants.spatialAnalystNeededError)
-
-
         # see what linear units are used in the tabulate area table
         outputLinearUnits = settings.getOutputLinearUnits(inLandCoverGrid)
 
@@ -346,12 +340,11 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         errors.standardErrorHandling(e)
 
     finally:
-        if lcpCalc.cleanupList:
-            if not lcpCalc.cleanupList[0] == "KeepIntermediates":
-                for (function,arguments) in lcpCalc.cleanupList:
-                    # Flexibly executes any functions added to cleanup array.
-                    function(*arguments)
-                AddMsg("Clean up complete", 0)
+        if not lcpCalc.cleanupList[0] == "KeepIntermediates":
+            for (function,arguments) in lcpCalc.cleanupList:
+                # Flexibly executes any functions added to cleanup array.
+                function(*arguments)
+            AddMsg("Clean up complete", 0)
         
         setupAndRestore.standardRestore(logFile)
         
@@ -3764,17 +3757,18 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             if fieldIsEmpty:
                 # raise errors.attilaException(errorConstants.emptyFieldError)
                 groupByZoneYN = "false"
-                AddMsg("The Zone ID field contains only NULL values or whitespace. The Group by zone option will not be performed.", 2, logFile)
+                AddMsg("The Zone ID field contains only NULL values or whitespace. The Group by zone option can not be performed.", 2, logFile)
                 raise errors.attilaException(errorConstants.emptyFieldError)     
     
         ### Is there an optional buffer
+        bufferDistanceVal = float(inBufferDistance.split()[0])
+        
         if descZone.datasetType == "RasterDataset":
-            if float(inBufferDistance.split()[0]) > 0:
+            if bufferDistanceVal > 0:
                 AddMsg("Buffering raster zone datasets is not currently supported. Buffer distance has been set to 0.", 1, logFile)
             bufferDistanceVal = 0
         
-        elif inBufferDistance == "" or inBufferDistance == "0":
-            bufferDistanceVal = 0    
+        elif bufferDistanceVal == 0:
             
             fieldMappings = arcpy.FieldMappings()
             fieldMappings.addTable(inZoneDataset)
@@ -3784,17 +3778,15 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
         
-            tempName = "%s_%s" % (metricConst.shortName, descZone.baseName)
-            tempZoneinFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
+            tempName = f"{metricConst.shortName}_{descZone.baseName}"
+            tempZoneinFeature = files.nameIntermediateFile([f"{tempName}_Work","FeatureClass"],cleanupList)
         
-            AddMsg("{0} Making a working copy of {1}. Intermediate: {2}".format(timer.now(), descZone.baseName, bn(tempZoneinFeature)), 0, logFile)
+            AddMsg(f"{timer.now()} Making a working copy of {descZone.baseName}. Intermediate: {bn(tempZoneinFeature)}", 0, logFile)
             log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, bn(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
         
             inZoneDataset = tempZoneinFeature
         
         else:
-            bufferDistanceVal = float(inBufferDistance.split()[0])
-        
             # Change the buffer distance to an integer if appropriate. This reduces the output field name string length by eliminating '_0'.
             if bufferDistanceVal.is_integer():
                 bufferDistanceVal = int(bufferDistanceVal)
