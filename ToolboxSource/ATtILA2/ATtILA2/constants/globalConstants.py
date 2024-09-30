@@ -46,7 +46,24 @@ rasterExtensions = [".bil",
                     ".tif"]
 tableExtensions = [".dbf"]
 
+# This is the script opening for the log file if the tool is run from metric.py
+metricScriptOpening = '''
+import arcpy
+from arcpy.sa import *
+arcpy.ImportToolbox("<toolbox path and filename>")
+from ATtILA2 import metric
+
+'''
+
+# This is the script opening for the log file if the tool is run from the ATtILA\scripts folder
+basicScriptOpening = '''
+import arcpy
+arcpy.ImportToolbox("<toolbox path and filename>")
+
+'''
+
 # parameterLabels for Log File
+# script variable name = tool parameter label
 inReportingUnitFeature = "Reporting unit feature"
 reportingUnitIdField = "Reporting unit ID field"
 inLandCoverGrid = "Land cover grid"
@@ -118,7 +135,13 @@ inZoneDataset = "Zone raster or polygon feature"
 groupByZoneYN = "Group by zone"
 zoneIdField = "Zone ID field"
 expandAreaDist = "Expand area served"
+versionName = "Version"
+inStreetsgdb = "Streets geodatabase"
+chkWalkableYN = "Walkable roads"
+chkIntDensYN = "Intersection density roads"
+chkIACYN = "Interstates, arterials, and collectors"
 
+# script variable name: tool variable label
 paramLabelDict = {
     "inReportingUnitFeature": "Reporting unit feature",
     "reportingUnitIdField": "Reporting unit ID field",
@@ -190,5 +213,10 @@ paramLabelDict = {
     "inZoneDataset": "Zone raster or polygon feature",
     "groupByZoneYN": "Group by zone",
     "zoneIdField": "Zone ID field",
-    "expandAreaDist": "Expand area served"
+    "expandAreaDist": "Expand area served",
+    "versionName": "Version",
+    "inStreetsgdb": "Streets geodatabase",
+    "chkWalkableYN": "Walkable roads",
+    "chkIntDensYN": "Intersection density roads",
+    "chkIACYN": "Interstates, arterials, and collectors"
     }

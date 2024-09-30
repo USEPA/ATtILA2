@@ -19,6 +19,7 @@ class baseMetricConstants():
     pctBufferName = ''
     parameterLabels = []
     spatialNeeded = True
+    scriptOpening = gc.metricScriptOpening
 
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
@@ -630,32 +631,84 @@ class pnfeaConstants(baseMetricConstants):
     parameterLabels = []
     spatialNeeded = False
 
-class prfeaConstants(baseMetricConstants):
+class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NAVTEQ 2019, ESRI StreetMap)
     name = "ProcessRoadsforEnviroAtlasAnalyses"
+    shortName = "PRFEA"
+    metricFUNC = 'arcpy.ATtILA.'+name
     prefix = ""
-    outNameRoadsWalkable = prefix+"_RdsWalkable"
+    optionalFilter = [gc.logDescription]
+    scriptOpening = gc.basicScriptOpening
+    outNameRoadsWalkable = prefix+"_RdsWalkable" 
     outNameRoadsIntDens = prefix+"_RdsIntDens"
     outNameRoadsIAC = prefix+"_RdsIAC"
-    value0_LANES = prefix + "_RdsIAC_0Lanes"
-    nullFields = ["FROM_REF_NUM_LANES", "TO_REF_NUM_LANES"]
-    optionalFilter = [gc.logDescription]
-    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
-    parameterLabels = []
-    spatialNeeded = False
-    typeCodesSM = (
-                   '509998',  #Beach
-                   '900108',  #Military Base
-                   '1900403', #Airports
-                   '2000123', #Golf Course
-                   '2000124', #Shopping Center
-                   '2000200', #Industrial Complex
-                   '2000408', #Hospital
-                   '2000420', #Cemetery
-                   '2000460', #Amusement Park
-                   '9997007'  #Railyard
-                   )
-    idSelectBySM = "SpeedCat = 8"
-    idSelectByN11 = "SPEED_CAT IN ('8')"
+    value0_LANES = "IAC_Lanes" 
+     
+    typeCodesString = "'AIRPORT',"\
+                      "'AMUSEMENT PARK',"\
+                      "'BEACH',"\
+                      "'CEMETERY',"\
+                      "'HOSPITAL',"\
+                      "'INDUSTRIAL COMPLEX',"\
+                      "'MILITARY BASE',"\
+                      "'RAILYARD',"\
+                      "'SHOPPING CENTRE',"\
+                      "'GOLF COURSE'" 
+    
+    typeCodesNumeric = ('509998', #Beach
+                        '900108', #Military Base
+                        '1900403', #Airports
+                        '2000123', #Golf Course
+                        '2000124', #Shopping Center
+                        '2000200', #Industrial Complex
+                        '2000408', #Hospital
+                        '2000420', #Cemetery
+                        '2000460', #Amusement Park
+                        '9997007' #Railyard
+                        )
+    
+    # StreetMap
+    WlkSelectSM = "SpeedCat < 4 Or FuncClass < 3 Or RestrictPedestrians = 'Y' Or FerryType <> 'H' Or Ramp = 'Y' Or ContrAcc = 'Y' Or Tollway = 'Y'"
+    WlkMsgSM = "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'"
+    landUseSetSM = " Or FEATURE_TYPE = ".join(typeCodesNumeric)
+    
+    # NAVTEQ 2019 
+    WlkSelectNAV19 = "SpeedCat < 4 Or FuncClass < 3 Or RestrictPedestrians = 'Y' Or FerryType <> 'H' Or Ramp = 'Y' Or ContrAcc = 'Y' Or Tollway = 'Y'"
+    WlkMsgNAV19 = "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'"
+    Streets_linkfield = 'Link_ID'
+    Link_linkfield = 'LINK_ID'
+    landUseSetNAV19 = " Or FEATURE_TYPE = ".join(typeCodesNumeric)
+    
+    # NAVTEQ 2011 
+    WlkSelectNAV11 = "FUNC_CLASS IN ('1','2') Or FERRY_TYPE <> 'H' Or SPEED_CAT IN ('1', '2', '3') Or AR_PEDEST = 'N' Or RAMP = 'Y' Or CONTRACC = 'Y' Or TOLLWAY ='Y'"
+    WlkSelectNAV11OLD = "FUNC_CLASS IN ('1','2') Or FERRY_TYPE <> 'H' Or SPEED_CAT IN ('1', '2', '3') Or AR_PEDEST = 'N'" # For old style of processing NAVTEQ for ENVIROATLAS
+    WlkMsgNAV11 = "Selecting and removing features where FUNC_CLASS < 3; SPEED_CAT < 4; AR_PEDEST = 'N'; FERRY_TRYPE <> 'H'; RAMP = 'Y'; CONTRACC = 'Y'; TOLLWAY = 'Y'"
+    
+    laneFieldDict = {
+        "ESRI StreetMap": ['FROM_REF_NUM_LANES','TO_REF_NUM_LANES'],
+        "NAVTEQ 2019": ['FROM_REF_NUM_LANES','TO_REF_NUM_LANES'],
+        "NAVTEQ 2011": ['TO_LANES', 'FROM_LANES']
+        }
+    
+    dirTravelDict = {
+        "ESRI StreetMap": "DirTravel = 'B'",
+        "NAVTEQ 2019": "DirTravel = 'B'",
+        "NAVTEQ 2011": "DIR_TRAVEL = 'B'"
+        }
+    
+    unnamedStreetsDict = {
+        "ESRI StreetMap": f"StreetName = '' And (FEATURE_TYPE = {landUseSetSM})",
+        "NAVTEQ 2019": f"StreetName = '' And (FEATURE_TYPE = {landUseSetNAV19})",
+        "NAVTEQ 2011": f"FEAT_TYPE IN ({typeCodesString}) And ST_NAME = ''"
+        }
+
+    parameterLabels = [
+        gc.versionName,
+        gc.inStreetsgdb,
+        gc.chkWalkableYN,
+        gc.chkIntDensYN,
+        gc.chkIACYN,
+        gc.outWorkspace
+        ]
     
 class pnhd24kConstants(baseMetricConstants):
     prefix = ""

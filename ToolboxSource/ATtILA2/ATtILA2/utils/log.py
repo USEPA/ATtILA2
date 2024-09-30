@@ -189,13 +189,8 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
     
     logFile.write('SCRIPT START:\n')
     
-    logFile.write('''
-    import arcpy
-    from arcpy.sa import *
-    arcpy.ImportToolbox("<toolbox path and filename>")
-    from ATtILA2 import metric
-    
-    ''')
+    logFile.write(metricConst.scriptOpening)
+        
     toolParameters = []
     for l, p in zip(labelsList, parametersList):
         l = l.replace(' ','_')
