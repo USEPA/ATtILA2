@@ -908,7 +908,9 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
             namePrefix = fileNameBase+"_Line_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Merging {len(lineList)} line features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
-            mergeOutput = arcpyLog(arcpy.Merge_management, (lineList,mergeName), 'arcpy.Merge_management', logFile)
+            # use fieldMappings to reduce file size and possible processing time.
+            fieldMappings = getMinimumFieldMappings(lineList)
+            mergeOutput = arcpyLog(arcpy.Merge_management, (lineList,mergeName,fieldMappings), 'arcpy.Merge_management', logFile)
             mergedOutputs[0] = mergeOutput
         elif len(lineList) == 1:
             mergedOutputs[0] = lineList[0]
@@ -917,16 +919,20 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
             namePrefix = fileNameBase+"_Poly_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Merging {len(polyList)} polygon features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
-            mergeOutput = arcpyLog(arcpy.Merge_management, (polyList,mergeName), 'arcpy.Merge_management', logFile)
+            # use fieldMappings to reduce file size and possible processing time.
+            fieldMappings = getMinimumFieldMappings(polyList)
+            mergeOutput = arcpyLog(arcpy.Merge_management, (polyList,mergeName,fieldMappings), 'arcpy.Merge_management', logFile)
             mergedOutputs[1] = mergeOutput
         elif len(polyList) == 1:
             mergedOutputs[1] = polyList[0]
         
-        if len(pointList) > 1:
+        if len(pointList) > 1:            
             namePrefix = fileNameBase+"_Point_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Merging {len(pointList)} point features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
-            mergeOutput = arcpyLog(arcpy.Merge_management, (pointList,mergeName), 'arcpy.Merge_management', logFile)
+            # use fieldMappings to reduce file size and possible processing time.
+            fieldMappings = getMinimumFieldMappings(pointList)
+            mergeOutput = arcpyLog(arcpy.Merge_management, (pointList,mergeName,fieldMappings), 'arcpy.Merge_management', logFile)
             mergedOutputs[2] = mergeOutput
         elif len(pointList) == 1:
             mergedOutputs[2] = pointList[0]
@@ -936,6 +942,30 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
     finally:
         pass
                     
+def getMinimumFieldMappings(layerList):
+    ''' Returns a fieldMapping object that contains only the first field of the first feature layer in the input layer list
+    
+    **Description:**
+        Processing speeds may increase by eliminating unnecessary table fields. In addition, output file size will be
+        reduced saving as much disk space as possible.
+        
+        This function will construct a fieldMapping object with only one field object, the minimum allowed. It will be the
+        first field from the first layer in the input layerList parameter. Using a fieldMapping object, as opposed to 
+        arcpy.DeleteField, is a more efficient way of deleting unnecessary/unwanted fields from an attribute table.
+        
+    **Arguments:**
+        * *layerList* - one or more feature class to extract a single field for the fieldMappings object.
+        
+    **Returns:**
+        * *fieldMappings* - fieldMappings object consisting of one FieldMap
+    '''
+    fieldMappings = arcpy.FieldMappings()
+    fieldMappings.addTable(layerList[0])
+    fmFields = fieldMappings.fields
+    firstName = fmFields[0].name
+    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != firstName]
+    
+    return fieldMappings
 
 # def nearRoadsBuffer(inRoadFeature,metricConst,cleanupList,timer,inRoadWidthOption,widthLinearUnit="",laneCntFld="",laneWidth="",laneDistFld="",
 #                     removeLinesYN,cutoffLength,bufferDist,roadClass=""):
