@@ -3352,7 +3352,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             
             # combine the Walkable and Impassable rasters. 
             AddMsg(f"{timer.now()} Combining the Walkable raster with the Impassable raster for final output", 0, logFile)
-            costRaster = Con((walkRaster == baseNumber), impassRaster, walkRaster)
+            costRaster = log.arcpyLog(arcpy.sa.Con, ((walkRaster == baseNumber), impassRaster, walkRaster), 'arcpy.sa.Con', logFile)
             
             categoryDict = {walkNumber: "Walkable", baseNumber: "Base", impassNumber: "Impassable"}
         else:
@@ -3364,6 +3364,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         costRaster.save(outRaster)
         
         # add category labels to the raster
+        AddMsg(f"{timer.now()} Finalizing {bn(outRaster)} by adding labels", 0, logFile)
         log.arcpyLog(arcpy.BuildRasterAttributeTable_management, (costRaster, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
         log.arcpyLog(arcpy.AddField_management, (costRaster, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
         raster.updateCategoryLabels(costRaster, categoryDict)
