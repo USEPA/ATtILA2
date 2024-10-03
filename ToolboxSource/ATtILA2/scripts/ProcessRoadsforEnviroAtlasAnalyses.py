@@ -28,7 +28,7 @@ chkWalkableYN = inputArguments[2]
 chkIntDensYN = inputArguments[3]
 chkIACYN = inputArguments[4]
 outWorkspace = inputArguments[5]
-prefix = inputArguments[6] 
+fnPrefix = inputArguments[6] 
 optionalFieldGroups = inputArguments[7] # Logfile will be an option here
 env.workspace = outWorkspace
 toolPath = __file__ # This can be used for when scripts are run from a stand-alone script and not from metric.py
@@ -61,9 +61,9 @@ def main(_argv):
         
         metricConst = metricConstants.prfeaConstants()
 
-        parametersList = [versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, optionalFieldGroups] #check this last one with logfile in the tool
+        parametersList = [versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
 
-        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+prefix, toolPath) #toolPath?
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+fnPrefix, toolPath) #toolPath?
         AddMsg(f"{timer.start()} Setting up initial environment variables", 0, logFile)
 
         # setup additional metric constants
@@ -132,7 +132,7 @@ def main(_argv):
             AddMsg(f"{timer.now()} {WlkMsg}", 0, logFile)
 
             if chkWalkableYN == "true":
-                walkableFCName = prefix+metricConst.outNameRoadsWalkable+ext
+                walkableFCName = fnPrefix+metricConst.outNameRoadsWalkable+ext
                 AddMsg(f"{timer.now()} Saving selected features to: {walkableFCName}", 0, logFile)
                 arcpy.CopyFeatures_management(streetLayer, walkableFCName)
                 flist.append(walkableFCName)
@@ -140,17 +140,16 @@ def main(_argv):
 
         if chkIntDensYN == "true":
             # get the output feature class name
-            intDensityFCName = prefix+metricConst.outNameRoadsIntDens+ext
+            intDensityFCName = fnPrefix+metricConst.outNameRoadsIntDens+ext
             mergeField = "MergeClass"
             
             if chkWalkableYN == "true":
                 AddMsg(f"{timer.now()} Continuing intersection density processing with the selected features", 0, logFile)
         
+            AddMsg(f"{timer.now()} Removing from the selection features where {metricConst.speedCatDict[versionName]}", 0, logFile)
+            arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', metricConst.speedCatDict[versionName])
+            
             if versionName == 'NAVTEQ 2011': #NAVTEQ 2011
-                AddMsg(f"{timer.now()} Removing from the selection features where SPEED_CAT = 8", 0, logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
-                                                        "SPEED_CAT IN ('8')")
-                
                 AddMsg(f"{timer.now()} Assigning landUseA codes to road segments", 0, logFile)
                 arcpy.Identity_analysis(streetLayer, NAVTEQ_LandUseA, intersectFromLandUseA)
                 intermediateList.append(intersectFromLandUseA)
@@ -174,9 +173,6 @@ def main(_argv):
                         cursor.updateRow(row)
                 
             elif versionName == 'NAVTEQ 2019':  #NAVTEQ 2019
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', "SpeedCat = 8")
-                AddMsg(f"{timer.now()} Removing from the selection features where SpeedCat = 8",0,logFile)
-                
                 AddMsg(f"{timer.now()} Assigning landArea codes to road segments",0,logFile)
                 arcpy.Identity_analysis(streetLayer, NAVTEQLandArea, intersectFromLandArea)
                 intermediateList.append(intersectFromLandArea)
@@ -187,11 +183,11 @@ def main(_argv):
 
                 if ext == ".shp":
                     # fieldname size restrictions with shapefiles cause FEAT_TYPE_1 to be truncated to FEAT_TYP_1 
-                    sql = "FEATURE_TYPE = 0 And FEATURE_TYPE_1 <> 0" # Not sure how this is truncated? FIGURE THIS OUT TOMORROW 9/12
-                    Relevant_Fields = ['FEATURE_TYPE', 'FEATURE_TYPE_1']
+                    sql = "FEATURE_TY = 0 And FEATURE_1 <> 0" # Not sure how this is truncated? FIGURE THIS OUT TOMORROW 9/12
+                    Relevant_Fields = ['FEATURE_TY', 'FEATURE_1']
                 else:
-                    sql = "FEATURE_TYPE = 0 And FEATURE_TYPE_1 <> 0" # Ask Don why this line of code!
-                    Relevant_Fields = ['FEATURE_TYPE', 'FEATURE_TYPE_1']
+                    sql = "FEATURE_TY = 0 And FEATURE_1 <> 0" # Ask Don why this line of code!
+                    Relevant_Fields = ['FEATURE_TY', 'FEATURE_1']
 
                 #Transfer all meaningful values from field FEAT_TYPE_1 to FEAT_TYPE
                 with arcpy.da.UpdateCursor(intersectFinal, Relevant_Fields, sql) as cursor:
@@ -200,9 +196,6 @@ def main(_argv):
                         cursor.updateRow(row)
             
             elif versionName == 'ESRI StreetMap': # ESRI StreetMaps
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', "SpeedCat = 8")
-                AddMsg(f"{timer.now()} Removing from the selection features where SpeedCat = 8",0,logFile)
-
                 AddMsg(f"{timer.now()} Assigning MapLandArea codes to road segments",0,logFile)
                 arcpy.Identity_analysis(streetLayer, SMLandArea, intersectFinal)
                 intermediateList.append(intersectFinal)
@@ -246,7 +239,7 @@ def main(_argv):
         if chkIACYN == "true":
             AddMsg(f"{timer.now()} Processing {inputStreets} for interstates, arterials, and connectors", 0, logFile)
             # get the name for the output feature class
-            iacFCName = prefix+metricConst.outNameRoadsIAC+ext
+            iacFCName = fnPrefix+metricConst.outNameRoadsIAC+ext
             lanesField = "LANES"
             ToFromFields = metricConst.laneFieldDict[versionName]
             

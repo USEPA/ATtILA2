@@ -634,7 +634,7 @@ class pnfeaConstants(baseMetricConstants):
 class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NAVTEQ 2019, ESRI StreetMap)
     name = "ProcessRoadsforEnviroAtlasAnalyses"
     shortName = "PRFEA"
-    metricFUNC = 'arcpy.ATtILA.'+name
+    metricFUNC = 'arcpy.ATtILA.'+shortName
     prefix = ""
     optionalFilter = [gc.logDescription]
     scriptOpening = gc.basicScriptOpening
@@ -700,6 +700,11 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
         "NAVTEQ 2019": f"StreetName = '' And (FEATURE_TYPE = {landUseSetNAV19})",
         "NAVTEQ 2011": f"FEAT_TYPE IN ({typeCodesString}) And ST_NAME = ''"
         }
+    
+    speedCatDict = {
+        "ESRI StreetMap": "SpeedCat = 8",
+        "NAVTEQ 2019": "SpeedCat = 8",
+        "NAVTEQ 2011": "SPEED_CAT IN ('8')"}
 
     parameterLabels = [
         gc.versionName,
@@ -707,7 +712,9 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
         gc.chkWalkableYN,
         gc.chkIntDensYN,
         gc.chkIACYN,
-        gc.outWorkspace
+        gc.outWorkspace,
+        gc.fnPrefix,
+        gc.optionalFieldGroups
         ]
     
 class pnhd24kConstants(baseMetricConstants):
