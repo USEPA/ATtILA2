@@ -4,7 +4,7 @@ class baseMetricConstants():
     """  """
     name = ''
     shortName = ''
-    metricFUNC = ''
+    toolFUNC = ''
     fieldPrefix = ''
     fieldSuffix = ''
     overlapName = ''
@@ -24,7 +24,8 @@ class baseMetricConstants():
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
     shortName = "caem"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ""
     fieldSuffix = "_E2A"
     overlapName = "CAEM_OVER"
@@ -65,7 +66,8 @@ class caemConstants(baseMetricConstants):
 class cwcrConstants(baseMetricConstants):
     name = "CreateWalkabilityCostRaster"
     shortName = "cwcr"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     prefix = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
@@ -84,7 +86,8 @@ class cwcrConstants(baseMetricConstants):
 class flcpConstants(baseMetricConstants):
     name = "FloodplainLandCoverProportions"
     shortName = "flcp"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldSuffix = ""
     fieldPrefix = "f"
     overlapName = "FLCP_OVER"
@@ -108,9 +111,9 @@ class flcpConstants(baseMetricConstants):
         [pctBufferName, gc.defaultPercentFieldType, 6, 1]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
-    fpTabAreaName = shortName+"_TabAreaFP"
-    landcoverGridName = shortName+"_Landcover"
-    zoneByRUName = shortName+"_FldplnByRU"
+    fpTabAreaName = f"{shortName}_TabAreaFP"
+    landcoverGridName = f"{shortName}_Landcover"
+    zoneByRUName = f"{shortName}_FldplnByRU"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -130,7 +133,8 @@ class flcpConstants(baseMetricConstants):
 class flcvConstants(baseMetricConstants):
     name = "FacilityLandCoverViews"
     shortName = "flcv"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldSuffix = "_Low"
     fieldPrefix = ""
     overlapName = "FLCV_OVER"
@@ -151,12 +155,12 @@ class flcvConstants(baseMetricConstants):
     lcpFieldParameters = [lcpFieldPrefix, lcpFieldSuffix, gc.defaultPercentFieldType, 6, 1]
     belowFieldSuffix = "_Below"
     aboveFieldSuffix = "_Above"
-    facilityCopyName = shortName+"_Facility"
-    facilityWithRUIDName = shortName+"_FacilityRUID"
-    viewBufferName = shortName+"_ViewBuffer"
-    lcpTableName = shortName+"_ViewLCP"
-    lcpTableWithRUID = shortName+"_ViewLCP_RUID"
-    statsResultTable = shortName+"_ViewStats"
+    facilityCopyName = f"{shortName}_Facility"
+    facilityWithRUIDName = f"{shortName}_FacilityRUID"
+    viewBufferName = f"{shortName}_ViewBuffer"
+    lcpTableName = f"{shortName}_ViewLCP"
+    lcpTableWithRUID = f"{shortName}_ViewLCP_RUID"
+    statsResultTable = f"{shortName}_ViewStats"
     facilityCountFieldName = "FAC_Count"
     facilityCountField = [facilityCountFieldName,"LONG",None, 10]
     singleFields = [facilityCountField]
@@ -184,7 +188,8 @@ class flcvConstants(baseMetricConstants):
 class idConstants(baseMetricConstants):
     name = "IntersectionDensity"
     shortName = "id"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
     fieldPrefix = ""
     fieldSuffix = "IntDen"
     overlapName = ""
@@ -195,13 +200,13 @@ class idConstants(baseMetricConstants):
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultPercentFieldType, 6, 1] 
     fieldOverrideKey = ""
     prjRoadName = "Prj"
-    intersectDensityGridName = shortName+"_IntDen"
+    intersectDensityGridName = f"{shortName}_IntDen"
     mergedRoadName = "Merged"
     unsplitRoadName = "UnSplit"
     roadIntersectName = "Intersections"
-    gidrRoadLayer = shortName+"_Road"
+    gidrRoadLayer = f"{shortName}_Road"
     singlepartRoadName = "SglPrt"
-    dummyFieldName = shortName+"_dummy"
+    dummyFieldName = f"{shortName}_dummy"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inLineFeature, 
@@ -219,7 +224,8 @@ class idConstants(baseMetricConstants):
 class lcccConstants(baseMetricConstants):
     name = "LandCoverCoefficientCalculator"
     shortName = "lccc"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = "LCCC_OVER"
@@ -252,7 +258,8 @@ class lcccConstants(baseMetricConstants):
 class lcdConstants(baseMetricConstants):
     name = "LandCoverDiversity"
     shortName = "lcd"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = "LCD_OVER"
@@ -281,7 +288,8 @@ class lcdConstants(baseMetricConstants):
 class lcospConstants(baseMetricConstants):
     name = "LandCoverOnSlopeProportions"
     shortName = "lcosp"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldSuffix = "_SL"
     fieldPrefix = ""
     overlapName = "LCOSP_OVER"
@@ -336,13 +344,14 @@ class lcpORIGINALConstants(baseMetricConstants):
 class lcpConstants(baseMetricConstants):
     name = "LandCoverProportions"
     shortName = "lcp"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = "p"
     fieldSuffix = ""
-    overlapName = shortName.upper()+"_OVER"
-    totalAreaName = shortName.upper()+"_TOTA"
-    effectiveAreaName = shortName.upper()+"_EFFA"
-    excludedAreaName = shortName.upper()+"_EXCA"
+    overlapName = f"{shortName.upper()}_OVER"
+    totalAreaName = f"{shortName.upper()}_TOTA"
+    effectiveAreaName = f"{shortName.upper()}_EFFA"
+    excludedAreaName = f"{shortName.upper()}_EXCA"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -359,7 +368,7 @@ class lcpConstants(baseMetricConstants):
     meterSquaredField = ["", meterSquaredSuffix, gc.defaultAreaFieldType, 15, 0]
     additionalFields = [perCapitaField, meterSquaredField]
     valueCountFieldNames =["RU_POP_C"]
-    valueCountTableName = shortName+"_populationCnt"   
+    valueCountTableName = f"{shortName}_populationCnt"   
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -380,7 +389,8 @@ class lcpConstants(baseMetricConstants):
 class npConstants(baseMetricConstants):
     name = "NeighborhoodProportions"
     shortName = "np"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ""
     fieldSuffix = "_Prox"
     overlapName = ""
@@ -420,7 +430,8 @@ class nrlcpConstants(baseMetricConstants):
 class paaaConstants(baseMetricConstants):
     name = "PedestrianAccessAndAvailability"
     shortName = "paaa"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
     accessCountFieldName = "Pop_Access"
     accessCountField = [accessCountFieldName,gc.defaultDecimalFieldType,None, 15]
@@ -447,7 +458,8 @@ class paaaConstants(baseMetricConstants):
 class pdmConstants(baseMetricConstants):
     name = "PopulationDensityMetrics"
     shortName = "pdm"
-    metricFUNC = 'metric.runPopulationDensityCalculator'
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
@@ -461,8 +473,8 @@ class pdmConstants(baseMetricConstants):
     areaFieldname = "AREAKM2"
     populationDensityFieldName = "POPDENS"
     populationChangeFieldName = "POPCHG"
-    intersectOutputName = shortName+"_intersectOutput"
-    summaryTableName = shortName+"_summaryTable"
+    intersectOutputName = f"{shortName}_intersectOutput"
+    summaryTableName = f"{shortName}_summaryTable"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -480,7 +492,8 @@ class pdmConstants(baseMetricConstants):
 class pifmConstants(baseMetricConstants):
     name = "PopulationInFloodplainMetrics"
     shortName = "pifm"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ["RU_", "FP_"]
     fieldSuffix = ["_RU", "_FP"]
     overlapName = ""
@@ -494,8 +507,8 @@ class pifmConstants(baseMetricConstants):
     populationProportionFieldName = "FP_POP_P"
     # populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
     populationCountFieldNames = ["RU_POP", "FP_POP_C"]
-    popCntTableName = shortName+"_populationCnt"
-    floodplainPopName = shortName+"_populationFP"
+    popCntTableName = f"{shortName}_populationCnt"
+    floodplainPopName = f"{shortName}_populationFP"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -510,7 +523,8 @@ class pifmConstants(baseMetricConstants):
 class pmConstants(baseMetricConstants):
     name = "PatchMetrics"
     shortName = "pm"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ""
     fieldSuffix = "_PLGP"
     overlapName = "PM_OVER"
@@ -574,7 +588,8 @@ class pmConstants(baseMetricConstants):
 class plcvConstants(baseMetricConstants):
     name = "PopulationLandCoverViews"
     shortName = "plcv"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ""
     mvFieldPrefix = ""
     fieldSuffix = "_PV_C"
@@ -595,7 +610,7 @@ class plcvConstants(baseMetricConstants):
     cntField = [fieldPrefix, pctSuffix, gc.defaultDecimalFieldType, 6, 1]
     additionalFields = [cntField]
     valueCountFieldNames =["RU_POP"]
-    valueCountTableName = shortName+"_populationCnt"
+    valueCountTableName = f"{shortName}_populationCnt"
     viewRasterOutputName = "_ViewArea"
     viewPolygonOutputName = "_ViewAreaPoly"
     areaPopRasterOutputName = "_ViewPopulation"
@@ -633,14 +648,14 @@ class pnfeaConstants(baseMetricConstants):
 
 class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NAVTEQ 2019, ESRI StreetMap)
     name = "ProcessRoadsforEnviroAtlasAnalyses"
-    shortName = "PRFEA"
-    metricFUNC = 'arcpy.ATtILA.'+shortName
+    shortName = "prfea"
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
     prefix = ""
     optionalFilter = [gc.logDescription]
-    scriptOpening = gc.basicScriptOpening
-    outNameRoadsWalkable = prefix+"_RdsWalkable" 
-    outNameRoadsIntDens = prefix+"_RdsIntDens"
-    outNameRoadsIAC = prefix+"_RdsIAC"
+    outNameRoadsWalkable = "_RdsWalkable" 
+    outNameRoadsIntDens = "_RdsIntDens"
+    outNameRoadsIAC = "_RdsIAC"
     value0_LANES = "IAC_Lanes" 
      
     typeCodesString = "'AIRPORT',"\
@@ -725,7 +740,8 @@ class pnhd24kConstants(baseMetricConstants):
 class pwzmConstants(baseMetricConstants):
     name = "PopulationWithinZoneMetrics"
     shortName = "pwzm"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = ["RU_", "FP_"]
     fieldSuffix = ["_RU", "_FP"]
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
@@ -734,8 +750,8 @@ class pwzmConstants(baseMetricConstants):
     fieldOverrideKey = ""
     populationProportionFieldName = "ZN_POP_P"
     populationCountFieldNames = ["RU_POP", "ZN_POP_C"]
-    popCntTableName = shortName+"_populationCnt"
-    zonePopName = shortName+"_populationZN"
+    popCntTableName = f"{shortName}_populationCnt"
+    zonePopName = f"{shortName}_populationZN"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -753,7 +769,8 @@ class pwzmConstants(baseMetricConstants):
 class rlcpConstants(baseMetricConstants):
     name = "RiparianLandCoverProportions"
     shortName = "rlcp"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = "r"
     fieldSuffix = ""
     overlapName = "RLCP_OVER"
@@ -797,7 +814,8 @@ class rlcpConstants(baseMetricConstants):
 class rdmConstants(baseMetricConstants):
     name = "RoadDensityMetrics"
     shortName = "rdm"
-    metricFUNC = 'metric.runRoadDensityCalculator'
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
@@ -817,15 +835,15 @@ class rdmConstants(baseMetricConstants):
     streamRoadXingsCountFieldname = "XCNT"
     xingsPerKMFieldName = "STXRD"
     rnsFieldName = "RNS"
-    roadsByReportingUnitName = [shortName+"_RdsByRU","FeatureClass"]
-    streamsByReportingUnitName = [shortName+"_StrByRU","FeatureClass"]
-    roadStreamMultiPoints = [shortName+"_RdsXStrMP","FeatureClass"]
-    roadStreamIntersects = [shortName+"_PtsOfXing","FeatureClass"]
-    roadStreamSummary = [shortName+"_RdsXStrTbl","Dataset"]
-    streamBuffers = [shortName+"_StrBuffers","FeatureClass"]
-    roadsNearStreams = [shortName+"_RdsNrStrms","FeatureClass"]
-    tmp1RNS = [shortName+"_TmpRdsInBuffer","FeatureClass"]
-    tmp2RNS = [shortName+"_TmpRdsWithRUID","FeatureClass"]
+    roadsByReportingUnitName = [f"{shortName}_RdsByRU","FeatureClass"]
+    streamsByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass"]
+    roadStreamMultiPoints = [f"{shortName}_RdsXStrMP","FeatureClass"]
+    roadStreamIntersects = [f"{shortName}_PtsOfXing","FeatureClass"]
+    roadStreamSummary = [f"{shortName}_RdsXStrTbl","Dataset"]
+    streamBuffers = [f"{shortName}_StrBuffers","FeatureClass"]
+    roadsNearStreams = [f"{shortName}_RdsNrStrms","FeatureClass"]
+    tmp1RNS = [f"{shortName}_TmpRdsInBuffer","FeatureClass"]
+    tmp2RNS = [f"{shortName}_TmpRdsWithRUID","FeatureClass"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -844,7 +862,8 @@ class rdmConstants(baseMetricConstants):
 class sdmConstants(baseMetricConstants):
     name = "StreamDensityMetric"
     shortName = "sdm"
-    metricFUNC = 'metric.runStreamDensityCalculator'
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = ""
@@ -858,7 +877,7 @@ class sdmConstants(baseMetricConstants):
     areaFieldname = "AREAKM2"
     lineLengthFieldName = "STRMKM"
     lineDensityFieldName = "STRMDENS"
-    linesByReportingUnitName = [shortName+"_StrByRU","FeatureClass"]
+    linesByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.inReportingUnitFeature, 
@@ -873,7 +892,8 @@ class sdmConstants(baseMetricConstants):
 class splcpConstants(baseMetricConstants):
     name = "SamplePointLandCoverProportions"
     shortName = "splcp"
-    metricFUNC = 'metric.run'+name
+    toolFUNC = f'metric.run{name}'
+    scriptOpening = gc.metricScriptOpening
     fieldPrefix = "s"
     fieldSuffix = ""
     overlapName = "SPLCP_OVER"

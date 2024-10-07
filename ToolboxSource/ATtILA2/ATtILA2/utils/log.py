@@ -201,7 +201,7 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
         toolParameters.append(f'{l}="{p}"')
     
     outString = ', \n    '.join(toolParameters)    
-    logFile.write(f'{metricConst.metricFUNC}(\n    {outString}\n    ) \n\n')
+    logFile.write(f'{metricConst.toolFUNC}(\n    {outString}\n    ) \n\n')
     
     logFile.write('SCRIPT END:\n\n')
     

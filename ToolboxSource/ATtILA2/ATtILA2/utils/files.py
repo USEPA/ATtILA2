@@ -55,3 +55,15 @@ def getGdbFolder(filePath):
         folderDir = None
         
     return folderDir
+
+
+def checkOutputType(outputLoc):
+    ''' Determines if an output table or feature class needs a .shp filename extension based on the output location.
+    '''
+    odsc = arcpy.Describe(outputLoc)
+    # if output location is a folder then create a shapefile otherwise it will be a feature layer
+    if odsc.DataType == "Folder":
+        ext = ".shp"
+    else:
+        ext = ""
+    return ext
