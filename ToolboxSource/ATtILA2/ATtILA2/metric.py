@@ -3763,7 +3763,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         # Begin process by making a feature layer from the Streets feature class
         AddMsg(f"{timer.now()} Creating feature layer from {inputStreets}", 0, logFile)
         streetLayer = "streetLayer"
-        arcpy.MakeFeatureLayer_management(inputStreets, streetLayer)
+        log.arcpyLog(arcpy.MakeFeatureLayer_management, (inputStreets, streetLayer), 'arcpy.MakeFeatureLayer_management', logFile, True)
 
         
         if chkWalkableYN == "true" or chkIntDensYN == "true":
@@ -3799,13 +3799,13 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 whereClause = metricConst.WlkSelectSM
                 WlkMsg = metricConst.WlkMsgSM
                 
-            arcpy.SelectLayerByAttribute_management(streetLayer, 'NEW_SELECTION', whereClause, "INVERT")
+            log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', whereClause, "INVERT"), 'arcpy.SelectLayerByAttribute_management', logFile)
             AddMsg(f"{timer.now()} {WlkMsg}", 0, logFile)
 
             if chkWalkableYN == "true":
                 walkableFCName = fnPrefix+metricConst.outNameRoadsWalkable+ext
                 AddMsg(f"{timer.now()} Saving selected features to: {walkableFCName}", 0, logFile)
-                walkableFC = arcpy.CopyFeatures_management(streetLayer, walkableFCName)
+                walkableFC = log.arcpyLog(arcpy.CopyFeatures_management, (streetLayer, walkableFCName), 'arcpy.CopyFeatures_management', logFile)
                 addToActiveMap.append(walkableFC)
                 
 
@@ -3818,15 +3818,15 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 AddMsg(f"{timer.now()} Continuing with the selected features for processing intersection density roads", 0, logFile)
         
             AddMsg(f"{timer.now()} Removing from the selection features where {metricConst.speedCatDict[versionName]}", 0, logFile)
-            arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', metricConst.speedCatDict[versionName])
+            log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', metricConst.speedCatDict[versionName]), 'arcpy.SelectLayerByAttribute_management', logFile)
             
             if versionName == 'NAVTEQ 2011': #NAVTEQ 2011
                 AddMsg(f"{timer.now()} Assigning landUseA codes to road segments", 0, logFile)
-                arcpy.Identity_analysis(streetLayer, NAVTEQ_LandUseA, intersectFromLandUseA)
+                log.arcpyLog(arcpy.Identity_analysis, (streetLayer, NAVTEQ_LandUseA, intersectFromLandUseA), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFromLandUseA)
 
                 AddMsg(f"{timer.now()} Assigning landUseB codes to road segments", 0, logFile)           
-                arcpy.Identity_analysis(intersectFromLandUseA, NAVTEQ_LandUseB, intersectFinal)
+                log.arcpyLog(arcpy.Identity_analysis, (intersectFromLandUseA, NAVTEQ_LandUseB, intersectFinal), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFinal)
 
                 if ext == ".shp":
@@ -3846,11 +3846,11 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 
             elif versionName == 'NAVTEQ 2019':  #NAVTEQ 2019
                 AddMsg(f"{timer.now()} Assigning landArea codes to road segments",0,logFile)
-                arcpy.Identity_analysis(streetLayer, NAVTEQLandArea, intersectFromLandArea)
+                log.arcpyLog(arcpy.Identity_analysis, (streetLayer, NAVTEQLandArea, intersectFromLandArea), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFromLandArea)
 
                 AddMsg(f"{timer.now()} Assigning FacilityArea codes to road segments",0,logFile)           
-                arcpy.Identity_analysis(intersectFromLandArea, NAVTEQFacilityArea, intersectFinal)
+                log.arcpyLog(arcpy.Identity_analysis, (intersectFromLandArea, NAVTEQFacilityArea, intersectFinal), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFinal)
 
                 if ext == ".shp":
@@ -3870,7 +3870,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             
             elif versionName == 'ESRI StreetMap': # ESRI StreetMaps
                 AddMsg(f"{timer.now()} Assigning MapLandArea codes to road segments",0,logFile)
-                arcpy.Identity_analysis(streetLayer, SMLandArea, intersectFinal)
+                log.arcpyLog(arcpy.Identity_analysis, (streetLayer, SMLandArea, intersectFinal), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFinal)
 
             # dropFields = [f.name for f in arcpy.ListFields(intersectFinal) if f.name not in keepFields]
@@ -3887,10 +3887,10 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                     cursor.deleteRow()
             
             AddMsg(f"{timer.now()} Adding a MergeClass field",0,logFile)
-            arcpy.AddField_management(intersectFinal,mergeField,"SHORT")
+            log.arcpyLog(arcpy.AddField_management, (intersectFinal,mergeField,"SHORT"), 'arcpy.AddField_management', logFile)
         
             AddMsg(f"{timer.now()} Setting MergeClass to an initial value of 1", 0, logFile)
-            arcpy.CalculateField_management(intersectFinal,mergeField,1)
+            log.arcpyLog(arcpy.CalculateField_management, (intersectFinal,mergeField,1), 'arcpy.CalculateField_management', logFile)
             
             dirTravelSQL = metricConst.dirTravelDict[versionName]
             dirTravelFld = dirTravelSQL.split(' = ')[0]
@@ -3902,12 +3902,12 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         
             AddMsg(f"{timer.now()} Converting any multipart roads to singlepart", 0, logFile)
             # Ensure the road feature class is comprised of singleparts. Multipart features will cause MergeDividedRoads to fail.
-            arcpy.MultipartToSinglepart_management(intersectFinal, singlepartRoads)
+            log.arcpyLog(arcpy.MultipartToSinglepart_management, (intersectFinal, singlepartRoads), 'arcpy.MultipartToSinglepart_management', logFile)
             intermediateList.append(singlepartRoads)
             AddMsg(f"{timer.now()} Merging divided roads to {intDensityFCName} using the MergeClass field and a merge distance of '30 Meters'. Only roads with the same value in the mergeField and within the mergeDistance will be merged. Roads with a MergeClass value equal to zero are locked and will not be merged. All non-merged roads are retained.", 
                    0, logFile)
             
-            intDensityFC = arcpy.MergeDividedRoads_cartography(singlepartRoads, mergeField, "30 Meters", intDensityFCName)                    
+            intDensityFC = log.arcpyLog(arcpy.MergeDividedRoads_cartography, (singlepartRoads, mergeField, "30 Meters", intDensityFCName), 'arcpy.MergeDividedRoads_cartography', logFile)                    
             AddMsg(f"{timer.now()} Finished processing {intDensityFCName}", 0, logFile)
             addToActiveMap.append(intDensityFC)
             
@@ -3922,51 +3922,51 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             if chkWalkableYN == "true" or chkIntDensYN == "true":
                 # this is probably unnecessary, but it makes sure everything is reset
                 AddMsg(f"{timer.now()} Clearing and resetting selections for {inputStreets}")
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'CLEAR_SELECTION')
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'CLEAR_SELECTION'), 'arcpy.SelectLayerByAttribute_management', logFile)
 
             if versionName == 'NAVTEQ 2011':
                 AddMsg(f"{timer.now()} Selecting features where FUNC_CLASS = 1, 2, 3, or 4",0,logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'NEW_SELECTION', "FUNC_CLASS IN ('1','2','3','4')")
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FUNC_CLASS IN ('1','2','3','4')"), 'arcpy.SelectLayerByAttribute_management', logFile)
                 AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H",0,logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', "FERRY_TYPE <> 'H'")                
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', "FERRY_TYPE <> 'H'"), 'arcpy.SelectLayerByAttribute_management', logFile)                
                 
             elif versionName == 'NAVTEQ 2019': #NAVTEQ2019 #(pickup updating messages here) 
                 #try running the join first
                 AddMsg(f"{timer.now()} Adding {ToFromFields[0]} and {ToFromFields[1]} from {link}", 0, logFile)
-                arcpy.management.JoinField(inputStreets, metricConst.Streets_linkfield, link, metricConst.Link_linkfield, ToFromFields)
+                log.arcpyLog(arcpy.management.JoinField, (inputStreets, metricConst.Streets_linkfield, link, metricConst.Link_linkfield, ToFromFields), 'arcpy.management.JoinField', logFile)
                 AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4", 0, logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'NEW_SELECTION', "FuncClass <= 4")
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FuncClass <= 4"), 'arcpy.SelectLayerByAttribute_management', logFile)
                 AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H", 0, logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'")                
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'"), 'arcpy.SelectLayerByAttribute_management', logFile)                
             
             elif versionName == 'ESRI StreetMap': # ESRI StreetMaps
                 AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4", 0, logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'NEW_SELECTION', "FuncClass <= 4")
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FuncClass <= 4"), 'arcpy.SelectLayerByAttribute_management', logFile)
                 AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H", 0, logFile)
-                arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'")            
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'"), 'arcpy.SelectLayerByAttribute_management', logFile)            
             
             # Write the selected features to a new feature class
             AddMsg(f"{timer.now()} Copying remaining selected features to "+iacFCName, 0, logFile)
-            iacFC = arcpy.CopyFeatures_management(streetLayer, iacFCName)
+            iacFC = log.arcpyLog(arcpy.CopyFeatures_management, (streetLayer, iacFCName), 'arcpy.CopyFeatures_management', logFile)
         
             for f in ToFromFields:
                 AddMsg(f"{timer.now()} Setting NULL values in {f} field to 0", 0, logFile)
                 calculate.replaceNullValues(iacFC, f, 0)
             
-            arcpy.AddField_management(iacFC,lanesField,"SHORT")
-            AddMsg(f"{timer.now()} Added field, LANES, to {iacFCName}. Calculating its value as {ToFromFields[0]} + {ToFromFields[1]}", 0, logFile)
+            AddMsg(f"{timer.now()} Adding field, LANES, to {iacFCName}. Calculating its value as {ToFromFields[0]} + {ToFromFields[1]}", 0, logFile)
+            log.arcpyLog(arcpy.AddField_management, (iacFC,lanesField,"SHORT"), 'arcpy.AddField_management', logFile)
             calcExpression = f"!{ToFromFields[0]}!+!{ToFromFields[1]}!"
-            arcpy.CalculateField_management(iacFC,lanesField,calcExpression,"PYTHON",'#')
-            
-            AddMsg(f"{timer.now()} Finished processing {iacFCName}", 0, logFile)
+            log.arcpyLog(arcpy.CalculateField_management, (iacFC,lanesField,calcExpression,"PYTHON",'#'), 'arcpy.CalculateField_management', logFile)
                 
             #inform the user the total number of features having LANES of value 0
             value0FCName = metricConst.value0_LANES+ext
             whereClause_0Lanes = lanesField + " = 0"
-            arcpy.Select_analysis(iacFC, value0FCName, whereClause_0Lanes)
+            log.arcpyLog(arcpy.Select_analysis, (iacFC, value0FCName, whereClause_0Lanes), 'arcpy.Select_analysis', logFile)
             zeroCount = arcpy.GetCount_management(value0FCName).getOutput(0)
             if int(zeroCount) > 0:
-                arcpy.AddWarning(f"Total number of records where LANES field = 0 in {iacFCName} is: {zeroCount}. Replacing LANES field value to 2 for these records. The user can locate and change these records with the following query: {ToFromFields[0]} = 0 And {ToFromFields[1]} = 0")
+                warningStr = f"Total number of records where LANES field = 0 in {iacFCName} is: {zeroCount}. Replacing LANES field value to 2 for these records. The user can locate and change these records with the following query: {ToFromFields[0]} = 0 And {ToFromFields[1]} = 0"
+                logFile.write(f'{timer.now()} Replacing LANES field value to 2 where LANES = 0.\n')
+                arcpy.AddWarning(warningStr)
                 
                 #Change the LANES value to 2 where LANES = 0
                 sql4 = "LANES = 0"
@@ -3974,7 +3974,9 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                     for row in cursor:
                         row[0] = 2
                         cursor.updateRow(row)
-            
+                        
+            AddMsg(f"{timer.now()} Finished processing {iacFCName}", 0, logFile)
+                        
             intermediateList.append(value0FCName)
             addToActiveMap.append(iacFC)
             
