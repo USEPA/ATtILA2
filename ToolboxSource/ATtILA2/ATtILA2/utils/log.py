@@ -7,6 +7,7 @@ from ATtILA2.constants import globalConstants
 from datetime import datetime
 from ATtILA2.datetimeutil import DateTimer
 from .messages import AddMsg
+from . import environment
 
 timer = DateTimer()
 
@@ -161,6 +162,67 @@ def writeEnvironments(logFile, snapRaster, processingCellSize, extentDataset=Non
     logFile.write(f'ENVIRONMENT: Parallel Processing Factor = {env.parallelProcessingFactor}\n')
     
     logFile.write('\n')       
+
+def writeExtentsNew(logFile, extentList):
+    intersectThese = []
+    for f in extentList:
+        desc = arcpy.Describe(f)
+        fExtent = desc.extent
+        
+        inSR = desc.spatialReference
+        #logFile.write(f'ENVIRONMENT: Reporting Extent ({inSR.name}) = {aExtent.XMax}, {aExtent.YMax}, {aExtent.XMin}, {aExtent.YMin}\n')
+        
+        wgs84SR = arcpy.SpatialReference(4326)
+        transformList = arcpy.ListTransformations(inSR, wgs84SR, fExtent)
+        if len(transformList) == 0:
+            # if no list is returned; no transformation is required
+            transformMethod = ""
+        else:
+            # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+            transformMethod = transformList[0]
+        
+        if transformMethod != "":
+            prjExt = fExtent.projectAs(wgs84SR, transformMethod)
+        else:
+            prjExt = fExtent.projectAs(wgs84SR)
+        
+        AddMsg(str(prjExt))
+        
+        intersectThese.append(prjExt)
+    
+    #intersectCoord = environment.getIntersectionOfExtents(intersectThese)
+    intersectLLX = max([aExt.XMin for aExt in intersectThese])
+    intersectLLY = max([aExt.YMin for aExt in intersectThese])
+    intersectURX = min([aExt.XMax for aExt in intersectThese])
+    intersectURY = min([aExt.YMax for aExt in intersectThese])
+        
+    logFile.write(f'ENVIRONMENT: Reporting Extent (WGS 1984) = {intersectURX}, {intersectURY}, {intersectLLX}, {intersectLLY}\n')
+
+
+def writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=None):
+    
+    logFile.write('\n')
+    
+    try:
+        if extentList:
+            writeExtentsNew(logFile, extentList)
+        else:
+            writeExtentsNew(logFile, env.extent)
+                                        
+    except:
+        logFile.write('ENVIRONMENT: Reporting Extent error encountered\n')
+
+
+    if snapRaster:
+        logFile.write(f'ENVIRONMENT: Snap Raster = {env.snapRaster}\n')
+    if processingCellSize:
+        logFile.write(f'ENVIRONMENT: Cell Size = {env.cellSize}\n')
+    logFile.write(f'ENVIRONMENT: Output M Flag = {env.outputMFlag}\n')
+    logFile.write(f'ENVIRONMENT: Output Z Flag = {env.outputZFlag}\n')
+    logFile.write(f'ENVIRONMENT: Parallel Processing Factor = {env.parallelProcessingFactor}\n')
+    
+    logFile.write('\n')
+    
 
 def logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst):
     ''' Write grid values for selected metric classes to log file. '''

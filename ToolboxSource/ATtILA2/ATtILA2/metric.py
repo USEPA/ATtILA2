@@ -3964,9 +3964,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             log.arcpyLog(arcpy.Select_analysis, (iacFC, value0FCName, whereClause_0Lanes), 'arcpy.Select_analysis', logFile)
             zeroCount = arcpy.GetCount_management(value0FCName).getOutput(0)
             if int(zeroCount) > 0:
-                warningStr = f"Total number of records where LANES field = 0 in {iacFCName} is: {zeroCount}. Replacing LANES field value to 2 for these records. The user can locate and change these records with the following query: {ToFromFields[0]} = 0 And {ToFromFields[1]} = 0"
-                logFile.write(f'{timer.now()} Replacing LANES field value to 2 where LANES = 0.\n')
-                arcpy.AddWarning(warningStr)
+                AddMsg(f'{timer.now()} Total number of records where LANES = 0 in {iacFCName} is: {zeroCount}.', 1, logFile)
+                AddMsg(f'{timer.now()} Replacing LANES field value to 2 for these records. The user can locate and change these records with the following query: {ToFromFields[0]} = 0 And {ToFromFields[1]} = 0', 1, logFile)
                 
                 #Change the LANES value to 2 where LANES = 0
                 sql4 = "LANES = 0"
@@ -4031,6 +4030,12 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                           inZoneDataset, inBufferDistance, groupByZoneYN, zoneIdField, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # create a list of input themes to 
+        if logFile:
+            extentList = [inReportingUnitFeature, inCensusDataset, inZoneDataset]
+        else:
+            extentList = []
             
         ### Initialization
         # Start the timer
@@ -4520,7 +4525,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            #log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList)
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
