@@ -3734,11 +3734,16 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         # setup additional metric constants
         ext = files.checkOutputType(outWorkspace) # determine if '.shp' needs to be added to outputs
         
-        ### Put in checks to see if the geodatabase has the required datasets
-        ###
-        ###
+        # checks to see if the geodatabase has the required datasets
+        requiredLayers = metricConst.requiredDict[versionName]
+        for fc in requiredLayers:
+            filename = f"{inStreetsgdb}{fc}"
+            AddMsg(filename)
+            if arcpy.Exists(filename) == False:
+                AddMsg(f"Required input, {fc}, was not found in {inStreetsgdb}. Aborting...", 2)
+                raise errors.attilaException(errorConstants.missingRoadsError)  
         
-        inputStreets = inStreetsgdb + "\\Streets"
+        inputStreets = f"{inStreetsgdb}\\Streets"
         singlepartRoads = "singlepartRoads"+ext
         intermediateList = []
         keepFields = [f.name for f in arcpy.ListFields(inputStreets)]
@@ -3772,32 +3777,24 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             else:
                 AddMsg(f"{timer.now()} Processing roads for intersection density analysis", 0, logFile)
             
-            if versionName == 'NAVTEQ 2011': #NAVTEQ 2011
-                whereClause = metricConst.WlkSelectNAV11
-                WlkMsg = metricConst.WlkMsgNAV11
+            whereClause = metricConst.walkSelectDict[versionName]
+            WlkMsg = metricConst.walkMsgDict[versionName]
                 
-                # OLD NAVTEQ SELECTION FOR ENVIROATLAS
-                # AddMsg("From "+inputStreets+"...")
-                # AddMsg("...selecting features where FUNC_CLASS <> 1 or 2")
-                # arcpy.SelectLayerByAttribute_management(streetLayer, 'NEW_SELECTION', 
-                #                                         "FUNC_CLASS NOT IN ('1','2')")
-                # AddMsg("...removing from the selection features where FERRY_TYPE <> H")
-                # arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
-                #                                         "FERRY_TYPE <> 'H'")
-                # AddMsg("...removing from the selection features where SPEED_CAT = 1, 2, or 3")
-                # arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
-                #                                         "SPEED_CAT IN ('1', '2', '3')")
-                # AddMsg("...removing from the selection features where AR_PEDEST = N")
-                # arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
-                #                                         "AR_PEDEST = 'N'")
+            # OLD NAVTEQ SELECTION FOR ENVIROATLAS
+            # AddMsg("From "+inputStreets+"...")
+            # AddMsg("...selecting features where FUNC_CLASS <> 1 or 2")
+            # arcpy.SelectLayerByAttribute_management(streetLayer, 'NEW_SELECTION', 
+            #                                         "FUNC_CLASS NOT IN ('1','2')")
+            # AddMsg("...removing from the selection features where FERRY_TYPE <> H")
+            # arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
+            #                                         "FERRY_TYPE <> 'H'")
+            # AddMsg("...removing from the selection features where SPEED_CAT = 1, 2, or 3")
+            # arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
+            #                                         "SPEED_CAT IN ('1', '2', '3')")
+            # AddMsg("...removing from the selection features where AR_PEDEST = N")
+            # arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', 
+            #                                         "AR_PEDEST = 'N'")
             
-            elif versionName == 'NAVTEQ 2019': #NAVTEQ 2019
-                whereClause = metricConst.WlkSelectNAV19
-                WlkMsg = metricConst.WlkMsgNAV19
-            
-            elif versionName == 'ESRI StreetMap': #StreetMaps
-                whereClause = metricConst.WlkSelectSM
-                WlkMsg = metricConst.WlkMsgSM
                 
             log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', whereClause, "INVERT"), 'arcpy.SelectLayerByAttribute_management', logFile)
             AddMsg(f"{timer.now()} {WlkMsg}", 0, logFile)
@@ -3831,11 +3828,11 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
 
                 if ext == ".shp":
                     # fieldname size restrictions with shapefiles cause FEAT_TYPE_1 to be truncated to FEAT_TYP_1 
-                    sql = "FEAT_TYPE = '' And FEAT_TYP_1 <> ''"
                     relevantFlds = ['FEAT_TYPE', 'FEAT_TYP_1']
                 else:
-                    sql = "FEAT_TYPE = '' And FEAT_TYPE_1 <> ''"
                     relevantFlds = ['FEAT_TYPE', 'FEAT_TYPE_1']
+
+                sql = f"{relevantFlds[0]} = '' And {relevantFlds[1]} <> ''"
 
                 #Transfer all meaningful values from field FEAT_TYPE_1 to FEAT_TYPE
                 AddMsg(f"{timer.now()} Transferring values from {relevantFlds[1]} to {relevantFlds[0]}", 0, logFile)
@@ -3855,11 +3852,11 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
 
                 if ext == ".shp":
                     # fieldname size restrictions with shapefiles cause FEAT_TYPE_1 to be truncated to FEAT_TYP_1 
-                    sql = "FEATURE_TY = 0 And FEATURE_1 <> 0" # Not sure how this is truncated? FIGURE THIS OUT TOMORROW 9/12
-                    relevantFlds = ['FEATURE_TY', 'FEATURE_1']
+                    relevantFlds = ['FEATURE_TY', 'FEATURE__1']
                 else:
-                    sql = "FEATURE_TYPE = 0 And FEATURE_TYPE_1 <> 0" # Ask Don why this line of code!
                     relevantFlds = ['FEATURE_TYPE', 'FEATURE_TYPE_1']
+                    
+                sql = f"{relevantFlds[0]} = 0 And {relevantFlds[1]} <> 0"
 
                 #Transfer all meaningful values from field FEAT_TYPE_1 to FEAT_TYPE
                 AddMsg(f"{timer.now()} Transferring values from {relevantFlds[1]} to {relevantFlds[0]}", 0, logFile)
@@ -3878,10 +3875,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             # arcpy.DeleteField_management(intersectFinal, dropFields)  #THIS SET OF CODE SLOWS THINGS DOWN A LOT
 
             AddMsg(f"{timer.now()} Removing roads with no street names from the following land use type areas: AIRPORT, AMUSEMENT PARK, BEACH, CEMETERY, HOSPITAL, INDUSTRIAL COMPLEX, MILITARY BASE, RAILYARD, SHOPPING CENTER, or GOLF COURSE", 0, logFile)
-            unnamedStreetsSQL = metricConst.unnamedStreetsDict[versionName]
-            ### Still need to put in code to change the SQL if the output is a shapefile. Fieldnames need to be truncated.
-            ### Look at other SQLs later in the script
-            ###
+            unnamedStreetsSQL = metricConst.unnamedStreetsDict[f"{versionName}{ext}"]
+
             with arcpy.da.UpdateCursor(intersectFinal, ["*"], unnamedStreetsSQL) as cursor:
                 for row in cursor:
                     cursor.deleteRow()
@@ -3904,8 +3899,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             # Ensure the road feature class is comprised of singleparts. Multipart features will cause MergeDividedRoads to fail.
             log.arcpyLog(arcpy.MultipartToSinglepart_management, (intersectFinal, singlepartRoads), 'arcpy.MultipartToSinglepart_management', logFile)
             intermediateList.append(singlepartRoads)
-            AddMsg(f"{timer.now()} Merging divided roads to {intDensityFCName} using the MergeClass field and a merge distance of '30 Meters'. Only roads with the same value in the mergeField and within the mergeDistance will be merged. Roads with a MergeClass value equal to zero are locked and will not be merged. All non-merged roads are retained.", 
-                   0, logFile)
+            AddMsg(f"{timer.now()} Merging divided roads to {intDensityFCName} using the MergeClass field and a merge distance of '30 Meters'. Only roads with the same value in the mergeField and within the mergeDistance will be merged. Roads with a MergeClass value equal to zero are locked and will not be merged. All non-merged roads are retained.", 0, logFile)
             
             intDensityFC = log.arcpyLog(arcpy.MergeDividedRoads_cartography, (singlepartRoads, mergeField, "30 Meters", intDensityFCName), 'arcpy.MergeDividedRoads_cartography', logFile)                    
             AddMsg(f"{timer.now()} Finished processing {intDensityFCName}", 0, logFile)
@@ -3933,7 +3927,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             elif versionName == 'NAVTEQ 2019': #NAVTEQ2019 #(pickup updating messages here) 
                 #try running the join first
                 AddMsg(f"{timer.now()} Adding {ToFromFields[0]} and {ToFromFields[1]} from {link}", 0, logFile)
-                log.arcpyLog(arcpy.management.JoinField, (inputStreets, metricConst.Streets_linkfield, link, metricConst.Link_linkfield, ToFromFields), 'arcpy.management.JoinField', logFile)
+                #log.arcpyLog(arcpy.management.JoinField, (inputStreets, metricConst.Streets_linkfield, link, metricConst.Link_linkfield, ToFromFields), 'arcpy.management.JoinField', logFile)
+                log.arcpyLog(arcpy.management.JoinField, (streetLayer, metricConst.Streets_linkfield, link, metricConst.Link_linkfield), 'arcpy.management.JoinField', logFile)
                 AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4", 0, logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FuncClass <= 4"), 'arcpy.SelectLayerByAttribute_management', logFile)
                 AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H", 0, logFile)
@@ -3948,6 +3943,9 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             # Write the selected features to a new feature class
             AddMsg(f"{timer.now()} Copying remaining selected features to "+iacFCName, 0, logFile)
             iacFC = log.arcpyLog(arcpy.CopyFeatures_management, (streetLayer, iacFCName), 'arcpy.CopyFeatures_management', logFile)
+            arcpy.management.RemoveJoin(streetLayer)
+            # need to reset the ToFromFiels in case the iacFC is a shapefile
+            ToFromFields = metricConst.laneFieldDict[f"{versionName}{ext}"]
         
             for f in ToFromFields:
                 AddMsg(f"{timer.now()} Setting NULL values in {f} field to 0", 0, logFile)
@@ -3960,7 +3958,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 
             #inform the user the total number of features having LANES of value 0
             value0FCName = metricConst.value0_LANES+ext
-            whereClause_0Lanes = lanesField + " = 0"
+            whereClause_0Lanes = f"{lanesField} = 0"
             log.arcpyLog(arcpy.Select_analysis, (iacFC, value0FCName, whereClause_0Lanes), 'arcpy.Select_analysis', logFile)
             zeroCount = arcpy.GetCount_management(value0FCName).getOutput(0)
             if int(zeroCount) > 0:
@@ -3983,7 +3981,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         try:
             # add outputs to the active map
             if actvMap != None:
-                AddMsg(f"Adding output(s) to {actvMap.name} view")
+                # AddMsg(f"Adding output(s) to {actvMap.name} view")
                 for aFeature in addToActiveMap:
                     actvMap.addDataFromPath(aFeature)
                     AddMsg(f"Adding {arcpy.Describe(aFeature).name} to {actvMap.name} view")
@@ -4003,8 +4001,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             logFile.close()
             AddMsg('Log file closed')
         
-        for i in intermediateList:
-            arcpy.Delete_management(i)
+        # for i in intermediateList:
+        #     arcpy.Delete_management(i)
 
         env.parallelProcessingFactor = _tempEnvironment0
         env.workspace = _tempEnvironment1

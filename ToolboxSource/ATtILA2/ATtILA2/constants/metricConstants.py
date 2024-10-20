@@ -682,26 +682,43 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
                         )
     
     # StreetMap
-    WlkSelectSM = "SpeedCat < 4 Or FuncClass < 3 Or RestrictPedestrians = 'Y' Or FerryType <> 'H' Or Ramp = 'Y' Or ContrAcc = 'Y' Or Tollway = 'Y'"
-    WlkMsgSM = "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'"
     landUseSetSM = " Or FEATURE_TYPE = ".join(typeCodesNumeric)
-    
+    landUseSetSMShp = " Or FEATURE_TY = ".join(typeCodesNumeric)
+        
     # NAVTEQ 2019 
-    WlkSelectNAV19 = "SpeedCat < 4 Or FuncClass < 3 Or RestrictPedestrians = 'Y' Or FerryType <> 'H' Or Ramp = 'Y' Or ContrAcc = 'Y' Or Tollway = 'Y'"
-    WlkMsgNAV19 = "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'"
     Streets_linkfield = 'Link_ID'
     Link_linkfield = 'LINK_ID'
     landUseSetNAV19 = " Or FEATURE_TYPE = ".join(typeCodesNumeric)
+    landUseSetNAV19Shp = " Or FEATURE_TY = ".join(typeCodesNumeric)
     
     # NAVTEQ 2011 
-    WlkSelectNAV11 = "FUNC_CLASS IN ('1','2') Or FERRY_TYPE <> 'H' Or SPEED_CAT IN ('1', '2', '3') Or AR_PEDEST = 'N' Or RAMP = 'Y' Or CONTRACC = 'Y' Or TOLLWAY ='Y'"
-    WlkSelectNAV11OLD = "FUNC_CLASS IN ('1','2') Or FERRY_TYPE <> 'H' Or SPEED_CAT IN ('1', '2', '3') Or AR_PEDEST = 'N'" # For old style of processing NAVTEQ for ENVIROATLAS
-    WlkMsgNAV11 = "Selecting and removing features where FUNC_CLASS < 3; SPEED_CAT < 4; AR_PEDEST = 'N'; FERRY_TRYPE <> 'H'; RAMP = 'Y'; CONTRACC = 'Y'; TOLLWAY = 'Y'"
+    # empty
+    
+    requiredDict = {
+        "ESRI StreetMap": ["\\Streets", "\\MapLandArea\\MapLandArea"],
+        "NAVTEQ 2019": ["\\RoutingApplication\\Streets", "\\MapFacilityArea", "\\MapLanduseArea", "\\link"],
+        "NAVTEQ 2011": ["\\Streets", "\\LandUseA", "\\LandUseB"]
+        }
+    
+    walkSelectDict = {
+        "ESRI StreetMap": "SpeedCat < 4 Or FuncClass < 3 Or RestrictPedestrians = 'Y' Or FerryType <> 'H' Or Ramp = 'Y' Or ContrAcc = 'Y' Or Tollway = 'Y'",
+        "NAVTEQ 2019": "SpeedCat < 4 Or FuncClass < 3 Or RestrictPedestrians = 'Y' Or FerryType <> 'H' Or Ramp = 'Y' Or ContrAcc = 'Y' Or Tollway = 'Y'",
+        "NAVTEQ 2011": "FUNC_CLASS IN ('1','2') Or FERRY_TYPE <> 'H' Or SPEED_CAT IN ('1', '2', '3') Or AR_PEDEST = 'N' Or RAMP = 'Y' Or CONTRACC = 'Y' Or TOLLWAY ='Y'"
+        }
+    
+    walkMsgDict = {
+        "ESRI StreetMap": "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'",
+        "NAVTEQ 2019": "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'",
+        "NAVTEQ 2011": "Selecting and removing features where FUNC_CLASS < 3; SPEED_CAT < 4; AR_PEDEST = 'N'; FERRY_TRYPE <> 'H'; RAMP = 'Y'; CONTRACC = 'Y'; TOLLWAY = 'Y'"
+        }
     
     laneFieldDict = {
         "ESRI StreetMap": ['FROM_REF_NUM_LANES','TO_REF_NUM_LANES'],
         "NAVTEQ 2019": ['FROM_REF_NUM_LANES','TO_REF_NUM_LANES'],
-        "NAVTEQ 2011": ['TO_LANES', 'FROM_LANES']
+        "NAVTEQ 2011": ['TO_LANES', 'FROM_LANES'],
+        "ESRI StreetMap.shp": ['FROM_REF_N','TO_REF_NUM'],
+        "NAVTEQ 2019.shp": ['FROM_REF_N','TO_REF_NUM'],
+        "NAVTEQ 2011.shp": ['TO_LANES', 'FROM_LANES']
         }
     
     dirTravelDict = {
@@ -713,13 +730,17 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
     unnamedStreetsDict = {
         "ESRI StreetMap": f"StreetName = '' And (FEATURE_TYPE = {landUseSetSM})",
         "NAVTEQ 2019": f"StreetName = '' And (FEATURE_TYPE = {landUseSetNAV19})",
-        "NAVTEQ 2011": f"FEAT_TYPE IN ({typeCodesString}) And ST_NAME = ''"
+        "NAVTEQ 2011": f"FEAT_TYPE IN ({typeCodesString}) And ST_NAME = ''",
+        "ESRI StreetMap.shp": f"StreetName = '' And (FEATURE_TY = {landUseSetSMShp})",
+        "NAVTEQ 2019.shp": f"StreetNa_1 = '' And (FEATURE_TY = {landUseSetNAV19Shp})",
+        "NAVTEQ 2011.shp": f"FEAT_TYPE IN ({typeCodesString}) And ST_NAME = ''"
         }
     
     speedCatDict = {
         "ESRI StreetMap": "SpeedCat = 8",
         "NAVTEQ 2019": "SpeedCat = 8",
-        "NAVTEQ 2011": "SPEED_CAT IN ('8')"}
+        "NAVTEQ 2011": "SPEED_CAT IN ('8')"
+        }
 
     parameterLabels = [
         gc.versionName,

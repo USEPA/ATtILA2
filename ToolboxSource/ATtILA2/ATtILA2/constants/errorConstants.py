@@ -85,3 +85,10 @@ A required field contains only NULL values or whitespace.
 Please inspect all fields selected for the tool inputs and verify their contents.
 
 '''
+
+
+missingRoadsError = '''
+
+A required input was not found in the Roads geodatabase.
+
+'''
