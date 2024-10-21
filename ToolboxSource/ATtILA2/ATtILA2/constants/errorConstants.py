@@ -91,4 +91,28 @@ missingRoadsError = '''
 
 A required input was not found in the Roads geodatabase.
 
+- For **ESRI StreetMap** the following feature classes must be present:  
+
+  - .gdb\\Streets  
+  
+  - .gdb\\MapLandArea\MapLandArea  
+
+- For **NAVTEQ 2019** the following feature classes must be present:  
+
+  - .gdb\\RoutingApplication\\Streets  
+  
+  - .gdb\\MapFacilityArea  
+  
+  - .gdb\\MapLanduseArea  
+  
+  - .gdb\\link  
+  
+- For **NAVTEQ 2011** the following feature classes must be present:  
+
+  - .gdb\\Streets  
+  
+  - .gdb\\LandUseA  
+  
+  - .gdb\\LandUseB  
+
 '''

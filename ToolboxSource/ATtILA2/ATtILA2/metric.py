@@ -3702,6 +3702,15 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.prfeaConstants()
         
+        # checks to see if the geodatabase has the required datasets.
+        requiredLayers = metricConst.requiredDict[versionName]
+        for fc in requiredLayers:
+            filename = f"{inStreetsgdb}{fc}"
+            if arcpy.Exists(filename) == False:
+                # inform the user what is wrong then kill the operation
+                AddMsg(f"Required input, {fc}, was not found in {inStreetsgdb}. Aborting...", 2)
+                raise errors.attilaException(errorConstants.missingRoadsError) 
+        
         # copy input parameters to pass to the log file routine
         parametersList = [versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
         # create a log file if requested, otherwise logFile = None
@@ -3732,16 +3741,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         env.workspace = outWorkspace
 
         # setup additional metric constants
-        ext = files.checkOutputType(outWorkspace) # determine if '.shp' needs to be added to outputs
-        
-        # checks to see if the geodatabase has the required datasets
-        requiredLayers = metricConst.requiredDict[versionName]
-        for fc in requiredLayers:
-            filename = f"{inStreetsgdb}{fc}"
-            AddMsg(filename)
-            if arcpy.Exists(filename) == False:
-                AddMsg(f"Required input, {fc}, was not found in {inStreetsgdb}. Aborting...", 2)
-                raise errors.attilaException(errorConstants.missingRoadsError)  
+        ext = files.checkOutputType(outWorkspace) # determine if '.shp' needs to be added to outputs 
         
         inputStreets = f"{inStreetsgdb}\\Streets"
         singlepartRoads = "singlepartRoads"+ext
@@ -4001,8 +4001,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             logFile.close()
             AddMsg('Log file closed')
         
-        # for i in intermediateList:
-        #     arcpy.Delete_management(i)
+        for i in intermediateList:
+            arcpy.Delete_management(i)
 
         env.parallelProcessingFactor = _tempEnvironment0
         env.workspace = _tempEnvironment1

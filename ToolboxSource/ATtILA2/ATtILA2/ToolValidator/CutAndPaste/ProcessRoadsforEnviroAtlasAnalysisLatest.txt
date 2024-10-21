@@ -1,0 +1,83 @@
+import arcpy
+import os
+import sys
+tbxPath = __file__.split("#")[0]
+sourceName = "ToolboxSource" 
+tbxParentDirPath =  os.path.dirname(tbxPath)
+srcDirPath = os.path.join(tbxParentDirPath, sourceName)
+sys.path.append(srcDirPath)
+import ATtILA2
+from ATtILA2.constants import validatorConstants
+
+class ToolValidator(object):
+    """Class for validating a tool's parameter values and controlling
+    the behavior of the tool's dialog."""
+
+    def __init__(self):
+        """Setup arcpy and the list of tool parameters."""
+        self.params = arcpy.GetParameterInfo()
+        self.inProjectedGDBParameter = self.params[1]
+        self.chkboxIntDen = self.params[3]
+        self.outWorkspaceParameter = self.params[5]
+        self.prefixParameter = self.params[6]
+        
+        self.projected = False
+        # self.initialized = False
+
+    def initializeParameters(self):
+        """Refine the properties of a tool's parameters.
+        This method is called when the tool is opened."""
+
+    def updateParameters(self):
+        """Modify the values and properties of parameters before internal
+        validation is performed. This method is called whenever a parameter
+        has been changed."""
+
+    def updateMessages(self):
+        """Modify the messages created by internal validation for each tool
+        parameter. This method is called after internal validation."""
+        
+        if self.inProjectedGDBParameter.value:
+            filename = f"{self.inProjectedGDBParameter.valueAsText}\\Streets"
+            if arcpy.Exists(filename):
+                # check for projected coordinate system
+                descFC = arcpy.Describe(filename)
+                sr = descFC.spatialReference
+                if sr.type != "Projected":
+                    self.projected = True
+            else:
+                self.inProjectedGDBParameter.setErrorMessage(f"Streets feature class not found in geodatabase. Additional feature classes may also be missing. Compatible geodatabase structure is provided in Version info.")
+        
+        if self.chkboxIntDen.value and self.inProjectedGDBParameter.value:
+            if self.projected:
+                self.chkboxIntDen.setErrorMessage("Streets feature class is not projected. All required datasets in the geodatabase must be in a projected coordinate system for valid results.")
+        
+        if self.outWorkspaceParameter.value and self.prefixParameter.value:
+            self.outWorkspace = self.outWorkspaceParameter.valueAsText
+            self.prefixValue = self.prefixParameter.value
+            
+            # check if any invalid characters are present
+            self.validPrefix = arcpy.ValidateTableName(self.prefixValue,self.outWorkspace)
+            if self.validPrefix != self.prefixValue:
+                self.prefixParameter.setErrorMessage("File base name contains invalid characters or symbols for the output workspace such as ., *, ?, ', <, >, |, and space or has an invalid starting character such as a number. Please adjust the File base name before proceeding.")
+    
+##    def listFeatures(self, envWS, foundList):
+##        datasets = arcpy.ListDatasets(feature_type='feature')
+##        datasets = [''] + datasets if datasets is not None else []
+##        for ds in datasets:
+##            for fc in arcpy.ListFeatureClasses(feature_dataset=ds):
+##                # path = os.path.join(envWS, ds, fc)
+##                if fc == "Streets":
+##                    foundList.append("Found Needed Files")
+##                    descFC = arcpy.Describe(fc)
+##                    sr = descFC.spatialReference
+##                    if sr.type != "Projected":
+##                        self.projected = True
+##                        break
+##                else:
+##                    foundList.append(fc)
+##        return foundList
+    
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
