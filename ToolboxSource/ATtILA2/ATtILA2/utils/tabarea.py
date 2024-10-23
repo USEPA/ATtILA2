@@ -1,5 +1,4 @@
 import arcpy
-#from ATtILA2.utils.log import logArcpy
 from ATtILA2.utils.log import arcpyLog
 
 
@@ -50,10 +49,6 @@ class TabulateAreaTable(object):
         else:
             self._tableName = arcpy.CreateScratchName(self._tempTableName, "", self._datasetType)
             
-        # # logArcpy("arcpy.gp.TabulateArea_sa",(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
-        # #                                      self._value, self._tableName), self._logFile)
-        # # arcpy.gp.TabulateArea_sa(self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
-        # #                          self._value, self._tableName)
         arcpyLog(arcpy.gp.TabulateArea_sa, (self._inReportingUnitFeature, self._reportingUnitIdField, self._inLandCoverGrid, 
                                  self._value, self._tableName), 'arcpy.gp.TabulateArea_sa', self._logFile)
         
