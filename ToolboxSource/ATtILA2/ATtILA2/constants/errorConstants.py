@@ -116,3 +116,34 @@ A required input was not found in the Roads geodatabase.
   - .gdb\\LandUseB  
 
 '''
+
+
+unprojectedRoadsError = '''
+
+One or more required files are in an unprojected coordinate system.
+
+- For **ESRI StreetMap** these feature classes must be in a projected coordinate system:  
+
+  - .gdb\\Streets  
+  
+  - .gdb\\MapLandArea\MapLandArea  
+
+- For **NAVTEQ 2019** these feature classes must be in a projected coordinate system:  
+
+  - .gdb\\RoutingApplication\\Streets  
+  
+  - .gdb\\MapFacilityArea  
+  
+  - .gdb\\MapLanduseArea  
+  
+  - .gdb\\link  
+  
+- For **NAVTEQ 2011** these feature classes must be in a projected coordinate system:  
+
+  - .gdb\\Streets  
+  
+  - .gdb\\LandUseA  
+  
+  - .gdb\\LandUseB  
+
+'''
