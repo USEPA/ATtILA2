@@ -175,9 +175,9 @@ def writeIntersectExtent(logFile, extentList):
         else:
             return False
     
-    AddMsg(str(extentList))####
+    #AddMsg(str(extentList))####
     extentList = list(filter(removeEmpty, extentList))
-    AddMsg(str(extentList))####
+    #AddMsg(str(extentList))####
     
     for f in extentList:
         desc = arcpy.Describe(f)

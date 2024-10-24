@@ -106,6 +106,7 @@ class metricCalc:
         self.ignoreHighest = ignoreHighest
         self.scratchNameToBeDeleted =  ""
         self.reportingUnitAreaDict = None
+        self.extentList = []
 
     def _replaceLCGrid(self):
         # Placeholder for internal function to replace the landcover grid.  Several metric Calculations require this step, but others skip it.
@@ -169,7 +170,9 @@ class metricCalc:
     def _logEnvironments(self):
         if self.logFile:
             # write environment settings
-            log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.inReportingUnitFeature)
+            # log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.inReportingUnitFeature)
+            
+            log.writeEnvironmentsNew(self.logFile, self.snapRaster, self.processingCellSize, self.extentList)
             
             # write the metric class grid values to the log file
             log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, self.metricConst)
@@ -235,7 +238,7 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         metricConst = metricConstants.lcpConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None.
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -313,6 +316,7 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
         lcpCalc.perCapitaYN = perCapitaYN
         lcpCalc.inCensusDataset = inCensusDataset
         lcpCalc.inPopField = inPopField
+        lcpCalc.extentList = [inReportingUnitFeature, inLandCoverGrid, inCensusDataset]
         lcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
 
         # see what linear units are used in the tabulate area table
@@ -361,7 +365,7 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inSlopeThresholdValue
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -417,6 +421,7 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
 
         lcspCalc.inSlopeGrid = inSlopeGrid
         lcspCalc.inSlopeThresholdValue = inSlopeThresholdValue
+        lcspCalc.extentList = [inReportingUnitFeature, inLandCoverGrid, inSlopeGrid]
 
         # Run Calculation
         lcspCalc.run()
@@ -452,7 +457,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
         metricConst = metricConstants.flcpConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inFloodplainGeodataset, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -552,6 +557,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
         flcpCalc.inFloodplainGeodataset = inFloodplainGeodataset
         flcpCalc.nullValuesList = [0] # List of values in the binary floodplain grid to set to null
         flcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        flcpCalc.extentList = [inReportingUnitFeature, inLandCoverGrid, inFloodplainGeodataset] # List of input themes to find the intersection extent
         
         # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
         # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
@@ -642,7 +648,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         metricConst = metricConstants.pmConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -707,7 +713,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
          
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
-        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, self.logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -819,9 +825,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             pmCalc.run()
             
             pmCalc.metricsBaseNameList = metricsBaseNameList
-
-        if clipLCGrid == "true":
-            arcpy.Delete_management(scratchName)  
+ 
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -829,7 +833,8 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             AddMsg("Summary complete", 0)   
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            # log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid])
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
@@ -837,7 +842,10 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             
             # write the class definitions to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
-            
+        
+        
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName)     
     
     except Exception as e:
         if logFile:
@@ -872,7 +880,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         metricConst = metricConstants.caemConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun,
                           inEdgeWidth, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -908,7 +916,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
-        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, self.logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -1033,9 +1041,6 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                 path = os.path.join(directory, caemCalc.scratchNameToBeDeleted)
                 arcpy.Delete_management(path)
 
-            
-        if clipLCGrid == "true":
-            arcpy.Delete_management(scratchName)
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -1043,11 +1048,15 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid])
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
+        
+        
+        if clipLCGrid == "true":
+            arcpy.Delete_management(scratchName)
 
     except Exception as e:
         if logFile:
@@ -1075,7 +1084,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
         metricConst = metricConstants.rlcpConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -1105,7 +1114,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
-                self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
+                self.bufferName = "%s_Buffer%s_" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
                 
                 # Generate the buffer area to use in the metric calculation
                 if enforceBoundary == "true":
@@ -1120,6 +1129,9 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                                                                                      self.bufferName, self.inBufferDistance,
                                                                                      self.reportingUnitIdField,
                                                                                      self.cleanupList, self.timer, self.logFile)
+                
+                # add the altered inReportingUnitFeature to the list of features to determine the intersection extent
+                self.extentList.append(self.inReportingUnitFeature) 
         
         # Create new instance of metricCalc class to contain parameters
         rlcpCalc = metricCalcRLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
@@ -1129,6 +1141,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
         rlcpCalc.inStreamFeatures = inStreamFeatures
         rlcpCalc.inBufferDistance = inBufferDistance
         rlcpCalc.enforceBoundary = enforceBoundary
+        rlcpCalc.extentList = [inReportingUnitFeature, inLandCoverGrid]
 
         rlcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
         
@@ -1212,7 +1225,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
         metricConst = metricConstants.splcpConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inPointFeatures, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inPointFeatures, 
                           ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -1236,15 +1249,15 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                     splcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
                 
                 if self.duplicateIds:
-                    AddMsg("{0} Duplicate ID values found in reporting unit feature. Forming multipart features...".format(self.timer.now()), 0, self.logFile)
                     # Get a unique name with full path for the output features - will default to current workspace:
-                    self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
+                    self.namePrefix = f"{self.metricConst.shortName}_Dissolve{self.inBufferDistance.split()[0]}_"
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
+                    AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {bn(self.dissolveName)}", 0, self.logFile)
                     self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
-                self.bufferName = "%s_Buffer%s" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
+                self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
                 
                 # Buffer the points and use the output as the new reporting units
                 if enforceBoundary == "true":
@@ -1263,6 +1276,9 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                                                                                      self.reportingUnitIdField,
                                                                                      self.cleanupList, self.timer, self.logFile)
 
+                # add the altered inReportingUnitFeature to the list of features to determine the intersection extent
+                self.extentList.append(self.inReportingUnitFeature)
+        
         # Create new instance of metricCalc class to contain parameters
         splcpCalc = metricCalcSPLCP(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, lccFilePath,
                        metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
@@ -1273,6 +1289,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
         splcpCalc.ruLinkField = ruLinkField
         splcpCalc.enforceBoundary = enforceBoundary
         splcpCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
+        splcpCalc.extentList = [inReportingUnitFeature, inLandCoverGrid]
         
         # Before generating the replacement reporting unit feature, if QA Fields is selected, get a dictionary of the reporting unit polygon area
         # and the effective area within the reporting unit (i.e., the land area in the reporting unit if water areas are excluded). If no grid values 
@@ -1361,11 +1378,11 @@ def runLandCoverCoefficientCalculator(toolPath, inReportingUnitFeature, reportin
         metricConst = metricConstants.lcccConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, 
                           metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
-
+        
         # Create new LCC metric calculation subclass
         class metricCalcLCC(metricCalc):
             # Subclass that overrides specific functions for the land Cover Coefficient calculation
@@ -1399,6 +1416,9 @@ def runLandCoverCoefficientCalculator(toolPath, inReportingUnitFeature, reportin
 
         # Set the conversion factor as a class attribute
         lccCalc.conversionFactor = conversionFactor
+        
+        # create a list of input themes to find the intersection extent
+        lccCalc.extentList = [inReportingUnitFeature, inLandCoverGrid]
 
         # Run calculation
         lccCalc.run()
@@ -1433,10 +1453,14 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         metricConst = metricConstants.rdmConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField, streamRoadCrossings, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inRoadFeature, outTable, roadClassField, streamRoadCrossings, 
                           roadsNearStreams, inStreamFeature, inBufferDistance, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inReportingUnitFeature, inRoadFeature, inStreamFeature]
         
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
@@ -1630,7 +1654,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             AddMsg("Summary complete", 0)
             
             # write to the log file some of the environment settings
-            log.writeEnvironments(logFile, None, None, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, None, None, extentList)
     
     except Exception as e:
         if logFile:
@@ -1677,9 +1701,13 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         metricConst = metricConstants.sdmConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField, optionalFieldGroups]
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inReportingUnitFeature, inLineFeature]
         
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
@@ -1778,7 +1806,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, None, None, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, None, None, extentList)
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
@@ -1842,6 +1870,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 self.inLandCoverGrid = inLandCoverGrid
                 self.snapRaster = snapRaster
                 self.processingCellSize = processingCellSize
+                self.extentList = [inReportingUnitFeature, inLandCoverGrid]
 
                 # If the user has checked the Intermediates option, name the tabulateArea table. This will cause it to be saved.
                 self.tableName = None
@@ -1852,7 +1881,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
             def _logEnvironments(self):
                 if self.logFile:
                     # write environment settings
-                    log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.inReportingUnitFeature)
+                    log.writeEnvironmentsNew(self.logFile, self.snapRaster, self.processingCellSize, self.extentList)
                     
             def _housekeeping(self):
                 # alert user if the land cover grid cells are not square (default to size along x axis)
@@ -1924,7 +1953,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
         metricConst = metricConstants.lcdConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
                           snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -1963,12 +1992,15 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         metricConst = metricConstants.pdmConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusFeature, inPopField, outTable,
                           popChangeYN, inCensusFeature2, inPopField2, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
-        
 
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inReportingUnitFeature, inCensusFeature, inCensusFeature2]
+        
         # Set the output workspace
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
@@ -2051,7 +2083,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, None, None, inReportingUnitFeature)   
+            log.writeEnvironmentsNew(logFile, None, None, extentList)   
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
@@ -2099,9 +2131,15 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         metricConst = metricConstants.pifmConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # create a list of input themes to find the intersection extent. 
+        # put this here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
+        # but you want the original inputs to be used for the extent intersection
+        if logFile:
+            extentList = [inReportingUnitFeature, inCensusDataset, inFloodplainDataset]
         
         AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
         _tempEnvironment0 = env.snapRaster
@@ -2332,7 +2370,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList)
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
@@ -2381,7 +2419,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         metricConst = metricConstants.plcvConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, viewRadius, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, viewRadius, 
                           minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -2436,7 +2474,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         ''' Make ATtILA Output Table '''
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
         #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
-        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, self.logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   logFile, metricConst.additionalFields)
@@ -2576,7 +2614,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
+            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid, inCensusRaster])
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
@@ -2612,7 +2650,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
         metricConst = metricConstants.flcvConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, 
                           inFacilityFeature, viewRadius, viewThreshold, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
@@ -2668,6 +2706,9 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 self.bufferResult = arcpy.Buffer_analysis(self.intersectResult,self.bufferResultName,viewRadius,"","","NONE","", "PLANAR")
 
                 self.inReportingUnitFeature = self.bufferResult
+                
+                # add the altered inReportingUnitFeature to the list of features to determine the intersection extent
+                self.extentList.append(self.inReportingUnitFeature)
                 
 
             def _makeAttilaOutTable(self):
@@ -2760,6 +2801,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
         flcvCalc.viewRadius = viewRadius
         flcvCalc.viewThreshold = viewThreshold
         flcvCalc.metricsToRun = metricsToRun
+        flcvCalc.extentList = [inReportingUnitFeature, inLandCoverGrid]
         
         # Initiate our flexible cleanuplist
         flcvCalc.cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
@@ -2804,11 +2846,15 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         metricConst = metricConstants.npConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize, burnIn, burnInValue, 
+        parametersList = [toolPath, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize, burnIn, burnInValue, 
                           minPatchSize, createZones, zoneBin_str, overWrite, outWorkspace, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         outTable = os.path.join(str(outWorkspace), metricConst.name)
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inLandCoverGrid]
         
         ### Initialization
         # Start the timer
@@ -3062,10 +3108,14 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         metricConst = metricConstants.idConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inLineFeature, mergeLines, mergeField, mergeDistance, outputCS, cellSize, 
+        parametersList = [toolPath, inLineFeature, mergeLines, mergeField, mergeDistance, outputCS, cellSize, 
                           searchRadius, areaUnits, outRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inLineFeature]
         
         ### Initialization
         # Start the timer
@@ -3251,11 +3301,15 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         metricConst = metricConstants.cwcrConstants()
     
         # copy input parameters to pass to the log file routine
-        parametersList = [inWalkFeatures, inImpassableFeatures, maxTravelDistStr, walkValueStr, baseValueStr,
+        parametersList = [toolPath, inWalkFeatures, inImpassableFeatures, maxTravelDistStr, walkValueStr, baseValueStr,
                           outRaster, cellSizeStr, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
-    
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inWalkFeatures, inImpassableFeatures]
+        
         ### Initialization
         # Start the timer
         timer = DateTimer()
@@ -3401,7 +3455,7 @@ def proc_park(parkIDStr, logFile=None):
     
 def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='', inCostSurface='', inCensusDataset='', inPopField='', 
                                maxTravelDist='', expandAreaDist='', outRaster='', processingCellSize='', snapRaster='', optionalFieldGroups=''):
-    """ Interface for script executing Pedestrian Access Metrics tool """
+    """ Interface for script executing Pedestrian Access And Availability tool """
    
     from arcpy import env
     # from multiprocessing import Process, Lock
@@ -3415,10 +3469,14 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         metricConst = metricConstants.paaaConstants()
 
         # copy input parameters to pass to the log file routine
-        parametersList = [inParkFeature, dissolveParkYN, inCostSurface, inCensusDataset, inPopField, maxTravelDist, expandAreaDist, outRaster, processingCellSize, snapRaster, optionalFieldGroups]
+        parametersList = [toolPath, inParkFeature, dissolveParkYN, inCostSurface, inCensusDataset, inPopField, maxTravelDist, expandAreaDist, outRaster, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
-
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inParkFeature, inCostSurface, inCensusDataset]
+        
         ### Initialization
         # Start the timer
         timer = DateTimer()
@@ -3710,11 +3768,23 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 # inform the user what is wrong then kill the operation
                 AddMsg(f"Required input, {fc}, was not found in {inStreetsgdb}. Aborting...", 2)
                 raise errors.attilaException(errorConstants.missingRoadsError) 
+            else:
+                if chkIntDensYN == "true":
+                    # check for projection
+                    descFC = arcpy.Describe(filename)
+                    sr = descFC.spatialReference
+                    if sr.type != "Projected":
+                        AddMsg(f"Required input, {fc}, is not in a projected coordinate system. All inputs for Intersection Density Roads need to be in a projected coordinate system. Aborting...", 2)
+                        raise errors.attilaException(errorConstants.unprojectedRoadsError)
         
         # copy input parameters to pass to the log file routine
-        parametersList = [versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
+        parametersList = [toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+fnPrefix, toolPath) #toolPath?
+
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [f"{inStreetsgdb}\\Streets"]
 
         # determine the active map to add the output raster/features    
         try:
@@ -4024,16 +4094,10 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         metricConst = metricConstants.pwzmConstants()
     
         # copy input parameters to pass to the log file routine
-        parametersList = [inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, 
+        parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, 
                           inZoneDataset, inBufferDistance, groupByZoneYN, zoneIdField, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
-        
-        # create a list of input themes to 
-        if logFile:
-            extentList = [inReportingUnitFeature, inCensusDataset, inZoneDataset]
-        else:
-            extentList = []
             
         ### Initialization
         # Start the timer
@@ -4524,7 +4588,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             
             # write the standard environment settings to the log file
             #log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
-            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList)
+            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inCensusDataset, inZoneDataset])
             # parameters are: logFile, snapRaster, processingCellSize, extentDataset
             # if extentDataset is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
@@ -4575,10 +4639,14 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         metricConst = metricConstants.nrlcpConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption, widthLinearUnit, laneCntFld, 
+        parametersList = [toolPath, inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption, widthLinearUnit, laneCntFld, 
                           laneWidth, laneDistFld, bufferDist, removeLinesYN, cutoffLength, overWrite, outWorkspace,  processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace, toolPath)
+        
+        # create a list of input themes to find the intersection extent
+        if logFile:
+            extentList = [inRoadFeature, inLandCoverGrid]
         
         ### Initialization
         # Start the timer
