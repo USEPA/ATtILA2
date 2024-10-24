@@ -7,7 +7,6 @@ from ATtILA2.constants import globalConstants
 from datetime import datetime
 from ATtILA2.datetimeutil import DateTimer
 from .messages import AddMsg
-from . import environment
 
 timer = DateTimer()
 
@@ -163,14 +162,29 @@ def writeEnvironments(logFile, snapRaster, processingCellSize, extentDataset=Non
     
     logFile.write('\n')       
 
-def writeExtentsNew(logFile, extentList):
-    intersectThese = []
+
+def writeIntersectExtent(logFile, extentList):
+    ''' Intersect the extent of input feature classes and write the WGS 84 projected coordinates of the bounding rectangle to the log file. '''
+    
+    projectedExtents = []
+    
+    # remove any potentially empty elements from the list
+    def removeEmpty(variable):
+        if variable not in ['#', '']:
+            return True
+        else:
+            return False
+    
+    AddMsg(str(extentList))####
+    extentList = list(filter(removeEmpty, extentList))
+    AddMsg(str(extentList))####
+    
     for f in extentList:
         desc = arcpy.Describe(f)
         fExtent = desc.extent
         
         inSR = desc.spatialReference
-        #logFile.write(f'ENVIRONMENT: Reporting Extent ({inSR.name}) = {aExtent.XMax}, {aExtent.YMax}, {aExtent.XMin}, {aExtent.YMin}\n')
+        logFile.write(f'INFO: Extent {desc.name} ({inSR.name}) = {fExtent.XMax}, {fExtent.YMax}, {fExtent.XMin}, {fExtent.YMin}\n')
         
         wgs84SR = arcpy.SpatialReference(4326)
         transformList = arcpy.ListTransformations(inSR, wgs84SR, fExtent)
@@ -186,17 +200,16 @@ def writeExtentsNew(logFile, extentList):
         else:
             prjExt = fExtent.projectAs(wgs84SR)
         
-        AddMsg(str(prjExt))
-        
-        intersectThese.append(prjExt)
+        projectedExtents.append(prjExt)
     
-    #intersectCoord = environment.getIntersectionOfExtents(intersectThese)
-    intersectLLX = max([aExt.XMin for aExt in intersectThese])
-    intersectLLY = max([aExt.YMin for aExt in intersectThese])
-    intersectURX = min([aExt.XMax for aExt in intersectThese])
-    intersectURY = min([aExt.YMax for aExt in intersectThese])
-        
-    logFile.write(f'ENVIRONMENT: Reporting Extent (WGS 1984) = {intersectURX}, {intersectURY}, {intersectLLX}, {intersectLLY}\n')
+    # get the vertices of the minimum bounding rectangle
+    intersectLLX = max([aExt.XMin for aExt in projectedExtents])
+    intersectLLY = max([aExt.YMin for aExt in projectedExtents])
+    intersectURX = min([aExt.XMax for aExt in projectedExtents])
+    intersectURY = min([aExt.YMax for aExt in projectedExtents])
+    
+    logFile.write('\n')    
+    logFile.write(f'ENVIRONMENT: Extent Intersection (WGS 1984) = {intersectURX}, {intersectURY}, {intersectLLX}, {intersectLLY}\n')
 
 
 def writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=None):
@@ -205,12 +218,12 @@ def writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=Non
     
     try:
         if extentList:
-            writeExtentsNew(logFile, extentList)
+            writeIntersectExtent(logFile, extentList)
         else:
-            writeExtentsNew(logFile, env.extent)
+            writeIntersectExtent(logFile, env.extent)
                                         
     except:
-        logFile.write('ENVIRONMENT: Reporting Extent error encountered\n')
+        logFile.write('ENVIRONMENT: Intersect Extent error encountered\n')
 
 
     if snapRaster:
@@ -273,18 +286,12 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
             # strip off any directory path information from the filename
             x = p.rfind('\\')
             if x != -1: p = p[x+1:]
-                
-            logFile.write(f'PARAMETER: {l} = {p}\n')
+            
+            if l != globalConstants.toolScriptPath: # do not include toolPath in the PARAMETERS section
+                logFile.write(f'PARAMETER: {l} = {p}\n')
     
     logFile.write('\n')
 
-
-def logArcpy(commandStr, paramsTuple, logFile):
-
-    paramStr = '(' + ', '.join([str(item) for item in paramsTuple]) + ')'
-    
-    AddMsg('    {0}{1}'.format(commandStr, paramStr), 0, logFile)
-    
 
 def arcpyLog(function, arguments, fxStr, logFile, logOnly=True):
     """ Performs an ArcPy function and writes its syntax as a string to tool history/details and/or a log file.

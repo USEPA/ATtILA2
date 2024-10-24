@@ -49,6 +49,7 @@ class caemConstants(baseMetricConstants):
     additionalFields = [coreField, edgeField]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -72,6 +73,7 @@ class cwcrConstants(baseMetricConstants):
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inWalkFeatures, 
         gc.inImpassableFeatures, 
         gc.maxTravelDist, 
@@ -116,6 +118,7 @@ class flcpConstants(baseMetricConstants):
     zoneByRUName = f"{shortName}_FldplnByRU"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -170,6 +173,7 @@ class flcvConstants(baseMetricConstants):
     additionalFields = [highField]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -209,6 +213,7 @@ class idConstants(baseMetricConstants):
     dummyFieldName = f"{shortName}_dummy"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inLineFeature, 
         gc.mergeLines, 
         gc.mergeField, 
@@ -243,6 +248,7 @@ class lcccConstants(baseMetricConstants):
     percentageMetrics = ("IMPERVIOUS")
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -276,6 +282,7 @@ class lcdConstants(baseMetricConstants):
     fixedMetricsToRun = 'H  -  Shannon Weiner;H_Prime  -  Standardized Shannon Weiner;C  -  Simpson;S  -  Simple'
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -307,6 +314,7 @@ class lcospConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -371,6 +379,7 @@ class lcpConstants(baseMetricConstants):
     valueCountTableName = f"{shortName}_populationCnt"   
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -407,6 +416,7 @@ class npConstants(baseMetricConstants):
     proxFocalSumOutName = "_Cnt"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inLandCoverGrid, 
         gc._lccName, 
         gc.lccFilePath, 
@@ -441,6 +451,7 @@ class paaaConstants(baseMetricConstants):
     calcFieldNames = [accessCountFieldName, countPerAreaFieldName]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inParkFeature, 
         gc.dissolveParkYN, 
         gc.inCostSurface, 
@@ -477,6 +488,7 @@ class pdmConstants(baseMetricConstants):
     summaryTableName = f"{shortName}_summaryTable"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inCensusFeature, 
@@ -511,6 +523,7 @@ class pifmConstants(baseMetricConstants):
     floodplainPopName = f"{shortName}_populationFP"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inCensusDataset, 
@@ -569,6 +582,7 @@ class pmConstants(baseMetricConstants):
     otherValue = 0
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -619,6 +633,7 @@ class plcvConstants(baseMetricConstants):
     patchGridName = "_ViewPatch"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -743,6 +758,7 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
         }
 
     parameterLabels = [
+        gc.toolScriptPath,
         gc.versionName,
         gc.inStreetsgdb,
         gc.chkWalkableYN,
@@ -775,6 +791,7 @@ class pwzmConstants(baseMetricConstants):
     zonePopName = f"{shortName}_populationZN"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inCensusDataset, 
@@ -817,6 +834,7 @@ class rlcpConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 
@@ -867,6 +885,7 @@ class rdmConstants(baseMetricConstants):
     tmp2RNS = [f"{shortName}_TmpRdsWithRUID","FeatureClass"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inRoadFeature, 
@@ -901,6 +920,7 @@ class sdmConstants(baseMetricConstants):
     linesByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLineFeature, 
@@ -940,6 +960,7 @@ class splcpConstants(baseMetricConstants):
     fieldOverrideKey = shortName + gc.fieldOverrideName
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
+        gc.toolScriptPath,
         gc.inReportingUnitFeature, 
         gc.reportingUnitIdField, 
         gc.inLandCoverGrid, 

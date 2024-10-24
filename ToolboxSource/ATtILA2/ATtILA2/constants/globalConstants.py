@@ -64,6 +64,7 @@ arcpy.ImportToolbox("<toolbox path and filename>")
 
 # parameterLabels for Log File
 # script variable name = tool parameter label
+toolScriptPath = "toolPath"
 inReportingUnitFeature = "Reporting unit feature"
 reportingUnitIdField = "Reporting unit ID field"
 inLandCoverGrid = "Land cover grid"

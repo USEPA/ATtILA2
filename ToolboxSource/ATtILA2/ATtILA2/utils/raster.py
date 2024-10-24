@@ -150,7 +150,7 @@ def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile
     timer = DateTimer()
     AddMsg(timer.now() + " Reducing input Land cover grid to smallest recommended size", 0, logFile)
     pathRoot = os.path.splitext(inRaster)[0]
-    namePrefix = "%s_%s" % (metricConst.shortName, os.path.basename(pathRoot))
+    namePrefix = f"{metricConst.shortName}_{os.path.basename(pathRoot)}_"
     scratchName = arcpy.CreateScratchName(namePrefix,"","RasterDataset")
     # this raster is typically deleted after the metric calculations. no need to report the name to the user.
     # AddMsg(f"{timer.now()} Reducing input Land cover grid to smallest recommended size. Intermediate: {os.path.basename(scratchName)}", 0, logFile)
