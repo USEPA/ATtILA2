@@ -2252,7 +2252,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             else: # floodplain feature is a polygon
                 # Assign the reporting unit ID to intersecting floodplain polygon segments using Identity
                 fileNameBase = descFldpln.baseName
-                tempName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Identity")
+                tempName = "%s_%s_%s_" % (metricConst.shortName, fileNameBase, "Identity")
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 AddMsg(timer.now() + " Assigning reporting unit IDs to intersecting floodplain features", 0, logFile)
                 arcpy.Identity_analysis(inFloodplainDataset, inReportingUnitFeature, tempPolygonFeature)
@@ -2303,7 +2303,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
                 delimitedVALUE = arcpy.AddFieldDelimiters(inFloodplainDataset,"VALUE")
                 whereClause = delimitedVALUE+" = 0"
                 nullGrid = arcpy.sa.SetNull(inFloodplainDataset, 1, whereClause)
-                tempName = "%s_%s" % (metricConst.shortName, descFldpln.baseName + "_Poly")
+                tempName = "%s_%s" % (metricConst.shortName, descFldpln.baseName + "_Poly_")
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 
                 # This may fail if a polgyon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
@@ -2337,7 +2337,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             fileNameBase = descFldpln.baseName
             # need to eliminate the tool's shortName from the fileNameBase if the floodplain polygon was derived from a raster
             fileNameBase = fileNameBase.replace(metricConst.shortName+"_","")
-            tempName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Identity")
+            tempName = "%s_%s_%s_" % (metricConst.shortName, fileNameBase, "Identity")
             tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(timer.now() + " Assigning reporting unit IDs to floodplain features", 0, logFile)
             arcpy.Identity_analysis(inFloodplainDataset, inReportingUnitFeature, tempPolygonFeature)
@@ -3597,8 +3597,8 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
             2) Create a buffer around the park extending 5% beyond the maximum travel distance
             3) Create Cost Distance raster to the Maximum travel distance with the buffer area as the processing extent
             4) Designate the accessible area by setting all cell values to 1 for any cell in the Cost Distance raster with a value >= 0
-            4) Expand the accessible area if indicated by the Expand area served parameter
-            5) Determine Population within accessible area
+            5) Expand the accessible area if indicated by the Expand area served parameter
+            6) Determine Population within accessible area
                 a) if Population parameter is a raster:
                     1) Set the geoprocessing snap raster and processing cell size environments to match the population raster 
                     2) Zonal Statistics As Table with the SUM option is used to calculate the surrounding population
@@ -3606,7 +3606,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
                     1) the accessible area raster is converted to a polygon
                     2) Tabulate Intersection is used with this polygon and the Population polygon feature to get 
                        an area-weighted estimate of the surrounding population
-            6) Determine Availability (Cost distance value to park area divided by surrounding population)
+            7) Determine Availability (Cost distance value to park area divided by surrounding population)
             
         ''', 0, logFile)
         

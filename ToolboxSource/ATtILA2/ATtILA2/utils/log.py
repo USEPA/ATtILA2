@@ -271,8 +271,10 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
     for l, p in zip(labelsList, parametersList):
         l = l.replace(' ','_') # replace any spaces with underscores
         p = p.replace('\\','\\\\') # replace any single slash characters with a double slash
+        p = p.replace('"',"'") # replace any double-quotes with single-quotes. Useful when a parameter contains internal double-quotes such as a geographic projection. See Intersection Density
         if l == 'Select_options':
-            p = (f"'{p}'") # place the options string in a quoted string
+            if p[0] != "'": # when a tool is run from a script, the Select options parameter string will already be quoted. Don't double quote
+                p = (f"'{p}'") # place the options string in a quoted string
 
         # the variable, toolPath, is included in all labelsLists by convention
         # tools that use a Land Cover Classification XML file need to have that variable put into the script section

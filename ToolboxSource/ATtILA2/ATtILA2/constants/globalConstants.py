@@ -64,6 +64,14 @@ arcpy.ImportToolbox("<toolbox path and filename>")
 
 '''
 
+# This is the script opening for the log file if the tool requires Spatial Analyst, but doesn't use an LCC XML file
+spatialScriptOpening = '''
+import arcpy
+from arcpy.sa import *
+arcpy.ImportToolbox("<toolbox path and filename>")
+
+'''
+
 # parameterLabels for Log File
 # script variable name = tool parameter label
 toolScriptPath = "toolPath"

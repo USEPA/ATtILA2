@@ -68,8 +68,8 @@ class caemConstants(baseMetricConstants):
 class cwcrConstants(baseMetricConstants):
     name = "CreateWalkabilityCostRaster"
     shortName = "cwcr"
-    toolFUNC = f'metric.run{name}'
-    scriptOpening = gc.metricScriptOpening
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.spatialScriptOpening
     prefix = ""
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
@@ -194,7 +194,7 @@ class idConstants(baseMetricConstants):
     name = "IntersectionDensity"
     shortName = "id"
     toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
-    scriptOpening = gc.basicScriptOpening
+    scriptOpening = gc.spatialScriptOpening
     fieldPrefix = ""
     fieldSuffix = "IntDen"
     overlapName = ""
@@ -266,7 +266,7 @@ class lcdConstants(baseMetricConstants):
     name = "LandCoverDiversity"
     shortName = "lcd"
     toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
-    scriptOpening = gc.basicScriptOpening
+    scriptOpening = gc.spatialScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     overlapName = "LCD_OVER"
@@ -441,8 +441,8 @@ class nrlcpConstants(baseMetricConstants):
 class paaaConstants(baseMetricConstants):
     name = "PedestrianAccessAndAvailability"
     shortName = "paaa"
-    toolFUNC = f'metric.run{name}'
-    scriptOpening = gc.metricScriptOpening
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.spatialScriptOpening
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
     accessCountFieldName = "Pop_Access"
     accessCountField = [accessCountFieldName,gc.defaultDecimalFieldType,None, 15]
@@ -505,8 +505,8 @@ class pdmConstants(baseMetricConstants):
 class pifmConstants(baseMetricConstants):
     name = "PopulationInFloodplainMetrics"
     shortName = "pifm"
-    toolFUNC = f'metric.run{name}'
-    scriptOpening = gc.metricScriptOpening
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.spatialScriptOpening
     fieldPrefix = ["RU_", "FP_"]
     fieldSuffix = ["_RU", "_FP"]
     overlapName = ""
@@ -778,8 +778,8 @@ class pnhd24kConstants(baseMetricConstants):
 class pwzmConstants(baseMetricConstants):
     name = "PopulationWithinZoneMetrics"
     shortName = "pwzm"
-    toolFUNC = f'metric.run{name}'
-    scriptOpening = gc.metricScriptOpening
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.spatialScriptOpening
     fieldPrefix = ["RU_", "FP_"]
     fieldSuffix = ["_RU", "_FP"]
     optionalFilter = [gc.intermediateDescription, gc.logDescription]
@@ -982,7 +982,7 @@ class szsConstants(baseMetricConstants):
     name = "SelectZonalStatistics"
     shortName = "szs"
     toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
-    scriptOpening = gc.basicScriptOpening
+    scriptOpening = gc.spatialScriptOpening
     fieldPrefix = ""
     fieldSuffix = ""
     qaName = "AREA_OVER"
