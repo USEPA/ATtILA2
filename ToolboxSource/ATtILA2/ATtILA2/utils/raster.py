@@ -764,13 +764,13 @@ def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellS
         fcName = fcDesc.baseName
         
         if fcType == "Polygon":
-            namePrefix = fileNameBase+"_Raster_Polygon_"
+            namePrefix = f"{fileNameBase}_Raster_Polygon_"
             rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
             AddMsg("{0} Converting {1} to raster. Intermediate: {2}".format(timer.now(), fcName, os.path.basename(rasterName)), 0, logFile)
             polygonRaster = arcpyLog(arcpy.conversion.PolygonToRaster, (fc, valueField, rasterName, "MAXIMUM_AREA", "NONE", cellSize, "BUILD"), 'arcpy.conversion.PolygonToRaster', logFile)
             rasterList[0] = polygonRaster
         elif fcType == "Polyline":
-            namePrefix = fileNameBase+"_Raster_Line_"
+            namePrefix = f"{fileNameBase}_Raster_Line_"
             rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
             AddMsg("{0} Converting {1} to raster. Intermediate: {2}".format(timer.now(), fcName, os.path.basename(rasterName)), 0, logFile)
             lineRaster = arcpyLog(arcpy.conversion.PolylineToRaster, (fc, valueField, rasterName, "MAXIMUM_LENGTH", "NONE", cellSize, "BUILD"), 'arcpy.conversion.PolylineToRaster', logFile)
@@ -780,7 +780,7 @@ def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellS
     rastersToMerge = [item for item in rasterList if arcpy.Exists(item)]
     
     # Start generation of the result raster    
-    namePrefix = fileNameBase+"_Raster_"
+    namePrefix = f"{fileNameBase}_Raster_"
     resultRasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
     
     rasterOne = Raster(rastersToMerge[0])

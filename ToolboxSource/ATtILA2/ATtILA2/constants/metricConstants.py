@@ -20,7 +20,8 @@ class baseMetricConstants():
     parameterLabels = []
     spatialNeeded = True
     scriptOpening = gc.metricScriptOpening
-
+    idFields = gc.idFields
+    
 class caemConstants(baseMetricConstants):
     name = "CoreAndEdgeMetrics"
     shortName = "caem"
@@ -113,9 +114,9 @@ class flcpConstants(baseMetricConstants):
         [pctBufferName, gc.defaultPercentFieldType, 6, 1]
         ]
     fieldOverrideKey = shortName + gc.fieldOverrideName
-    fpTabAreaName = f"{shortName}_TabAreaFP"
-    landcoverGridName = f"{shortName}_Landcover"
-    zoneByRUName = f"{shortName}_FldplnByRU"
+    fpTabAreaName = f"{shortName}_TabAreaFP_"
+    landcoverGridName = f"{shortName}_Landcover_"
+    zoneByRUName = f"{shortName}_FldplnByRU_"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,
@@ -376,7 +377,7 @@ class lcpConstants(baseMetricConstants):
     meterSquaredField = ["", meterSquaredSuffix, gc.defaultAreaFieldType, 15, 0]
     additionalFields = [perCapitaField, meterSquaredField]
     valueCountFieldNames =["RU_POP_C"]
-    valueCountTableName = f"{shortName}_populationCnt"   
+    valueCountTableName = f"{shortName}_populationCnt_"   
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,
@@ -520,7 +521,7 @@ class pifmConstants(baseMetricConstants):
     # populationCountFieldNames = ["RU_POP_C", "FP_POP_C"]
     populationCountFieldNames = ["RU_POP", "FP_POP_C"]
     popCntTableName = f"{shortName}_populationCnt"
-    floodplainPopName = f"{shortName}_populationFP"
+    floodplainPopName = f"{shortName}_populationFP_"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,
@@ -576,7 +577,7 @@ class pmConstants(baseMetricConstants):
     rastertoPoly = "PatchPoly"
     rastertoPoint = "PatchCentroids"
     polyDissolve = "PatchPoly_Diss"
-    nearTable = "_NearTable"
+    nearTable = "_NearTable_"
     classValue = 3
     excludedValue = -9999
     otherValue = 0
@@ -787,8 +788,8 @@ class pwzmConstants(baseMetricConstants):
     fieldOverrideKey = ""
     populationProportionFieldName = "ZN_POP_P"
     populationCountFieldNames = ["RU_POP", "ZN_POP_C"]
-    popCntTableName = f"{shortName}_populationCnt"
-    zonePopName = f"{shortName}_populationZN"
+    popCntTableName = f"{shortName}_populationCnt_"
+    zonePopName = f"{shortName}_populationZN_"
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,
@@ -816,11 +817,11 @@ class rlcpConstants(baseMetricConstants):
     effectiveAreaName = "RLCP_EFFA"
     excludedAreaName = "RLCP_EXCA"
     pctBufferSuffix = ""
-    pctBufferBase = "%sEFFA" % fieldPrefix
-    pctBufferName = "%s%s" % (pctBufferBase, pctBufferSuffix)
+    pctBufferBase = f"{fieldPrefix}EFFA"
+    pctBufferName = f"{pctBufferBase}{pctBufferSuffix}"
     totaPctSuffix = ""
-    totaPctBase = "%sTOTA" % fieldPrefix
-    totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
+    totaPctBase = f"{fieldPrefix}TOTA"
+    totaPctName = f"{totaPctBase}{totaPctSuffix}"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -874,15 +875,15 @@ class rdmConstants(baseMetricConstants):
     streamRoadXingsCountFieldname = "XCNT"
     xingsPerKMFieldName = "STXRD"
     rnsFieldName = "RNS"
-    roadsByReportingUnitName = [f"{shortName}_RdsByRU","FeatureClass"]
-    streamsByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass"]
-    roadStreamMultiPoints = [f"{shortName}_RdsXStrMP","FeatureClass"]
-    roadStreamIntersects = [f"{shortName}_PtsOfXing","FeatureClass"]
-    roadStreamSummary = [f"{shortName}_RdsXStrTbl","Dataset"]
-    streamBuffers = [f"{shortName}_StrBuffers","FeatureClass"]
-    roadsNearStreams = [f"{shortName}_RdsNrStrms","FeatureClass"]
-    tmp1RNS = [f"{shortName}_TmpRdsInBuffer","FeatureClass"]
-    tmp2RNS = [f"{shortName}_TmpRdsWithRUID","FeatureClass"]
+    roadsByReportingUnitName = [f"{shortName}_RdsByRU_","FeatureClass"]
+    streamsByReportingUnitName = [f"{shortName}_StrByRU_","FeatureClass"]
+    roadStreamMultiPoints = [f"{shortName}_RdsXStrMP_","FeatureClass"]
+    roadStreamIntersects = [f"{shortName}_PtsOfXing_","FeatureClass"]
+    roadStreamSummary = [f"{shortName}_RdsXStrTbl_","Dataset"]
+    streamBuffers = [f"{shortName}_StrBuffers_","FeatureClass"]
+    roadsNearStreams = [f"{shortName}_RdsNrStrms_","FeatureClass"]
+    tmp1RNS = [f"{shortName}_TmpRdsInBuffer_","FeatureClass"]
+    tmp2RNS = [f"{shortName}_TmpRdsWithRUID_","FeatureClass"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,
@@ -917,7 +918,7 @@ class sdmConstants(baseMetricConstants):
     areaFieldname = "AREAKM2"
     lineLengthFieldName = "STRMKM"
     lineDensityFieldName = "STRMDENS"
-    linesByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass"]
+    linesByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass_"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,
@@ -942,11 +943,11 @@ class splcpConstants(baseMetricConstants):
     effectiveAreaName = "SPLCP_EFFA"
     excludedAreaName = "SPLCP_EXCA"
     pctBufferSuffix = ""
-    pctBufferBase = "%sEFFA" % fieldPrefix
-    pctBufferName = "%s%s" % (pctBufferBase, pctBufferSuffix)
+    pctBufferBase = f"{fieldPrefix}EFFA"
+    pctBufferName = f"{pctBufferBase}{pctBufferSuffix}"
     totaPctSuffix = ""
-    totaPctBase = "%sTOTA" % fieldPrefix
-    totaPctName = "%s%s" % (totaPctBase, totaPctSuffix)
+    totaPctBase = f"{fieldPrefix}TOTA"
+    totaPctName = f"{totaPctBase}{totaPctSuffix}"
     optionalFilter = [gc.qaCheckDescription, gc.metricAddDescription, gc.intermediateDescription, gc.logDescription]
     fieldParameters = [fieldPrefix, fieldSuffix, gc.defaultPercentFieldType, 6, 1]
     qaCheckFieldParameters = [
@@ -976,3 +977,34 @@ class splcpConstants(baseMetricConstants):
         gc.snapRaster, 
         gc.optionalFieldGroups
         ]
+
+class szsConstants(baseMetricConstants):
+    name = "SelectZonalStatistics"
+    shortName = "szs"
+    toolFUNC = f'arcpy.ATtILA.{shortName.upper()}'
+    scriptOpening = gc.basicScriptOpening
+    fieldPrefix = ""
+    fieldSuffix = ""
+    qaName = "AREA_OVER"
+    totalAreaName = ""
+    effectiveAreaName = ""
+    excludedAreaName = ""
+    optionalFilter = [gc.logDescription]
+    #fieldParameters = [fieldPrefix,fieldSuffix, gc.defaultDecimalFieldType, 8, 4]
+    # Output field names are fixed. Field name override option is not available to the user.
+    statsToRun = ''
+    # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
+    parameterLabels = [
+        gc.inReportingUnitFeature, 
+        gc.reportingUnitIdField, 
+        gc.inValueRaster,
+        gc.statisticsType,
+        gc.outTable, 
+        gc.fieldPrefix,
+        gc.optionalFieldGroups]
+    
+    statisticsFieldNames = ["COUNT", "AREA", "MIN", "MAX", "RANGE", "MEAN", "STD", "SUM", "VARIETY", "MAJORITY", "MAJORITY_COUNT", "MAJORITY_PERCENT", 
+                            "MINORITY", "MINORITY_COUNT", "MINORITY_PERCENT", "MEDIAN", "PCT90"]
+    
+    idFields = gc.idFields + ["ZONE_CODE"]
+    

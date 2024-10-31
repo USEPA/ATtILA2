@@ -17,3 +17,15 @@ def fc_to_pd_df(feature_class, field_list):
             null_value=-99999
         )
     )
+
+def table_to_pd_df(table): 
+    """Similar to the above function, this turns a table in a gdb to Pandas
+    Data Frame for subsequent analysis
+    """
+    data = []
+    fields = [f.name for f in arcpy.ListFields(table)]
+    with arcpy.da.SearchCursor(table,fields) as cursor: 
+        for row in cursor:
+            data.append(row)
+    df = pd.DataFrame(data,columns=fields)
+    return df

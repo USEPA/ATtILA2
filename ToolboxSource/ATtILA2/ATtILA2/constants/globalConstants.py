@@ -46,6 +46,8 @@ rasterExtensions = [".bil",
                     ".tif"]
 tableExtensions = [".dbf"]
 
+idFields =  ['OBJECTID', 'FID', 'ID']
+
 # This is the script opening for the log file if the tool is run from metric.py
 metricScriptOpening = '''
 import arcpy
@@ -141,4 +143,7 @@ inStreetsgdb = "Road geodatabase"
 chkWalkableYN = "Walkable roads"
 chkIntDensYN = "Intersection density roads"
 chkIACYN = "Interstates arterials and collectors"
+inValueRaster = "Input value raster"
+statisticsType = "Statistics type"
+fieldPrefix = "Field prefix"
 fnPrefix = "Filename prefix"

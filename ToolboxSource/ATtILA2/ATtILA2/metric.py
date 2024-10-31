@@ -32,7 +32,7 @@ from datetime import datetime
 import traceback
 import random
 import string
-from os.path import basename as bn
+from os.path import basename
 
 from .utils import pandasutil
 
@@ -57,7 +57,7 @@ class metricCalc:
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile, ignoreHighest=False):
         self.timer = DateTimer()
         self.logFile = logFile
-        AddMsg(self.timer.start() + " Setting up environment variables", 0, self.logFile)
+        AddMsg(f"{self.timer.start()} Setting up environment variables", 0, self.logFile)
         
         # Check to see if the user has specified a Processing cell size other than the cell size of the inLandCoverGrid
         inLandCoverGridCellSize = Raster(inLandCoverGrid).meanCellWidth
@@ -164,15 +164,15 @@ class metricCalc:
         if self.logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
             # Internal function to analyze the output table fields for the log file. This may be overridden by some metrics
-            log.logWriteOutputTableInfo(self.newTable, self.logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            self.metricConst.idFields = self.metricConst.idFields + [self.reportingUnitIdField]
+            log.logWriteOutputTableInfo(self.newTable, self.logFile, self.metricConst)
             AddMsg("Summary complete", 0)
     
     def _logEnvironments(self):
         if self.logFile:
             # write environment settings
-            # log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.inReportingUnitFeature)
-            
-            log.writeEnvironmentsNew(self.logFile, self.snapRaster, self.processingCellSize, self.extentList)
+            log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.extentList)
             
             # write the metric class grid values to the log file
             log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, self.metricConst)
@@ -698,10 +698,6 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         except:
             raise errors.attilaException(errorConstants.linearUnitConversionError)
         
-        # if logFile:
-        #     # write to the log file some of the environment settings before any user alerts
-        #     log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
-        
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         
@@ -780,11 +776,11 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                         AddMsg(self.timer.now() + " Calculating MDCP for Class:" + m, 0, self.logFile)
                         
                         # create and name intermediate data layers
-                        rastoPolyFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.rastertoPoly))
+                        rastoPolyFeatureName = ("%s_%s_%s_" % (metricConst.shortName, outClassName, metricConst.rastertoPoly))
                         rastoPolyFeature = files.nameIntermediateFile([rastoPolyFeatureName, "FeatureClass"], cleanupList)
-                        rasterCentroidFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.rastertoPoint))
+                        rasterCentroidFeatureName = ("%s_%s_%s_" % (metricConst.shortName, outClassName, metricConst.rastertoPoint))
                         rasterCentroidFeature = files.nameIntermediateFile([rasterCentroidFeatureName, "FeatureClass"], cleanupList)
-                        polyDissolvedPatchFeatureName = ("%s_%s_%s" % (metricConst.shortName, outClassName, metricConst.polyDissolve))
+                        polyDissolvedPatchFeatureName = ("%s_%s_%s_" % (metricConst.shortName, outClassName, metricConst.polyDissolve))
                         polyDissolvedFeature = files.nameIntermediateFile([polyDissolvedPatchFeatureName, "FeatureClass"], cleanupList)
                         nearPatchTable = files.nameIntermediateFile([outClassName + metricConst.nearTable, "Dataset"], cleanupList)            
                         
@@ -829,14 +825,16 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)   
             
             # write the standard environment settings to the log file
-            # log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
-            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid])
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
             
@@ -1044,13 +1042,16 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid])
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
         
@@ -1252,7 +1253,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = f"{self.metricConst.shortName}_Dissolve{self.inBufferDistance.split()[0]}_"
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
-                    AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {bn(self.dissolveName)}", 0, self.logFile)
+                    AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {basename(self.dissolveName)}", 0, self.logFile)
                     self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
                                                                             self.reportingUnitIdField,"","MULTI_PART")
                     
@@ -1459,11 +1460,13 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # create a list of input themes to find the intersection extent
+        # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
+        # but you want the original inputs to be used for the extent intersection
         if logFile:
             extentList = [inReportingUnitFeature, inRoadFeature, inStreamFeature]
         
         # Set the output workspace
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         _tempEnvironment4 = env.outputMFlag
@@ -1650,11 +1653,13 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write to the log file some of the environment settings
-            log.writeEnvironmentsNew(logFile, None, None, extentList)
+            log.writeEnvironments(logFile, None, None, extentList)
     
     except Exception as e:
         if logFile:
@@ -1706,11 +1711,13 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # create a list of input themes to find the intersection extent
+        # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
+        # but you want the original inputs to be used for the extent intersection
         if logFile:
             extentList = [inReportingUnitFeature, inLineFeature]
         
         # Set the output workspace
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         _tempEnvironment4 = env.outputMFlag
@@ -1802,13 +1809,16 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironmentsNew(logFile, None, None, extentList)
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, None, None, extentList)
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
         
@@ -1854,7 +1864,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                          processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile):
                 self.timer = DateTimer()
                 self.logFile = logFile
-                AddMsg(self.timer.start() + " Setting up environment variables", 0, logFile)
+                AddMsg(f"{self.timer.start()} Setting up environment variables", 0, logFile)
                 
                 # Run the setup
                 self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
@@ -1881,7 +1891,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
             def _logEnvironments(self):
                 if self.logFile:
                     # write environment settings
-                    log.writeEnvironmentsNew(self.logFile, self.snapRaster, self.processingCellSize, self.extentList)
+                    log.writeEnvironments(self.logFile, self.snapRaster, self.processingCellSize, self.extentList)
                     
             def _housekeeping(self):
                 # alert user if the land cover grid cells are not square (default to size along x axis)
@@ -1924,7 +1934,9 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                 if self.logFile:
                     AddMsg("Summarizing the ATtILA metric output table to log file", 0)
                     # Internal function to analyze the output table fields for the log file. This may be overridden by some metrics
-                    log.logWriteOutputTableInfo(self.newTable, self.logFile)
+                    # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+                    self.metricConst.idFields = self.metricConst.idFields + [self.reportingUnitIdField]
+                    log.logWriteOutputTableInfo(self.newTable, self.logFile, self.metricConst)
                     AddMsg("Summary complete", 0)
                     
             # Function to run all the steps in the calculation process
@@ -1998,11 +2010,13 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
 
         # create a list of input themes to find the intersection extent
+        # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
+        # but you want the original inputs to be used for the extent intersection
         if logFile:
             extentList = [inReportingUnitFeature, inCensusFeature, inCensusFeature2]
         
         # Set the output workspace
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         # Strip the description from the "additional option" and determine whether intermediates are stored.
@@ -2031,7 +2045,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {bn(tempReportingUnitFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
                                                            reportingUnitIdField,"","MULTI_PART")
 
@@ -2079,13 +2093,16 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironmentsNew(logFile, None, None, extentList)   
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, None, None, extentList)   
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
+            # if extentList is set to None, the env.extent setting will reported.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
     
@@ -2136,12 +2153,12 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
         # create a list of input themes to find the intersection extent. 
-        # put this here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
+        # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
         # but you want the original inputs to be used for the extent intersection
         if logFile:
             extentList = [inReportingUnitFeature, inCensusDataset, inFloodplainDataset]
         
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         _tempEnvironment0 = env.snapRaster
         _tempEnvironment1 = env.workspace
         _tempEnvironment2 = env.cellSize
@@ -2185,7 +2202,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         
         # Generate name for reporting unit population count table.
         suffix = metricConst.fieldSuffix[index]
-        popTable_RU = files.nameIntermediateFile([metricConst.popCntTableName + suffix,'Dataset'],cleanupList)
+        popTable_RU = files.nameIntermediateFile([f"{metricConst.popCntTableName}{suffix}_",'Dataset'],cleanupList)
 
         ### Metric Calculation
         AddMsg(timer.now() + " Calculating population within each reporting unit", 0, logFile)        
@@ -2214,7 +2231,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             # Set variables for the floodplain population calculations
             index = 1
             suffix = metricConst.fieldSuffix[index]
-            popTable_FP = files.nameIntermediateFile([metricConst.popCntTableName + suffix,'Dataset'],cleanupList)
+            popTable_FP = files.nameIntermediateFile([f"{metricConst.popCntTableName}{suffix}_",'Dataset'],cleanupList)
             
             if descFldpln.datasetType == "RasterDataset":
                 # Use SetNull to eliminate non-floodplain areas and to replace the floodplain cells with values from the 
@@ -2226,7 +2243,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
                 inCensusDataset = arcpy.sa.SetNull(inFloodplainDataset, inCensusDataset, whereClause)
                 
                 if globalConstants.intermediateName in processed:
-                    namePrefix = "%s_" % (metricConst.floodplainPopName)
+                    namePrefix = metricConst.floodplainPopName
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     inCensusDataset.save(scratchName)
                     AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
@@ -2260,8 +2277,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             fieldMappings.addTable(inCensusDataset)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inPopField]
         
-            tempName = "%s_%s" % (metricConst.shortName, descCensus.baseName)
-            tempCensusFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
+            tempName = "%s_%s_Work_" % (metricConst.shortName, descCensus.baseName)
+            tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             inCensusDataset = arcpy.FeatureClassToFeatureClass_conversion(inCensusDataset,env.workspace,
                                                                                  os.path.basename(tempCensusFeature),"",
                                                                                  fieldMappings)
@@ -2305,8 +2322,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
                 fieldMappings.addTable(inFloodplainDataset)
                 [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != fieldMappings.fields[0].name]
                 
-                tempName = "%s_%s" % (metricConst.shortName, descFldpln.baseName)
-                tempFldplnFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
+                tempName = "%s_%s_Work_" % (metricConst.shortName, descFldpln.baseName)
+                tempFldplnFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 inFloodplainDataset = arcpy.FeatureClassToFeatureClass_conversion(inFloodplainDataset,env.workspace,
                                                                                      os.path.basename(tempFldplnFeature),"",
                                                                                      fieldMappings)
@@ -2366,13 +2383,16 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList)
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList)
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
             
@@ -2610,13 +2630,16 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid, inCensusRaster])
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inLandCoverGrid, inCensusRaster])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
 
@@ -2848,18 +2871,15 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         # copy input parameters to pass to the log file routine
         parametersList = [toolPath, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inNeighborhoodSize, burnIn, burnInValue, 
                           minPatchSize, createZones, zoneBin_str, overWrite, outWorkspace, optionalFieldGroups]
+
         # create a log file if requested, otherwise logFile = None
         outTable = os.path.join(str(outWorkspace), metricConst.name)
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
-        # create a list of input themes to find the intersection extent
-        if logFile:
-            extentList = [inLandCoverGrid]
-        
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         processingCellSize = Raster(inLandCoverGrid).meanCellWidth
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
@@ -2875,13 +2895,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         landCoverValues = raster.getRasterValues(inLandCoverGrid)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
-        
-        # if logFile:
-        #     log.writeEnvironments(logFile, snapRaster, processingCellSize, inLandCoverGrid)
-        #
-        #     # write the metric class grid values to the log file
-        #     log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
-        
+                
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
         # alert user if the land cover grid has values undefined in the LCC XML file
@@ -2963,11 +2977,11 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 # save the intermediate raster if save intermediates option has been chosen
                 if saveIntermediates: 
                     # namePrefix = metricConst.burnInGridName
-                    namePrefix = ("{0}_{1}_{2}").format(metricConst.shortName,minPatchSize,metricConst.burnInGridName)
+                    namePrefix = f"{metricConst.shortName}_{minPatchSize}_{metricConst.burnInGridName}_"
                     scratchName = files.getRasterName(namePrefix)
-                    AddMsg(timer.now() + " Saving intermediate grid: "+os.path.basename(scratchName), 0, logFile)
+                    AddMsg(f"{timer.now()} Saving intermediate grid: {basename(scratchName)}", 0, logFile)
                     burnInGrid.save(scratchName)
-                    AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+                    AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}")
 
         # Run metric calculate for each metric in list
         for m in metricsBaseNameList:
@@ -3008,7 +3022,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         
             
             # get output grid name. Add it to the list of features to add to the Contents pane
-            namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxRasterOutName)
+            namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxRasterOutName}_"
             proximityGridName = files.getRasterName(namePrefix)
             datasetList = arcpy.ListDatasets()
             if proximityGridName in datasetList:
@@ -3023,7 +3037,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                   
             # save the intermediate raster if save intermediates option has been chosen 
             if saveIntermediates:
-                namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxFocalSumOutName)
+                namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxFocalSumOutName}_"
                 scratchName = files.getRasterName(namePrefix)  
                 datasetList = arcpy.ListDatasets()
                 if scratchName in datasetList:
@@ -3053,7 +3067,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 # instead of the saved raster name (e.g., Reclass_NI_91 instead of NI_9_Zone0). The technique below appears
                 # to alleviate that problem without adding substantial time to the reclassification operation.
                 nbrZoneGrid = (Reclassify(proximityGrid, "VALUE", rngRemap) * 1)
-                namePrefix = ("{0}_{1}{2}").format(m.upper(),inNeighborhoodSize,metricConst.proxZoneRaserOutName)
+                namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxZoneRaserOutName}_"
                 scratchName = files.getRasterName(namePrefix)
                 datasetList = arcpy.ListDatasets()
                 if scratchName in datasetList:
@@ -3068,9 +3082,10 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
      
         if logFile:
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, inLandCoverGrid)
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList=[inLandCoverGrid])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
         
@@ -3113,14 +3128,10 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
         
-        # create a list of input themes to find the intersection extent
-        if logFile:
-            extentList = [inLineFeature]
-        
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         
         # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
         # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
@@ -3261,9 +3272,10 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         
         if logFile:
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, None, None, None)
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, None, None, extentList=[inLineFeature])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
 
@@ -3306,14 +3318,10 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
         
-        # create a list of input themes to find the intersection extent
-        if logFile:
-            extentList = [inWalkFeatures, inImpassableFeatures]
-        
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
     
         # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
         # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
@@ -3385,6 +3393,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         # create the Walkable raster. 
         walkRaster, cleanupList = raster.getWalkabilityGrid(vectorsToRaster, walkNumber, baseNumber, walkName, cellSize, cleanupList, timer, logFile)
         
+        walkRasterPath = arcpy.Describe(walkRaster).catalogPath
         
         ## if applicable, convert all input impassable features to a single raster and combine with walkable raster
         if inImpassableFeatures:
@@ -3404,12 +3413,15 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             # create the Impassable raster
             impassRaster, cleanupList = raster.getWalkabilityGrid(vectorsToRaster, impassNumber, baseNumber, impassName, cellSize, cleanupList, timer, logFile)
             
+            impassRasterPath = arcpy.Describe(impassRaster).catalogPath
+            
             # combine the Walkable and Impassable rasters. 
             AddMsg(f"{timer.now()} Combining the Walkable raster with the Impassable raster for final output", 0, logFile)
             costRaster = log.arcpyLog(arcpy.sa.Con, ((walkRaster == baseNumber), impassRaster, walkRaster), 'arcpy.sa.Con', logFile)
             
             categoryDict = {walkNumber: "Walkable", baseNumber: "Base", impassNumber: "Impassable"}
         else:
+            impassRasterPath = ''
             AddMsg(f"{timer.now()} Creating a copy of the Walkable raster for the final output", 0, logFile)
             costRaster = walkRaster
             
@@ -3418,16 +3430,17 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         costRaster.save(outRaster)
         
         # add category labels to the raster
-        AddMsg(f"{timer.now()} Finalizing {bn(outRaster)} by adding labels", 0, logFile)
+        AddMsg(f"{timer.now()} Finalizing {basename(outRaster)} by adding labels", 0, logFile)
         log.arcpyLog(arcpy.BuildRasterAttributeTable_management, (costRaster, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
         log.arcpyLog(arcpy.AddField_management, (costRaster, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
         raster.updateCategoryLabels(costRaster, categoryDict)
         
         if logFile:
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, cellSizeStr, None)
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, cellSizeStr, extentList=[walkRasterPath, impassRasterPath])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
     
@@ -3473,14 +3486,16 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outRaster, toolPath)
         
-        # create a list of input themes to find the intersection extent
-        if logFile:
-            extentList = [inParkFeature, inCostSurface, inCensusDataset]
+        # # create a list of input themes to find the intersection extent
+        # # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
+        # # but you want the original inputs to be used for the extent intersection
+        # if logFile:
+        #     extentList = [inParkFeature, inCostSurface, inCensusDataset]
         
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
 
         # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
         # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
@@ -3543,12 +3558,12 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         desc = arcpy.Describe(inParkFeature)
         tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
         tempParkFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {bn(tempParkFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
         
         if dissolveParkYN == 'true':
             inParkFeature = log.arcpyLog(arcpy.Dissolve_management, (inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES"), 'arcpy.Dissolve_management', logFile)
         else:
-            inParkFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inParkFeature, env.workspace, bn(tempParkFeature)), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
+            inParkFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inParkFeature, env.workspace, basename(tempParkFeature)), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
         
         # use the OID for identifying Parks
         idFlds = [aFld for aFld in arcpy.ListFields(inParkFeature) if aFld.type == "OID"]
@@ -3685,9 +3700,9 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         if len(mosaicRasters) == 0:
             AddMsg(f"No individual park population access rasters were generated. Exiting...\n", 1, logFile)
         else:
-            AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {bn(outRaster)}.", 0, logFile)
+            AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {basename(outRaster)}.", 0, logFile)
             outWS = env.workspace
-            log.arcpyLog(arcpy.management.MosaicToNewRaster, (mosaicRasters, outWS, bn(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST"), 'arcpy.management.MosaicToNewRaster', logFile)   
+            arcpy.management.MosaicToNewRaster(mosaicRasters, outWS, basename(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST")   
             
             AddMsg(f"{timer.now()} Deleting individual park rasters...", 0, logFile)
             [arcpy.Delete_management(p) for p in mosaicRasters]
@@ -3714,9 +3729,13 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         
         if logFile:
             # write the standard environment settings to the log file
-            log.writeEnvironments(logFile, snapRaster, processingCellSize, None)
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            
+            # The analysis extent and coordinate system is set to the cost raster if these environments are not set.
+            # Intersecting the inCostSurface extent with the inCensusDataset will show the minimum area of overlap
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList = [inCostSurface, inCensusDataset])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
 
@@ -3748,7 +3767,6 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
 
     from arcpy import env
     
-    cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
     addToActiveMap = [] # set up a list for feature class names to add to the ArcGIS Project's TOC
     
     #Script arguments
@@ -3781,10 +3799,6 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         parametersList = [toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+fnPrefix, toolPath) #toolPath?
-
-        # create a list of input themes to find the intersection extent
-        if logFile:
-            extentList = [f"{inStreetsgdb}\\Streets"]
 
         # determine the active map to add the output raster/features    
         try:
@@ -4047,6 +4061,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             intermediateList.append(value0FCName)
             addToActiveMap.append(iacFC)
             
+        if logFile:
+            log.writeEnvironments(logFile, None, None, extentList=[inputStreets])
         
         try:
             # add outputs to the active map
@@ -4060,12 +4076,17 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             AddMsg(f"Unable to add processed layer(s) to {actvMap.name} view")
 
     except Exception as e:
+        if logFile:
+            # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+            
         errors.standardErrorHandling(e)
  
     finally:
 
         if logFile:
-            log.writeEnvironments(logFile, None, None, inputStreets) # This is calculating based on input rather than output. Has the same conceptual issue as other ATtILA tools.
             logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             logFile.write("\n---End of Log File---\n")
             logFile.close()
@@ -4176,11 +4197,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
         
-            tempName = f"{metricConst.shortName}_{descZone.baseName}"
-            tempZoneinFeature = files.nameIntermediateFile([f"{tempName}_Work","FeatureClass"],cleanupList)
+            tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
+            tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         
-            AddMsg(f"{timer.now()} Making a working copy of {descZone.baseName}. Intermediate: {bn(tempZoneinFeature)}", 0, logFile)
-            log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, bn(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
+            AddMsg(f"{timer.now()} Making a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
+            log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
         
             inZoneDataset = tempZoneinFeature
         
@@ -4189,9 +4210,9 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             if bufferDistanceVal.is_integer():
                 bufferDistanceVal = int(bufferDistanceVal)
                 
-            tempBufferName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Buffer")
+            tempBufferName = f"{metricConst.shortName}_{fileNameBase}_Buffer_"
             tempBufferFeature = files.nameIntermediateFile([tempBufferName,"FeatureClass"],cleanupList)
-            AddMsg("{0} Adding {1} buffer to {2}. Intermediate: {3}".format(timer.now(), inBufferDistance, descZone.baseName, bn(tempBufferFeature)), 0, logFile)
+            AddMsg(f"{timer.now()} Adding {inBufferDistance} buffer to {descZone.baseName}. Intermediate: {basename(tempBufferFeature)}", 0, logFile)
             log.arcpyLog(arcpy.Buffer_analysis, (inZoneDataset, tempBufferFeature, inBufferDistance), 'arcpy.Buffer_analysis', logFile)
         
             inZoneDataset = tempBufferFeature
@@ -4201,7 +4222,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         popTable_RU = files.nameIntermediateFile([metricConst.popCntTableName,'Dataset'],cleanupList)
         
         ### Metric Calculation
-        AddMsg("{0} Calculating population within each reporting unit. Intermediate: {1}".format(timer.now(), bn(popTable_RU)), 0, logFile)        
+        AddMsg(f"{timer.now()} Calculating population within each reporting unit. Intermediate: {basename(popTable_RU)}", 0, logFile)        
         
         # tool gui does not have a snapRaster parameter. When the census dataset is a raster, the snapRaster will
         # be set to the census raster. To record this correctly in the log file, set up the snapRaster variable.
@@ -4234,7 +4255,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             if descZone.datasetType == "RasterDataset" and groupByZoneYN == 'true':
                 
                 # Convert the Raster zones to Polygon
-                AddMsg("{0} Setting 0 value cells in {1} to NoData".format(timer.now(), descZone.basename))
+                AddMsg(f"{timer.now()} Setting 0 value cells in {descZone.basename} to NoData")
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
                 whereClause = delimitedVALUE+" = 0"
                 nullGrid = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, inZoneDataset, whereClause), 'arcpy.sa.SetNull', logFile)  
@@ -4244,11 +4265,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 
                 # This may fail if a polygon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
                 maxVertices = 250000
-                AddMsg(timer.now() + "{0} Converting non-zero cells in {1} to a polygon feature. Intermediate {2}".format(timer.now(), descZone.basename, bn(tempPolygonFeature)), 0, logFile)
+                AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                 try:
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 except:
-                    AddMsg(timer.now() + "{0} Converting non-zero cells in {1} to a polygon feature with maximum vertices technique. Intermediate {2}".format(timer.now(), descZone.basename, bn(tempPolygonFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature with maximum vertices technique. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                     maxVertices = maxVertices / 2
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 
@@ -4264,19 +4285,19 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             if descZone.datasetType == "RasterDataset":
                 # Use SetNull to eliminate non-zone areas and to replace the in-zone cells with values from the 
                 # PopulationRaster. The snap raster, and cell size have already been set to match the census raster
-                AddMsg(timer.now() + " Setting non-zone areas to NULL", 0, logFile)
+                AddMsg(f"{timer.now()} Setting non-zone areas to NULL", 0, logFile)
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
                 # whereClause = delimitedVALUE+" <> 1"
                 whereClause = delimitedVALUE+" = 0"
                 inCensusDataset = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, inCensusDataset, whereClause), 'arcpy.sa.SetNull', logFile)
         
                 if globalConstants.intermediateName in processed:
-                    namePrefix = "%s_" % (metricConst.zonePopName)
+                    namePrefix = f"{metricConst.zonePopName}_"
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     inCensusDataset.save(scratchName)
-                    AddMsg(timer.now() + " Save intermediate grid complete: "+bn(scratchName), 0, logFile)
+                    AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}", 0, logFile)
                     
-                AddMsg("{0} Calculating population for each reporting unit. Intermediate: {1}".format(timer.now(), bn(popTable_ZN)), 0, logFile)
+                AddMsg(f"{timer.now()} Calculating population for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
         
         
@@ -4286,44 +4307,44 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
                 ## If groupby, then dissolve by zoneIdField
                 if  groupByZoneYN == "true":
-                    tempDissolveName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Dissolve")
+                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
                     tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                    AddMsg("{0} Dissolving {1} by Zone ID field. Intermediate: {2}".format(timer.now(), bn(inZoneDataset), bn(tempDissolveFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Dissolving {basename(inZoneDataset)} by Zone ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     arcpy.management.Dissolve(inZoneDataset, tempDissolveFeature, zoneIdField)
         
                 ## Else dissolve all
                 else:
-                    tempDissolveName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Dissolve")
+                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
                     tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                    AddMsg("{0} Dissolving all zone features. Intermediate: {1}". format(timer.now(), bn(tempDissolveFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Dissolving all zone features. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     log.arcpyLog(arcpy.management.Dissolve, (inZoneDataset, tempDissolveFeature), 'arcpy.management.Dissolve', logFile)
         
                 inZoneDataset = tempDissolveFeature
         
-                tempName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Identity")
+                tempName = f"{metricConst.shortName}_{fileNameBase}_Identity_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                AddMsg("{0} Assigning reporting unit IDs to intersecting zone features. Intermediate: {1}".format(timer.now(), bn(tempPolygonFeature)), 0, logFile)
+                AddMsg(f"{timer.now()} Assigning reporting unit IDs to intersecting zone features. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                 log.arcpyLog(arcpy.Identity_analysis, (inZoneDataset, inReportingUnitFeature, tempPolygonFeature), 'arcpy.Identity_analysis', logFile)
         
                 inReportingUnitFeature = tempPolygonFeature
         
         
-                AddMsg(timer.now() + " Calculating population within zones for each reporting unit", 0, logFile)
+                AddMsg(f"{timer.now()} Calculating population within zones for each reporting unit", 0, logFile)
             
                 # calculate the population for the reporting unit using zonal statistics as table
                 # The snap raster, and cell size have been set to match the census raster
                 if  groupByZoneYN == "true":
             
                     ## Dissolve Identity features by zoneIdField, reportingUnitIdField
-                    tempDissolveName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "IdentityDissolve")
+                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_IdentityDissolve_"
                     tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                    AddMsg("{0} Dissolving Identity features by Zone ID field and Reporting unit field. Intermediate: {1}".format(timer.now(), bn(tempDissolveFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Dissolving Identity features by Zone ID field and Reporting unit field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     log.arcpyLog(arcpy.management.Dissolve, (inReportingUnitFeature, tempDissolveFeature, [zoneIdField, reportingUnitIdField]), 'arcpy.management.Dissolve', logFile)
             
                     inReportingUnitFeature = tempDissolveFeature
             
                     # Create new unique OID field.  Cant use original OID because the new output table has its own OID. join will not work
-                    AddMsg("{0} Creating unique OID field for {1}".format(timer.now(), bn(inReportingUnitFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Creating unique OID field for {basename(inReportingUnitFeature)}", 0, logFile)
                     currentOID = arcpy.Describe(inReportingUnitFeature).oidFieldName
                     tempSuccess = 0
                     while tempSuccess == 0:
@@ -4331,17 +4352,17 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                         tempOID = arcpy.ValidateFieldName(tempOID, inReportingUnitFeature)
                         if tempOID not in [f.name for f in arcpy.ListFields(inReportingUnitFeature)]:
                             tempSuccess = 1
-                    calcExpression = 'int(!{0}!)'.format(currentOID)
+                    calcExpression = f'int(!{currentOID}!)'
                     log.arcpyLog(arcpy.CalculateField_management, (inReportingUnitFeature, tempOID, calcExpression, "PYTHON3", "", 'TEXT'), 'arcpy.CalculateField_management', logFile)  
             
-                    AddMsg("{0} Calculating population within zone areas for each reporting unit. Intermediate: {1}".format(timer.now(), bn(popTable_ZN)), 0, logFile)
+                    AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                     log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, tempOID, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
                     log.arcpyLog(arcpy.JoinField_management, (popTable_ZN, tempOID, inReportingUnitFeature, tempOID, [reportingUnitIdField, zoneIdField]), 'arcpy.JoinField_management', logFile)
             
                     log.arcpyLog(arcpy.JoinField_management, (popTable_ZN, reportingUnitIdField, popTable_RU, reportingUnitIdField, popCntFields[0]), 'arcpy.JoinField_management', logFile)
                     popTable_RU = popTable_ZN
                 else:
-                    AddMsg("{0} Calculating population for each reporting unit. Intermediate: {1}".format(timer.now(), bn(popTable_ZN)), 0, logFile)
+                    AddMsg(f"{timer.now()} Calculating population for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                     log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
         
             # Rename the population count field.
@@ -4360,10 +4381,10 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             fieldMappings.addTable(inCensusDataset)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inPopField]
         
-            tempName = "%s_%s" % (metricConst.shortName, descCensus.baseName)
-            tempCensusFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
-            AddMsg("{0} Making a working copy of {1}. Intermediate: {2}".format(timer.now(), descCensus.baseName, bn(tempCensusFeature)), 0, logFile)
-            inCensusDataset = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inCensusDataset,env.workspace,bn(tempCensusFeature),"",fieldMappings), 
+            tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
+            tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+            AddMsg(f"{timer.now()} Making a working copy of {descCensus.baseName}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
+            inCensusDataset = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings), 
                                            'arcpy.FeatureClassToFeatureClass_conversion', logFile)
         
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
@@ -4372,8 +4393,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             log.arcpyLog(arcpy.CalculateField_management, (inCensusDataset,classField,1), 'arcpy.CalculateField_management', logFile)
         
             # Perform population count calculation for the reporting unit
-            calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,inCensusDataset,inPopField,
-                                      classField,popTable_RU,metricConst,index, logFile)
+            calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,inCensusDataset,inPopField,classField,popTable_RU,metricConst,index, logFile)
         
             # Set variables for the zone population calculations   
             index = 1
@@ -4384,20 +4404,20 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             ## If zone dataset is raster
             if descZone.datasetType == "RasterDataset":
                 # Convert the Raster zones to Polygon
-                AddMsg("{0} Setting 0 value cells in {1} to NoData".format(timer.now(), descZone.basename))
+                AddMsg(f"{timer.now()} Setting 0 value cells in {descZone.basename} to NoData")
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
                 whereClause = delimitedVALUE+" = 0"
                 nullGrid = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, 1, whereClause), 'arcpy.sa.SetNull', logFile)  
-                tempName = "%s_%s" % (metricConst.shortName, descZone.baseName + "_Poly")
+                tempName = f"{metricConst.shortName}_{descZone.baseName}_Poly_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         
                 # This may fail if a polygon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
                 maxVertices = 250000
-                AddMsg(timer.now() + "{0} Converting non-zero cells in {1} to a polygon feature. Intermediate {2}".format(timer.now(), descZone.basename, bn(tempPolygonFeature)), 0, logFile)
+                AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature. Intermediate {basename(tempPolygonFeature)}", 0, logFile)
                 try:
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 except:
-                    AddMsg(timer.now() + "{0} Converting non-zero cells in {1} to a polygon feature with maximum vertices technique. Intermediate {2}".format(timer.now(), descZone.basename, bn(tempPolygonFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature with maximum vertices technique. Intermediate {basename(tempPolygonFeature)}", 0, logFile)
                     maxVertices = maxVertices / 2
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 
@@ -4419,11 +4439,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     
                 [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
         
-                tempName = "%s_%s" % (metricConst.shortName, descZone.baseName)
-                tempZoneinFeature = files.nameIntermediateFile([tempName + "_Work","FeatureClass"],cleanupList)
+                tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
+                tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 
-                AddMsg("{0} Making a working copy of {1}. Intermediate: {2}".format(timer.now(), descZone.baseName, bn(tempZoneinFeature)), 0, logFile)
-                log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, bn(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
+                AddMsg(f"{timer.now()} Making a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
+                log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
                 
                 inZoneDataset = tempZoneinFeature
                 
@@ -4431,16 +4451,16 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
                 ## If groupby, then dissolve by zoneIDField
                 if  groupByZoneYN == "true":
-                    tempDissolveName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Dissolve")
+                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
                     tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                    AddMsg("{0} Dissolving {1} by Zone ID field. Intermediate: {2}".format(timer.now(), bn(inZoneDataset), bn(tempDissolveFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Dissolving {basename(inZoneDataset)} by Zone ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     log.arcpyLog(arcpy.management.Dissolve, (inZoneDataset, tempDissolveFeature, zoneIdField), 'arcpy.management.Dissolve', logFile)
         
                 ## Else dissolve all (i.e., ignore overlapping polygons)
                 else:
-                    tempDissolveName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Dissolve")
+                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
                     tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                    AddMsg("{0} Dissolving {1}. Intermediate: {2}".format(timer.now(), bn(inZoneDataset), bn(tempDissolveFeature)), 0, logFile)
+                    AddMsg(f"{timer.now()} Dissolving {basename(inZoneDataset)}. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     log.arcpyLog(arcpy.management.Dissolve, (inZoneDataset, tempDissolveFeature), 'arcpy.management.Dissolve', logFile)
                 
                 ## Set inZoneDataset as the dissolved zone features
@@ -4456,19 +4476,18 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             fileNameBase = descZone.baseName
             # need to eliminate the tool's shortName from the fileNameBase if the zone polygon was derived from a raster
             fileNameBase = fileNameBase.replace(metricConst.shortName+"_","")
-            tempName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "Identity")
+            tempName = f"{metricConst.shortName}_{fileNameBase}_Identity_"
             tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            # AddMsg("{0} Assigning reporting unit IDs to {1}. Intermediate: {2}".format(timer.now(), bn(inZoneDataset), bn(tempPolygonFeature)), 0, logFile)
-            AddMsg("{0} Assigning reporting unit IDs to {1}. Intermediate: {2}".format(timer.now(), descZone.baseName, bn(tempPolygonFeature)), 0, logFile)
+            AddMsg(f"{timer.now()} Assigning reporting unit IDs to {descZone.baseName}. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
         
             log.arcpyLog(arcpy.Identity_analysis, (inZoneDataset, inReportingUnitFeature, tempPolygonFeature), 'arcpy.Identity_analysis', logFile)
         
             ## 
             if  groupByZoneYN == "true":
                 ## Dissolve Identity features by zoneIdField, reportingUnitIdField
-                tempDissolveName = "%s_%s_%s" % (metricConst.shortName, fileNameBase, "IdentityDissolve")
+                tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_IdentityDissolve_"
                 tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                AddMsg("{0} Dissolving {1} by Zone ID field. Intermediate: {2}".format(timer.now(), bn(tempPolygonFeature), bn(tempDissolveFeature)), 0, logFile)
+                AddMsg(f"{timer.now()} Dissolving {basename(tempPolygonFeature)} by Zone ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                 log.arcpyLog(arcpy.management.Dissolve, (tempPolygonFeature, tempDissolveFeature, [zoneIdField, reportingUnitIdField]), 'arcpy.management.Dissolve', logFile)
         
                 tempPolygonFeature = tempDissolveFeature
@@ -4481,12 +4500,12 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     tempOID = arcpy.ValidateFieldName(tempOID, tempPolygonFeature)
                     if tempOID not in [f.name for f in arcpy.ListFields(tempPolygonFeature)]:
                         tempSuccess = 1
-                AddMsg("{0} Creating unique OID field for {1}".format(timer.now(), bn(tempPolygonFeature)), 0, logFile)
-                calcExpression = 'int(!{0}!)'.format(currentOID)
+                AddMsg(f"{timer.now()} Creating unique OID field for {basename(tempPolygonFeature)}", 0, logFile)
+                calcExpression = f'int(!{currentOID}!)'
                 log.arcpyLog(arcpy.CalculateField_management, (tempPolygonFeature, tempOID, calcExpression, "PYTHON3", "", 'TEXT'), 'arcpy.CalculateField_management', logFile)
         
                 # Perform population count calculation for second feature class area
-                AddMsg(timer.now() + " Calculating population within zone areas for each reporting unit", 0, logFile)
+                AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit", 0, logFile)
                 calculate.getPolygonPopCount(tempPolygonFeature,tempOID,inCensusDataset,inPopField,classField,popTable_ZN,metricConst,index, logFile)
         
                 log.arcpyLog(arcpy.JoinField_management, (popTable_ZN, tempOID, tempPolygonFeature, tempOID, [reportingUnitIdField, zoneIdField]), 'arcpy.JoinField_management', logFile)
@@ -4494,14 +4513,13 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 popTable_RU = popTable_ZN
         
             else:
-                AddMsg("{0} Calculating population within zone areas for each reporting unit. Intermediate: {1}".format(timer.now(), bn(popTable_ZN)), 0, logFile)
+                AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 # Perform population count calculation for second feature class area
-                calculate.getPolygonPopCount(tempPolygonFeature,reportingUnitIdField,inCensusDataset,inPopField,
-                                              classField,popTable_ZN,metricConst,index, logFile)
+                calculate.getPolygonPopCount(tempPolygonFeature,reportingUnitIdField,inCensusDataset,inPopField,classField,popTable_ZN,metricConst,index, logFile)
         
         
         # Build and populate final output table.
-        AddMsg(timer.now() + " Calculating the percent of the population that is within a zone for each reporting unit", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating the percent of the population that is within a zone for each reporting unit", 0, logFile)
         
         fieldMappings = arcpy.FieldMappings()
         fieldMappings.addTable(popTable_RU)
@@ -4524,7 +4542,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
         
-            log.arcpyLog(arcpy.TableToTable_conversion, (popTable_RU,os.path.dirname(outTable),bn(outTable),"",fieldMappings), 'arcpy.TableToTable_conversion', logFile)
+            log.arcpyLog(arcpy.TableToTable_conversion, (popTable_RU,os.path.dirname(outTable),basename(outTable),"",fieldMappings), 'arcpy.TableToTable_conversion', logFile)
         
             # Compile a list of fields that will be transferred from the zone population table into the output table
             fromFields = [popCntFields[index]]
@@ -4542,7 +4560,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
         
         
-            log.arcpyLog(arcpy.TableToTable_conversion, (popTable_RU,os.path.dirname(outTable),bn(outTable), "", newFieldMap), 'arcpy.TableToTable_conversion', logFile)
+            log.arcpyLog(arcpy.TableToTable_conversion, (popTable_RU,os.path.dirname(outTable),basename(outTable), "", newFieldMap), 'arcpy.TableToTable_conversion', logFile)
         
         
             ## rename count field to include buffer
@@ -4566,7 +4584,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         # Calculate the percent population within zone        
         vector.addCalculateField(outTable,metricConst.populationProportionFieldName + suffix, "FLOAT", calcExpression, codeBlock, logFile)   
         
-        AddMsg(timer.now() + " Calculation complete")
+        AddMsg(f"{timer.now()} Calculation complete")
         
         # check for NULL values in output table
         num_NULL = 0
@@ -4583,14 +4601,16 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
-            log.logWriteOutputTableInfo(outTable, logFile)
+            # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+            metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+            log.logWriteOutputTableInfo(outTable, logFile, metricConst)
             AddMsg("Summary complete", 0)
             
             # write the standard environment settings to the log file
-            #log.writeEnvironments(logFile, snapRaster, processingCellSize, inReportingUnitFeature)
-            log.writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inCensusDataset, inZoneDataset])
-            # parameters are: logFile, snapRaster, processingCellSize, extentDataset
-            # if extentDataset is set to None, the env.extent setting will reported.
+            log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inCensusDataset, inZoneDataset])
+            # parameters are: logFile, snapRaster, processingCellSize, extentList
+            # if extentList is set to None, the env.extent setting will reported.
+            # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
     
@@ -4624,6 +4644,119 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             env.parallelProcessingFactor = _tempEnvironment6 
 
         
+def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdField, inValueRaster, statisticsType, outTable, fieldPrefix, optionalFieldGroups):
+    from arcpy import env
+
+    try: 
+        metricConst = metricConstants.szsConstants #Change constant name 
+        parametersList = [inReportingUnitFeature, reportingUnitIdField, inValueRaster, statisticsType, outTable, fieldPrefix, optionalFieldGroups]
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        timer = DateTimer() 
+        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        # Ask Don about the environment set up. This is probably not the best way to do it.
+        _tempEnvironment0 = env.snapRaster
+        _tempEnvironment1 = env.workspace
+        _tempEnvironment2 = env.cellSize
+        _tempEnvironment6 = env.parallelProcessingFactor
+        env.snapRaster = inValueRaster
+        env.cellSize = inValueRaster       
+        snapRaster = env.snapRaster
+        processingCellSize = env.cellSize
+
+        env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
+        statsTypeList = statisticsType.split(";")
+
+        # Run arcpy zonal statistics for "ALL" and "DATA"
+        AddMsg(f"{timer.now()} Running zonal statistics as table for {statsTypeList}", 0, logFile)
+        if len(statsTypeList) == 1: 
+        #If only one statistic type is selected process on just the one.
+            if statsTypeList[0] == "MAX": 
+                log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inValueRaster, outTable, "DATA", 'MAXIMUM'), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
+            elif statsTypeList[0] == "MIN": 
+                log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inValueRaster, outTable, "DATA", 'MINIMUM'), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
+            # zone more statement for the percentile
+            else:
+                log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inValueRaster, outTable, "DATA", statsTypeList[0]), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
+        else: 
+            log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inValueRaster, outTable, "DATA", "ALL"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
+        
+        # Add Quality Assurance Field "AREA_OVER"
+        AddMsg(f"{timer.now()} Adding quality assurance field: 'AREA_OVER'", 0, logFile)
+        outputSpatialRef = settings.getOutputSpatialReference(inValueRaster) # Get the raster spatial refernce
+        zoneAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+        #arcpy.AddField_management(outTable, metricConst.qaName, globalConstants.defaultIntegerFieldType)
+        log.arcpyLog(arcpy.AddField_management, (outTable, metricConst.qaName, globalConstants.defaultIntegerFieldType), 'arcpy.AddField_management', logFile)
+        
+        with arcpy.da.UpdateCursor(outTable, [reportingUnitIdField, "AREA", metricConst.qaName]) as cursor: 
+            for row in cursor: 
+                DictKey = row[0] # DictKey = reportingUnitIdField row
+                rasterArea = row[1]
+                # arcpy.AddMessage(DictKey) THESE ARE REALLY HELPFUL FOR TROUBLESHOOTING
+                # arcpy.AddMessage(Area)
+                if DictKey in zoneAreaDict: 
+                    polygonArea = zoneAreaDict[DictKey]
+                    # arcpy.AddMessage(value)
+                    row[2] = rasterArea/polygonArea * 100
+                else: 
+                    row[2] = None
+                cursor.updateRow(row)
+
+        originalFields = [field.name for field in arcpy.ListFields(outTable)]
+        
+        if len(statsTypeList) > 1: 
+            AddMsg(f"{timer.now()} Trimming unnecessary fields", 0, logFile) 
+            keepFields2 =  statsTypeList + originalFields[0:5] + [metricConst.qaName]   # Keep basic info fields and user defined statistics
+            #arcpy.DeleteField_management(outTable, keepFields2, "KEEP_FIELDS") # should these be shown as [CMD] in logfile?
+            log.arcpyLog(arcpy.DeleteField_management, (outTable, keepFields2, "KEEP_FIELDS"), 'arcpy.DeleteField_management', logFile)
+        
+        AddMsg(f"{timer.now()} Updating field names", 0, logFile)
+        oldFields = arcpy.ListFields(outTable)
+        for field in oldFields: 
+            if field.name in metricConst.statisticsFieldNames:
+                newFieldName = fieldPrefix + "_" + field.name 
+                #arcpy.management.AlterField(outTable,field.name, newFieldName, newFieldName) # should these be shown as [CMD] in logfile?
+                log.arcpyLog(arcpy.management.AlterField, (outTable, field.name, newFieldName, newFieldName), 'arcpy.management.AlterField', logFile)
+
+
+        if logFile:
+                AddMsg("Summarizing the ATtILA metric output table to log file", 0)
+                # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+                metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+                # append the reporting unit id field to the list of category fields; even if it's a numeric field type
+                metricConst.idFields = metricConst.idFields + [reportingUnitIdField]
+                log.logWriteOutputTableInfo(outTable, logFile, metricConst)
+                AddMsg("Summary complete", 0)
+                
+                # write the standard environment settings to the log file
+                log.writeEnvironments(logFile, snapRaster, processingCellSize, extentList=[inReportingUnitFeature, inValueRaster])
+                # parameters are: logFile, snapRaster, processingCellSize, extentDataset
+                # if extentDataset is set to None, the env.extent setting will reported.
+                # for snapRaster and processingCellSize, if the parameter is None, no entry will
+                # will be recorded in the log for that parameter
+    except Exception as e:
+        if logFile:
+                # COMPLETE LOGFILE
+            logFile.write("\nSomething went wrong.\n\n")
+            logFile.write("Python Traceback Message below:")
+            logFile.write(traceback.format_exc())
+                
+        errors.standardErrorHandling(e)       
+
+    finally:
+        
+        if logFile:
+            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write("\n---End of Log File---\n")
+            logFile.close()
+            AddMsg('Log file closed')
+            
+        # again ask about environemnt stuff     
+        if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
+            env.snapRaster = _tempEnvironment0
+            env.workspace = _tempEnvironment1
+            env.cellSize = _tempEnvironment2
+            env.parallelProcessingFactor = _tempEnvironment6
+
 
 def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _lccName, lccFilePath, metricsToRun, inRoadWidthOption,
                       widthLinearUnit="", laneCntFld="#", laneWidth="#", laneDistFld="#", bufferDist="#", removeLinesYN="",

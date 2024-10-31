@@ -1,12 +1,17 @@
 import os
 import arcpy
 from arcpy import env
-# from arcpy.sa import *
 from . import parameters
 from ATtILA2.constants import globalConstants
 from datetime import datetime
 from ATtILA2.datetimeutil import DateTimer
 from .messages import AddMsg
+import pandas
+from pandas import DataFrame
+from pandas.api.types import is_numeric_dtype
+from ATtILA2.utils import pandasutil
+
+
 
 timer = DateTimer()
 
@@ -77,90 +82,25 @@ def createLogFile(inDataset, dateTimeStamp):
         return None
 
 
-def logWriteOutputTableInfo(newTable, logFile):
+def logWriteOutputTableInfo(newTable, logFile, metricConst):
     
     logFile.write('\n')
-    logFile.write('Table Field Attributes: NAME, ALIAS, TYPE, LENGTH, PRECISION, SCALE \n')
+    logFile.write('Table Field Attributes: NAME, ALIAS, TYPE, LENGTH, PRECISION, SCALE, MIN, MAX \n') # Do we also want MEAN?
     
     newFields = arcpy.ListFields(newTable)
-    
-    for f in newFields:
-        logFile.write('FIELD: {0} ; {1} ; {2} ; {3} ; {4} ; {5} \n'.format(f.name, f.aliasName, f.type, f.length, f.precision, f.scale))
-    
-    # # This section of code will write the field NAME, TYPE, MIN Value, and MAX Value to the log file. It is time consumptive.
-    #
-    # import pandas
-    # from arcgis.features import GeoAccessor, GeoSeriesAccessor
-    #
-    # stat_Fields = arcpy.ListFields(newTable)[2:]  # if we start at position 2 we’ll drop OBJECTID and RU ID Field
-    # in_fields  = ';'.join([f.name for f in stat_Fields]) 
-    # outTables = "ALL ATtILA_TmpStats"
-    #
-    # arcpy.management.FieldStatisticsToTable(newTable,
-    #                                         in_fields,
-    #                                         env.workspace,
-    #                                         outTables,
-    #                                         None,
-    #                                         "ALIAS Alias;FIELDNAME FieldName;FIELDTYPE FieldType;MAXIMUM Maximum;MINIMUM Minimum"
-    #                                         )
-    #
-    # outTable = "ATtILA_TmpStats"
-    # sdf = pandas.DataFrame.spatial.from_table(outTable)
-    # out_columns = ['FieldName', 'FieldType', 'Minimum', 'Maximum']
-    #
-    # logFile.write("\n")
-    # logFile.write(sdf[out_columns].to_csv(index=None, header=None))
-    #
-    # if arcpy.Exists(outTable):
-    #     arcpy.Delete_management(outTable)
+    #fieldNames = [field.name for field in newFields]
+    df = pandasutil.table_to_pd_df(newTable)
+    #arcpy.AddMessage(df)
+    for f, c  in zip(newFields, df):
+        #if is_numeric_dtype(df[c]) and c not in ['OBJECTID', 'FID', 'ID']:
+        if is_numeric_dtype(df[c]) and c not in metricConst.idFields: #maybr call NonNumericFields
+            fMin = str(df[c].min())
+            fMax = str(df[c].max())
+        else: 
+            fMin = "NA"
+            fMax = "NA"
 
-def writeExtents(logFile, inExt):
-    inSR = inExt.spatialReference
-    logFile.write(f'ENVIRONMENT: Reporting Extent ({inSR.name}) = {inExt.XMax}, {inExt.YMax}, {inExt.XMin}, {inExt.YMin}\n')
-    
-    wgs84SR = arcpy.SpatialReference(4326)
-    transformList = arcpy.ListTransformations(inSR, wgs84SR, inExt)
-    if len(transformList) == 0:
-        # if no list is returned; no transformation is required
-        transformMethod = ""
-    else:
-        # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
-        transformMethod = transformList[0]
-    
-    if transformMethod != "":
-        prjExt = inExt.projectAs(wgs84SR, transformMethod)
-    else:
-        prjExt = inExt.projectAs(wgs84SR)
-        
-    logFile.write(f'ENVIRONMENT: Reporting Extent (WGS 1984) = {prjExt.XMax}, {prjExt.YMax}, {prjExt.XMin}, {prjExt.YMin}\n')
-
-
-def writeEnvironments(logFile, snapRaster, processingCellSize, extentDataset=None):
-    
-    logFile.write('\n')
-    
-    try:
-        if extentDataset:
-            desc = arcpy.Describe(extentDataset)
-            inExt = desc.extent
-        else:
-            inExt = env.extent
-            
-        writeExtents(logFile, inExt)
-                                        
-    except:
-        logFile.write('ENVIRONMENT: Reporting Extent error encountered\n')
-
-
-    if snapRaster:
-        logFile.write(f'ENVIRONMENT: Snap Raster = {env.snapRaster}\n')
-    if processingCellSize:
-        logFile.write(f'ENVIRONMENT: Cell Size = {env.cellSize}\n')
-    logFile.write(f'ENVIRONMENT: Output M Flag = {env.outputMFlag}\n')
-    logFile.write(f'ENVIRONMENT: Output Z Flag = {env.outputZFlag}\n')
-    logFile.write(f'ENVIRONMENT: Parallel Processing Factor = {env.parallelProcessingFactor}\n')
-    
-    logFile.write('\n')       
+        logFile.write('FIELD: {0} ; {1} ; {2} ; {3} ; {4} ; {5}; {6}; {7} \n'.format(f.name, f.aliasName, f.type, f.length, f.precision, f.scale, fMin, fMax))     
 
 
 def writeIntersectExtent(logFile, extentList):
@@ -175,9 +115,7 @@ def writeIntersectExtent(logFile, extentList):
         else:
             return False
     
-    #AddMsg(str(extentList))####
     extentList = list(filter(removeEmpty, extentList))
-    #AddMsg(str(extentList))####
     
     for f in extentList:
         desc = arcpy.Describe(f)
@@ -212,7 +150,33 @@ def writeIntersectExtent(logFile, extentList):
     logFile.write(f'ENVIRONMENT: Extent Intersection (WGS 1984) = {intersectURX}, {intersectURY}, {intersectLLX}, {intersectLLY}\n')
 
 
-def writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=None):
+def writeEnvironments(logFile, snapRaster, processingCellSize, extentList=None):
+    ''' Write select analysis environment settings to a log file.
+    
+    **Description:**
+
+        The following analysis environment settings are recorded: 
+        
+        The M Flag, Z Flag, and Parallel Processing Factor settings are always captured in the log file. 
+        
+        If provided, the Snap Raster and the Processing Cell Size settings are also recorded. 
+        
+        If an extentList of datasets is provided, each dataset's spatial reference name and the
+        bounding coordinates of its spatial extent will be written to the log file as well as the bounding 
+        coordinates in the WGS 84 spatial reference coordinate system of the intersection of all extents.
+        
+    **Arguments:**
+    
+        * *logFile* - CatalogPath and name of the text log file
+        * *snapRaster* - CatalogPath and name of a raster dataset as a string. Can be None
+        * *processingCellSize* - the processing cell size as a string. Can be None
+        * *extentList* - List of datasets. Can be None
+        
+    **Returns:**
+
+        * N/A
+    
+    '''
     
     logFile.write('\n')
     
@@ -220,7 +184,28 @@ def writeEnvironmentsNew(logFile, snapRaster, processingCellSize, extentList=Non
         if extentList:
             writeIntersectExtent(logFile, extentList)
         else:
-            writeIntersectExtent(logFile, env.extent)
+            envExtent = env.extent
+            ocs = env.outputCoordinateSystem
+            
+            logFile.write(f'INFO: Extent env ({ocs.name}) = {envExtent.XMax}, {envExtent.YMax}, {envExtent.XMin}, {envExtent.YMin}\n')
+            
+            wgs84SR = arcpy.SpatialReference(4326)
+            transformList = arcpy.ListTransformations(ocs, wgs84SR, envExtent)
+            if len(transformList) == 0:
+                # if no list is returned; no transformation is required
+                transformMethod = ""
+            else:
+                # default to the first transformation method listed. ESRI documentation indicates this is typically the most suitable
+                transformMethod = transformList[0]
+            
+            if transformMethod != "":
+                prjExt = envExtent.projectAs(wgs84SR, transformMethod)
+            else:
+                prjExt = envExtent.projectAs(wgs84SR)
+            
+            logFile.write('\n')    
+            logFile.write(f'ENVIRONMENT: Extent Intersection (WGS 1984) = {prjExt.XMax}, {prjExt.YMax}, {prjExt.XMin}, {prjExt.YMin}\n')
+
                                         
     except:
         logFile.write('ENVIRONMENT: Intersect Extent error encountered\n')
@@ -262,24 +247,62 @@ def logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst):
 def logWriteParameters(logFile, parametersList, labelsList, metricConst):
     ''' Write tool parameter inputs to log file. '''
     
+    # Begin the Parameters section with a formated script that captures all of the parameters used for
+    # the current tool run. The formating will include all of the necessary import statements, the variable 
+    # assignments, and the command to launch the tool
+    
     logFile.write('SCRIPT START:\n')
     
-    logFile.write(metricConst.scriptOpening)
-        
-    toolParameters = []
-    for l, p in zip(labelsList, parametersList):
-        l = l.replace(' ','_')
-        p = p.replace('\\','\\\\')
-        if l == 'Select_options':
-            p = (f"'{p}'")
-
-        toolParameters.append(f'{l}="{p}"')
+    # to neatly format the script with the variables listed in a comma-delimited column under the tool function
+    # line, we need to know how far to indent the variables. Construct a string of spaces to pad the left side of the
+    # variable entry beyond the tool function opening (e.g. 'arcpy.ATtILA.PAAA' = 17 spaces, 'metric.runLandCoverProportions' = 30 spaces).
+    # add one more space to account for the parentheses enclosing the variables.
+    numSpaces = len(metricConst.toolFUNC) + 1
+    padding = ' ' * numSpaces
     
-    outString = ', \n    '.join(toolParameters)    
-    logFile.write(f'{metricConst.toolFUNC}(\n    {outString}\n    ) \n\n')
+    # set up a list to capture the tool parameters in the format: parameter = 'value'
+    toolParameters = []
+    
+    # set up a list to capture the parameters as variables in the format: padding+variable+','
+    toolVariables = []
+    
+    # construct the parameter variable lines. The labelsList for each tool is found in metricConstants. 
+    # The parametersList for each tool is found in metric.py
+    for l, p in zip(labelsList, parametersList):
+        l = l.replace(' ','_') # replace any spaces with underscores
+        p = p.replace('\\','\\\\') # replace any single slash characters with a double slash
+        if l == 'Select_options':
+            p = (f"'{p}'") # place the options string in a quoted string
+
+        # the variable, toolPath, is included in all labelsLists by convention
+        # tools that use a Land Cover Classification XML file need to have that variable put into the script section
+        # these tools begin with 'metric.run' toolFUNC versus the 'arcpy.ATtILA' toolFUNC. toolFUNC is found in metricConstants
+        # toolPath needs to be excluded for the 'arcpy.ATtILA' tools
+        if metricConst.toolFUNC.startswith("metric"):
+            toolParameters.append(f'{l} = "{p}"')
+            toolVariables.append(f'{padding}{l}')
+        elif l != 'toolPath':
+            toolParameters.append(f'{l} = "{p}"')
+            toolVariables.append(f'{padding}{l}')
+    
+    # take the list of tool parameter strings, and join them together into a single line-separated string
+    variableAssignmentString = '\n'.join(toolParameters)
+    
+    # take the list of tool variables, and join them together into a single line-separated string with a comma at the end of each line
+    variableCommaString = ',\n'.join(toolVariables)
+    
+    # Write the constructed script
+    logFile.write(metricConst.scriptOpening)
+    
+    logFile.write(f'{variableAssignmentString} \n\n')
+    
+    logFile.write(f'{metricConst.toolFUNC}(\n{variableCommaString}\n{padding}) \n\n')
     
     logFile.write('SCRIPT END:\n\n')
     
+    
+    # Finish the Parameters section with a list of tool parameters formatted as:
+    # 'PARAMETER: label = value' (e.g., PARAMETER: Reporting unit feature = Watersheds)
     for l, p in zip(labelsList, parametersList):
         if p:
             p = p.replace("'"," ")

@@ -13,7 +13,7 @@ from . import vector
 from . import table
 from .messages import AddMsg
 from .log import arcpyLog
-from os.path import basename as bn
+from os.path import basename
 
 
 def getMetricPercentAreaAndSum(metricGridCodesList, tabAreaDict, effectiveAreaSum, excludedValues):
@@ -1095,8 +1095,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
 
     desc = arcpy.Describe(inCensusFeature)
     tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
-    tempCensusFeature = files.nameIntermediateFile([tempName + index + "_","FeatureClass"],cleanupList)
-    # AddMsg(f"{timer.now()} Creating a copy of the Census feature layer. Intermediate: {bn(tempCensusFeature)}", 0, logFile)
+    tempCensusFeature = files.nameIntermediateFile([f"{tempName}{index}_","FeatureClass"],cleanupList)
+    # AddMsg(f"{timer.now()} Creating a copy of the Census feature layer. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
     inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
                                                                          os.path.basename(tempCensusFeature),"",
                                                                          fieldMappings)
@@ -1110,8 +1110,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     inPopDensityField = vector.addCalculateField(inCensusFeature,'popDens' + index,"DOUBLE",calcExpression)
 
     # Intersect the reporting units with the population features.
-    intersectOutput = files.nameIntermediateFile([metricConst.intersectOutputName + index + "_","FeatureClass"],cleanupList)
-    # AddMsg(f"{timer.now()} Intersecting {bn(str(inReportingUnitFeature))} with {bn(tempCensusFeature)}. Intermediate: {bn(intersectOutput)}", 0, logFile)
+    intersectOutput = files.nameIntermediateFile([f"{metricConst.intersectOutputName}{index}_","FeatureClass"],cleanupList)
+    # AddMsg(f"{timer.now()} Intersecting {basename(str(inReportingUnitFeature))} with {basename(tempCensusFeature)}. Intermediate: {basename(intersectOutput)}", 0, logFile)
     arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
 
     # Add and populate the area field of the intersected polygons
@@ -1124,8 +1124,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     intPopField = vector.addCalculateField(intersectOutput,'intPop', "DOUBLE", calcExpression)
 
     # Generate a table of the number of intersected Census feature polygons and the sums of the area-weighted population counts within each reporting unit.
-    summaryTable = files.nameIntermediateFile([metricConst.summaryTableName + index + "_",'Dataset'],cleanupList)
-    # AddMsg(f"{timer.now()} Generating a table of area-weighted population counts for each reporting unit. Intermediate: {bn(summaryTable)}", 0, logFile)
+    summaryTable = files.nameIntermediateFile([f"{metricConst.summaryTableName}{index}_",'Dataset'],cleanupList)
+    # AddMsg(f"{timer.now()} Generating a table of area-weighted population counts for each reporting unit. Intermediate: {basename(summaryTable)}", 0, logFile)
     
     # Sum population for each reporting unit.
     """ If the reportingUnitIdField field is not found, it is assumed that
@@ -1280,7 +1280,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
 
     # Make the join permanent by saving the table to a new file
     # Get a unique name with full path for the output features - will default to current workspace:
-    namePrefix = metricConst.lcpTableWithRUID+viewRadius.split()[0]+"_"
+    namePrefix = f"{metricConst.lcpTableWithRUID}{viewRadius.split()[0]}_"
     lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
     arcpy.TableToTable_conversion(tableWithRUID, os.path.dirname(facilityLCPTable), os.path.basename(lcpTableWithRUID))
 
@@ -1292,7 +1292,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
         stats.append([mBaseName + aboveSuffix, "Sum"])
 
     # Get a unique name with full path for the output features - will default to current workspace:
-    namePrefix = metricConst.statsResultTable+viewRadius.split()[0]+"_"
+    namePrefix = f"{metricConst.statsResultTable}{viewRadius.split()[0]}_"
     statsResultTable = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
 
     arcpy.Statistics_analysis(lcpTableWithRUID, statsResultTable, stats, reportingUnitIdField)

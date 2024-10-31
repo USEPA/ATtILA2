@@ -183,6 +183,14 @@ class rdmToolValidator(BaseValidators.NoLccFileValidator):
     metricShortName = rdmConstants.shortName 
     spatialNeeded = rdmConstants.spatialNeeded
 
+class szsToolValidator(BaseValidators.NoLccFileValidator): # This is not used in the most recent Validation Scripts
+    """ ToolValidator for SelectZonalStatistics """
+    
+    filterList = szsConstants.optionalFilter
+    fieldPrefix = szsConstants.fieldPrefix
+    fieldSuffix = szsConstants.fieldSuffix
+    metricShortName = szsConstants.shortName
+    spatialNeeded = szsConstants.spatialNeeded
 
 
 '''NoReportingUnitValidator Tools'''    
