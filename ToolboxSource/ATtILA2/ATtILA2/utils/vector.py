@@ -42,13 +42,13 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         # First perform a buffer on all the points with the specified distance.  
         # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every 
         # reporting unit.  The output is written to the user's scratch workspace.
-        AddMsg("{0} Buffering input features...".format(timer.now()), 0, logFile)
+        AddMsg(f"{timer.now()} Buffering input features: in_memory/bFeats", 0, logFile)
         bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"in_memory/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField)
         
         # If the input features are polygons, we need to erase the the input polyons from the buffer output
         inGeom = arcpy.Describe(inFeatures).shapeType
         if inGeom == "Polygon":
-            AddMsg("{0} Erasing polygon areas from buffer areas...".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas: in_memory/bFeats2", 0, logFile)
             newBufferFeatures = arcpy.Erase_analysis(bufferedFeatures,inFeatures,"in_memory/bFeats2")
             arcpy.Delete_management(bufferedFeatures)
             bufferedFeatures = newBufferFeatures

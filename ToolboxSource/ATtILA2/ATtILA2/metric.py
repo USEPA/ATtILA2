@@ -1678,7 +1678,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             AddMsg("Clean up complete")
         
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
@@ -1749,16 +1749,16 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
         desc = arcpy.Describe(inReportingUnitFeature)
-        tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+        tempName = f"{metricConst.shortName}_{desc.baseName}_" 
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
+        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
                                                            reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         uIDField = settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
 
-        AddMsg(timer.now() + " Calculating reporting unit area", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating reporting unit area", 0, logFile)
         # Add a field to the reporting units to hold the area value in square kilometers
         # Check for existence of field.
         fieldList = arcpy.ListFields(inReportingUnitFeature,metricConst.areaFieldname)
@@ -1777,13 +1777,13 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # from being stripped off for several data types.
         desc = arcpy.Describe(inLineFeature)
         if desc.HasM or desc.HasZ:
-            tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+            tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
-            inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, os.path.basename(tempLineFeature))
+            AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+            inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, basename(tempLineFeature))
 
 
-        AddMsg(timer.now() + " Calculating feature density", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating feature density", 0, logFile)
         # Get a unique name for the merged roads and prep for cleanup
         mergedInLines = files.nameIntermediateFile(metricConst.linesByReportingUnitName,cleanupList)
 
@@ -1795,7 +1795,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
                                                                                  strmOrderField)
 
         # Build and populate final output table.
-        AddMsg(timer.now() + " Compiling calculated values into output table", 0, logFile)
+        AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
         arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
         # Get a list of unique road class values
         if strmOrderField:
@@ -1839,7 +1839,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             AddMsg("Clean up complete")
         
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
@@ -2123,7 +2123,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             AddMsg("Clean up complete")
         
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
@@ -2413,7 +2413,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             AddMsg("Clean up complete")
         
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
@@ -2444,7 +2444,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
          
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
@@ -2976,8 +2976,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 
                 # save the intermediate raster if save intermediates option has been chosen
                 if saveIntermediates: 
-                    # namePrefix = metricConst.burnInGridName
-                    namePrefix = f"{metricConst.shortName}_{minPatchSize}_{metricConst.burnInGridName}_"
+                    namePrefix = f"{metricConst.shortName}_{minPatchSize}_{metricConst.burnInGridName}"
+                    if overWrite == "false":
+                        namePrefix = f"{namePrefix}_"
                     scratchName = files.getRasterName(namePrefix)
                     AddMsg(f"{timer.now()} Saving intermediate grid: {basename(scratchName)}", 0, logFile)
                     burnInGrid.save(scratchName)
@@ -3022,7 +3023,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         
             
             # get output grid name. Add it to the list of features to add to the Contents pane
-            namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxRasterOutName}_"
+            namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxRasterOutName}"
+            if overWrite == "false":
+                namePrefix = f"{namePrefix}_"
             proximityGridName = files.getRasterName(namePrefix)
             datasetList = arcpy.ListDatasets()
             if proximityGridName in datasetList:
@@ -3037,7 +3040,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                   
             # save the intermediate raster if save intermediates option has been chosen 
             if saveIntermediates:
-                namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxFocalSumOutName}_"
+                namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxFocalSumOutName}"
+                if overWrite == "false":
+                    namePrefix = f"{namePrefix}_"
                 scratchName = files.getRasterName(namePrefix)  
                 datasetList = arcpy.ListDatasets()
                 if scratchName in datasetList:
@@ -3067,7 +3072,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 # instead of the saved raster name (e.g., Reclass_NI_91 instead of NI_9_Zone0). The technique below appears
                 # to alleviate that problem without adding substantial time to the reclassification operation.
                 nbrZoneGrid = (Reclassify(proximityGrid, "VALUE", rngRemap) * 1)
-                namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxZoneRaserOutName}_"
+                namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxZoneRaserOutName}"
+                if overWrite == "false":
+                    namePrefix = f"{namePrefix}_"
                 scratchName = files.getRasterName(namePrefix)
                 datasetList = arcpy.ListDatasets()
                 if scratchName in datasetList:
@@ -4087,7 +4094,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
     finally:
 
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
@@ -4632,7 +4639,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         # close the log file
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')
@@ -4652,7 +4659,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inValueRaster, statisticsType, outTable, fieldPrefix, optionalFieldGroups]
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         timer = DateTimer() 
-        AddMsg(timer.start() + " Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
         # Ask Don about the environment set up. This is probably not the best way to do it.
         _tempEnvironment0 = env.snapRaster
         _tempEnvironment1 = env.workspace
@@ -4745,7 +4752,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
     finally:
         
         if logFile:
-            logFile.write("\nEnded: {0}\n".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            logFile.write(f"\nEnded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             logFile.write("\n---End of Log File---\n")
             logFile.close()
             AddMsg('Log file closed')

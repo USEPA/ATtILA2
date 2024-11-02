@@ -918,7 +918,7 @@ class sdmConstants(baseMetricConstants):
     areaFieldname = "AREAKM2"
     lineLengthFieldName = "STRMKM"
     lineDensityFieldName = "STRMDENS"
-    linesByReportingUnitName = [f"{shortName}_StrByRU","FeatureClass_"]
+    linesByReportingUnitName = [f"{shortName}_StrByRU_","FeatureClass"]
     # copy tool's parameter variable names from metric.py arguments. Be sure there's a corresponding entry in global constants. Keep variable names uniform between tools.
     parameterLabels = [
         gc.toolScriptPath,

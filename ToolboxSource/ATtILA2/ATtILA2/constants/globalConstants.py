@@ -30,6 +30,7 @@ ruTabulateAreaTableAbbv = "_TabAreaRU"
 dummyFieldName = "_dummy"
 scratchGDBFilename = "attilaScratchWorkspace.gdb"
 allGridValuesTools = ["lccc", "lcd"]
+
 # These are the extensions Esri recognizes as rasters. They may not all be acceptable when saving a calculated grid. Tools
 # such as Intersection Density can only save its output with ".img", or ".tif" extensions when saving to a folder. An 
 # extension in this case, however, is not required and may be omitted. No extensions are permitted inside a geodatabase.
@@ -52,7 +53,7 @@ idFields =  ['OBJECTID', 'FID', 'ID']
 metricScriptOpening = '''
 import arcpy
 from arcpy.sa import *
-arcpy.ImportToolbox("<toolbox path and filename>")
+arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")    
 from ATtILA2 import metric
 
 '''
@@ -60,7 +61,7 @@ from ATtILA2 import metric
 # This is the script opening for the log file if the tool is run from the ATtILA\scripts folder
 basicScriptOpening = '''
 import arcpy
-arcpy.ImportToolbox("<toolbox path and filename>")
+arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")
 
 '''
 
@@ -68,11 +69,11 @@ arcpy.ImportToolbox("<toolbox path and filename>")
 spatialScriptOpening = '''
 import arcpy
 from arcpy.sa import *
-arcpy.ImportToolbox("<toolbox path and filename>")
+arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")
 
 '''
 
-# parameterLabels for Log File
+# parameterLabels for Log File with the following format:
 # script variable name = tool parameter label
 toolScriptPath = "toolPath"
 inReportingUnitFeature = "Reporting unit feature"
