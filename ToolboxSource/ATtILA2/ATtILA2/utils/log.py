@@ -2,7 +2,9 @@ import os
 import arcpy
 from arcpy import env
 from . import parameters
+from ATtILA2 import errors
 from ATtILA2.constants import globalConstants
+from ATtILA2.constants import errorConstants
 from datetime import datetime
 from ATtILA2.datetimeutil import DateTimer
 from .messages import AddMsg
@@ -60,7 +62,12 @@ def createLogFile(inDataset, dateTimeStamp):
     # geodatabase, the log file is created in the folder that contains the geodatabase.
     # If the workspace is a folder, the log file is created in that folder.
     
-    odsc = arcpy.Describe(env.workspace)
+    # if ATtILA is run from a standalone script it's possible there is no env.workspace set 
+    try:
+        odsc = arcpy.Describe(env.workspace)
+    except:
+        # no env.workspace set. abort ATtILA operations
+        raise errors.attilaException(errorConstants.noEnvWorkspaceError)
     
     # determine where to create the log file
     if odsc.DataType == 'Folder':
@@ -71,13 +78,13 @@ def createLogFile(inDataset, dateTimeStamp):
     try:
         msg = 'Created log file: {0}\n'
         arcpy.AddMessage(msg.format(logPathName))
-        reportFile = open(logPathName, 'a')
+        logFile = open(logPathName, 'a')
             
-        return reportFile
+        return logFile
     except:
         AddMsg('Unable to create log file. Continuing metric calculations.', 1)
-        if reportFile:
-            reportFile.close()
+        if logFile:
+            logFile.close()
         
         return None
 

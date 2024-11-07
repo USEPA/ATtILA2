@@ -3582,12 +3582,15 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         # Calculate the park area in square meters using the coordinate system set in the spatial analysis environment
         AddMsg(f"{timer.now()} Calculating park area in square meters", 0, logFile)
         calcAreaFld = 'CalcAreaM2'
-        fieldAndGeometry = 'CalcAreaM2 AREA'
-        log.arcpyLog(arcpy.management.CalculateGeometryAttributes, (inParkFeature, fieldAndGeometry, "", "SQUARE_METERS"), 'arcpy.management.CalculateGeometryAttributes', logFile)
+        #fieldAndGeometry = 'CalcAreaM2 AREA'
+        #log.arcpyLog(arcpy.management.CalculateGeometryAttributes, (inParkFeature, fieldAndGeometry, "", "SQUARE_METERS"), 'arcpy.management.CalculateGeometryAttributes', logFile)
+        log.arcpyLog(arcpy.management.AddField, (inParkFeature, calcAreaFld, 'FLOAT'), "arcpy.management.AddField", logFile)
+        exp = "!SHAPE.AREA@SQUAREMETERS!"
+        log.arcpyLog(arcpy.CalculateField_management, (inParkFeature, calcAreaFld, exp, "PYTHON"), "arcpy.CalculateField_management", logFile)
         
         if globalConstants.intermediateName in optionalGroupsList:
             # Add additional fields for population with access counts and square meters of park accessible per person calculation.  
-            arcpy.management.AddFields(inParkFeature, metricConst.parkCalculationFields)
+            log.arcpyLog(arcpy.management.AddFields, (inParkFeature, metricConst.parkCalculationFields), "arcpy.management.AddFields", logFile)
         
         # Get a count of the number of reporting units to give an accurate progress estimate.
         n = len(parkList)

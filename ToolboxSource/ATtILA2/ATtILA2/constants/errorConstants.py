@@ -147,3 +147,22 @@ One or more required files are in an unprojected coordinate system.
   - .gdb\\LandUseB  
 
 '''
+
+
+noEnvWorkspaceError = '''
+
+No arcpy.env.workspace set. Unable to create log file. 
+
+If running ATtILA outside of a traditional ArcGIS install via a standalone script, the log file can be 
+created by setting arcpy.env.workspace to a directory path variable at the beginning of the script.
+
+For example:
+
+  outGDB = r"example/Outputs.gdb"
+  arcpy.env.workspace = outGDB
+
+
+If a log file is not necessary, removing the LOGFILE option from the 'Select_options' parameter will allow 
+the tool to run to completion.
+
+'''

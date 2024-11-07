@@ -874,7 +874,11 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
                 outPop = 0
                 sqm_person = 0
                 popZero.append(parkID)
-                rasterName = None
+                cost_con =  Con(expand_raster, float(sqm_person), None, "VALUE >= 0")
+    
+                namePrefix = f"{metricConst.shortName}_Access_Id{parkID}_"
+                rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
+                cost_con.save(rasterName)
             
             else:
                 # Cost distance value to park area divided by surrounding population
