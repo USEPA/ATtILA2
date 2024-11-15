@@ -92,7 +92,7 @@ def createLogFile(inDataset, dateTimeStamp):
 def logWriteOutputTableInfo(newTable, logFile, metricConst):
     
     logFile.write('\n')
-    logFile.write('Table Field Attributes: NAME, ALIAS, TYPE, LENGTH, PRECISION, SCALE, MIN, MAX \n') # Do we also want MEAN?
+    logFile.write('Table Field Attributes: NAME ; ALIAS ; TYPE ; LENGTH ; PRECISION ; SCALE ; MIN ; MAX \n') # Do we also want MEAN?
     
     newFields = arcpy.ListFields(newTable)
     #fieldNames = [field.name for field in newFields]
@@ -107,12 +107,19 @@ def logWriteOutputTableInfo(newTable, logFile, metricConst):
             fMin = "NA"
             fMax = "NA"
 
-        logFile.write('FIELD: {0} ; {1} ; {2} ; {3} ; {4} ; {5}; {6}; {7} \n'.format(f.name, f.aliasName, f.type, f.length, f.precision, f.scale, fMin, fMax))     
+        logFile.write(f'FIELD: {f.name} ; {f.aliasName} ; {f.type} ; {f.length} ; {f.precision} ; {f.scale} ; {fMin} ; {fMax} \n')
+    
+    # Report the newTable row count
+    nRows = int(arcpy.GetCount_management(newTable).getOutput(0))
+    logFile.write('\n')
+    logFile.write(f'TABLE ROW COUNT: {nRows}\n')     
 
 
 def writeIntersectExtent(logFile, extentList):
     ''' Intersect the extent of input feature classes and write the WGS 84 projected coordinates of the bounding rectangle to the log file. '''
     
+    logFile.write('Extent Attributes: DATASET NAME (SPATIAL REFERENCE) = XMAX, YMAX, XMIN, YMIN \n')
+
     projectedExtents = []
     
     # remove any potentially empty elements from the list
@@ -129,7 +136,7 @@ def writeIntersectExtent(logFile, extentList):
         fExtent = desc.extent
         
         inSR = desc.spatialReference
-        logFile.write(f'INFO: Extent {desc.name} ({inSR.name}) = {fExtent.XMax}, {fExtent.YMax}, {fExtent.XMin}, {fExtent.YMin}\n')
+        logFile.write(f'EXTENT: {desc.name} ({inSR.name}) = {fExtent.XMax}, {fExtent.YMax}, {fExtent.XMin}, {fExtent.YMin}\n')
         
         wgs84SR = arcpy.SpatialReference(4326)
         transformList = arcpy.ListTransformations(inSR, wgs84SR, fExtent)
