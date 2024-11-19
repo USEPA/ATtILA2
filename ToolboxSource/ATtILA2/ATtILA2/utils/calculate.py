@@ -509,7 +509,7 @@ def landCoverCoefficientCalculator(lccValuesDict, metricsBaseNameList, optionalG
             pass
 
 
-def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField,inLengthField,lineClass="",iaField=""):
+def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField,inLengthField,lineClass="",iaField="",logFile=None):
     """ Creates *outLines* that contains one multipart linear feature for each *inArea* for calculating line density
         in kilometers per square kilometer of area.
 
@@ -542,13 +542,13 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     # from . import vector
 
     # First perform the split/dissolve/merge on the roads
-    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,inLengthField,lineClass)
+    outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,inLengthField,lineClass,logFile)
 
     # Next join the reporting units layer to the merged roads layer
-    arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])
+    arcpyLog(arcpy.JoinField_management,(outLines, areaUID.name, inAreas, areaUID.name, [unitArea]),"arcpy.JoinField_management",logFile)
     # Set up a calculation expression for density.
     calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
-    densityField = vector.addCalculateField(outLines,densityField,"DOUBLE",calcExpression)
+    densityField = vector.addCalculateField(outLines,densityField,"DOUBLE",calcExpression,'#',logFile)
 
     if iaField: # if a field has been specified for calculating total impervious area.
         # Calculate the road density linear regression for total impervious area:
@@ -562,7 +562,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
         else:
             return pctia"""
         
-        iaField = vector.addCalculateField(outLines,iaField,"DOUBLE",calcExpression,codeblock)
+        iaField = vector.addCalculateField(outLines,iaField,"DOUBLE",calcExpression,codeblock,logFile)
 
     return outLines, lineLengthFieldName
 

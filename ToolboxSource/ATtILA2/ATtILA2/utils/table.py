@@ -83,7 +83,7 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
     return newTable
 
 def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDataset,inValueField,
-                  outTable,metricConst,index,cleanupList):
+                  outTable,metricConst,index,cleanupList,logFile=None):
     """Transfer a value count from an specified geodataset to input polygon features, using simple areal weighting.
     
     **Description:**
@@ -128,16 +128,16 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             env.cellSize = desc.meanCellWidth
 
             # calculate the population for the polygon features using zonal statistics as table
-            arcpy.sa.ZonalStatisticsAsTable(inPolygonFeature, inPolygonIdField, inValueDataset, outTable, "DATA", "SUM")
+            arcpyLog(arcpy.sa.ZonalStatisticsAsTable,(inPolygonFeature, inPolygonIdField, inValueDataset, outTable, "DATA", "SUM"),"arcpy.sa.ZonalStatisticsAsTable",logFile)
 
             # Rename the population count field.
             outValueField = metricConst.valueCountFieldNames[index]
             try:
-                arcpy.AlterField_management(outTable, "SUM", outValueField, outValueField)
+                arcpyLog(arcpy.AlterField_management,(outTable, "SUM", outValueField, outValueField),"arcpy.AlterField_management",logFile)
             except:
-                arcpy.AddField_management(outTable, outValueField, "DOUBLE")
-                arcpy.CalculateField_management(outTable, outValueField, '!SUM!')
-                arcpy.DeleteField_management(outTable, ["SUM"])
+                arcpyLog(arcpy.AddField_management,(outTable, outValueField, "DOUBLE"),"arcpy.AddField_management",logFile)
+                arcpyLog(arcpy.CalculateField_management,(outTable, outValueField, '!SUM!'),"arcpy.CalculateField_management",logFile)
+                arcpyLog(arcpy.DeleteField_management,(outTable, ["SUM"]),"arcpy.DeleteField_management",logFile)
         
         else: # census features are polygons
             # Create a copy of the census feature class that we can add new fields to for calculations.
@@ -146,26 +146,30 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inValueField]
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            inValueDataset = arcpy.FeatureClassToFeatureClass_conversion(inValueDataset,env.workspace,
-                                                                                 os.path.basename(tempCensusFeature),"",
-                                                                                 fieldMappings)
+            inValueDataset = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
+                                      (inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings),
+                                      "arcpy.FeatureClassToFeatureClass_conversion",
+                                      logFile)
 
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
-            arcpy.AddField_management(inValueDataset,classField,"SHORT")
-            arcpy.CalculateField_management(inValueDataset,classField,1)
+            arcpyLog(arcpy.AddField_management,(inValueDataset,classField,"SHORT"),"arcpy.AddField_management",logFile)
+            arcpyLog(arcpy.CalculateField_management,(inValueDataset,classField,1),"arcpy.CalculateField_management",logFile)
             
             # Construct a table with a field containing the area weighted value count for each input polygon unit
-            arcpy.TabulateIntersection_analysis(inPolygonFeature,[inPolygonIdField],inValueDataset,outTable,[classField],[inValueField])
+            arcpyLog(arcpy.TabulateIntersection_analysis,
+                     (inPolygonFeature,[inPolygonIdField],inValueDataset,outTable,[classField],[inValueField]),
+                     "arcpy.TabulateIntersection_analysis",
+                     logFile)
             
             # Rename the population count field.
             outValueField = metricConst.valueCountFieldNames[index]
             try:
-                arcpy.AlterField_management(outTable, inValueField, outValueField, outValueField)
+                arcpyLog(arcpy.AlterField_management,(outTable, inValueField, outValueField, outValueField),"arcpy.AlterField_management",logFile)
             except:
-                arcpy.AddField_management(outTable, outValueField, "DOUBLE")
-                arcpy.CalculateField_management(outTable, outValueField, '!SUM!')
-                arcpy.DeleteField_management(outTable, ["SUM"])
+                arcpyLog(arcpy.AddField_management,(outTable, outValueField, "DOUBLE"),"arcpy.AddField_management",logFile)
+                arcpyLog(arcpy.CalculateField_management,(outTable, outValueField, '!SUM!'),"arcpy.CalculateField_management",logFile)
+                arcpyLog(arcpy.DeleteField_management,(outTable, ["SUM"]),"arcpy.DeleteField_management",logFile)
             
         return outTable, outValueField
 

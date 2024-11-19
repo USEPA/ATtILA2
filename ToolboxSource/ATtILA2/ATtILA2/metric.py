@@ -291,7 +291,8 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
                                                                          self.popTable,
                                                                          self.metricConst,
                                                                          self.index,
-                                                                         self.cleanupList)
+                                                                         self.cleanupList,
+                                                                         self.logFile)
                     
                     # Assemble dictionary with the reporting unit's ID as key, and the area-weighted population as the value
                     self.zonePopulationDict = table.getIdValueDict(self.populationTable, 
@@ -313,6 +314,7 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
                              metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile)
         
         # Assign class attributes unique to this module.
+        lcpCalc.logFile
         lcpCalc.perCapitaYN = perCapitaYN
         lcpCalc.inCensusDataset = inCensusDataset
         lcpCalc.inPopField = inPopField
@@ -1111,8 +1113,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
-                                                                            self.reportingUnitIdField,"","MULTI_PART")
+                    self.inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management, (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), "arcpy.Dissolve_management", logFile)
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = "%s_Buffer%s_" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
@@ -1254,8 +1255,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                     self.namePrefix = f"{self.metricConst.shortName}_Dissolve{self.inBufferDistance.split()[0]}_"
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
                     AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {basename(self.dissolveName)}", 0, self.logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
-                                                                            self.reportingUnitIdField,"","MULTI_PART")
+                    self.inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management, (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), "arcpy.Dissolve_management", logFile)
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
@@ -1501,8 +1501,10 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
-                                                           reportingUnitIdField,"","MULTI_PART")
+        inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management,
+                                              (inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),
+                                              "arcpy.Dissolve_management",
+                                              logFile)
 
         # Get the field properties for the unitID, this will be frequently used
         # If the field is numeric, it creates a text version of the field.
@@ -1513,7 +1515,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         # Check for existence of field.
         fieldList = arcpy.ListFields(inReportingUnitFeature,metricConst.areaFieldname)
         # Add and populate the area field (or just recalculate if it already exists
-        unitArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        unitArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname,logFile)
         if not fieldList: # if the list of fields that exactly match the validated fieldname is empty...
             if not cleanupList[0] == "KeepIntermediates":
                 # ...add this to the list of items to clean up at the end.
@@ -1530,7 +1532,10 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             tempName = "%s_%s" % (metricConst.shortName, arcpy.Describe(inRoadFeature).baseName)
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature, env.workspace, os.path.basename(tempLineFeature))
+            inRoadFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
+                                         (inRoadFeature, env.workspace, os.path.basename(tempLineFeature)),
+                                         "arcpy.FeatureClassToFeatureClass_conversion",
+                                         logFile)
 
 
         AddMsg(timer.now() + " Calculating road density", 0, logFile)
@@ -1539,15 +1544,17 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
 
         # Calculate the density of the roads by reporting unit.
         mergedRoads, roadLengthFieldName = calculate.lineDensityCalculator(inRoadFeature,inReportingUnitFeature,
-                                                                                 uIDField,unitArea,mergedRoads,
-                                                                                 metricConst.roadDensityFieldName,
-                                                                                 metricConst.roadLengthFieldName,
-                                                                                 roadClassField,
-                                                                                 metricConst.totalImperviousAreaFieldName)
+                                                                           uIDField,unitArea,mergedRoads,
+                                                                           metricConst.roadDensityFieldName,
+                                                                           metricConst.roadLengthFieldName,
+                                                                           roadClassField,
+                                                                           metricConst.totalImperviousAreaFieldName,
+                                                                           logFile)
 
         # Build and populate final output table.
         AddMsg(timer.now() + " Compiling calculated values into output table", 0, logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        log.arcpyLog(arcpy.TableToTable_conversion,(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable)),
+                     "arcpy.TableToTable_conversion",logFile)
         # Get a list of unique road class values
         if roadClassField:
             classValues = fields.getUniqueValues(mergedRoads,roadClassField)
@@ -1568,7 +1575,9 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
                 tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
                 tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
-                inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
+                inStreamFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
+                                               (inStreamFeature, env.workspace, os.path.basename(tempLineFeature)),
+                                               "arcpy.FeatureClassToFeatureClass_conversion", logFile)
 
             
             AddMsg(timer.now() + " Calculating Stream and Road Crossings (STXRD)", 0, logFile)
@@ -1577,11 +1586,12 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
 
             # Calculate the density of the streams by reporting unit.
             mergedStreams, streamLengthFieldName = calculate.lineDensityCalculator(inStreamFeature,
-                                                                                         inReportingUnitFeature,
-                                                                                         uIDField,
-                                                                                         unitArea,mergedStreams,
-                                                                                         metricConst.streamDensityFieldName,
-                                                                                         metricConst.streamLengthFieldName)
+                                                                                   inReportingUnitFeature,
+                                                                                   uIDField,
+                                                                                   unitArea,mergedStreams,
+                                                                                   metricConst.streamDensityFieldName,
+                                                                                   metricConst.streamLengthFieldName,
+                                                                                   "","",logFile)
 
             # Get a unique name for the road/stream intersections:
             roadStreamMultiPoints = files.nameIntermediateFile(metricConst.roadStreamMultiPoints,cleanupList)
@@ -1620,16 +1630,19 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
                     tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
                     tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                     AddMsg(timer.now() + " Creating temporary copy of " + desc.name, 0, logFile)
-                    inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
+                    inStreamFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
+                                                   (inStreamFeature, env.workspace, os.path.basename(tempLineFeature)),
+                                                   "arcpy.FeatureClassToFeatureClass_conversion", logFile)
                 
                 # Get a unique name for the merged streams:
                 mergedStreams = files.nameIntermediateFile(metricConst.streamsByReportingUnitName,cleanupList)
                 # Calculate the density of the streams by reporting unit.
                 mergedStreams, streamLengthFieldName = calculate.lineDensityCalculator(inStreamFeature,
-                                                                                             inReportingUnitFeature,
-                                                                                             uIDField,unitArea,mergedStreams,
-                                                                                             metricConst.streamDensityFieldName,
-                                                                                             metricConst.streamLengthFieldName)
+                                                                                       inReportingUnitFeature,
+                                                                                       uIDField,unitArea,mergedStreams,
+                                                                                       metricConst.streamDensityFieldName,
+                                                                                       metricConst.streamLengthFieldName,
+                                                                                       "","",logFile)
             # Get a unique name for the buffered streams:
             streamBuffer = files.nameIntermediateFile(metricConst.streamBuffers,cleanupList)
             # Set a unique name for the undissolved  road/stream buffer intersections
@@ -1752,8 +1765,10 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         tempName = f"{metricConst.shortName}_{desc.baseName}_" 
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
-                                                           reportingUnitIdField,"","MULTI_PART")
+        inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management,
+                                             (inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),
+                                             "arcpy.Dissolve_management",
+                                             logFile)
 
         # Get the field properties for the unitID, this will be frequently used
         uIDField = settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
@@ -1763,7 +1778,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # Check for existence of field.
         fieldList = arcpy.ListFields(inReportingUnitFeature,metricConst.areaFieldname)
         # Add and populate the area field (or just recalculate if it already exists
-        unitArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        unitArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname, logFile)
         if not fieldList: # if the list of fields that exactly match the validated fieldname is empty...
             if not cleanupList[0] == "KeepIntermediates":
                 # ...add this to the list of items to clean up at the end.
@@ -1780,7 +1795,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-            inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, basename(tempLineFeature))
+            inLineFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inLineFeature, env.workspace, basename(tempLineFeature)),"arcpy.FeatureClassToFeatureClass_conversion",logFile)
 
 
         AddMsg(f"{timer.now()} Calculating feature density", 0, logFile)
@@ -1792,11 +1807,11 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
                                                                                  uIDField,unitArea,mergedInLines,
                                                                                  metricConst.lineDensityFieldName,
                                                                                  metricConst.lineLengthFieldName,
-                                                                                 strmOrderField)
+                                                                                 strmOrderField,"",logFile)
 
         # Build and populate final output table.
         AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        log.arcpyLog(arcpy.TableToTable_conversion,(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable)),"arcpy.TableToTable_conversion",logFile)
         # Get a list of unique road class values
         if strmOrderField:
             orderValues = fields.getUniqueValues(mergedInLines,strmOrderField)
@@ -2517,7 +2532,8 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
                                                                               newtable,
                                                                               metricConst,
                                                                               index,
-                                                                              cleanupList)
+                                                                              cleanupList,
+                                                                              logFile)
         
         # Eliminate unnecessary fields from the population table
         fields.deleteFields(populationTable, ["ZONE_CODE", "COUNT", "AREA"])
