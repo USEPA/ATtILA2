@@ -874,15 +874,15 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
         #For each Reporting Unit run Tabulate Area Analysis and add the results to a dictionary
         for aZone in zoneAreaDict.keys():
             # set initial metric values
-            numpatch = 0
+            numPatch = 0
             patchArea = 0
             otherArea = 0
             excludedArea = 0
-            lrgpatch = 0
-            avepatch = 0
-            mdnpatch = 0
-            proportion = 0
-            patchdensity = 0
+            lrgPatch = 0
+            avePatch = 0
+            mdnPatch = 0
+            lrgProportion = 0
+            patchDensity = 0
 
             if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
                 squery = "%s = %s" % (delimitedField, str(aZone))
@@ -940,21 +940,21 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                         arcpy.AddWarning("No patches found in " + str(aZone))
 
                     else: 
-                        numpatch = len(patchAreaList)
+                        numPatch = len(patchAreaList)
                         patchArea = sum(patchAreaList)
-                        lrgpatch = max(patchAreaList)
-                        mdnpatch = np.median(patchAreaList)
-                        avepatch = patchArea/numpatch
-                        proportion = (lrgpatch/patchArea) * 100
+                        lrgPatch = max(patchAreaList)
+                        mdnPatch = np.median(patchAreaList)
+                        avePatch = patchArea/numPatch
+                        lrgProportion = (lrgPatch/patchArea) * 100
 
                         #convert to square kilometers
                         rasterRUArea = otherArea + patchArea
                         rasterRUAreaKM = rasterRUArea* (conversionFactor/1000000)
-                        patchdensity = numpatch/rasterRUAreaKM         
+                        patchDensity = numPatch/rasterRUAreaKM         
 
                     row = rows.next()
 
-            resultsDict[aZone] = (proportion,numpatch,avepatch,mdnpatch,patchdensity,lrgpatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
+            resultsDict[aZone] = (lrgProportion,numPatch,avePatch,mdnPatch,patchDensity,lrgPatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
 
             if arcpy.Exists(selectedRUName):
                 arcpy.Delete_management(selectedRUName)
@@ -1042,7 +1042,8 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             del row
             del outTableRows
             del outTableRow
-            arcpy.Delete_management(tabareaTable)
+            if arcpy.Exists(tabareaTable):
+                arcpy.Delete_management(tabareaTable)
         except:
             pass
 

@@ -163,7 +163,7 @@ def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile
         cellSize = Raster(inRaster).meanCellWidth
         linearUnits = arcpy.Describe(inRaster).spatialReference.linearUnitName
         bufferFloat = cellSize * (int(inBufferDistance)+1)
-        bufferDistance = "%s %s" % (bufferFloat, linearUnits)
+        bufferDistance = f"{bufferFloat} {linearUnits}"
         clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
         
         clipBuffer = arcpyLog(arcpy.Buffer_analysis, (inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL"), 'arcpy.Buffer_analysis', logFile)
@@ -176,7 +176,7 @@ def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile
     
     arcpyLog(arcpy.BuildRasterAttributeTable_management, (clippedGrid, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
 
-    AddMsg(timer.now() + " Reduction complete")
+    AddMsg(f"{timer.now()} Reduction complete")
     
     return clippedGrid, scratchName
             
@@ -193,19 +193,19 @@ def getIntersectOfGrids(lccObj,inLandCoverGrid, inSlopeGrid, inSlopeThresholdVal
     addOne = True
     AreaBelowThresholdValue = getMaximumValue(LCGrid, lccObj, addOne)
 
-    AddMsg(timer.now() + " Generating land cover above slope threshold grid", 0, logFile)    
+    AddMsg(f"{timer.now()} Generating land cover above slope threshold grid", 0, logFile)    
     delimitedVALUE = arcpy.AddFieldDelimiters(SLPGrid,"VALUE")
-    whereClause = delimitedVALUE+" >= " + inSlopeThresholdValue
-    SLPxLCGrid = Con(SLPGrid, LCGrid, AreaBelowThresholdValue, whereClause)
+    whereClause = f"{delimitedVALUE} >= {inSlopeThresholdValue}"
+    SLPxLCGrid = arcpyLog(arcpy.sa.Con, (SLPGrid, LCGrid, AreaBelowThresholdValue, whereClause), "arcpy.sa.Con", logFile)
      
     # get the frozenset of excluded values (i.e., values not to use when calculating the reporting unit effective area)
     excludedValues = lccObj.values.getExcludedValueIds()
 
     if excludedValues:
-        AddMsg(timer.now() + " Inserting EXCLUDED values into areas below slope threshold", 0, logFile)
+        AddMsg(f"{timer.now()} Inserting EXCLUDED values into areas below slope threshold", 0, logFile)
         # build a whereClause string (e.g. "VALUE" = 11 or "VALUE" = 12") to identify where excluded values occur on the land cover grid
         whereExcludedClause = buildWhereValueClause(SLPGrid, excludedValues)
-        SLPxLCGrid = Con(LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause) 
+        SLPxLCGrid = arcpyLog(arcpy.sa.Con, (LCGrid, LCGrid, SLPxLCGrid, whereExcludedClause), "arcpy.sa.Con", logFile) 
     
     return SLPxLCGrid
 
@@ -219,7 +219,7 @@ def getSetNullGrid(inConditionalGrid, inReplacementGrid, nullValuesList, logFile
     whereClause = buildWhereValueClause(conditionalRaster, nullValuesList)
 
     replaceRaster = Raster(inReplacementGrid)
-    nullSubstituteGrid = SetNull(conditionalRaster, replaceRaster, whereClause)
+    nullSubstituteGrid = arcpyLog(arcpy.sa.SetNull, (conditionalRaster, replaceRaster, whereClause), "arcpy.sa.SetNull", logFile)
     
     return nullSubstituteGrid
 
@@ -330,24 +330,24 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
-    AddMsg(timer.now() + " Step 1 of 4: Reclassing land cover grid to Class = 3, Other = 2, and Excluded = 1", 0, logFile)
+    AddMsg(f"{timer.now()} Step 1 of 4: Reclassifying land cover grid to Class = 3, Other = 2, and Excluded = 1", 0, logFile)
     reclassGrid = arcpyLog(Reclassify, (inLandCoverGrid,"VALUE", RemapValue(reclassPairs)), 'Reclassify', logFile)
     
-    AddMsg(timer.now() + " Step 2 of 4: Setting Class areas to Null", 0, logFile)
+    AddMsg(f"{timer.now()} Step 2 of 4: Setting Class areas to Null", 0, logFile)
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
     otherGrid = arcpyLog(SetNull, (reclassGrid, 1, delimitedVALUE+" = 3"), 'SetNull', logFile)
     
-    AddMsg(timer.now() + " Step 3 of 4: Finding distance from Other", 0, logFile)
+    AddMsg(f"{timer.now()} Step 3 of 4: Finding distance from Other", 0, logFile)
     distGrid = arcpyLog(EucDistance, (otherGrid,), 'EucDistance', logFile)
     
-    AddMsg(timer.now() + " Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4", 0, logFile)
+    AddMsg(f"{timer.now()} Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4", 0, logFile)
     edgeDist = (float(PatchEdgeWidth_str) + 0.5) * Raster(inLandCoverGrid).meanCellWidth
 
     zonesGrid = arcpyLog(Con, ((distGrid >= edgeDist) & reclassGrid, 4, reclassGrid), 'Con', logFile)
     
     # it appears that ArcGIS cannot process the BuildRasterAttributeTable request without first saving the raster.
     # This step wasn't the case earlier. Either ESRI changed things, or I altered something in ATtILA that unwittingly caused this. -DE
-    namePrefix = shortName+"_"+"Raster"+m.upper()+PatchEdgeWidth_str+"_"
+    namePrefix = f"{shortName}_Raster{m.upper()}{PatchEdgeWidth_str}_"
     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
     scratchNameReference[0] = scratchName
     zonesGrid.save(scratchName)
@@ -384,8 +384,7 @@ def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, m
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
             
-    AddMsg(timer.now() + " Reclassing land cover to Class:"+m+" = "+str(classValue)+", Other = "+str(otherValue)+
-           ", and Excluded = "+str(excludedValue)+"...", 0, logFile)
+    AddMsg(f"{timer.now()} Reclassifying land cover to Class:{m} = {classValue}, Other = {otherValue}, and Excluded = {excludedValue}.", 0, logFile)
     reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
      
     # create patch raster where:
@@ -398,41 +397,41 @@ def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, m
     
     # Check if Maximum Separation > 0 if it is then skip to regions group analysis otherwise run Euclidean distance
     if intMaxSeparation == 0:
-        AddMsg(timer.now() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...", 0, logFile)
+        AddMsg(f"{timer.now()} Assigning unique numbers to each unconnected cluster of Class:{m}.", 0, logFile)
         regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
     else:
-        AddMsg(timer.now() + " Connecting clusters of Class:"+m+" within maximum separation distance...", 0, logFile)
+        AddMsg(f"{timer.now()} Connecting clusters of Class:{m} within maximum separation distance.", 0, logFile)
         fltProcessingCellSize = Raster(inLandCoverGrid).meanCellWidth
         maxSep = intMaxSeparation * Raster(inLandCoverGrid).meanCellWidth
         delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
-        whereClause = delimitedVALUE+" < " + str(classValue)
-        classRaster = SetNull(reclassGrid, 1, whereClause)
-        eucDistanceRaster = EucDistance(classRaster, maxSep, fltProcessingCellSize)
+        whereClause = f"{delimitedVALUE} < {classValue}"
+        classRaster = arcpyLog(arcpy.sa.SetNull, (reclassGrid, 1, whereClause), "arcpy.sa.SetNull", logFile)
+        eucDistanceRaster = arcpyLog(arcpy.sa.EucDistance, (classRaster, maxSep, fltProcessingCellSize), "arcpy.sa.EucDistance", logFile)
 
         # Run Region Group analysis on UserEuclidPlus, ignores 0/NoData values
-        AddMsg(timer.now() + " Assigning unique numbers to each unconnected cluster of Class:"+m+"...", 0, logFile)
-        UserEuclidRegionGroup = RegionGroup(eucDistanceRaster >= 0,"EIGHT","CROSS","ADD_LINK","0")
+        AddMsg(f"{timer.now()} Assigning unique numbers to each unconnected cluster of Class:{m}.", 0, logFile)
+        UserEuclidRegionGroup = arcpyLog(arcpy.sa.RegionGroup, (eucDistanceRaster >= 0,"EIGHT","CROSS","ADD_LINK","0"), "arcpy.sa.RegionGroup", logFile)
 
         # Maintain the original boundaries of each patch
-        regionOther = Con(reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid)
+        regionOther = arcpyLog(arcpy.sa.Con, (reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid), "arcpy.sa.Con", logFile)
 
     if intMinPatchSize > 1:
-        AddMsg(timer.now() + " Eliminating clusters below minimum patch size...", 0, logFile)
+        AddMsg(f"{timer.now()} Eliminating clusters below minimum patch size.", 0, logFile)
         delimitedCOUNT = arcpy.AddFieldDelimiters(regionOther,"COUNT")
-        whereClause = delimitedCOUNT+" < " + str(intMinPatchSize)
-        regionOtherFinal = Con(regionOther, otherValue, regionOther, whereClause)
+        whereClause = f"{delimitedCOUNT} < {intMinPatchSize}"
+        regionOtherFinal = arcpyLog(arcpy.sa.Con, (regionOther, otherValue, regionOther, whereClause), "arcpy.sa.Con", logFile)
     else:
         regionOtherFinal = regionOther
 
     # add the excluded class areas back to the raster if present
     if excludedValuesList:
-        regionOtherExcluded = Con(reclassGrid == excludedValue, reclassGrid, regionOtherFinal)
+        regionOtherExcluded = arcpyLog(arcpy.sa.Con, (reclassGrid == excludedValue, reclassGrid, regionOtherFinal), "arcpy.sa.Con", logFile)
     else:
         regionOtherExcluded = regionOtherFinal
 
     # The Patch Metrics tool appears to have trouble calculating its metrics when the raster area is large and the
     # regionOtherExcluded grid is treated as a raster object in memory and not saved as a raster on disk
-    namePrefix = metricConst.shortName+"_"+m+"_PatchRast"
+    namePrefix = f"{metricConst.shortName}_{m}_PatchRast_"
     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
     regionOtherExcluded.save(scratchName)
     desc = arcpy.Describe(regionOtherExcluded)

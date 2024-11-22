@@ -225,11 +225,11 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 sysExecutable = arcpy.glob.os.path.basename(arcpy.sys.executable)
                 if licenseLevel in ["AlreadyInitialized","Available"] or sysExecutable.upper() == "PYTHON.EXE":
                     bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                    AddMsg("{0} Repairing buffer areas for input areal features...".format(timer.now()), 0, logFile)
+                    AddMsg("{0} Repairing buffer areas for input areal features.".format(timer.now()), 0, logFile)
                     arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
                 else:
                     bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                    AddMsg("{0} Repairing buffer areas for input areal features...".format(timer.now()), 0, logFile)
+                    AddMsg("{0} Repairing buffer areas for input areal features.".format(timer.now()), 0, logFile)
                     arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
                     bufferErase = files.nameIntermediateFile([f"{inFCName}_bufferErase_","FeatureClass"],cleanupList)
                     AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas: {basename(bufferErase)}", 0, logFile)
@@ -237,7 +237,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     bufferResult = newBufferFeatures
             else:
                 bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                AddMsg("{0} Repairing buffer areas for input linear features...".format(timer.now()), 0, logFile)
+                AddMsg("{0} Repairing buffer areas for input linear features.".format(timer.now()), 0, logFile)
                 arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
             
             
@@ -248,7 +248,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
 
             # Select only those intersected features whose reporting unit IDs match 
             # This ensures that buffer areas that fall outside of the input feature's reporting unit are excluded
-            AddMsg("{0} Trimming buffer zones to reporting unit boundaries".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Trimming buffer zones to reporting unit boundaries", 0, logFile)
             whereClause = arcpy.AddFieldDelimiters(secondIntersectResult,unitID) + " = " + arcpy.AddFieldDelimiters(secondIntersectResult,newUnitID)
             matchingBuffers = arcpyLog(arcpy.MakeFeatureLayer_management, (secondIntersectResult,"matchingBuffers",whereClause), "arcpy.MakeFeatureLayer_management", logFile)
 
@@ -275,9 +275,9 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             AddMsg(f"{timer.now()} Dissolving merged buffer zones: {basename(outFeatures)}", 0, logFile)
             finalOutput = arcpyLog(arcpy.Dissolve_management, (mergeOutput,outFeatures,unitID), "arcpy.Dissolve_management", logFile)
             # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
-            AddMsg("{0} Removing interior waterbody areas from dissolve result...".format(timer.now()), 0, logFile)
+            AddMsg("{0} Removing interior waterbody areas from dissolve result.".format(timer.now()), 0, logFile)
             if len(eraseList) > 0:
-                #  Merge all eraseFeatures so we only have to do this once...
+                #  Merge all eraseFeatures so we only have to do this once.
                 eraseName = files.nameIntermediateFile([f"{toolShortName}_erasePolygons_","FeatureClass"],cleanupList)
                 eraseFeatureClass = arcpyLog(arcpy.Merge_management, (eraseList,eraseName), 'arcpy.Merge_management', logFile)
                 # Rename the old final output so that it becomes an intermediate dataset
@@ -348,7 +348,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
             
             # because borders are not enforced, features outside of the reporting unit can impact the results.
             # need to find all input features in the reporting units and also those that are within the buffer distance of the reporting unit's edge.
-            AddMsg("%s Selecting features from %s within %s of Reporting units..." % (timer.now(), inFCName, bufferDist), 0, logFile)
+            AddMsg(f"{timer.now()} Selecting features from {inFCName} within {bufferDist} of Reporting units.", 0, logFile)
             inFeatureLayer = arcpyLog(arcpy.MakeFeatureLayer_management, (inFC, "inFC_lyr"), "arcpy.MakeFeatureLayer_management", logFile)
             arcpyLog(arcpy.SelectLayerByLocation_management, (inFeatureLayer,'WITHIN_A_DISTANCE', repUnits, bufferDist), "arcpy.SelectLayerByLocation_management", logFile)
             
@@ -358,9 +358,9 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
             inFCName = toolShortName+"_"+inFCDesc.baseName 
             
             # Buffer these features and merge the outputs
-            AddMsg("{0} Buffering selected features...".format(timer.now()), 0, logFile)
-            namePrefix = inFCName+"_Buffer"
+            namePrefix = inFCName+"_Buffer_"
             bufferName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg(f"{timer.now()} Buffering selected features: {basename(bufferName)}", 0, logFile)
             
             # If the input features are polygons, we need to erase the the input polygons from the buffer output
             inGeom = inFCDesc.shapeType
@@ -377,7 +377,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
             else:
                 bufferResult = arcpyLog(arcpy.Buffer_analysis, (inFeatureLayer,bufferName,bufferDist,"FULL","ROUND"), "arcpy.Buffer_analysis", logFile)
           
-            AddMsg("{0} Repairing buffer areas for input features...".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Repairing buffer areas for input features.", 0, logFile)
             arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)       
             
             # keep track of list of outputs.  
@@ -385,7 +385,6 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
             
             # remove the temporary stream layer
             arcpyLog(arcpy.Delete_management, (inFeatureLayer), "arcpy.Delete_management", logFile)
-            #arcpyLog(arcpy.Delete_management, ("inFC_lyr"), "arcpy.Delete_management", logFile)
         
         # Create a copy of the identity feature class that we can add new fields to for calculations.
         fieldMappings = arcpy.FieldMappings()
@@ -395,37 +394,39 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
         # merge buffer features from all input feature classes into a single feature class.
         # Even if there is only one input, the merge will create a copy of the buffer theme without any unnecessary fields.
         # It is essentially a FeatureClassToFeatureClass operation with fieldMappings.
-        if len(inFeaturesList) > 1:
-            AddMsg("{0} Merging buffer zones from all input Stream features...".format(timer.now()), 0, logFile)
-        else:
-            AddMsg("{0} Removing unnecessary fields from buffered feature...".format(timer.now()), 0, logFile)
-        namePrefix = toolShortName+"_Merge"
+        namePrefix = toolShortName+"_Merge_"
         mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+        
+        if len(inFeaturesList) > 1:
+            AddMsg(f"{timer.now()} Merging buffer zones from all input Stream features: {basename(mergeName)}", 0, logFile)
+        else:
+            AddMsg(f"{timer.now()} Removing unnecessary fields from buffered feature: {basename(mergeName)}", 0, logFile)
+        
         mergeOutput = arcpyLog(arcpy.Merge_management, (mergeList,mergeName,fieldMappings), "arcpy.Merge_management", logFile)
 
-            
         
         # Perform an Intersect on erased buffers to assign the Reporting Unit's ID value to the buffer zones within and 
         # to eliminate buffer areas outside of the reporting unit boundaries
-        AddMsg("{0} Assigning Reporting unit ID values to buffer zones...".format(timer.now()), 0, logFile)
-        namePrefix = toolShortName+"_Intersect"
+        namePrefix = toolShortName+"_Intersect_"
         intersectName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+        AddMsg(f"{timer.now()} Assigning Reporting unit ID values to buffer zones: {basename(intersectName)}", 0, logFile)
         intersectFeatureClass = arcpyLog(arcpy.Intersect_analysis, ([repUnits,mergeOutput],intersectName,"ALL","","INPUT"), "arcpy.Intersect_analysis", logFile) 
         
         if len(eraseList) > 0:
             # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
-            AddMsg("{0} Removing interior waterbody areas from buffer result...".format(timer.now()), 0, logFile)
-            namePrefix = toolShortName+"_Erase"
-            erasedOutputName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             
             if len(eraseList) > 1:
-                #  Merge all eraseFeatures so we only have to do this once...
-                namePrefix = toolShortName+"_ErasePolygons"
+                #  Merge all eraseFeatures so we only have to do this once.
+                namePrefix = toolShortName+"_ErasePolygons_"
                 erasePolygonsName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+                AddMsg(f"{timer.now()} Creating a single erase feature from all polygon Stream features: {basename(erasePolygonsName)}", 0, logFile)
                 eraseFeatureClass = arcpyLog(arcpy.Merge_management, (eraseList, erasePolygonsName), "arcpy.Merge_management", logFile)
             else:
                 eraseFeatureClass = eraseList[0]
-            
+
+            namePrefix = toolShortName+"_Erase_"
+            erasedOutputName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
+            AddMsg(f"{timer.now()} Removing interior waterbody areas from buffer result: {basename(erasedOutputName)}", 0, logFile) 
     
             try:
                 erasedOutput = arcpyLog(arcpy.Erase_analysis, (intersectFeatureClass, eraseFeatureClass, erasedOutputName), "arcpy.Erase_analysis", logFile)
@@ -441,7 +442,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
         else:
             erasedOutput = intersectFeatureClass
         
-        AddMsg("{0} Dissolving intersections by reporting unit...".format(timer.now()), 0, logFile)
+        AddMsg(f"{timer.now()} Dissolving intersections by reporting unit.", 0, logFile)
         finalOutput = arcpyLog(arcpy.Dissolve_management, (erasedOutput,outFeatures,unitID), "arcpy.Dissolve_management", logFile)
         
         return finalOutput, cleanupList 
@@ -469,15 +470,15 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     desc1 = arcpy.Describe(repUnits)
     desc2 = arcpy.Describe(secondPoly)
     
-    # Intersect the reporting unit features with the floodplain features
-    AddMsg(timer.now() + " Intersecting %s with %s..." % (desc1.basename, desc2.basename), 0, logFile) 
+    # Intersect the reporting unit features with the floodplain features 
     intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
+    AddMsg(f"{timer.now()} Intersecting {desc1.basename} with {desc2.basename}. Intermediate: {basename(intersectFeatures)}", 0, logFile)
     intersection = arcpyLog(arcpy.Intersect_analysis, ([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT"), "arcpy.Intersect_analysis", logFile)
      
     # Dissolve the intersected lines on the unit ID fields.
     outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
     dissolveFields = uIDField
-    AddMsg(timer.now() + " Dissolving %s zone features..." % (desc2.basename), 0, logFile)  
+    AddMsg(f"{timer.now()} Dissolving {desc2.basename} zone features. Intermediate: {basename(outFeatures)}", 0, logFile)  
     arcpyLog(arcpy.Dissolve_management, (intersection,outFeatures,dissolveFields,"","MULTI_PART","DISSOLVE_LINES"), "arcpy.Dissolve_management", logFile)
     
     # Delete following intermediate datasets in order to reduce clutter if Intermediates are to be saved
@@ -553,18 +554,18 @@ def roadsNearStreams(inStreamFeature,mergedStreams,bufferDist,inRoadFeature,inRe
     are measured in map units (e.g., m of road/m of stream).
     '''
     # For RNS metric, first buffer all the streams by the desired distance
-    AddMsg("{0} Buffering stream features...".format(timer.now()), 0, logFile)
+    AddMsg("{0} Buffering stream features.".format(timer.now()), 0, logFile)
     arcpyLog(arcpy.Buffer_analysis, (inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND","ALL","#"), "arcpy.Buffer_analysis", logFile)
     # Intersect the stream buffers with the input road layer to find road segments in the buffer zone
-    AddMsg("{0} Intersecting road features with stream buffers...".format(timer.now()), 0, logFile)
+    AddMsg("{0} Intersecting road features with stream buffers.".format(timer.now()), 0, logFile)
     intersect1 = arcpyLog(arcpy.Intersect_analysis, ([inRoadFeature, streamBuffer],tmp1RdsNearStrms,"ALL","#","INPUT"), "arcpy.Intersect_analysis", logFile)
     # Intersect the roads in the buffer zones with the reporting unit feature to assign RU Id values to road segments
-    AddMsg("{0} Assigning reporting unit feature ID values to road segments...".format(timer.now()), 0, logFile)
+    AddMsg("{0} Assigning reporting unit feature ID values to road segments.".format(timer.now()), 0, logFile)
     intersect2 = arcpyLog(arcpy.Intersect_analysis, ([intersect1, inReportingUnitFeature],tmp2RdsNearStrms,"ALL","#","INPUT"), "arcpy.Intersect_analysis", logFile)
     
     # if overlapping polygons exist in reporting unit theme, the above intersection may result in several rows of data for a given reporting unit.
     # perform a dissolve to get a 1 to 1 relationship with input to output. Include the class field if provided.
-    AddMsg("{0} Dissolving intersection result and calculating values...".format(timer.now()), 0, logFile)
+    AddMsg("{0} Dissolving intersection result and calculating values.".format(timer.now()), 0, logFile)
     dissolveFields = ruID.name
     if roadClass != '':
         dissolveFields = [ruID.name, roadClass] 
@@ -658,8 +659,8 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     delimitedField = arcpy.AddFieldDelimiters(inReportingUnitFeature, reportingUnitIdField)
     
     #Convert Final Patch Raster to polygon
-    AddMsg(timer.now() + " Converting raster patches to polygons...", 0, logFile)
-    patchOnlyRaster = SetNull(inPatchRaster, inPatchRaster, "VALUE <= 0")
+    AddMsg(f"{timer.now()} Converting raster patches to polygons. Intermediate: {basename(rastoPolyFeature)}", 0, logFile)
+    patchOnlyRaster = arcpyLog(arcpy.sa.SetNull, (inPatchRaster, inPatchRaster, "VALUE <= 0"), "arcpy.sa.SetNull", logFile)
     
     
     # Check to see if all values are NULL (ALLNODATA: 0 = no, 1 = yes)
@@ -668,31 +669,50 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
     
     if anyPatches == '0':
     
-        arcpy.RasterToPolygon_conversion(patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE")
+        arcpyLog(arcpy.RasterToPolygon_conversion, (patchOnlyRaster, rastoPolyFeature, "NO_Simplify", "VALUE"), "arcpy.RasterToPolygon_conversion", logFile)
         
         #Dissolve the polygons on Value Field to make sure each patch is represented by a single polygon.
-        AddMsg(timer.now() + " Dissolving patch polygons by value field...", 0, logFile)
-        arcpy.Dissolve_management(rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES")
+        AddMsg(f"{timer.now()} Dissolving patch polygons by value field. Intermediate: {basename(patchDissolvedFeature)}", 0, logFile)
+        arcpyLog(arcpy.Dissolve_management, (rastoPolyFeature, patchDissolvedFeature,"gridcode","#", "MULTI_PART","DISSOLVE_LINES"), "arcpy.Dissolve_management", logFile)
           
         #Create a feature layer of the FinalPatch_poly_diss
-        patchDissolvedLayer = arcpy.MakeFeatureLayer_management(patchDissolvedFeature, "patchDissolvedLayer")
+        patchDissolvedLayer = arcpyLog(arcpy.MakeFeatureLayer_management, (patchDissolvedFeature, "patchDissolvedLayer"), "arcpy.MakeFeatureLayer_management", logFile)
          
         #Convert Final Patch Raster to points to get the cell centroids
-        AddMsg(timer.now() + " Converting raster patch cells to centroid points...", 0, logFile)
-        arcpy.RasterToPoint_conversion(patchOnlyRaster, patchCentroidsFeature, "VALUE")
+        AddMsg(f"{timer.now()} Converting raster patch cells to centroid points. Intermediate: {basename(patchCentroidsFeature)}", 0, logFile)
+        arcpyLog(arcpy.RasterToPoint_conversion, (patchOnlyRaster, patchCentroidsFeature, "VALUE"), "arcpy.RasterToPoint_conversion", logFile)
          
         #Create a feature layer of the FinalPatch_centroids
-        patchCentroidsLayer = arcpy.MakeFeatureLayer_management(patchCentroidsFeature, "patchCentroidsLayer")
+        patchCentroidsLayer = arcpyLog(arcpy.MakeFeatureLayer_management, (patchCentroidsFeature, "patchCentroidsLayer"), "arcpy.MakeFeatureLayer_management", logFile)
         
         # Initialize custom progress indicator
         totalRUs = len(zoneAreaDict)
+        #mdcpLoopProgress = messages.loopProgress(totalRUs, logFile)
         mdcpLoopProgress = messages.loopProgress(totalRUs)
         
         noPatches = 0
         singlePatch = 0
        
         #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
-        AddMsg(timer.now() + " Analyzing MDCP by reporting unit...", 0, logFile)
+        per = '[PER UNIT]'
+        AddMsg(f"{timer.now()} The following steps are performed for each reporting unit:", 0, logFile)    
+        AddMsg("\n---")
+        AddMsg(f"{timer.now()} {per} 1) Create a feature layer of the reporting unit.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 2) Select centroid points that are in the reporting unit layer.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 3) If number of selected centroids is zero, Set MDCP, PWN, and PWON to -9999.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 4) If number of selected centroids is greater than zero:", 0, logFile)
+        AddMsg(f"{timer.now()} {per}   4a) Select patch polygons that intersect the selected centroids.", 0, logFile)
+        AddMsg(f"{timer.now()} {per}   4b) Clip the selected patches to the reporting unit boundary.", 0, logFile) 
+        AddMsg(f"{timer.now()} {per}   4c) Use GenerateNearTable to create a table with entries for each patch and the distance to its nearest neighbor.", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     c1) arcpy.GenerateNearTable_analysis(clipPolyFeature,[clipPolyFeature], nearPatchTable, '','NO_LOCATION','NO_ANGLE','CLOSEST','0')", 0, logFile)
+        AddMsg(f"{timer.now()} {per}   4d) If only one patch exists in reporting unit, set MDCP and PWN to 0, and PWON to 1.", 0, logFile) 
+        AddMsg(f"{timer.now()} {per}   4d) If more than one patch exists in reporting unit:", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     d1) Collect the nearest distance values for all patches in a list.", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     d2) PWN = len(distList)", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     d3) MDCP = sum(distList)/PWN", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     d3) PWON = numPatch - PWN", 0, logFile)
+        AddMsg("---\n")
+        
         for aZone in zoneAreaDict.keys():
             pwnCount = 0
             pwonCount = 0
@@ -779,14 +799,14 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
                          
                     else: # found neighboring patches
                         rows = arcpy.SearchCursor(nearPatchTable)
-                        distlist = []
+                        distList = []
                         for row in rows:
                             distance = row.getValue("NEAR_DIST")
-                            distlist.append(distance)
+                            distList.append(distance)
                         del row, rows
                         
-                        pwnCount = len(distlist)
-                        totalDist = sum(distlist)
+                        pwnCount = len(distList)
+                        totalDist = sum(distList)
                         meanDist = totalDist/pwnCount
                         pwonCount = totalNumPatches - pwnCount
                      
@@ -800,7 +820,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
                     arcpy.Delete_management(nearPatchTable)
     
                                   
-            resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
+            resultDict[aZone] = f"{pwnCount},{pwonCount},{meanDist}"
             
             # delete the single reporting unit layer
             arcpy.Delete_management(aReportingUnitLayer)
@@ -816,13 +836,13 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             mdcpLoopProgress.update()
             
         if noPatches > 0:
-            AddMsg("%s reporting units contained no patches. MDCP was set to -9999 for these units." % (str(noPatches)), 1, logFile)
+            AddMsg(f"{noPatches} reporting units contained no patches. MDCP was set to -9999 for these units.", 1, logFile)
         
         if singlePatch > 0:
-            AddMsg("%s reporting units contained a single patch. MDCP was set to 0 for these units." % (str(singlePatch)), 1, logFile)
+            AddMsg(f"{singlePatch} reporting units contained a single patch. MDCP was set to 0 for these units.", 1, logFile)
             
-        arcpy.Delete_management(patchCentroidsLayer)
-        arcpy.Delete_management(patchDissolvedLayer)
+        arcpyLog(arcpy.Delete_management, (patchCentroidsLayer), "arcpy.Delete_management", logFile)
+        arcpyLog(arcpy.Delete_management, (patchDissolvedLayer), "arcpy.Delete_management", logFile)
     
     else:
         AddMsg("No reporting units contained patches. Setting MDCP to -9999 for all units.", 1, logFile)
@@ -832,7 +852,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             pwnCount = -9999
             pwonCount = -9999
             
-            resultDict[aZone] = str(pwnCount) +  "," + str(pwonCount) +"," + str(meanDist)
+            resultDict[aZone] = f"{pwnCount},{pwonCount},{meanDist}"
               
     return resultDict
 

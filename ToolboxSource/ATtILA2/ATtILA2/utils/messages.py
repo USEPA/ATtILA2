@@ -33,8 +33,9 @@ def AddMsg(msg, severity=0, logFile=None):
     
 class loopProgress:
     count = 0
-    def __init__(self, total):
+    def __init__(self, total, logFile=None):
         self.total = total
+        self.logFile = logFile
         self.startTime = datetime.datetime.now()
         self.increment = int(total/10.0)
         if self.increment == 0: # handle case where total is less than five and the int function rounds down to zero
@@ -49,7 +50,7 @@ class loopProgress:
             avgLoop = self.timeToStr(elapsed.seconds / self.count)
             elapsedStr = self.timeToStr(elapsed.seconds)
             message = "{0} out of {1} loops, {2}% complete, {3} elapsed, est. {4} remaining, average time per loop: {5}"
-            AddMsg(message.format(self.count,self.total,pctComplete,elapsedStr,estRemaining,avgLoop))
+            AddMsg(message.format(self.count,self.total,pctComplete,elapsedStr,estRemaining,avgLoop), 0, self.logFile)
 
     def timeToStr(self,secs):
         return str(datetime.timedelta(seconds=secs)).split('.')[0]

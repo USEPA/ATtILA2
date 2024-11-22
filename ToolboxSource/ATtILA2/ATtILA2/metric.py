@@ -412,7 +412,7 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
                     self.namePrefix = self.metricConst.shortName+"_"+"Raster"+metricConst.fieldParameters[1]+"_"
                     self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
-                    AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName), 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Save intermediate grid complete: {basename(self.scratchName)}", 0, self.logFile)
                     
         # Set toogle to ignore 'below slope threshold' marker in slope/land cover hybrid grid when checking for undefined values
         ignoreHighest = True
@@ -486,14 +486,14 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
                     flcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
                 
                 # replace the inLandCoverGrid
-                AddMsg(timer.now() + " Generating land cover in floodplain grid", 0, self.logFile)
+                AddMsg(f"{self.timer.now()} Generating land cover in floodplain grid", 0, self.logFile)
                 self.inLandCoverGrid = raster.getSetNullGrid(self.inFloodplainGeodataset, self.inLandCoverGrid, self.nullValuesList, self.logFile)
                     
                 if self.saveIntermediates:
                     self.namePrefix = self.metricConst.landcoverGridName
                     self.scratchName = arcpy.CreateScratchName(self.namePrefix, "", "RasterDataset")
                     self.inLandCoverGrid.save(self.scratchName)
-                    AddMsg(self.timer.now() + " Save intermediate grid complete: "+os.path.basename(self.scratchName), 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Save intermediate grid complete: {basename(self.scratchName)}", 0, self.logFile)
                     
                     
             def _housekeeping(self):
@@ -511,10 +511,13 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
                 # If QAFIELDS option is checked, compile a dictionary with key:value pair of ZoneId:ZoneArea
                 self.zoneAreaDict = None
                 if self.addQAFields:
-                    AddMsg(self.timer.now() + " Tabulating the area of the floodplains within each reporting unit", 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Tabulating the area of the floodplains within each reporting unit", 0, self.logFile)
                     fpTabAreaTable = files.nameIntermediateFile([self.metricConst.fpTabAreaName, "Dataset"], self.cleanupList)   
             
-                    arcpy.sa.TabulateArea(self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize)
+                    log.arcpyLog(arcpy.sa.TabulateArea, 
+                                 (self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize),
+                                 "arcpy.sa.TabulateArea", 
+                                 logFile)
             
                     # This technique allows the use of all non-zero values in a grid to designate floodplain areas instead of just '1'. 
                     self.excludedValueFields = ["VALUE_0"]
@@ -583,7 +586,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
             excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
             
             if len(excludedValuesList) > 0:
-                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit" % timer.now(), 0, flcpCalc.logFile)
+                AddMsg(f"{timer.now()} Excluded values found in the land cover grid. Calculating effective areas for each reporting unit", 0, flcpCalc.logFile)
                 # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
                 if flcpCalc.saveIntermediates:
                     # name the table so that it will be saved
@@ -655,7 +658,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
-        AddMsg(timer.start() + " Setting up initial environment variables", 0, logFile)
+        AddMsg(f"{timer.start()} Setting up initial environment variables", 0, logFile)
         
         # index the reportingUnitIdField to speed query results
         ruIdIndex = "ruIdIndex_ATtILA"
@@ -710,8 +713,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
          
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
-        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {basename(outTable)}", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -735,13 +737,13 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
 
                 def _replaceLCGrid(self):
                     # replace the inLandCoverGrid
-                    AddMsg(self.timer.now() + " Creating Patch Grid for Class:"+m, 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Creating Patch Grid for Class:{m}", 0, self.logFile)
                     scratchNameReference = [""]
                     self.inLandCoverGrid = raster.createPatchRaster(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid,
                                                                     self.metricConst, self.maxSeparation, self.minPatchSize, 
                                                                     timer, scratchNameReference, self.logFile)
                     self.scratchNameToBeDeleted = scratchNameReference[0]
-                    AddMsg(self.timer.now() + " Patch Grid Completed for Class:"+m, 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Patch Grid Completed for Class:{m}. Intermediate: {basename(self.scratchNameToBeDeleted)}", 0, self.logFile)
 
                 #skip over make out table since it has already been made
                 def _makeAttilaOutTable(self):
@@ -760,29 +762,51 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                         
                 # Update calculateMetrics to populate Patch Metrics and MDCP
                 def _calculateMetrics(self):
+                    AddMsg(f"{self.timer.now()} Calculating Patch Numbers by Reporting Unit for Class:{m}", 0, self.logFile)
                     
-                    AddMsg(self.timer.now() + " Calculating Patch Numbers by Reporting Unit for Class:" + m, 0, self.logFile)
-                     
+                    per = '[PER UNIT]'
+                    AddMsg(f"{timer.now()} The following steps are performed for each reporting unit:", 0, logFile)    
+                    AddMsg("\n---")
+                    AddMsg(f"{timer.now()} {per} 1) Create a feature layer of the single reporting unit.", 0, logFile)
+                    AddMsg(f"{timer.now()} {per} 2) Set the geoprocessing extent to just the extent of the selected reporting unit.", 0, logFile)
+                    AddMsg(f"{timer.now()} {per} 3) Copy the single reporting unit feature layer to a new feature class.", 0, logFile)
+                    AddMsg(f"{timer.now()} {per} 4) Calculate the area of patches within reporting unit with TabulateArea:", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}     4a) arcpy.sa.TabulateArea(newFeatureClass, reportingUnitIdField, inLandCoverGrid,'Value', tabareaTable, processingCellSize)", 0, logFile)
+                    AddMsg(f"{timer.now()} {per} 5) Loop through each row in the TabulateArea table (only one row in table) and calculate the patch metrics: ", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}     5a) other area = value of 'Value_0' field ", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}     5b) excluded area = value of 'Value__9999' field", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}     5c) create a list of all patch area values for the row (all fields except 'Value_0' and 'Value__9999'):", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c1) numPatch = len(patchAreaList)", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c2) patchArea = sum(patchAreaList)", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c3) lrgPatch = max(patchAreaList)", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c4) mdnpatch = numpy.median(patchAreaList)", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c5) avePatch = patchArea/numPatch", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c6) lrgProportion = (lrgPatch/patchArea) * 100", 0, logFile)
+                    AddMsg(f"{timer.now()} {per}       c7) patchDensity = numPatch/(patchArea + otherArea) in square kilometers", 0, logFile)    
+                    AddMsg(f"{timer.now()} {per} 6) Insert calculated values into Output table.", 0, logFile)
+                    AddMsg(f"{timer.now()} {per} 7) Delete reporting unit feature layer, reporting unit feature class, and TabulateArea table.", 0, logFile)
+                    AddMsg("---\n")
+                    
                     # calculate Patch metrics
                     self.pmResultsDict = calculate.getPatchNumbers(self.outIdField, self.newTable, self.reportingUnitIdField, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m, self.inReportingUnitFeature, 
                                                       self.inLandCoverGrid, processingCellSize, conversionFactor)
  
-                    AddMsg(timer.now() + " Patch analysis has been run for Class:" + m, 0, self.logFile)
+                    AddMsg(f"{timer.now()} Patch analysis has been run for Class:{m}", 0, self.logFile)
                     
                     # get class name (may have been modified from LCC XML input by ATtILA)
                     outClassName = metricsFieldnameDict[m][1]
                     
                     if mdcpYN == "true": #calculate MDCP value
                     
-                        AddMsg(self.timer.now() + " Calculating MDCP for Class:" + m, 0, self.logFile)
+                        AddMsg(f"{self.timer.now()} Calculating MDCP for Class:{m}", 0, self.logFile)
                         
                         # create and name intermediate data layers
-                        rastoPolyFeatureName = ("%s_%s_%s_" % (metricConst.shortName, outClassName, metricConst.rastertoPoly))
+                        rastoPolyFeatureName = f"{metricConst.shortName}_{outClassName}_{metricConst.rastertoPoly}_"
                         rastoPolyFeature = files.nameIntermediateFile([rastoPolyFeatureName, "FeatureClass"], cleanupList)
-                        rasterCentroidFeatureName = ("%s_%s_%s_" % (metricConst.shortName, outClassName, metricConst.rastertoPoint))
+                        rasterCentroidFeatureName = f"{metricConst.shortName}_{outClassName}_{metricConst.rastertoPoint}_"
                         rasterCentroidFeature = files.nameIntermediateFile([rasterCentroidFeatureName, "FeatureClass"], cleanupList)
-                        polyDissolvedPatchFeatureName = ("%s_%s_%s_" % (metricConst.shortName, outClassName, metricConst.polyDissolve))
+                        polyDissolvedPatchFeatureName = f"{metricConst.shortName}_{outClassName}_{metricConst.polyDissolve}_"
                         polyDissolvedFeature = files.nameIntermediateFile([polyDissolvedPatchFeatureName, "FeatureClass"], cleanupList)
                         nearPatchTable = files.nameIntermediateFile([outClassName + metricConst.nearTable, "Dataset"], cleanupList)            
                         
@@ -794,7 +818,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                         calculate.getMDCP(self.outIdField, self.newTable, self.mdcpDict, self.optionalGroupsList,
                                                  outClassName)
                         
-                        AddMsg(self.timer.now() + " MDCP analysis has been run for Class:" + m, 0, self.logFile)
+                        AddMsg(f"{self.timer.now()} MDCP analysis has been run for Class:{m}", 0, self.logFile)
                     
                     if self.saveIntermediates:
                         pass
@@ -915,8 +939,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         settings.checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile)
      
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
-        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {basename(outTable)}", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, logFile,
                                                                                   metricConst.additionalFields)
@@ -941,11 +964,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                 # Subclass that overrides specific functions for the CoreAndEdgeAreaMetric calculation
                 def _replaceLCGrid(self):                      
                     # replace the inLandCoverGrid
-                    AddMsg("%s Generating core and edge grid for Class: %s" % (self.timer.now(), m.upper()), 0, self.logFile)
-                    
-                    # if self.logFile:
-                    #     # write the metric class grid values to the log file
-                    #     log.logWriteClassValues(self.logFile, self.metricsBaseNameList, self.lccObj, self.metricConst)
+                    AddMsg(f"{self.timer.now()} Generating core and edge grid for Class: {m.upper()}", 0, self.logFile)
                     
                     scratchNameReference =  [""];
                     self.inLandCoverGrid = raster.getEdgeCoreGrid(m, self.lccObj, self.lccClassesDict, self.inLandCoverGrid, self.inEdgeWidth,
@@ -960,7 +979,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                     pass  
                 
                 def _makeTabAreaTable(self):
-                    AddMsg("%s Generating a zonal tabulate area table" % self.timer.now(), 0, self.logFile)
+                    AddMsg(f"{self.timer.now()} Generating a zonal tabulate area table", 0, self.logFile)
                     # Internal function to generate a zonal tabulate area table
                     class categoryTabAreaTable(TabulateAreaTable):
                         #Update definition so Tabulate Table is run on the POS field.
@@ -1012,7 +1031,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
                     # calculate Core to Edge ratio
                     calculate.getCoreEdgeRatio(self.outIdField, self.newTable, self.tabAreaTable, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m)
-                    AddMsg("%s Core/Edge Ratio calculations are complete for class: %s" % (self.timer.now(), m.upper()), self.logFile)
+                    AddMsg(f"{self.timer.now()} Core/Edge Ratio calculations are complete for class: {m.upper()}", 0, self.logFile)
                 
                 #skip over output table statistics routine as it will be performed later
                 def _summarizeOutTable(self):
@@ -1109,10 +1128,10 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                 else:
                     rlcpCalc.cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
                 if self.duplicateIds:
-                    AddMsg("Duplicate ID values found in reporting unit feature. Forming multipart features...", self.logFile)
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
+                    AddMsg(f"Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", self.logFile)
                     self.inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management, (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), "arcpy.Dissolve_management", logFile)
                     
                 # Generate a default filename for the buffer feature class
@@ -1169,7 +1188,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
             excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
             
             if len(excludedValuesList) > 0:
-                AddMsg("%s Excluded values found in the land cover grid. Calculating effective areas for each reporting unit..." % timer.now(), 0, logFile)
+                AddMsg(f"{timer.now()} Excluded values found in the land cover grid. Calculating effective areas for each reporting unit.", 0, logFile)
                 # Use ATtILA's TabulateAreaTable operation to return an object where a tabulate area table can be easily queried.
                 if rlcpCalc.saveIntermediates:
                     # name the table so that it will be saved
@@ -3615,28 +3634,24 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         
         AddMsg(f"{timer.now()} Calculating access and availability for {n} areas", 0, logFile)
         
-        
-        AddMsg(    
-        '''The following steps are performed for each park:
-        
-            1) Select park by its id value and create a feature layer
-            2) Create a buffer around the park extending 5% beyond the maximum travel distance
-            3) Create Cost Distance raster to the Maximum travel distance with the buffer area as the processing extent
-            4) Designate the accessible area by setting all cell values to 1 for any cell in the Cost Distance raster with a value >= 0
-            5) Expand the accessible area if indicated by the Expand area served parameter
-            6) Determine Population within accessible area
-                a) if Population parameter is a raster:
-                    1) Set the geoprocessing snap raster and processing cell size environments to match the population raster 
-                    2) Zonal Statistics As Table with the SUM option is used to calculate the surrounding population
-                b) if Population parameter is a polygon feature:
-                    1) the accessible area raster is converted to a polygon
-                    2) Tabulate Intersection is used with this polygon and the Population polygon feature to get 
-                       an area-weighted estimate of the surrounding population
-            7) Determine Availability (Cost distance value to park area divided by surrounding population)
-            
-        ''', 0, logFile)
-        
-        AddMsg(f"{timer.now()} Starting calculations per park...", 0, logFile)
+        per = '[PER UNIT]'
+        AddMsg(f"{timer.now()} The following steps are performed for each park:", 0, logFile)    
+        AddMsg("\n---")
+        AddMsg(f"{timer.now()} {per} 1) Select park by its ID value and create a feature layer.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 2) Create a buffer around the park extending 5% beyond the maximum travel distance.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 3) Create Cost Distance raster to the Maximum travel distance with the buffer extent as the processing extent.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 4) Designate the accessibility area by setting all cells to 1 for any cell in the Cost Distance raster >= 0.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 5) Expand the accessibility area if indicated by the Expand area served parameter.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 6) Determine Population within accessibility area.", 0, logFile)
+        AddMsg(f"{timer.now()} {per}   6a) If Population parameter input is a raster:", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     a1) Set the geoprocessing snap raster and processing cell size environments to the population raster.", 0, logFile) 
+        AddMsg(f"{timer.now()} {per}     a2) Use Zonal Statistics As Table with the SUM option to calculate the accessibility area population.", 0, logFile)
+        AddMsg(f"{timer.now()} {per}   6b) If Population parameter input is a polygon feature:", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     b1) Convert the accessibility area raster to a polygon.", 0, logFile)
+        AddMsg(f"{timer.now()} {per}     b2) Use Tabulate Intersection with this polygon and the Population polygons to calculate the accessibility area population.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 7) Determine Availability (Cost distance value to park area divided by surrounding population)", 0, logFile)
+        AddMsg("---\n")
+        #AddMsg(f"{timer.now()} Starting calculations per park...", 0, logFile)
         
         # Create a list to keep track of any park that did not rasterize
         nullRaster = []
@@ -3696,7 +3711,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
             except:
                 AddMsg("Failed while processing Park ID: {0}".format(parkID), 2)
                 
-        AddMsg(f"{timer.now()} Finished last park", 0, logFile)
+        AddMsg(f"{timer.now()} Finished calculations for last park", 0, logFile)
         
         if globalConstants.intermediateName in optionalGroupsList:
         # create the cursor to add data to the output table
@@ -3730,7 +3745,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
             outWS = env.workspace
             arcpy.management.MosaicToNewRaster(mosaicRasters, outWS, basename(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST")   
             
-            AddMsg(f"{timer.now()} Deleting individual park rasters...", 0, logFile)
+            AddMsg(f"{timer.now()} Deleting individual park rasters.", 0, logFile)
             [arcpy.Delete_management(p) for p in mosaicRasters]
             AddMsg(f"{timer.now()} Individual park rasters deletion complete\n", 0, logFile)   
         
