@@ -76,8 +76,8 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
             # Get the reporting unit ID
             rowID = row.getValue(ruLinkField)
             # Set up the whereclause for the buffered features and the reporting units to select one of each
-            whereClausePts = buffUnitID + " = " + delimitBuffValues(rowID)
-            whereClausePolys = repUnitID + " = " + delimitRUValues(rowID)
+            whereClausePts = f"{buffUnitID} = {delimitBuffValues(rowID)}"
+            whereClausePolys = f"{repUnitID} = {delimitRUValues(rowID)}"
             
             # Create an in-memory Feature Layer with the whereclause.  This is analogous to creating a map layer with a 
             # definition expression.
@@ -519,7 +519,7 @@ def splitDissolveMerge(lines,repUnits,uIDField,mergedLines,inLengthField,lineCla
     return mergedLines, lengthFieldName
 
 def findIntersections(mergedRoads,inStreamFeature,mergedStreams,ruID,roadStreamMultiPoints,roadStreamIntersects,roadStreamSummary,
-                      streamLengthFieldName,xingsPerKMFieldName,roadClass=""):
+                      streamLengthFieldName,xingsPerKMFieldName,timer,roadClass="",logFile=None):
     '''This function performs an intersection analysis on two input line feature classes.  The desired output is 
     a count of the number of intersections per reporting unit ID (both line feature classes already contain this ID).  
     To obtain this cout the intersection output is first converted to singlepart features (from the default of multipart
@@ -528,23 +528,27 @@ def findIntersections(mergedRoads,inStreamFeature,mergedStreams,ruID,roadStreamM
 
     # Intersect the roads and the streams - the output is a multipoint feature class with one feature per combination 
     # of road class and streams per reporting unit
-    arcpy.Intersect_analysis([mergedRoads,inStreamFeature],roadStreamMultiPoints,"ALL","#","POINT")
+    AddMsg(f"{timer.now()} Intersecting the road and stream features. Intermediate: {basename(roadStreamMultiPoints)}")
+    arcpyLog(arcpy.Intersect_analysis,([mergedRoads,inStreamFeature],roadStreamMultiPoints,"ALL","#","POINT"),"arcpy.Intersect_analysis", 0, logFile)
     
     # Because we want a count of individual intersection features, break apart the multipoints into single points
-    arcpy.MultipartToSinglepart_management(roadStreamMultiPoints,roadStreamIntersects)
+    AddMsg(f"{timer.now()} Converting intersection points from multi-point to single point. Intermediate: {basename(roadStreamIntersects)}", 0, logFile)
+    arcpyLog(arcpy.MultipartToSinglepart_management,(roadStreamMultiPoints,roadStreamIntersects),"arcpy.MultipartToSinglepart_management",logFile)
     
     # Perform a frequency analysis to get a count of the number of crossings per class per reporting unit
+    AddMsg(f"{timer.now()} Performing frequency analysis to determine the number crossings per reporting unit. Intermediate: {basename(roadStreamSummary)}", 0, logFile)
     fieldList = [ruID.name]
     if roadClass:
         fieldList.append(roadClass)
     arcpy.Frequency_analysis(roadStreamIntersects,roadStreamSummary,fieldList)
     
     # Lastly, calculate the number of stream crossings per kilometer of streams.
+    AddMsg(f"{timer.now()} Calculating the number of stream crossings per kilometer of streams.", 0, logFile)
     # Join the stream layer to the summary table
-    arcpy.JoinField_management(roadStreamSummary, ruID.name, mergedStreams, ruID.name, [streamLengthFieldName])
+    arcpyLog(arcpy.JoinField_management,(roadStreamSummary, ruID.name, mergedStreams, ruID.name, [streamLengthFieldName]),"arcpy.JoinField_management", logFile)
     # Set up a calculation expression for crossings per kilometer.
     calcExpression = "!FREQUENCY!/!" + streamLengthFieldName + "!"    
-    addCalculateField(roadStreamSummary,xingsPerKMFieldName,"DOUBLE",calcExpression)
+    addCalculateField(roadStreamSummary,xingsPerKMFieldName,"DOUBLE",calcExpression,"",logFile)
 
 def roadsNearStreams(inStreamFeature,mergedStreams,bufferDist,inRoadFeature,inReportingUnitFeature,streamLengthFieldName,ruID,streamBuffer,
                      tmp1RdsNearStrms,tmp2RdsNearStrms,roadsNearStreams,rnsFieldName,inLengthField, timer, logFile, roadClass=""):
@@ -554,18 +558,18 @@ def roadsNearStreams(inStreamFeature,mergedStreams,bufferDist,inRoadFeature,inRe
     are measured in map units (e.g., m of road/m of stream).
     '''
     # For RNS metric, first buffer all the streams by the desired distance
-    AddMsg("{0} Buffering stream features.".format(timer.now()), 0, logFile)
+    AddMsg(f"{timer.now()} Buffering stream features. Intermediate: {basename(streamBuffer)}", 0, logFile)
     arcpyLog(arcpy.Buffer_analysis, (inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND","ALL","#"), "arcpy.Buffer_analysis", logFile)
     # Intersect the stream buffers with the input road layer to find road segments in the buffer zone
-    AddMsg("{0} Intersecting road features with stream buffers.".format(timer.now()), 0, logFile)
+    AddMsg(f"{timer.now()} Intersecting road features with stream buffers.", 0, logFile)
     intersect1 = arcpyLog(arcpy.Intersect_analysis, ([inRoadFeature, streamBuffer],tmp1RdsNearStrms,"ALL","#","INPUT"), "arcpy.Intersect_analysis", logFile)
     # Intersect the roads in the buffer zones with the reporting unit feature to assign RU Id values to road segments
-    AddMsg("{0} Assigning reporting unit feature ID values to road segments.".format(timer.now()), 0, logFile)
+    AddMsg(f"{timer.now()} Assigning reporting unit feature ID values to road segments.", 0, logFile)
     intersect2 = arcpyLog(arcpy.Intersect_analysis, ([intersect1, inReportingUnitFeature],tmp2RdsNearStrms,"ALL","#","INPUT"), "arcpy.Intersect_analysis", logFile)
     
     # if overlapping polygons exist in reporting unit theme, the above intersection may result in several rows of data for a given reporting unit.
     # perform a dissolve to get a 1 to 1 relationship with input to output. Include the class field if provided.
-    AddMsg("{0} Dissolving intersection result and calculating values.".format(timer.now()), 0, logFile)
+    AddMsg(f"{timer.now()} Dissolving intersection result and calculating values. Intermediate: {basename(roadsNearStreams)}", 0, logFile)
     dissolveFields = ruID.name
     if roadClass != '':
         dissolveFields = [ruID.name, roadClass] 
