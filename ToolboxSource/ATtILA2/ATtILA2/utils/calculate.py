@@ -1095,38 +1095,38 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inPopField]
 
     desc = arcpy.Describe(inCensusFeature)
-    tempName = "%s_%s" % (metricConst.shortName, desc.baseName)
+    tempName = f"{metricConst.shortName}_{desc.baseName}"
     tempCensusFeature = files.nameIntermediateFile([f"{tempName}{index}_","FeatureClass"],cleanupList)
-    # AddMsg(f"{timer.now()} Creating a copy of the Census feature layer. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-    inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,
+    AddMsg(f"{timer.now()} Creating a copy of the Census feature layer. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
+    inCensusFeature = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inCensusFeature,tempWorkspace,
                                                                          os.path.basename(tempCensusFeature),"",
-                                                                         fieldMappings)
+                                                                         fieldMappings),"arcpy.FeatureClassToFeatureClass_conversion",logFile)
 
     # Add and populate the area field (or just recalculate if it already exists
-    popArea = vector.addAreaField(inCensusFeature,'popArea')
+    popArea = vector.addAreaField(inCensusFeature,'popArea',logFile)
 
     # Set up a calculation expression for the density calculation
     calcExpression = "!" + inPopField + "!/!" + popArea + "!"
     # Calculate the population density
-    inPopDensityField = vector.addCalculateField(inCensusFeature,'popDens' + index,"DOUBLE",calcExpression)
+    inPopDensityField = vector.addCalculateField(inCensusFeature,'popDens' + index,"DOUBLE",calcExpression,"",logFile)
 
     # Intersect the reporting units with the population features.
     intersectOutput = files.nameIntermediateFile([f"{metricConst.intersectOutputName}{index}_","FeatureClass"],cleanupList)
-    # AddMsg(f"{timer.now()} Intersecting {basename(str(inReportingUnitFeature))} with {basename(tempCensusFeature)}. Intermediate: {basename(intersectOutput)}", 0, logFile)
-    arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
+    AddMsg(f"{timer.now()} Intersecting {basename(str(inReportingUnitFeature))} with {basename(tempCensusFeature)}. Intermediate: {basename(intersectOutput)}", 0, logFile)
+    arcpyLog(arcpy.Intersect_analysis,([inReportingUnitFeature,inCensusFeature], intersectOutput),"arcpy.Intersect_analysis",logFile)
 
     # Add and populate the area field of the intersected polygons
-    intArea = vector.addAreaField(intersectOutput,'intArea')
+    intArea = vector.addAreaField(intersectOutput,'intArea',logFile)
 
     # Calculate the population of the intersected areas by multiplying population density by intersected area
     # Set up a calculation expression for the density calculation
     calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
     # Calculate the population density
-    intPopField = vector.addCalculateField(intersectOutput,'intPop', "DOUBLE", calcExpression)
+    intPopField = vector.addCalculateField(intersectOutput,'intPop', "DOUBLE", calcExpression,"",logFile)
 
     # Generate a table of the number of intersected Census feature polygons and the sums of the area-weighted population counts within each reporting unit.
     summaryTable = files.nameIntermediateFile([f"{metricConst.summaryTableName}{index}_",'Dataset'],cleanupList)
-    # AddMsg(f"{timer.now()} Generating a table of area-weighted population counts for each reporting unit. Intermediate: {basename(summaryTable)}", 0, logFile)
+    AddMsg(f"{timer.now()} Generating a table of area-weighted population counts for each reporting unit. Intermediate: {basename(summaryTable)}", 0, logFile)
     
     # Sum population for each reporting unit.
     """ If the reportingUnitIdField field is not found, it is assumed that
@@ -1138,18 +1138,20 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     uIDField = uIDFields[0] # This is an arcpy field object
     reportingUnitIdField = uIDField.name
 
-    arcpy.Statistics_analysis(intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField)
+    arcpyLog(arcpy.Statistics_analysis, (intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField), "arcpy.Statistics_analysis", logFile)
 
     # Compile a list of fields that will be transferred from the intersected feature class into the output table
     fromFields = ["SUM_" + intPopField]
     toField = 'POPCNT' + index
     # Transfer the values to the output table
-    table.transferField(summaryTable,outTable,fromFields,[toField],reportingUnitIdField,None)
+    AddMsg(f"{timer.now()} Transferring values from {basename(summaryTable)} to {basename(outTable)}.", 0, logFile)
+    table.transferField(summaryTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
 
+    AddMsg(f"{timer.now()} Performing final density calculation.", 0, logFile)
     # Set up a calculation expression for the final density calculation
     calcExpression = "!" + toField + "!/!" + ruArea + "!"
     # Calculate the population density
-    vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,"DOUBLE",calcExpression)
+    vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,"DOUBLE",calcExpression,"",logFile)
 
 
 def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopField,classField,

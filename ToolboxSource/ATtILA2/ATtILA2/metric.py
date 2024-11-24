@@ -2059,18 +2059,18 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
         # values and will also keep only the OID, shape, and reportingUnitIdField fields
         desc = arcpy.Describe(inReportingUnitFeature)
-        tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
+        tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), 
-                                                           reportingUnitIdField,"","MULTI_PART")
+        inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management,(inReportingUnitFeature, basename(tempReportingUnitFeature), 
+                                                           reportingUnitIdField,"","MULTI_PART"),"arcpy.Dissolve_management",logFile)
 
         # Add and populate the area field (or just recalculate if it already exists
-        ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname)
+        ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname,logFile)
         
         # Build the final output table.
         AddMsg(f"{timer.now()} Creating output table", 0, logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        log.arcpyLog(arcpy.TableToTable_conversion,(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable)),"arcpy.TableToTable_conversion",logFile)
         
         AddMsg(f"{timer.now()} Calculating population density", 0, logFile)
         # Create an index value to keep track of intermediate outputs and fieldnames.
@@ -2103,7 +2103,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         return ((pop2-pop1)/pop1)*100"""
             
             # Calculate the population density
-            vector.addCalculateField(outTable,metricConst.populationChangeFieldName,"DOUBLE",calcExpression,codeBlock)       
+            vector.addCalculateField(outTable,metricConst.populationChangeFieldName,"DOUBLE",calcExpression,codeBlock,logFile)       
 
         AddMsg(f"{timer.now()} Calculation complete", 0, logFile)
         
@@ -2712,8 +2712,8 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                     # Get a unique name with full path for the output features - will default to current workspace:            
                     self.namePrefix = self.metricConst.shortName + "_FacDissolve"+self.inBufferDistance.split()[0]+"_"
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
-                                                                            self.reportingUnitIdField,"","MULTI_PART")
+                    self.inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, 
+                                                                            self.reportingUnitIdField,"","MULTI_PART"),"arcpy.Dissolve_management",logFile)
 
                 # Make a temporary facility point layer so that a field of the same name as reportingUnitIdField could be deleted
                 # Get a unique name with full path for the output features - will default to current workspace:
@@ -4973,7 +4973,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         
         tempName = "%s_%s" % (metricConst.shortName, '_RoadBuffer')
         finalBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        arcpy.Dissolve_management(mergeBuffFeature, finalBuffFeature)        
+        log.arcpyLog(arcpy.Dissolve_management,(mergeBuffFeature, finalBuffFeature),"arcpy.Dissolve_management",logFile)        
         
         
 

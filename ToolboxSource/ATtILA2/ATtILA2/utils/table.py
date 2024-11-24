@@ -592,7 +592,7 @@ def tableWriterNoLcc(outTable, metricsBaseNameList, optionalGroupsList, metricCo
 
 
 
-def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#",classValues=[]):
+def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#",classValues=[],logFile=None):
     '''This function transfers a series of fields from one table to another, and, if a class field is specified, pivots
        the metric fields for those class values into a new field for each class.
     **Description:**
@@ -618,7 +618,7 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
     if not classField: 
         # Iterate through the field list and run the addJoinCalculateField function
         for (fromField,toField) in transferFields:
-            addJoinCalculateField(fromTable,toTable,fromField,toField,joinField)
+            addJoinCalculateField(fromTable,toTable,fromField,toField,joinField,logFile)
     else:
         # Now the tougher case - pivoting class values.
         # Create a dictionary that will link class values to tuples matching source fieldnames and valid destination fieldnames
@@ -677,7 +677,7 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
         del updateCursor
             
 
-def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
+def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField,logFile=None):
     '''This function transfers one field to another via a simple JoinField operation, but also allows for a field to be 
        renamed as part of the transfer.
     **Description:**
@@ -699,11 +699,11 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
         # Get the properties of the from field for transfer
         fromField = arcpy.ListFields(fromTable,fromField)[0]
         # Add the new field with the new name
-        arcpy.AddField_management(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
+        arcpyLog(arcpy.AddField_management,(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
                               fromField.length,"",fromField.isNullable,fromField.required,
-                              fromField.domain)        
+                              fromField.domain), "arcpy.AddField_management", logFile)        
         # Calculate the field
-        arcpy.CalculateField_management(fromTable,toField,'!'+ fromField.name +'!',"PYTHON")
+        arcpyLog(arcpy.CalculateField_management,(fromTable,toField,'!'+ fromField.name +'!',"PYTHON"),"arcpy.CalculateField_management", logFile)
     # Perform the joinfield
     """ If the joinField field is not found in toTable, it is assumed that
     the joinField was an object ID field that was lost in a format conversion"""
@@ -712,10 +712,10 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField):
         uIDFields = arcpy.ListFields(toTable,"",'OID')
     uIDField = uIDFields[0] # This is an arcpy field object
     joinField_In_toTable = uIDField.name    
-    arcpy.JoinField_management(toTable,joinField_In_toTable,fromTable,joinField,toField)
+    arcpyLog(arcpy.JoinField_management,(toTable,joinField_In_toTable,fromTable,joinField,toField),"arcpy.JoinField_management",logFile)
     # If we added a temp field
     if fromField != toField:
-        arcpy.DeleteField_management(fromTable,toField)
+        arcpyLog(arcpy.DeleteField_management,(fromTable,toField),"arcpy.DeleteField_management",logFile)
     
 def getClassFieldName(fieldName,classVal,table):
     '''This function generates a valid fieldname based on the combination of a desired fieldname and a class value
