@@ -471,7 +471,7 @@ def getIntersectOfPolygons(repUnits, uIDField, secondPoly, outFeatures, cleanupL
     desc2 = arcpy.Describe(secondPoly)
     
     # Intersect the reporting unit features with the floodplain features 
-    intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect","FeatureClass"], cleanupList)
+    intersectFeatures = files.nameIntermediateFile([toolShortName+"_Intersect_","FeatureClass"], cleanupList)
     AddMsg(f"{timer.now()} Intersecting {desc1.basename} with {desc2.basename}. Intermediate: {basename(intersectFeatures)}", 0, logFile)
     intersection = arcpyLog(arcpy.Intersect_analysis, ([repUnits, secondPoly],intersectFeatures,"ALL","","INPUT"), "arcpy.Intersect_analysis", logFile)
      

@@ -1097,7 +1097,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     desc = arcpy.Describe(inCensusFeature)
     tempName = f"{metricConst.shortName}_{desc.baseName}"
     tempCensusFeature = files.nameIntermediateFile([f"{tempName}{index}_","FeatureClass"],cleanupList)
-    AddMsg(f"{timer.now()} Creating a copy of the Census feature layer. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
+    AddMsg(f"{timer.now()} Creating a working copy of {basename(inCensusFeature)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
     inCensusFeature = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inCensusFeature,tempWorkspace,
                                                                          os.path.basename(tempCensusFeature),"",
                                                                          fieldMappings),"arcpy.FeatureClassToFeatureClass_conversion",logFile)

@@ -1564,7 +1564,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         # Compile a list of fields that will be transferred from the merged roads feature class into the output table
         fromFields = [roadLengthFieldName, metricConst.roadDensityFieldName,metricConst.totalImperviousAreaFieldName]
         # Transfer the values to the output table, pivoting the class values into new fields if necessary.
-        table.transferField(mergedRoads,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
+        table.transferField(mergedRoads,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues,logFile)
         
         # If the Streams By Roads (STXRD) box is checked...
         if streamRoadCrossings and streamRoadCrossings != "false":
@@ -1613,12 +1613,12 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             fromFields = [streamLengthFieldName, metricConst.streamDensityFieldName]
             # Transfer the values to the output table, pivoting the class values into new fields if necessary.
             # Possible to add stream class values here if desired.
-            table.transferField(mergedStreams,outTable,fromFields,fromFields,uIDField.name,None)
+            table.transferField(mergedStreams,outTable,fromFields,fromFields,uIDField.name,None,None,logFile)
             # Transfer crossings fields - note the renaming of the count field.
             fromFields = ["FREQUENCY", metricConst.xingsPerKMFieldName]
             toFields = [metricConst.streamRoadXingsCountFieldname,metricConst.xingsPerKMFieldName]
             # Transfer the values to the output table, pivoting the class values into new fields if necessary.
-            table.transferField(roadStreamSummary,outTable,fromFields,toFields,uIDField.name,roadClassField,classValues)
+            table.transferField(roadStreamSummary,outTable,fromFields,toFields,uIDField.name,roadClassField,classValues,logFile)
             
 
         if roadsNearStreams and roadsNearStreams != "false":
@@ -1665,7 +1665,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
             fromFields = [rnsFieldName]
             # Transfer the values to the output table, pivoting the class values into new fields if necessary.
-            table.transferField(roadsNearStreams,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues)
+            table.transferField(roadsNearStreams,outTable,fromFields,fromFields,uIDField.name,roadClassField,classValues,logFile)
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -1821,7 +1821,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # Compile a list of fields that will be transferred from the merged roads feature class into the output table
         fromFields = [lineLengthFieldName, metricConst.lineDensityFieldName]
         # Transfer the values to the output table, pivoting the class values into new fields if necessary.
-        table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,strmOrderField,orderValues)
+        table.transferField(mergedInLines,outTable,fromFields,fromFields,uIDField.name,strmOrderField,orderValues,logFile)
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -1935,16 +1935,15 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                                                                                         self.logFile)
                 
             def _makeTabAreaTable(self):
-                AddMsg(self.timer.now() + " Generating a zonal tabulate area table", 0, self.logFile)
+                AddMsg(f"{self.timer.now()} Generating a zonal tabulate area table", 0, self.logFile)
                 # Internal function to generate a zonal tabulate area table
                 self.tabAreaTable = TabulateAreaTable(self.inReportingUnitFeature, self.reportingUnitIdField,
                                                       self.inLandCoverGrid, self.logFile, self.tableName)
                 
             def _calculateMetrics(self):
-                AddMsg(self.timer.now() + " Processing the tabulate area table and computing metric values", 0, self.logFile)
+                AddMsg(f"{self.timer.now()} Processing the tabulate area table and computing metric values", 0, self.logFile)
                 # Internal function to process the tabulate area table and compute metric values. Use values to populate the ATtILA output table
-                calculate.landCoverDiversity(self.metricConst, self.outIdField, 
-                                                   self.newTable, self.tabAreaTable, self.zoneAreaDict)
+                calculate.landCoverDiversity(self.metricConst, self.outIdField, self.newTable, self.tabAreaTable, self.zoneAreaDict)
                 
             def _summarizeOutTable(self):
                 if self.logFile:
@@ -2051,7 +2050,6 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             pass
         else:
             # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
             AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
             env.parallelProcessingFactor = None
         
@@ -2220,8 +2218,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         suffix = metricConst.fieldSuffix[index]
         popTable_RU = files.nameIntermediateFile([f"{metricConst.popCntTableName}{suffix}_",'Dataset'],cleanupList)
 
-        ### Metric Calculation
-        AddMsg(timer.now() + " Calculating population within each reporting unit", 0, logFile)        
+        ### Metric Calculation        
          
         # tool gui does not have a snapRaster parameter. When the census dataset is a raster, the snapRaster will
         # be set to the census raster. To record this correctly in the log file, set up the snapRaster variable.
@@ -2238,11 +2235,13 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             processingCellSize = str(descCensus.meanCellWidth)
             
             # calculate the population for the reporting unit using zonal statistics as table
-            arcpy.sa.ZonalStatisticsAsTable(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_RU, "DATA", "SUM")
+            AddMsg(f"{timer.now()} Calculating population within each reporting unit. Intermediate: {basename(popTable_RU)}")
+            log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_RU, "DATA", "SUM"),
+                         "arcpy.sa.ZonalStatisticsAsTable", logFile)
             
             # Rename the population count field.
             outPopField = metricConst.populationCountFieldNames[index]
-            arcpy.AlterField_management(popTable_RU, "SUM", outPopField, outPopField)
+            log.arcpyLog(arcpy.AlterField_management, (popTable_RU, "SUM", outPopField, outPopField), "arcpy.AlterField_management", logFile)
             
             # Set variables for the floodplain population calculations
             index = 1
@@ -2252,84 +2251,85 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             if descFldpln.datasetType == "RasterDataset":
                 # Use SetNull to eliminate non-floodplain areas and to replace the floodplain cells with values from the 
                 # PopulationRaster. The snap raster, and cell size have already been set to match the census raster
-                AddMsg(timer.now() + " Setting non-floodplain areas to NULL", 0, logFile)
+                AddMsg(f"{timer.now()} Setting floodplain areas to population values.", 0, logFile)
                 delimitedVALUE = arcpy.AddFieldDelimiters(inFloodplainDataset,"VALUE")
-                # whereClause = delimitedVALUE+" <> 1"
                 whereClause = delimitedVALUE+" = 0"
-                inCensusDataset = arcpy.sa.SetNull(inFloodplainDataset, inCensusDataset, whereClause)
+                inCensusDataset = log.arcpyLog(arcpy.sa.SetNull,(inFloodplainDataset, inCensusDataset, whereClause),"arcpy.sa.SetNull",logFile)
                 
                 if globalConstants.intermediateName in processed:
                     namePrefix = metricConst.floodplainPopName
                     scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
                     inCensusDataset.save(scratchName)
-                    AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+                    AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}", 0, logFile)
                     
                  
             else: # floodplain feature is a polygon
                 # Assign the reporting unit ID to intersecting floodplain polygon segments using Identity
                 fileNameBase = descFldpln.baseName
-                tempName = "%s_%s_%s_" % (metricConst.shortName, fileNameBase, "Identity")
+                tempName = f"{metricConst.shortName}_{fileNameBase}_Identity_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                AddMsg(timer.now() + " Assigning reporting unit IDs to intersecting floodplain features", 0, logFile)
-                arcpy.Identity_analysis(inFloodplainDataset, inReportingUnitFeature, tempPolygonFeature)
+                AddMsg(f"{timer.now()} Assigning reporting unit IDs to intersecting floodplain features. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
+                log.arcpyLog(arcpy.Identity_analysis, (inFloodplainDataset, inReportingUnitFeature, tempPolygonFeature), "arcpy.Identity_analysis", logFile)
                 inReportingUnitFeature = tempPolygonFeature
             
-            AddMsg(timer.now() + " Calculating population within floodplain areas for each reporting unit", 0, logFile)
+            AddMsg(f"{timer.now()} Calculating population within floodplain areas for each reporting unit. Intermediate: {basename(popTable_FP)}", 0, logFile)
             # calculate the population for the reporting unit using zonal statistics as table
             # The snap raster, and cell size have been set to match the census raster
-            arcpy.sa.ZonalStatisticsAsTable(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_FP, "DATA", "SUM")
+            log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable,(inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_FP, "DATA", "SUM"),
+                         "arcpy.sa.ZonalStatisticsAsTable", logFile)
             
             # Rename the population count field.
             outPopField = metricConst.populationCountFieldNames[index]
-            arcpy.AlterField_management(popTable_FP, "SUM", outPopField, outPopField)
+            log.arcpyLog(arcpy.AlterField_management,(popTable_FP, "SUM", outPopField, outPopField),"arcpy.AlterField_management",logFile)
 
         else: # census features are polygons
-            # # Check that the user supplied a population field
-            # if len(inPopField) == 0:
-            #     raise errors.attilaException(errorConstants.missingFieldError)
             
             # Create a copy of the census feature class that we can add new fields to for calculations.
             fieldMappings = arcpy.FieldMappings()
             fieldMappings.addTable(inCensusDataset)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inPopField]
         
-            tempName = "%s_%s_Work_" % (metricConst.shortName, descCensus.baseName)
+            tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            inCensusDataset = arcpy.FeatureClassToFeatureClass_conversion(inCensusDataset,env.workspace,
-                                                                                 os.path.basename(tempCensusFeature),"",
-                                                                                 fieldMappings)
+            AddMsg(f"{timer.now()} Creating a working copy of {basename(inCensusDataset)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
+            inCensusDataset = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
+                                           (inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings),
+                                           "arcpy.FeatureClassToFeatureClass_conversion",logFile)
             
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
-            arcpy.AddField_management(inCensusDataset,classField,"SHORT")
-            arcpy.CalculateField_management(inCensusDataset,classField,1)
+            log.arcpyLog(arcpy.AddField_management,(inCensusDataset,classField,"SHORT"),"arcpy.AddField_management",logFile)
+            log.arcpyLog(arcpy.CalculateField_management,(inCensusDataset,classField,1),"arcpy.CalculateField_management",logFile)
             
             # Perform population count calculation for the reporting unit
+            AddMsg(f"{timer.now()} Calculating population counts within reporting units. Intermediate: {basename(popTable_RU)}", 0, logFile)
             calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,inCensusDataset,inPopField,
-                                      classField,popTable_RU,metricConst,index)
+                                      classField,popTable_RU,metricConst,index,logFile)
         
             # Set variables for the floodplain population calculations   
             index = 1
             suffix = metricConst.fieldSuffix[index]
-            popTable_FP = files.nameIntermediateFile([metricConst.popCntTableName + suffix,'Dataset'],cleanupList)
+            popTable_FP = files.nameIntermediateFile([f"{metricConst.popCntTableName}{suffix}_",'Dataset'],cleanupList)
             
             if descFldpln.datasetType == "RasterDataset":
                 # Convert the Raster floodplain to Polygon
-                AddMsg(timer.now() + " Converting floodplain raster to a polygon feature", 0, logFile)
                 delimitedVALUE = arcpy.AddFieldDelimiters(inFloodplainDataset,"VALUE")
                 whereClause = delimitedVALUE+" = 0"
-                nullGrid = arcpy.sa.SetNull(inFloodplainDataset, 1, whereClause)
-                tempName = "%s_%s" % (metricConst.shortName, descFldpln.baseName + "_Poly_")
+                nullGrid = log.arcpyLog(arcpy.sa.SetNull,(inFloodplainDataset, 1, whereClause),"arcpy.sa.SetNull",logFile)
+                tempName = f"{metricConst.shortName}_{descFldpln.baseName}_Poly_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+                AddMsg(f"{timer.now()} Converting floodplain raster to a polygon feature. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                 
                 # This may fail if a polgyon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
                 maxVertices = 250000
                 try:
-                    inFloodplainDataset = arcpy.RasterToPolygon_conversion(nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices)
+                    inFloodplainDataset = log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices),
+                                                       "arcpy.RasterToPolygon_conversion", logFile)
                 except:
-                    AddMsg(timer.now() + " Converting raster to polygon with maximum vertices technique", 0, logFile)
+                    AddMsg(f"{timer.now()} Converting raster to polygon with maximum vertices technique", 0, logFile)
                     maxVertices = maxVertices / 2
-                    inFloodplainDataset = arcpy.RasterToPolygon_conversion(nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices)
+                    inFloodplainDataset = log.arcpyLog(arcpy.RasterToPolygon_conversion,(nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices),
+                                                       "arcpy.RasterToPolygon_conversion", logFile)
                 
             else: # floodplain input is a polygon dataset
                 # Create a copy of the floodplain feature class that we can add new fields to for calculations.
@@ -2338,33 +2338,34 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
                 fieldMappings.addTable(inFloodplainDataset)
                 [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != fieldMappings.fields[0].name]
                 
-                tempName = "%s_%s_Work_" % (metricConst.shortName, descFldpln.baseName)
+                tempName = f"{metricConst.shortName}_{descFldpln.baseName}_Work_"
                 tempFldplnFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                inFloodplainDataset = arcpy.FeatureClassToFeatureClass_conversion(inFloodplainDataset,env.workspace,
-                                                                                     os.path.basename(tempFldplnFeature),"",
-                                                                                     fieldMappings)
+                AddMsg(f"{timer.now()} Creating a working copy of {basename(inFloodplainDataset)}. Intermediate: {basename(tempFldplnFeature)}", 0, logFile)
+                inFloodplainDataset = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
+                                                   (inFloodplainDataset,env.workspace, basename(tempFldplnFeature),"", fieldMappings),
+                                                   "arcpy.FeatureClassToFeatureClass_conversion", logFile)
                 
             # Add a field and calculate it to a value of 1. This field will use as the classField in Tabulate Intersection operation below
             classField = "tmpClass"
-            arcpy.AddField_management(inFloodplainDataset,classField,"SHORT")
-            arcpy.CalculateField_management(inFloodplainDataset,classField,1)
+            log.arcpyLog(arcpy.AddField_management,(inFloodplainDataset,classField,"SHORT"),"arcpy.AddField_management",logFile)
+            log.arcpyLog(arcpy.CalculateField_management,(inFloodplainDataset,classField,1),"arcpy.CalculateField_management",logFile)
 
             # intersect the floodplain polygons with the reporting unit polygons
             fileNameBase = descFldpln.baseName
             # need to eliminate the tool's shortName from the fileNameBase if the floodplain polygon was derived from a raster
             fileNameBase = fileNameBase.replace(metricConst.shortName+"_","")
-            tempName = "%s_%s_%s_" % (metricConst.shortName, fileNameBase, "Identity")
+            tempName = f"{metricConst.shortName}_{fileNameBase}_Identity_"
             tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(timer.now() + " Assigning reporting unit IDs to floodplain features", 0, logFile)
-            arcpy.Identity_analysis(inFloodplainDataset, inReportingUnitFeature, tempPolygonFeature)
+            AddMsg(f"{timer.now()} Assigning reporting unit IDs to floodplain features. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
+            log.arcpyLog(arcpy.Identity_analysis,(inFloodplainDataset, inReportingUnitFeature, tempPolygonFeature),"arcpy.Identity_analysis",logFile)
     
-            AddMsg(timer.now() + " Calculating population within floodplain areas for each reporting unit", 0, logFile)
+            AddMsg(f"{timer.now()} Calculating population within floodplain areas for each reporting unit. Intermediate: {basename(popTable_FP)}", 0, logFile)
             # Perform population count calculation for second feature class area
             calculate.getPolygonPopCount(tempPolygonFeature,reportingUnitIdField,inCensusDataset,inPopField,
-                                          classField,popTable_FP,metricConst,index)
+                                          classField,popTable_FP,metricConst,index,logFile)
         
         # Build and populate final output table.
-        AddMsg(timer.now() + " Calculating the percent of the population that is within a floodplain", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating the percent of the population that is within a floodplain", 0, logFile)
         
         # Construct a list of fields to retain in the output metrics table
         keepFields = metricConst.populationCountFieldNames
@@ -2373,13 +2374,15 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         fieldMappings.addTable(popTable_RU)
         [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
 
-        arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable),os.path.basename(outTable),"",fieldMappings)
+        log.arcpyLog(arcpy.TableToTable_conversion,
+                     (popTable_RU,os.path.dirname(outTable), basename(outTable), "", fieldMappings),
+                     "arcpy.TableToTable_conversion", logFile)
         
         # Compile a list of fields that will be transferred from the floodplain population table into the output table
         fromFields = [popCntFields[index]]
         toField = popCntFields[index]
         # Transfer the values to the output table
-        table.transferField(popTable_FP,outTable,fromFields,[toField],reportingUnitIdField,None)
+        table.transferField(popTable_FP,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
         
         # Set up a calculation expression for population change
         calcExpression = "getPopPercent(!"+popCntFields[0]+"!,!"+popCntFields[1]+"!)"
@@ -2395,7 +2398,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # Calculate the percent population within floodplain
         vector.addCalculateField(outTable,metricConst.populationProportionFieldName,"DOUBLE",calcExpression,codeBlock)   
 
-        AddMsg(timer.now() + " Calculation complete")
+        AddMsg(f"{timer.now()} Calculation complete")
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -2509,8 +2512,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
  
         ''' Make ATtILA Output Table '''
         #Create the output table outside of metricCalc so that result can be added for multiple metrics
-        #AddMsg(timer.now() + " Constructing the ATtILA metric output table: "+outTable, 0, logFile)
-        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {os.path.basename(outTable)}", 0, logFile)
+        AddMsg(f"{timer.now()} Constructing the ATtILA metric output table: {basename(outTable)}", 0, logFile)
         newtable, metricsFieldnameDict = table.tableWriterByClass(outTable, metricsBaseNameList,optionalGroupsList, 
                                                                                   metricConst, lccObj, outIdField, 
                                                                                   logFile, metricConst.additionalFields)
@@ -2621,7 +2623,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             toField = metricsFieldnameDict[m][0] #generated metric field name for the current land cover class
             
             # Transfer the fromField values to the output table
-            table.addJoinCalculateField(areaPopTable, populationTable, fromField, toField, reportingUnitIdField)
+            table.addJoinCalculateField(areaPopTable, populationTable, fromField, toField, reportingUnitIdField,logFile)
             
             # Assign 0 to reporting units where no population was calculated in the view/non-view area
             calculate.replaceNullValues(populationTable, toField, metricConst.valueWhenNULL)
@@ -4223,7 +4225,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
             tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         
-            AddMsg(f"{timer.now()} Making a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
+            AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
             log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
         
             inZoneDataset = tempZoneinFeature
@@ -4406,7 +4408,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
             tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Making a working copy of {descCensus.baseName}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
+            AddMsg(f"{timer.now()} Creating a working copy of {descCensus.baseName}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
             inCensusDataset = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings), 
                                            'arcpy.FeatureClassToFeatureClass_conversion', logFile)
         
@@ -4416,6 +4418,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             log.arcpyLog(arcpy.CalculateField_management, (inCensusDataset,classField,1), 'arcpy.CalculateField_management', logFile)
         
             # Perform population count calculation for the reporting unit
+            AddMsg(f"{timer.now()} Calculating population counts within reporting units. Intermediate: {basename(popTable_RU)}", 0, logFile)
             calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,inCensusDataset,inPopField,classField,popTable_RU,metricConst,index, logFile)
         
             # Set variables for the zone population calculations   
@@ -4465,7 +4468,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
                 tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 
-                AddMsg(f"{timer.now()} Making a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
+                AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
                 log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
                 
                 inZoneDataset = tempZoneinFeature
@@ -4528,7 +4531,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 log.arcpyLog(arcpy.CalculateField_management, (tempPolygonFeature, tempOID, calcExpression, "PYTHON3", "", 'TEXT'), 'arcpy.CalculateField_management', logFile)
         
                 # Perform population count calculation for second feature class area
-                AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit", 0, logFile)
+                AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 calculate.getPolygonPopCount(tempPolygonFeature,tempOID,inCensusDataset,inPopField,classField,popTable_ZN,metricConst,index, logFile)
         
                 log.arcpyLog(arcpy.JoinField_management, (popTable_ZN, tempOID, tempPolygonFeature, tempOID, [reportingUnitIdField, zoneIdField]), 'arcpy.JoinField_management', logFile)
@@ -4536,8 +4539,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 popTable_RU = popTable_ZN
         
             else:
-                AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 # Perform population count calculation for second feature class area
+                AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 calculate.getPolygonPopCount(tempPolygonFeature,reportingUnitIdField,inCensusDataset,inPopField,classField,popTable_ZN,metricConst,index, logFile)
         
         
@@ -4572,7 +4575,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             toFields = [popCntFields[index] + suffix]
             
             # Transfer the values to the output table
-            table.transferField(popTable_ZN,outTable,fromFields,toFields,reportingUnitIdField,None)
+            table.transferField(popTable_ZN,outTable,fromFields,toFields,reportingUnitIdField,None,None,logFile)
         
         else:
             keepFields = [zoneIdField, reportingUnitIdField] + metricConst.populationCountFieldNames

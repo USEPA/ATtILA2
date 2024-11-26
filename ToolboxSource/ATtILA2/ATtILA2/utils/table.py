@@ -5,6 +5,7 @@
     .. _Table: 
 '''
 import os
+from os.path import basename
 
 import arcpy
 
@@ -12,6 +13,7 @@ from . import fields
 from ATtILA2.constants import globalConstants
 from ATtILA2.datetimeutil import DateTimer
 from ATtILA2.utils.log import arcpyLog
+from ATtILA2.utils.messages import AddMsg
 
 timer = DateTimer()
 
@@ -641,8 +643,12 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
                 # Get the properties of the source field
                 fromFieldObj = arcpy.ListFields(fromTable,fromField)[0]
                 # Add the new field to the output table with the appropriate properties and the valid name
-                arcpy.AddField_management(toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
-                          fromFieldObj.length,"",fromFieldObj.isNullable,fromFieldObj.required,fromFieldObj.domain)
+                arcpyLog(arcpy.AddField_management,
+                         (toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
+                          fromFieldObj.length,"",fromFieldObj.isNullable,fromFieldObj.required,fromFieldObj.domain),
+                         "arcpy.AddField_management",logFile)
+                
+        AddMsg(f"{timer.now()} Using a search cursor and an update cursor to pivot the metrics to a table with one row per reporting unit and a metric field for each class.", 0, logFile)        
         # In preparation for the upcoming whereclause, add the appropriate delimiters to the join field
         joinFieldDelim = arcpy.AddFieldDelimiters(fromTable,joinField)
         # In preparation for the upcoming whereclause, set up the appropriate delimiter function for the join value
@@ -675,6 +681,7 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
             del updateRow
         # Clean up our row element for memory management and to remove locks
         del updateCursor
+        AddMsg(f"{timer.now()} Finished recording values to {basename(toTable)}.", 0, logFile)
             
 
 def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField,logFile=None):
