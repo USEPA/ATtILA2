@@ -3113,7 +3113,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 if scratchName in datasetList:
                     arcpy.Delete_management(scratchName)
                 try:
-                    AddMsg("{0} Saving {1}% breaks zone raster: {2}".format(timer.now(), zoneBin_str, os.path.basename(scratchName)), 0, logFile)
+                    AddMsg(f"{timer.now()} Saving {zoneBin_str}% breaks zone raster: {basename(scratchName)}", 0, logFile)
                     nbrZoneGrid.save(scratchName)
                 except:
                     raise errors.attilaException(errorConstants.rasterOutputFormatError)
@@ -3206,10 +3206,10 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         nonSpecificExtents = ["NONE", "MAXOF", "MINOF"]
         envExtent = str(env.extent).upper()
         if envExtent in nonSpecificExtents:
-            AddMsg(("{0} Using {1}'s extent for geoprocessing steps.").format(timer.now(), inBaseName), 0, logFile)
+            AddMsg(f"{timer.now()} Using {inBaseName}'s extent for geoprocessing steps.", 0, logFile)
             env.extent = descInLines.extent
         else:
-            AddMsg("{0} Extent found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Extent found in Geoprocessing environment settings used for processing.", 0, logFile)
             
         ### Computations
         
@@ -3225,11 +3225,11 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         # The inLineFeature needs to be in a projected coordinate system for the MergeDividedRoads and the KernelDensity operations 
         if inLineCS != outputCS:
             # Project the road feature to the selected output coordinate system.
-            prjPrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.prjRoadName)       
+            prjPrefix = f"{metricConst.shortName}_{inBaseName}_{metricConst.prjRoadName}_"       
             prjFeatureName = files.nameIntermediateFile([prjPrefix, "FeatureClass"], cleanupList)
             outCS = arcpy.SpatialReference(text=outputCS)
-            AddMsg(("{0} Projecting {1} to {2}. Intermediate: {3}").format(timer.now(), inBaseName, outCS.name, os.path.basename(prjFeatureName)), 0, logFile)
-            inRoadFeature = arcpy.Project_management(inLineFeature, prjFeatureName, outCS)
+            AddMsg(f"{timer.now()} Projecting {inBaseName} to {outCS.name}. Intermediate: {basename(prjFeatureName)}", 0, logFile)
+            inRoadFeature = log.arcpyLog(arcpy.Project_management, (inLineFeature, prjFeatureName, outCS), "arcpy.Project_management", logFile)
             
             # No need to make a copy of the inLineFeature to add fields to. Can use the projected Feature instead
             makeCopy = False
@@ -3241,33 +3241,35 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             if mergeField == "":
                 if makeCopy: # The inLineFeature was not already copied by the PROJECT operation.
                     # Create a copy of the road feature class that we can add new fields to for calculations.
-                    namePrefix = "%s_%s_" % (metricConst.shortName, inBaseName)
+                    namePrefix = f"{metricConst.shortName}_{inBaseName}_"
                     copyFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-                    AddMsg(("{0} Copying {1} to {2}...").format(timer.now(), inBaseName, os.path.basename(copyFeatureName)), 0, logFile)
-                    inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature,env.workspace,
-                                                                                 os.path.basename(copyFeatureName))
+                    AddMsg(f"{timer.now()} Copying {inBaseName} to {basename(copyFeatureName)}.", 0, logFile)
+                    inRoadFeature = log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, 
+                                                 (inLineFeature,env.workspace, basename(copyFeatureName)), 
+                                                 "arcpy.FeatureClassToFeatureClass_conversion", logFile)
 
                 # No merge field was supplied. Add a field to the copied inRoadFeature and populate it with a constant value
-                AddMsg(("{0} Adding a dummy field to {1} and assigning value 1 to all records...").format(timer.now(), arcpy.Describe(inRoadFeature).baseName), 0, logFile)
+                AddMsg(f"{timer.now()} Adding a dummy field to {arcpy.Describe(inRoadFeature).baseName} and assigning value 1 to all records.", 0, logFile)
                 mergeField = metricConst.dummyFieldName
-                arcpy.AddField_management(inRoadFeature,mergeField,"SHORT")
-                arcpy.CalculateField_management(inRoadFeature,mergeField,1)
+                log.arcpyLog(arcpy.AddField_management, (inRoadFeature,mergeField,"SHORT"), "arcpy.AddField_management", logFile)
+                log.arcpyLog(arcpy.CalculateField_management, (inRoadFeature,mergeField,1), "arcpy.CalculateField_management", logFile)
             
             # Ensure the road feature class is comprised of singleparts. Multipart features will cause MergeDividedRoads to fail.
-            namePrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.singlepartRoadName)
+            namePrefix = f"{metricConst.shortName}_{inBaseName}_{metricConst.singlepartRoadName}_"
             singlepartFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg(("{0} Converting Multipart features to Singlepart. Intermediary output: {1}").format(timer.now(), os.path.basename(singlepartFeatureName)), 0, logFile)
+            AddMsg(f"{timer.now()} Converting Multipart features to Singlepart. Intermediary output: {basename(singlepartFeatureName)}", 0, logFile)
             arcpy.MultipartToSinglepart_management(inRoadFeature, singlepartFeatureName)
 
             # Generate single-line road features in place of matched pairs of divided road lanes.
             # Only roads with the same value in the mergeField and within the mergeDistance will be merged. All non-merged roads are retained.
             # Input features with the Merge Field parameter value equal to zero are locked and will not be merged, even if adjacent features are not locked
-            namePrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.mergedRoadName)
+            namePrefix = f"{metricConst.shortName}_{inBaseName}_{metricConst.mergedRoadName}_"
             mergedFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg(("{0} Merging divided road features. Intermediary output: {1}").format(timer.now(), os.path.basename(mergedFeatureName)), 0, logFile)
+            AddMsg(f"{timer.now()} Merging divided road features. Intermediary output: {basename(mergedFeatureName)}", 0, logFile)
             
             # This is also the final reassignment of the inRoadFeature variable
-            inRoadFeature = arcpy.MergeDividedRoads_cartography(singlepartFeatureName, mergeField, mergeDistance, mergedFeatureName)
+            inRoadFeature = log.arcpyLog(arcpy.MergeDividedRoads_cartography, (singlepartFeatureName, mergeField, mergeDistance, mergedFeatureName), 
+                                         "arcpy.MergeDividedRoads_cartography", logFile)
 
         # UNSPLIT LINES
         # We're only going to use two parameters for the arcpy.UnsplitLine_management tool. 
@@ -3275,32 +3277,36 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         # However, this will cause an intersection wherever a street name changes regardless if it's an actual intersection. 
         # Less importantly, it would require the user to identify which field in the "roads" layer is the street name field 
         # adding more clutter to the tool interface.
-        unsplitPrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.unsplitRoadName) 
+        unsplitPrefix = f"{metricConst.shortName}_{inBaseName}_{metricConst.unsplitRoadName}_" 
         unsplitFeatureName = files.nameIntermediateFile([unsplitPrefix, "FeatureClass"], cleanupList)
-        AddMsg(("{0} Unsplitting {1}. Intermediate: {2}").format(timer.now(), arcpy.Describe(inRoadFeature).baseName, os.path.basename(unsplitFeatureName)), 0, logFile)
-        arcpy.UnsplitLine_management(inRoadFeature, unsplitFeatureName)
+        AddMsg(f"{timer.now()} Unsplitting {arcpy.Describe(inRoadFeature).baseName}. Intermediate: {basename(unsplitFeatureName)}", 0, logFile)
+        log.arcpyLog(arcpy.UnsplitLine_management, (inRoadFeature, unsplitFeatureName), "arcpy.UnsplitLine_management", logFile)
         
         # INTERSECT LINES WITH THEMSELVES
-        intersectPrefix = "%s_%s_%s_" % (metricConst.shortName, inBaseName, metricConst.roadIntersectName) 
+        intersectPrefix = f"{metricConst.shortName}_{inBaseName}_{metricConst.roadIntersectName}_" 
         intersectFeatureName = files.nameIntermediateFile([intersectPrefix, "FeatureClass"], cleanupList) 
-        AddMsg(("{0} Finding intersections. Intermediate: {1}.").format(timer.now(), os.path.basename(intersectFeatureName)), 0, logFile)
-        arcpy.Intersect_analysis([unsplitFeatureName, unsplitFeatureName], intersectFeatureName, "ONLY_FID",'',"POINT")
+        AddMsg(f"{timer.now()} Finding intersections. Intermediate: {basename(intersectFeatureName)}.", 0, logFile)
+        log.arcpyLog(arcpy.Intersect_analysis, ([unsplitFeatureName, unsplitFeatureName], intersectFeatureName, "ONLY_FID",'',"POINT"), 
+                     "arcpy.Intersect_analysis", logFile)
 
         # DELETE REDUNDANT INTERSECTION POINTS THAT OCCUR AT THE SAME LOCATION
-        AddMsg(("{0} Deleting identical intersections...").format(timer.now()), 0, logFile)
-        arcpy.DeleteIdentical_management(intersectFeatureName, "Shape")
+        AddMsg(f"{timer.now()} Deleting identical intersections.", 0, logFile)
+        log.arcpyLog(arcpy.DeleteIdentical_management, (intersectFeatureName, "Shape"), "arcpy.DeleteIdentical_management", logFile)
 
         # Calculate a magnitude-per-unit area from the intersection features using a kernel function to fit a smoothly tapered surface to each point. 
         # The output cell size, search radius, and area units can be altered by the user
-        AddMsg(("{0} Performing kernel density: Result saved as {1}.").format(timer.now(), os.path.basename(outRaster)), 0, logFile)
+        AddMsg(f"{timer.now()} Performing kernel density: Result saved as {basename(outRaster)}.", 0, logFile)
         # Sometimes, often when the extent of an area is small, the ESRI default layer name is retained in the
         # saved output raster. Although the output raster appears to have the correct name in the catalog, when the 
         # raster is added to a map, the layer name is displayed in the TOC instead. Multiplying the result by 1  
         # appears to alleviate that problem without adding substantial time to the overall operation.
         den = (arcpy.sa.KernelDensity(intersectFeatureName, "NONE", int(cellSize), int(searchRadius), areaUnits) * 1)
+        # capture the operation to the log file. The usual arcpyLog technique won't work
+        logFile.write(f'{timer.now()}   [CMD] (arcpy.sa.KernelDensity({intersectFeatureName}, "NONE", int({cellSize}), int({searchRadius}), areaUnits) * 1) * 1)\n')
 
         # Save the kernel density raster
         den.save(outRaster)
+        AddMsg(f"{timer.now()} Kernel density grid save complete: {arcpy.Describe(den).baseName}", 0, logFile)
         
         # Add it to the list of features to add to the Contents pane
         addToActiveMap.append(outRaster)
@@ -3309,7 +3315,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         if actvMap != None:
             for aFeature in addToActiveMap:
                 actvMap.addDataFromPath(aFeature)
-                AddMsg(("Adding {0} to {1} view").format(os.path.basename(aFeature), actvMap.name))
+                AddMsg(f"Adding {basename(aFeature)} to {actvMap.name} view")
         
         if logFile:
             # write the standard environment settings to the log file
@@ -3397,20 +3403,20 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         nonSpecificExtents = ["NONE", "MAXOF", "MINOF"]
         envExtent = str(env.extent).upper()
         if envExtent in nonSpecificExtents:
-            AddMsg(("{0} Using {1}'s extent for geoprocessing steps.").format(timer.now(), snapBaseName), 0, logFile)
+            AddMsg(f"{timer.now()} Using {snapBaseName}'s extent for geoprocessing steps.", 0, logFile)
             env.extent = descSnapRaster.extent
         else:
-            AddMsg("{0} Extent found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Extent found in Geoprocessing environment settings used for processing.", 0, logFile)
         
         # if no specific geoprocessing environment outputCoodinateSystem is set, temporarily set it to match the snapRaster. It will be reset during the standardRestore
         nonSpecificOCS = ["NONE"]
         envOCS = str(env.outputCoordinateSystem).upper()
         if envOCS in nonSpecificOCS:
             outSR = descSnapRaster.spatialReference
-            AddMsg(("{0} Using {1}'s spatial reference for geoprocessing steps: {2}").format(timer.now(), snapBaseName, outSR.name), 0, logFile)
+            AddMsg(f"{timer.now()} Using {snapBaseName}'s spatial reference for geoprocessing steps: {outSR.name}", 0, logFile)
             env.outputCoordinateSystem = outSR
         else:
-            AddMsg("{0} OutputCoordinateSystem found in Geoprocessing environment settings used for processing.".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} OutputCoordinateSystem found in Geoprocessing environment settings used for processing.", 0, logFile)
     
         
         ### Computations
@@ -3422,8 +3428,8 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         
         ## convert all input walkable features to a single raster
         
-        AddMsg("{0} Processing Walkability features".format(timer.now()), 0, logFile)
-        walkName = "{0}_Walk".format(metricConst.shortName)
+        AddMsg(f"{timer.now()} Processing Walkability features.", 0, logFile)
+        walkName = f"{metricConst.shortName}_Walk"
         # merge all input Walkability features into separate line and polygon feature classes
         mergedWalkFeatures, cleanupList = vector.mergeVectorsByType(inWalkFeatures, walkName, cleanupList, timer, logFile)
         
@@ -3440,9 +3446,9 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         if inImpassableFeatures:
             # auto calculate the impass value and inform the user. Consider changing this to an input parameter.
             impassNumber = math.ceil(distNumber / cellSize)
-            AddMsg(f"{timer.now()} Impass Value = {impassNumber}. Calculated as (Maximum walking distance / Cost raster cell size) rounded up to the nearest integer", 0, logFile)
+            AddMsg(f"{timer.now()} Impass Value = {impassNumber}. Calculated as (Maximum walking distance / Cost raster cell size) rounded up to the nearest integer.", 0, logFile)
             
-            AddMsg(f"{timer.now()} Processing Impassable features", 0, logFile)
+            AddMsg(f"{timer.now()} Processing Impassable features.", 0, logFile)
             impassName = f"{metricConst.shortName}_Impass"
             # merge all input Impassable features into separate line and polygon feature classes
             mergedImpassFeatures, cleanupList = vector.mergeVectorsByType(inImpassableFeatures, impassName, cleanupList, timer, logFile)
@@ -3457,13 +3463,13 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             impassRasterPath = arcpy.Describe(impassRaster).catalogPath
             
             # combine the Walkable and Impassable rasters. 
-            AddMsg(f"{timer.now()} Combining the Walkable raster with the Impassable raster for final output", 0, logFile)
+            AddMsg(f"{timer.now()} Stacking the Walkable raster on the Impassable raster for final output.", 0, logFile)
             costRaster = log.arcpyLog(arcpy.sa.Con, ((walkRaster == baseNumber), impassRaster, walkRaster), 'arcpy.sa.Con', logFile)
             
             categoryDict = {walkNumber: "Walkable", baseNumber: "Base", impassNumber: "Impassable"}
         else:
             impassRasterPath = ''
-            AddMsg(f"{timer.now()} Creating a copy of the Walkable raster for the final output", 0, logFile)
+            AddMsg(f"{timer.now()} Creating a copy of the Walkable raster for the final output.", 0, logFile)
             costRaster = walkRaster
             
             categoryDict = {walkNumber: "Walkable", baseNumber: "Base"}
@@ -3471,7 +3477,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         costRaster.save(outRaster)
         
         # add category labels to the raster
-        AddMsg(f"{timer.now()} Finalizing {basename(outRaster)} by adding labels", 0, logFile)
+        AddMsg(f"{timer.now()} Finalizing {basename(outRaster)} by adding labels.", 0, logFile)
         log.arcpyLog(arcpy.BuildRasterAttributeTable_management, (costRaster, "Overwrite"), 'arcpy.BuildRasterAttributeTable_management', logFile)
         log.arcpyLog(arcpy.AddField_management, (costRaster, "CATEGORY", "TEXT", "#", "#", "10"), 'arcpy.AddField_management', logFile)
         raster.updateCategoryLabels(costRaster, categoryDict)
@@ -3503,7 +3509,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             AddMsg("Clean up complete")
 
 
-def proc_park(parkIDStr, logFile=None):
+def proc_park(parkIDStr):
     AddMsg(f"parkIDStr = {parkIDStr}")
     
     
@@ -3597,7 +3603,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         # Create a copy of the park feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. 
         desc = arcpy.Describe(inParkFeature)
-        tempName = "%s_%s_" % (metricConst.shortName, desc.baseName)
+        tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempParkFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
         
@@ -3609,15 +3615,13 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         # use the OID for identifying Parks
         idFlds = [aFld for aFld in arcpy.ListFields(inParkFeature) if aFld.type == "OID"]
         oidFld = idFlds[0].name
-        AddMsg(f"{timer.now()} Collecting id values from {oidFld} for each park", 0, logFile)
+        AddMsg(f"{timer.now()} Collecting id values from {oidFld} for each park.", 0, logFile)
         parksDF = pandasutil.fc_to_pd_df(inParkFeature, oidFld)
         parkList = parksDF[oidFld].to_list()
         
         # Calculate the park area in square meters using the coordinate system set in the spatial analysis environment
         AddMsg(f"{timer.now()} Calculating park area in square meters", 0, logFile)
         calcAreaFld = 'CalcAreaM2'
-        #fieldAndGeometry = 'CalcAreaM2 AREA'
-        #log.arcpyLog(arcpy.management.CalculateGeometryAttributes, (inParkFeature, fieldAndGeometry, "", "SQUARE_METERS"), 'arcpy.management.CalculateGeometryAttributes', logFile)
         log.arcpyLog(arcpy.management.AddField, (inParkFeature, calcAreaFld, 'FLOAT'), "arcpy.management.AddField", logFile)
         exp = "!SHAPE.AREA@SQUAREMETERS!"
         log.arcpyLog(arcpy.CalculateField_management, (inParkFeature, calcAreaFld, exp, "PYTHON"), "arcpy.CalculateField_management", logFile)
@@ -3631,7 +3635,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         # Initialize custom progress indicator
         loopProgress = messages.loopProgress(n)
         
-        AddMsg(f"{timer.now()} Calculating access and availability for {n} areas", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating access and availability for {n} areas.", 0, logFile)
         
         per = '[PER UNIT]'
         AddMsg(f"{timer.now()} The following steps are performed for each park:", 0, logFile)    
@@ -3670,7 +3674,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         for parkID in parkList:
             try:
                 # # # lock = Lock()
-                # # # p = Process(target=proc_park, args=(str(parkID), logFile))
+                # # # p = Process(target=proc_park, args=(str(parkID)))
                 # # # p.start()
                 # # #
                 # # # p.join()
@@ -3708,9 +3712,9 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
                 loopProgress.update()
                 
             except:
-                AddMsg("Failed while processing Park ID: {0}".format(parkID), 2)
+                AddMsg(f"Failed while processing Park ID: {parkID}", 2)
                 
-        AddMsg(f"{timer.now()} Finished calculations for last park", 0, logFile)
+        AddMsg(f"{timer.now()} Finished calculations for last park.", 0, logFile)
         
         if globalConstants.intermediateName in optionalGroupsList:
         # create the cursor to add data to the output table
@@ -3740,7 +3744,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         if len(mosaicRasters) == 0:
             AddMsg(f"No individual park population access rasters were generated. Exiting...\n", 1, logFile)
         else:
-            AddMsg(f"{timer.now()} Merging {str(len(mosaicRasters))} calculated park/population rasters. Output: {basename(outRaster)}.", 0, logFile)
+            AddMsg(f"{timer.now()} Merging {(len(mosaicRasters))} calculated park/population rasters. Output: {basename(outRaster)}.", 0, logFile)
             outWS = env.workspace
             arcpy.management.MosaicToNewRaster(mosaicRasters, outWS, basename(outRaster), "#", "64_BIT", env.cellSize, 1, "SUM", "FIRST")   
             

@@ -769,13 +769,13 @@ def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellS
         if fcType == "Polygon":
             namePrefix = f"{fileNameBase}_Raster_Polygon_"
             rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
-            AddMsg("{0} Converting {1} to raster. Intermediate: {2}".format(timer.now(), fcName, os.path.basename(rasterName)), 0, logFile)
+            AddMsg(f"{timer.now()} Converting {fcName} to raster. Intermediate: {basename(rasterName)}", 0, logFile)
             polygonRaster = arcpyLog(arcpy.conversion.PolygonToRaster, (fc, valueField, rasterName, "MAXIMUM_AREA", "NONE", cellSize, "BUILD"), 'arcpy.conversion.PolygonToRaster', logFile)
             rasterList[0] = polygonRaster
         elif fcType == "Polyline":
             namePrefix = f"{fileNameBase}_Raster_Line_"
             rasterName = files.nameIntermediateFile([namePrefix,"RasterDataset"],cleanupList)
-            AddMsg("{0} Converting {1} to raster. Intermediate: {2}".format(timer.now(), fcName, os.path.basename(rasterName)), 0, logFile)
+            AddMsg(f"{timer.now()} Converting {fcName} to raster. Intermediate: {basename(rasterName)}", 0, logFile)
             lineRaster = arcpyLog(arcpy.conversion.PolylineToRaster, (fc, valueField, rasterName, "MAXIMUM_LENGTH", "NONE", cellSize, "BUILD"), 'arcpy.conversion.PolylineToRaster', logFile)
             rasterList[1] = lineRaster
 
@@ -788,11 +788,11 @@ def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellS
     
     rasterOne = Raster(rastersToMerge[0])
     if len(rastersToMerge) == 1: # inputs features were either polyline or polygon, not both
-        AddMsg("{0} Setting converted raster cell values to {1} where features exist. Everywhere else will be set to {2}. Intermediate: {3}".format(timer.now(), inValue, inBaseValue, os.path.basename(resultRasterName)), 0, logFile)
+        AddMsg(f"{timer.now()} Setting converted raster cell values to {inValue} where features exist. Everywhere else will be set to {inBaseValue}. Intermediate: {basename(resultRasterName)}", 0, logFile)
         resultRaster = arcpyLog(arcpy.sa.Con, (IsNull(rasterOne), inBaseValue, inValue), 'arcpy.sa.Con', logFile)
 
     elif len(rastersToMerge) == 2: # inputs were a combination of polyline and polygon features
-        AddMsg("{0} Combining converted rasters and setting output cell values to {1} where features exist. Everywhere else will be set to {2}. Intermediate: {3}".format(timer.now(), inValue, inBaseValue, os.path.basename(resultRasterName)), 0, logFile)
+        AddMsg(f"{timer.now()} Combining converted rasters and setting output cell values to {inValue} where features exist. Everywhere else will be set to {inBaseValue}. Intermediate: {basename(resultRasterName)}", 0, logFile)
         rasterTwo = Raster(rastersToMerge[1])
         conOne = arcpyLog(arcpy.sa.Con, (IsNull(rasterOne), inBaseValue, inValue), 'arcpy.sa.Con', logFile)
         resultRaster = arcpyLog(arcpy.sa.Con, (IsNull(rasterTwo), conOne, inValue), 'arcpy.sa.Con', logFile)
@@ -809,7 +809,7 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
     arcpy.env.scratchWorkspace = arcpy.env.workspace
     
     # Apply cost distance to park with a max distance set and processing extent set at park buffered by slightly further than max dist
-    whereClause = "{} = {}".format(oidFld, parkID)
+    whereClause = f"{oidFld} = {parkID}"
     arcpy.management.MakeFeatureLayer(inParkFeature, "selectedLayer")
 
     onePark = arcpy.management.SelectLayerByAttribute("selectedLayer", 'NEW_SELECTION', whereClause, None)

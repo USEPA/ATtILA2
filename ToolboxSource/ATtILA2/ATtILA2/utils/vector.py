@@ -918,7 +918,7 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
                        "input data to the same projection.".format(fcName, transformMethod), 1, logFile)
                 namePrefix = fcName+"_Prj_"
                 prjFC = files.nameIntermediateFile([namePrefix, "FeatureClass"], cleanupList)
-                AddMsg("{0} Projecting {1} to {2}".format(timer.now(), fcName, os.path.basename(prjFC)), 0, logFile)
+                AddMsg(f"{timer.now()} Projecting {fcName} to {basename(prjFC)}.", 0, logFile)
                 arcpyLog(arcpy.management.Project, (inFC, prjFC, outCS, transformMethod), 'arcpy.management.Project', logFile)    
             else:
                 prjFC = inFC
@@ -947,7 +947,7 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
             mergedOutputs[0] = lineList[0]
 
         if len(polyList) > 1:
-            namePrefix = fileNameBase+"_Poly_Merge_"
+            namePrefix = f"{fileNameBase}_Poly_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Merging {len(polyList)} polygon features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
             # use fieldMappings to reduce file size and possible processing time.
@@ -958,7 +958,7 @@ def mergeVectorsByType(inFeatures, fileNameBase, cleanupList, timer, logFile):
             mergedOutputs[1] = polyList[0]
         
         if len(pointList) > 1:            
-            namePrefix = fileNameBase+"_Point_Merge_"
+            namePrefix = f"{fileNameBase}_Point_Merge_"
             mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Merging {len(pointList)} point features from input features. Intermediate: {os.path.basename(mergeName)}", 0, logFile)
             # use fieldMappings to reduce file size and possible processing time.
