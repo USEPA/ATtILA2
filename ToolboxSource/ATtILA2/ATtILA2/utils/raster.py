@@ -3,6 +3,7 @@
 """
 import arcpy
 import os
+from os.path import basename
 from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,Extent, IsNull
 from . import *
 from .messages import AddMsg
@@ -512,34 +513,34 @@ def getPatchViewGrid(m, classValuesList, excludedValuesList, inLandCoverGrid, la
     # generate a reclass list where each item in the list is a two item list: the original grid value, and the reclass value
     reclassPairs = getInOutOtherReclassPairs(landCoverValues, classValuesList, excludedValuesList, newValuesList)
       
-    AddMsg(("{0} Reclassifying selected {1} land cover class to 1. All other values = 0...").format(timer.now(), m.upper()), 0, logFile)
-    reclassGrid = Reclassify(inLandCoverGrid,"VALUE", RemapValue(reclassPairs))
+    AddMsg(f"{timer.now()} Reclassifying selected {m.upper()} land cover class to 1. All other values = 0.", 0, logFile)
+    reclassGrid = arcpyLog(arcpy.sa.Reclassify,(inLandCoverGrid,"VALUE", RemapValue(reclassPairs)),"arcpy.sa.Reclassify",logFile)
  
     if int(minimumPatchSize) > 1:
         # find patches of selected land cover >= the minimum patch size requirement
                     
-        AddMsg(("{0} Calculating size of class patches...").format(timer.now()), 0, logFile)
-        regionGrid = RegionGroup(reclassGrid,"EIGHT","WITHIN","ADD_LINK")
+        AddMsg(f"{timer.now()} Calculating size of class patches.", 0, logFile)
+        regionGrid = arcpyLog(arcpy.sa.RegionGroup,(reclassGrid,"EIGHT","WITHIN","ADD_LINK"),"arcpy.sa.RegionGroup",logFile)
                     
-        AddMsg(("{0} Assigning {1} to patches >= minimum size threshold of {2} cells...").format(timer.now(), "1", minimumPatchSize), 0, logFile)
+        AddMsg(f"{timer.now()} Assigning 1 to patches >= minimum size threshold of {minimumPatchSize} cells.", 0, logFile)
         delimitedCOUNT = arcpy.AddFieldDelimiters(regionGrid,"COUNT")
         whereClause = delimitedCOUNT+" >= " + minimumPatchSize + " AND LINK = 1"
-        patchGrid = Con(regionGrid, classValue, 0, whereClause)
+        patchGrid = arcpyLog(arcpy.sa.Con,(regionGrid, classValue, 0, whereClause),"arcpy.sa.Con",logFile)
     else:
         patchGrid = reclassGrid
         
-    AddMsg(("{0} Performing focal SUM on patches of {1} using {2} cell radius neighborhood...").format(timer.now(), m.upper(), viewRadius), 0, logFile)
+    AddMsg(f"{timer.now()} Performing focal SUM on patches of {m.upper()} using {viewRadius} cell radius neighborhood.", 0, logFile)
     neighborhood = arcpy.sa.NbrCircle(int(viewRadius), "CELL")
     focalGrid = arcpy.sa.FocalStatistics(patchGrid == classValue, neighborhood, "SUM", "NODATA")
     
-    AddMsg(("{0} Reclassifying focal SUM results into a single-value raster where 1 = potential view area...").format(timer.now()), 0, logFile)
+    AddMsg(f"{timer.now()} Reclassifying focal SUM results into a single-value raster where 1 = potential view area.", 0, logFile)
     whereValue = conValues[0]
     trueValue = conValues[1]
     viewGrid = Con(Raster(focalGrid) > whereValue, trueValue)
     
     # save the intermediate raster if save intermediates option has been chosen
     if saveIntermediates: 
-        namePrefix = "%s_%s%s_" % (metricConst.shortName, m.upper(), metricConst.patchGridName)
+        namePrefix = f"{metricConst.shortName}_{m.upper()}{metricConst.patchGridName}_"
         scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
         # Delete output grid if it already exists in the GDB. This prevents errors caused by lingering locks and such
         try:
@@ -547,22 +548,25 @@ def getPatchViewGrid(m, classValuesList, excludedValuesList, inLandCoverGrid, la
         except:
             pass
         patchGrid.save(scratchName)
+        AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}", 0, logFile)
         
         # add a CATEGORY field for raster labels; make it large enough to hold your longest category label.        
+        AddMsg(f"{timer.now()} Adding CATEGORY field for raster labels.", 0, logFile)
         classLabelSize = len(m) + 1
         if classLabelSize > 10:
             fieldSize = classLabelSize
         else:
             fieldSize = 10
-        arcpy.BuildRasterAttributeTable_management(patchGrid, "Overwrite")       
-        arcpy.AddField_management(patchGrid, "CATEGORY", "TEXT", "#", "#", str(fieldSize))
+        arcpyLog(arcpy.BuildRasterAttributeTable_management,(patchGrid, "Overwrite"),"arcpy.BuildRasterAttributeTable_management",logFile)      
+        arcpyLog(arcpy.AddField_management,(patchGrid, "CATEGORY", "TEXT", "#", "#", str(fieldSize)),"arcpy.AddField_management",logFile)
         
         # Use categoryDict to pass on labels; should be in the format {gridValue1 : "category1 string", gridValue2: "category2 string", etc}
         # Undefined grid values will appear as NULL
         categoryDict = {0: "Other", 1: m}
         updateCategoryLabels(patchGrid, categoryDict)
-                
-        AddMsg(timer.now() + " Save intermediate grid complete: "+os.path.basename(scratchName))
+        
+    else:
+        AddMsg("ViewPatch grid not saved")
             
     return viewGrid
 

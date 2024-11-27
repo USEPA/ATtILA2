@@ -141,6 +141,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
     
     try:
         toolShortName = outFeatures[:outFeatures.find("_")]
+        repUnitsName = arcpy.Describe(repUnits).baseName
         outFeatures = files.nameIntermediateFile([outFeatures,"FeatureClass"], cleanupList)
         
         # The tool accepts a semicolon-delimited list of input features - convert this into a python list object
@@ -166,7 +167,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 copyFCNameBase = f"{toolShortName}_{inFCName}_"
                 copyFCName = files.nameIntermediateFile([copyFCNameBase,"FeatureClass"], cleanupList)
                 AddMsg(f"{timer.now()} Creating a copy of {inFCName} without M or Z values: {basename(copyFCName)}", 0, logFile)
-                inFC = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inFC, env.workspace, os.path.basename(copyFCName)), "arcpy.FeatureClassToFeatureClass_conversion", logFile)
+                inFC = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inFC, env.workspace, basename(copyFCName)), "arcpy.FeatureClassToFeatureClass_conversion", logFile)
                 inFCDesc = arcpy.Describe(inFC)
                 inFCName = inFCDesc.baseName
             else:
@@ -182,12 +183,12 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             try:
                 intersectResult = arcpyLog(arcpy.Intersect_analysis, ([repUnits,inFC],firstIntersectionName,"ALL","","INPUT"), "arcpy.Intersect_analysis", logFile)
             except:
-                AddMsg("No features of {0} intersect with features of {1}. Omitting {1} from further processing.".format(inFCName, arcpy.Describe(repUnits).baseName), 1, logFile)
+                AddMsg(f"No features of {inFCName} intersect with features of {repUnitsName}. Omitting {inFCName} from further processing.", 1, logFile)
                 continue
             
             # Check for empty intersect features
             if not arcpy.SearchCursor(firstIntersectionName).next():
-                AddMsg("No features of {0} intersect with features of {1}. Omitting {1} from further processing.".format(inFCName, arcpy.Describe(repUnits).baseName), 1, logFile)
+                AddMsg(f"No features of {inFCName} intersect with features of {repUnitsName}. Omitting {inFCName} from further processing.", 1, logFile)
                 continue
 
             # We are later going to perform a second intersection with the reporting units layer, which will cause

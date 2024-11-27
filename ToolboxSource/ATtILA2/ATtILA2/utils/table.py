@@ -148,6 +148,7 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inValueField]
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+            AddMsg(f"{timer.now()} Creating a working copy of {basename(inValueDataset)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
             inValueDataset = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
                                       (inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings),
                                       "arcpy.FeatureClassToFeatureClass_conversion",

@@ -1193,10 +1193,10 @@ def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopFi
     outPopField = metricConst.populationCountFieldNames[index]
     arcpyLog(arcpy.AlterField_management, (outTable, inPopField, outPopField, outPopField), 'arcpy.AlterField_management', logFile)
 
-def replaceNullValues(inTable,inField,newValue):
+def replaceNullValues(inTable,inField,newValue,logFile=None):
     # Replace NULL values in a field with the supplied value
     whereClause = inField+" IS NULL"
-    updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
+    updateCursor = arcpyLog(arcpy.UpdateCursor,(inTable, whereClause, "", inField),"arcpy.UpdateCursor",logFile)
     for updateRow in updateCursor:
         updateRow.setValue(inField, newValue)
         # Persist all of the updates for this row.
@@ -1206,7 +1206,7 @@ def replaceNullValues(inTable,inField,newValue):
     # Clean up our row element for memory management and to remove locks
     del updateCursor
 
-def percentageValue(inTable, numeratorField, denominatorField, percentField):
+def percentageValue(inTable, numeratorField, denominatorField, percentField, logFile=None):
     # Set up a calculate percentage expression 
     calcExpression = "getValuePercent(!"+numeratorField+"!,!"+denominatorField+"!)"
     codeBlock = """def getValuePercent(n,d):
@@ -1219,18 +1219,18 @@ def percentageValue(inTable, numeratorField, denominatorField, percentField):
                             return (n/d)*100"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateField(inTable, percentField, "DOUBLE", calcExpression, codeBlock)
+    vector.addCalculateField(inTable, percentField, "DOUBLE", calcExpression, codeBlock, logFile)
 
-def differenceValue(inTable, totalField, subtratorField, resultField):
+def differenceValue(inTable, totalField, subtratorField, resultField, logFile=None):
     # Set up a calculate percentage expression 
     calcExpression = "getValueDifference(!"+totalField+"!,!"+subtratorField+"!)"
     codeBlock = """def getValueDifference(n,d):
                         return (n-d)"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateField(inTable, resultField, "DOUBLE", calcExpression, codeBlock)
+    vector.addCalculateField(inTable, resultField, "DOUBLE", calcExpression, codeBlock, logFile)
 
-def aboveValue(inTable, sourceField, threshold, addedField):
+def aboveValue(inTable, sourceField, threshold, addedField, logFile=None):
     # Set up a calculate percentage expression 
     calcExpression = "getValuePercent(!"+sourceField+"!, "+ threshold + ")"
     codeBlock = """def getValuePercent(n, d):
@@ -1240,9 +1240,9 @@ def aboveValue(inTable, sourceField, threshold, addedField):
                             return 1"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateField(inTable, addedField, "SHORT", calcExpression, codeBlock)
+    vector.addCalculateField(inTable, addedField, "SHORT", calcExpression, codeBlock, logFile)
 
-def belowValue(inTable, sourceField, threshold, addedField):
+def belowValue(inTable, sourceField, threshold, addedField, logFile=None):
     # Set up a calculate percentage expression 
     calcExpression = "getValuePercent(!"+sourceField+"!, "+ threshold + ")"
     codeBlock = """def getValuePercent(n, d):
@@ -1252,7 +1252,7 @@ def belowValue(inTable, sourceField, threshold, addedField):
                             return 0"""
 
     # Calculate and record the percent population within view area
-    vector.addCalculateField(inTable, addedField, "SHORT", calcExpression, codeBlock)
+    vector.addCalculateField(inTable, addedField, "SHORT", calcExpression, codeBlock, logFile)
 
 
 def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,
@@ -1267,27 +1267,24 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     aboveSuffix = metricConst.aboveFieldSuffix
     cntFldName = metricConst.facilityCountFieldName
 
-    AddMsg("%s Finding facilities with views below threshold limit for selected class(es)..." % (timer.now()), 0, logFile)
+    AddMsg(f"{timer.now()} Finding facilities with views below threshold limit for selected class(es).", 0, logFile)
     for mBaseName in metricsBaseNameList:
         # belowValue(inTable, sourceField, threshold, addedField)
-        belowValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + belowSuffix)
+        belowValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName+belowSuffix, logFile)
         # Find facilities with views at or above threshold limit. This value can be used to check if all facilities have land cover information
-        aboveValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName + aboveSuffix)
+        aboveValue(facilityLCPTable, lcpFieldnameDict[mBaseName][0], viewThreshold, mBaseName+aboveSuffix, logFile)
 
     # attach the reporting unit id's to the land cover proportions table by use of a join
 
     # joining the facilityLCPTable to the facilityRUIDTable will maintain a record for all input facilities. NULL values
     # will be assigned to any facility that did not have any land cover data (i.e., at least 1 raster cell center) in its
     # view radius buffer
-    tableWithRUID = arcpy.AddJoin_management(facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID", "KEEP_ALL")
-
-    # Make the join permanent by saving the table to a new file
-    # Get a unique name with full path for the output features - will default to current workspace:
-    namePrefix = f"{metricConst.lcpTableWithRUID}{viewRadius.split()[0]}_"
-    lcpTableWithRUID = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
-    arcpy.TableToTable_conversion(tableWithRUID, os.path.dirname(facilityLCPTable), os.path.basename(lcpTableWithRUID))
-
-    AddMsg("%s Summarizing facilities with low views by Reporting Unit..." % (timer.now()), 0, logFile)
+    
+    AddMsg(f"{timer.now()} Joining {basename(facilityLCPTable)} to {arcpy.Describe(facilityRUIDTable).baseName} to maintain a record for all facilities.", 0, logFile)
+    arcpyLog(arcpy.management.JoinField, (facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID"), "arcpy.management.JoinField", logFile)
+    
+    
+    # Summarizing facilities with low views by Reporting Unit
     stats = []
     for mBaseName in metricsBaseNameList:
         stats.append([mBaseName + belowSuffix, "Sum"])
@@ -1297,8 +1294,9 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     # Get a unique name with full path for the output features - will default to current workspace:
     namePrefix = f"{metricConst.statsResultTable}{viewRadius.split()[0]}_"
     statsResultTable = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
-
-    arcpy.Statistics_analysis(lcpTableWithRUID, statsResultTable, stats, reportingUnitIdField)
+    AddMsg(f"{timer.now()} Summarizing facilities with low views by Reporting Unit. Intermediate: {basename(statsResultTable)}", 0, logFile)
+    #arcpyLog(arcpy.Statistics_analysis,(lcpTableWithRUID, statsResultTable, stats, reportingUnitIdField),"arcpy.Statistics_analysis",logFile)
+    arcpyLog(arcpy.Statistics_analysis,(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField),"arcpy.Statistics_analysis",logFile)
 
 ###  This commented out section can be used if INFO tables are not an option for ATtILA metric tables  ###  
 #    #Rename the fields in the result table
