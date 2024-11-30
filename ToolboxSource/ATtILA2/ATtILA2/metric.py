@@ -756,7 +756,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                     AddMsg(f"{self.timer.now()} Calculating Patch Numbers by Reporting Unit for Class:{m}", 0, self.logFile)
                     
                     per = '[PER UNIT]'
-                    AddMsg(f"{timer.now()} The following steps are performed for each reporting unit:", 0, logFile)    
+                    AddMsg(f"{timer.now()} The following steps will be performed for each reporting unit:", 0, logFile)    
                     AddMsg("\n---")
                     AddMsg(f"{timer.now()} {per} 1) Create a feature layer of the single reporting unit.", 0, logFile)
                     AddMsg(f"{timer.now()} {per} 2) Set the geoprocessing extent to just the extent of the selected reporting unit.", 0, logFile)
@@ -779,6 +779,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                     AddMsg("---\n")
                     
                     # calculate Patch metrics
+                    AddMsg(f"{timer.now()} Starting calculations per reporting unit...", 0, logFile)
                     self.pmResultsDict = calculate.getPatchNumbers(self.outIdField, self.newTable, self.reportingUnitIdField, self.metricsFieldnameDict,
                                                       self.zoneAreaDict, self.metricConst, m, self.inReportingUnitFeature, 
                                                       self.inLandCoverGrid, processingCellSize, conversionFactor)
@@ -2314,7 +2315,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             if descFldpln.datasetType == "RasterDataset":
                 # Convert the Raster floodplain to Polygon
                 delimitedVALUE = arcpy.AddFieldDelimiters(inFloodplainDataset,"VALUE")
-                whereClause = delimitedVALUE+" = 0"
+                whereClause = f"{delimitedVALUE} = 0"
                 nullGrid = log.arcpyLog(arcpy.sa.SetNull,(inFloodplainDataset, 1, whereClause),"arcpy.sa.SetNull",logFile)
                 tempName = f"{metricConst.shortName}_{descFldpln.baseName}_Poly_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
@@ -2385,7 +2386,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         table.transferField(popTable_FP,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
         
         # Set up a calculation expression for population change
-        calcExpression = "getPopPercent(!"+popCntFields[0]+"!,!"+popCntFields[1]+"!)"
+        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}!)"
         codeBlock = """def getPopPercent(pop1,pop2):
                             if pop1 == 0:
                                 if pop2 == 0:
@@ -3638,7 +3639,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         AddMsg(f"{timer.now()} Calculating access and availability for {n} areas.", 0, logFile)
         
         per = '[PER UNIT]'
-        AddMsg(f"{timer.now()} The following steps are performed for each park:", 0, logFile)    
+        AddMsg(f"{timer.now()} The following steps will be performed for each park:", 0, logFile)    
         AddMsg("\n---")
         AddMsg(f"{timer.now()} {per} 1) Select park by its ID value and create a feature layer.", 0, logFile)
         AddMsg(f"{timer.now()} {per} 2) Create a buffer around the park extending 5% beyond the maximum travel distance.", 0, logFile)
@@ -3654,7 +3655,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         AddMsg(f"{timer.now()} {per}     b2) Use Tabulate Intersection with this polygon and the Population polygons to calculate the accessibility area population.", 0, logFile)
         AddMsg(f"{timer.now()} {per} 7) Determine Availability (Cost distance value to park area divided by surrounding population)", 0, logFile)
         AddMsg("---\n")
-        #AddMsg(f"{timer.now()} Starting calculations per park...", 0, logFile)
+        AddMsg(f"{timer.now()} Starting calculations per park...", 0, logFile)
         
         # Create a list to keep track of any park that did not rasterize
         nullRaster = []
@@ -3819,8 +3820,21 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         # Start the timer
         timer = DateTimer()
         
+        # Save the current environment settings to restore at the end of the script
+        _tempEnvironment0 = env.parallelProcessingFactor
+        _tempEnvironment1 = env.workspace
+        _tempEnvironment2 = env.overwriteOutput
+        
         # retrieve the attribute constants associated with this metric
         metricConst = metricConstants.prfeaConstants()
+        
+        # copy input parameters to pass to the log file routine
+        parametersList = [toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
+        # create a log file if requested, otherwise logFile = None
+        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+fnPrefix, toolPath) #toolPath?
+        
+        # set up a list to keep track of intermediate products that can be deleted/saved at the end of the tool operation
+        intermediateList = []
         
         # checks to see if the geodatabase has the required datasets.
         requiredLayers = metricConst.requiredDict[versionName]
@@ -3839,11 +3853,6 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                         AddMsg(f"Required input, {fc}, is not in a projected coordinate system. All inputs for Intersection Density Roads need to be in a projected coordinate system. Aborting...", 2)
                         raise errors.attilaException(errorConstants.unprojectedRoadsError)
         
-        # copy input parameters to pass to the log file routine
-        parametersList = [toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
-        # create a log file if requested, otherwise logFile = None
-        logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+fnPrefix, toolPath) #toolPath?
-
         # determine the active map to add the output raster/features    
         try:
             currentProject = arcpy.mp.ArcGISProject("CURRENT")
@@ -3851,11 +3860,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         except:
             actvMap = None
 
-        # Save the current environment settings, then set to desired condition 
+        # Set the environmental variables to desired condition 
         AddMsg(f"{timer.start()} Setting up initial environment variables", 0, logFile)
-        _tempEnvironment0 = env.parallelProcessingFactor
-        _tempEnvironment1 = env.workspace
-        _tempEnvironment2 = env.overwriteOutput
         
         # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
         currentFactor = str(env.parallelProcessingFactor)
@@ -3873,7 +3879,6 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         
         inputStreets = f"{inStreetsgdb}\\Streets"
         singlepartRoads = "singlepartRoads"+ext
-        intermediateList = []
         keepFields = [f.name for f in arcpy.ListFields(inputStreets)]
         newFields = ["FEATURE_TYPE", "FEAT_TYPE", "MergeClass", "LANES"]
         keepFields.extend(newFields)
@@ -3894,16 +3899,16 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         SMLandArea = inStreetsgdb + "\\MapLandArea\\MapLandArea"
         
         # Begin process by making a feature layer from the Streets feature class
-        AddMsg(f"{timer.now()} Creating feature layer from {inputStreets}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating feature layer from {inputStreets}.", 0, logFile)
         streetLayer = "streetLayer"
         log.arcpyLog(arcpy.MakeFeatureLayer_management, (inputStreets, streetLayer), 'arcpy.MakeFeatureLayer_management', logFile, True)
 
         
         if chkWalkableYN == "true" or chkIntDensYN == "true":
             if chkWalkableYN == "true":
-                AddMsg(f"{timer.now()} Processing walkable roads", 0, logFile)
+                AddMsg(f"{timer.now()} Processing walkable roads.", 0, logFile)
             else:
-                AddMsg(f"{timer.now()} Processing roads for intersection density analysis", 0, logFile)
+                AddMsg(f"{timer.now()} Processing roads for intersection density analysis.", 0, logFile)
             
             whereClause = metricConst.walkSelectDict[versionName]
             WlkMsg = metricConst.walkMsgDict[versionName]
@@ -3940,17 +3945,17 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             mergeField = "MergeClass"
             
             if chkWalkableYN == "true":
-                AddMsg(f"{timer.now()} Continuing with the selected features for processing intersection density roads", 0, logFile)
+                AddMsg(f"{timer.now()} Continuing with the selected features for processing intersection density roads.", 0, logFile)
         
-            AddMsg(f"{timer.now()} Removing from the selection features where {metricConst.speedCatDict[versionName]}", 0, logFile)
+            AddMsg(f"{timer.now()} Removing from the selection features where {metricConst.speedCatDict[versionName]}.", 0, logFile)
             log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', metricConst.speedCatDict[versionName]), 'arcpy.SelectLayerByAttribute_management', logFile)
             
             if versionName == 'NAVTEQ 2011': #NAVTEQ 2011
-                AddMsg(f"{timer.now()} Assigning landUseA codes to road segments", 0, logFile)
+                AddMsg(f"{timer.now()} Assigning landUseA codes to road segments.", 0, logFile)
                 log.arcpyLog(arcpy.Identity_analysis, (streetLayer, NAVTEQ_LandUseA, intersectFromLandUseA), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFromLandUseA)
 
-                AddMsg(f"{timer.now()} Assigning landUseB codes to road segments", 0, logFile)           
+                AddMsg(f"{timer.now()} Assigning landUseB codes to road segments.", 0, logFile)           
                 log.arcpyLog(arcpy.Identity_analysis, (intersectFromLandUseA, NAVTEQ_LandUseB, intersectFinal), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFinal)
 
@@ -3963,18 +3968,18 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 sql = f"{relevantFlds[0]} = '' And {relevantFlds[1]} <> ''"
 
                 #Transfer all meaningful values from field FEAT_TYPE_1 to FEAT_TYPE
-                AddMsg(f"{timer.now()} Transferring values from {relevantFlds[1]} to {relevantFlds[0]}", 0, logFile)
+                AddMsg(f"{timer.now()} Transferring values from {relevantFlds[1]} to {relevantFlds[0]}.", 0, logFile)
                 with arcpy.da.UpdateCursor(intersectFinal,relevantFlds,sql) as cursor:
                     for row in cursor:
                         row[0] = row[1]
                         cursor.updateRow(row)
                 
             elif versionName == 'NAVTEQ 2019':  #NAVTEQ 2019
-                AddMsg(f"{timer.now()} Assigning landArea codes to road segments",0,logFile)
+                AddMsg(f"{timer.now()} Assigning landArea codes to road segments.",0,logFile)
                 log.arcpyLog(arcpy.Identity_analysis, (streetLayer, NAVTEQLandArea, intersectFromLandArea), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFromLandArea)
 
-                AddMsg(f"{timer.now()} Assigning FacilityArea codes to road segments",0,logFile)           
+                AddMsg(f"{timer.now()} Assigning FacilityArea codes to road segments.",0,logFile)           
                 log.arcpyLog(arcpy.Identity_analysis, (intersectFromLandArea, NAVTEQFacilityArea, intersectFinal), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFinal)
 
@@ -3987,14 +3992,14 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 sql = f"{relevantFlds[0]} = 0 And {relevantFlds[1]} <> 0"
 
                 #Transfer all meaningful values from field FEAT_TYPE_1 to FEAT_TYPE
-                AddMsg(f"{timer.now()} Transferring values from {relevantFlds[1]} to {relevantFlds[0]}", 0, logFile)
+                AddMsg(f"{timer.now()} Transferring values from {relevantFlds[1]} to {relevantFlds[0]}.", 0, logFile)
                 with arcpy.da.UpdateCursor(intersectFinal, relevantFlds, sql) as cursor:
                     for row in cursor:
                         row[0] = row[1]
                         cursor.updateRow(row)
             
             elif versionName == 'ESRI StreetMap': # ESRI StreetMaps
-                AddMsg(f"{timer.now()} Assigning MapLandArea codes to road segments",0,logFile)
+                AddMsg(f"{timer.now()} Assigning MapLandArea codes to road segments.",0,logFile)
                 log.arcpyLog(arcpy.Identity_analysis, (streetLayer, SMLandArea, intersectFinal), 'arcpy.Identity_analysis', logFile)
                 intermediateList.append(intersectFinal)
 
@@ -4002,84 +4007,84 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             # AddMsg(f"{timer.now()} Trimming unnecessary fields",0,logFile)
             # arcpy.DeleteField_management(intersectFinal, dropFields)  #THIS SET OF CODE SLOWS THINGS DOWN A LOT
 
-            AddMsg(f"{timer.now()} Removing roads with no street names from the following land use type areas: AIRPORT, AMUSEMENT PARK, BEACH, CEMETERY, HOSPITAL, INDUSTRIAL COMPLEX, MILITARY BASE, RAILYARD, SHOPPING CENTER, or GOLF COURSE", 0, logFile)
+            AddMsg(f"{timer.now()} Removing roads with no street names from the following land use type areas: AIRPORT, AMUSEMENT PARK, BEACH, CEMETERY, HOSPITAL, INDUSTRIAL COMPLEX, MILITARY BASE, RAILYARD, SHOPPING CENTER, and GOLF COURSE.", 0, logFile)
             unnamedStreetsSQL = metricConst.unnamedStreetsDict[f"{versionName}{ext}"]
 
             with arcpy.da.UpdateCursor(intersectFinal, ["*"], unnamedStreetsSQL) as cursor:
                 for row in cursor:
                     cursor.deleteRow()
             
-            AddMsg(f"{timer.now()} Adding a MergeClass field",0,logFile)
+            AddMsg(f"{timer.now()} Adding a MergeClass field.",0,logFile)
             log.arcpyLog(arcpy.AddField_management, (intersectFinal,mergeField,"SHORT"), 'arcpy.AddField_management', logFile)
         
-            AddMsg(f"{timer.now()} Setting MergeClass to an initial value of 1", 0, logFile)
+            AddMsg(f"{timer.now()} Setting MergeClass to an initial value of 1.", 0, logFile)
             log.arcpyLog(arcpy.CalculateField_management, (intersectFinal,mergeField,1), 'arcpy.CalculateField_management', logFile)
             
             dirTravelSQL = metricConst.dirTravelDict[versionName]
             dirTravelFld = dirTravelSQL.split(' = ')[0]
-            AddMsg(f"{timer.now()} Replacing MergeClass value to 0 for rows where {dirTravelFld} = 'B'", 0, logFile)
+            AddMsg(f"{timer.now()} Replacing MergeClass value to 0 for rows where {dirTravelFld} = 'B'.", 0, logFile)
             with arcpy.da.UpdateCursor(intersectFinal, [mergeField], dirTravelSQL) as cursor:
                 for row in cursor:
                     row[0] = 0
                     cursor.updateRow(row)
         
-            AddMsg(f"{timer.now()} Converting any multipart roads to singlepart", 0, logFile)
+            AddMsg(f"{timer.now()} Converting any multipart roads to singlepart.", 0, logFile)
             # Ensure the road feature class is comprised of singleparts. Multipart features will cause MergeDividedRoads to fail.
             log.arcpyLog(arcpy.MultipartToSinglepart_management, (intersectFinal, singlepartRoads), 'arcpy.MultipartToSinglepart_management', logFile)
             intermediateList.append(singlepartRoads)
             AddMsg(f"{timer.now()} Merging divided roads to {intDensityFCName} using the MergeClass field and a merge distance of '30 Meters'. Only roads with the same value in the mergeField and within the mergeDistance will be merged. Roads with a MergeClass value equal to zero are locked and will not be merged. All non-merged roads are retained.", 0, logFile)
             
             intDensityFC = log.arcpyLog(arcpy.MergeDividedRoads_cartography, (singlepartRoads, mergeField, "30 Meters", intDensityFCName), 'arcpy.MergeDividedRoads_cartography', logFile)                    
-            AddMsg(f"{timer.now()} Finished processing {intDensityFCName}", 0, logFile)
+            AddMsg(f"{timer.now()} Finished processing {intDensityFCName}.", 0, logFile)
             addToActiveMap.append(intDensityFC)
             
 
         if chkIACYN == "true":
-            AddMsg(f"{timer.now()} Processing interstates, arterials, and connectors", 0, logFile)
+            AddMsg(f"{timer.now()} Processing interstates, arterials, and connectors.", 0, logFile)
             # get the name for the output feature class
-            iacFCName = fnPrefix+metricConst.outNameRoadsIAC+ext
+            iacFCName = f"{fnPrefix}{metricConst.outNameRoadsIAC}{ext}"
             lanesField = "LANES"
             ToFromFields = metricConst.laneFieldDict[versionName]
             
             if chkWalkableYN == "true" or chkIntDensYN == "true":
                 # this is probably unnecessary, but it makes sure everything is reset
-                AddMsg(f"{timer.now()} Clearing and resetting selections for {inputStreets}")
+                AddMsg(f"{timer.now()} Clearing and resetting selections for {inputStreets}.")
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'CLEAR_SELECTION'), 'arcpy.SelectLayerByAttribute_management', logFile)
 
             if versionName == 'NAVTEQ 2011':
-                AddMsg(f"{timer.now()} Selecting features where FUNC_CLASS = 1, 2, 3, or 4",0,logFile)
+                AddMsg(f"{timer.now()} Selecting features where FUNC_CLASS = 1, 2, 3, or 4.",0,logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FUNC_CLASS IN ('1','2','3','4')"), 'arcpy.SelectLayerByAttribute_management', logFile)
-                AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H",0,logFile)
+                AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H.",0,logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', "FERRY_TYPE <> 'H'"), 'arcpy.SelectLayerByAttribute_management', logFile)                
                 
             elif versionName == 'NAVTEQ 2019': #NAVTEQ2019 #(pickup updating messages here) 
                 #try running the join first
-                AddMsg(f"{timer.now()} Adding {ToFromFields[0]} and {ToFromFields[1]} from {link}", 0, logFile)
+                AddMsg(f"{timer.now()} Adding {ToFromFields[0]} and {ToFromFields[1]} from {link}.", 0, logFile)
                 #log.arcpyLog(arcpy.management.JoinField, (inputStreets, metricConst.Streets_linkfield, link, metricConst.Link_linkfield, ToFromFields), 'arcpy.management.JoinField', logFile)
                 log.arcpyLog(arcpy.management.JoinField, (streetLayer, metricConst.Streets_linkfield, link, metricConst.Link_linkfield), 'arcpy.management.JoinField', logFile)
-                AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4", 0, logFile)
+                AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4.", 0, logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FuncClass <= 4"), 'arcpy.SelectLayerByAttribute_management', logFile)
-                AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H", 0, logFile)
+                AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H.", 0, logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'"), 'arcpy.SelectLayerByAttribute_management', logFile)                
             
             elif versionName == 'ESRI StreetMap': # ESRI StreetMaps
-                AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4", 0, logFile)
+                AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4.", 0, logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', "FuncClass <= 4"), 'arcpy.SelectLayerByAttribute_management', logFile)
-                AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H", 0, logFile)
+                AddMsg(f"{timer.now()} Removing from the selection features where FERRY_TYPE <> H.", 0, logFile)
                 log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'"), 'arcpy.SelectLayerByAttribute_management', logFile)            
             
             # Write the selected features to a new feature class
-            AddMsg(f"{timer.now()} Copying remaining selected features to "+iacFCName, 0, logFile)
+            AddMsg(f"{timer.now()} Copying remaining selected features to {iacFCName}", 0, logFile)
             iacFC = log.arcpyLog(arcpy.CopyFeatures_management, (streetLayer, iacFCName), 'arcpy.CopyFeatures_management', logFile)
             arcpy.management.RemoveJoin(streetLayer)
             # need to reset the ToFromFiels in case the iacFC is a shapefile
             ToFromFields = metricConst.laneFieldDict[f"{versionName}{ext}"]
         
             for f in ToFromFields:
-                AddMsg(f"{timer.now()} Setting NULL values in {f} field to 0", 0, logFile)
+                AddMsg(f"{timer.now()} Setting NULL values in {f} field to 0.", 0, logFile)
                 calculate.replaceNullValues(iacFC, f, 0)
             
-            AddMsg(f"{timer.now()} Adding field, LANES, to {iacFCName}. Calculating its value as {ToFromFields[0]} + {ToFromFields[1]}", 0, logFile)
+            AddMsg(f"{timer.now()} Adding field, LANES, to {iacFCName}. Calculating its value as {ToFromFields[0]} + {ToFromFields[1]}.", 0, logFile)
             log.arcpyLog(arcpy.AddField_management, (iacFC,lanesField,"SHORT"), 'arcpy.AddField_management', logFile)
             calcExpression = f"!{ToFromFields[0]}!+!{ToFromFields[1]}!"
             log.arcpyLog(arcpy.CalculateField_management, (iacFC,lanesField,calcExpression,"PYTHON",'#'), 'arcpy.CalculateField_management', logFile)
@@ -4091,7 +4096,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             zeroCount = arcpy.GetCount_management(value0FCName).getOutput(0)
             if int(zeroCount) > 0:
                 AddMsg(f'{timer.now()} Total number of records where LANES = 0 in {iacFCName} is: {zeroCount}.', 1, logFile)
-                AddMsg(f'{timer.now()} Replacing LANES field value to 2 for these records. The user can locate and change these records with the following query: {ToFromFields[0]} = 0 And {ToFromFields[1]} = 0', 1, logFile)
+                AddMsg(f'{timer.now()} Replacing LANES field value to 2 for these records. The user can locate and change these records with the following query: {ToFromFields[0]} = 0 And {ToFromFields[1]} = 0.', 1, logFile)
                 
                 #Change the LANES value to 2 where LANES = 0
                 sql4 = "LANES = 0"
@@ -4100,7 +4105,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                         row[0] = 2
                         cursor.updateRow(row)
                         
-            AddMsg(f"{timer.now()} Finished processing {iacFCName}", 0, logFile)
+            AddMsg(f"{timer.now()} Finished processing {iacFCName}.", 0, logFile)
                         
             intermediateList.append(value0FCName)
             addToActiveMap.append(iacFC)
@@ -4114,10 +4119,10 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 # AddMsg(f"Adding output(s) to {actvMap.name} view")
                 for aFeature in addToActiveMap:
                     actvMap.addDataFromPath(aFeature)
-                    AddMsg(f"Adding {arcpy.Describe(aFeature).name} to {actvMap.name} view")
+                    AddMsg(f"Adding {arcpy.Describe(aFeature).name} to {actvMap.name} view.")
         
         except:
-            AddMsg(f"Unable to add processed layer(s) to {actvMap.name} view")
+            AddMsg(f"Unable to add processed layer(s) to {actvMap.name} view.")
 
     except Exception as e:
         if logFile:
@@ -4136,8 +4141,9 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             logFile.close()
             AddMsg('Log file closed')
         
-        for i in intermediateList:
-            arcpy.Delete_management(i)
+        if intermediateList:
+            [arcpy.Delete_management(i) for i in intermediateList]
+                
 
         env.parallelProcessingFactor = _tempEnvironment0
         env.workspace = _tempEnvironment1
@@ -4301,9 +4307,9 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 # Convert the Raster zones to Polygon
                 AddMsg(f"{timer.now()} Setting 0 value cells in {descZone.basename} to NoData")
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
-                whereClause = delimitedVALUE+" = 0"
+                whereClause = f"{delimitedVALUE} = 0"
                 nullGrid = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, inZoneDataset, whereClause), 'arcpy.sa.SetNull', logFile)  
-                tempName = "%s_%s" % (metricConst.shortName, descZone.baseName + "_Poly")
+                tempName = f"{metricConst.shortName}_{descZone.baseName}_Poly_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 
                 
@@ -4331,7 +4337,6 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 # PopulationRaster. The snap raster, and cell size have already been set to match the census raster
                 AddMsg(f"{timer.now()} Setting non-zone areas to NULL", 0, logFile)
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
-                # whereClause = delimitedVALUE+" <> 1"
                 whereClause = delimitedVALUE+" = 0"
                 inCensusDataset = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, inCensusDataset, whereClause), 'arcpy.sa.SetNull', logFile)
         
@@ -4343,7 +4348,6 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     
                 AddMsg(f"{timer.now()} Calculating population for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
-        
         
         
             else: # zone feature is a polygon
@@ -4387,7 +4391,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             
                     inReportingUnitFeature = tempDissolveFeature
             
-                    # Create new unique OID field.  Cant use original OID because the new output table has its own OID. join will not work
+                    # Create new unique OID field.  Can not use original OID because the new output table has its own OID. join will not work
                     AddMsg(f"{timer.now()} Creating unique OID field for {basename(inReportingUnitFeature)}", 0, logFile)
                     currentOID = arcpy.Describe(inReportingUnitFeature).oidFieldName
                     tempSuccess = 0
@@ -4416,9 +4420,6 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         ### End census features are raster ###
         
         else: # census features are polygons
-            # # Check that the user supplied a population field
-            # if len(inPopField) == 0:
-            #     raise errors.attilaException(errorConstants.missingFieldError)
         
             # Create a copy of the census feature class that we can add new fields to for calculations.
             fieldMappings = arcpy.FieldMappings()
@@ -4451,7 +4452,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 # Convert the Raster zones to Polygon
                 AddMsg(f"{timer.now()} Setting 0 value cells in {descZone.basename} to NoData")
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
-                whereClause = delimitedVALUE+" = 0"
+                whereClause = f"{delimitedVALUE} = 0"
                 nullGrid = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, 1, whereClause), 'arcpy.sa.SetNull', logFile)  
                 tempName = f"{metricConst.shortName}_{descZone.baseName}_Poly_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
@@ -4520,7 +4521,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             # intersect the zone polygons with the reporting unit polygons
             fileNameBase = descZone.baseName
             # need to eliminate the tool's shortName from the fileNameBase if the zone polygon was derived from a raster
-            fileNameBase = fileNameBase.replace(metricConst.shortName+"_","")
+            fileNameBase = fileNameBase.replace(f"{metricConst.shortName}_","")
             tempName = f"{metricConst.shortName}_{fileNameBase}_Identity_"
             tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Assigning reporting unit IDs to {descZone.baseName}. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
@@ -4614,7 +4615,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         
         # Set up a calculation expression for population change        
-        calcExpression = "getPopPercent(!"+popCntFields[0]+"!,!"+popCntFields[1] + suffix + "!)"
+        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}{suffix}!)"
         
         codeBlock = """def getPopPercent(pop1,pop2):
                 if pop1 is None or pop2 is None:
@@ -4727,11 +4728,13 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
         
         # Add Quality Assurance Field "AREA_OVER"
         AddMsg(f"{timer.now()} Adding quality assurance field: 'AREA_OVER'", 0, logFile)
-        outputSpatialRef = settings.getOutputSpatialReference(inValueRaster) # Get the raster spatial refernce
-        zoneAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
-        #arcpy.AddField_management(outTable, metricConst.qaName, globalConstants.defaultIntegerFieldType)
         log.arcpyLog(arcpy.AddField_management, (outTable, metricConst.qaName, globalConstants.defaultIntegerFieldType), 'arcpy.AddField_management', logFile)
         
+        AddMsg(f"{timer.now()} Collecting polygon area values for each Reporting Unit", 0, logFile)
+        outputSpatialRef = settings.getOutputSpatialReference(inValueRaster) # Get the raster spatial refernce
+        zoneAreaDict = polygons.getMultiPartIdAreaDict(inReportingUnitFeature, reportingUnitIdField, outputSpatialRef)
+        
+        AddMsg(f"{timer.now()} Calculating 'AREA_OVER': (reporting unit raster area / reporting unit polygon area) * 100", 0, logFile)
         with arcpy.da.UpdateCursor(outTable, [reportingUnitIdField, "AREA", metricConst.qaName]) as cursor: 
             for row in cursor: 
                 DictKey = row[0] # DictKey = reportingUnitIdField row
@@ -4758,7 +4761,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
         oldFields = arcpy.ListFields(outTable)
         for field in oldFields: 
             if field.name in metricConst.statisticsFieldNames:
-                newFieldName = fieldPrefix + "_" + field.name 
+                newFieldName = f"{fieldPrefix}_{field.name}" 
                 #arcpy.management.AlterField(outTable,field.name, newFieldName, newFieldName) # should these be shown as [CMD] in logfile?
                 log.arcpyLog(arcpy.management.AlterField, (outTable, field.name, newFieldName, newFieldName), 'arcpy.management.AlterField', logFile)
 

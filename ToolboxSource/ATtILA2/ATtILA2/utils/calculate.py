@@ -885,9 +885,9 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             patchDensity = 0
 
             if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
-                squery = "%s = %s" % (delimitedField, str(aZone))
+                squery = f"{delimitedField} = {aZone}"
             else: # reporting unit id is a string - enclose it in single quotes for SQL expression
-                squery = "%s = '%s'" % (delimitedField, str(aZone))
+                squery = f"{delimitedField} = '{aZone}'"
 
             #Create a feature layer of the single reporting unit
             if arcpy.Exists("subwatersheds_Layer"):
@@ -896,7 +896,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
             arcpy.MakeFeatureLayer_management(inReportingUnitFeature,"subwatersheds_Layer",squery)
 
             #Set the geoprocessing extent to just the extent of the selected reporting unit
-            selectedRUName = "selectedRU_"+str(aZone)
+            selectedRUName = f"selectedRU_{aZone}"
             arcpy.CopyFeatures_management("subwatersheds_Layer", selectedRUName)
 
             #Tabulate areas of patches within single reporting unit
@@ -912,7 +912,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
 
             rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
             if rowcount == 0:
-                arcpy.AddWarning("No land cover grid data found in " + str(aZone))
+                AddMsg(f"No land cover grid data found in {aZone}", 1)
 
             else:
                 #Loop through each row in the table and calculate the patch metrics 
@@ -937,7 +937,7 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                         excludedArea = 0
 
                     if len(patchAreaList) == 0:
-                        arcpy.AddWarning("No patches found in " + str(aZone))
+                        AddMsg(f"No patches found in {aZone}", 1)
 
                     else: 
                         numPatch = len(patchAreaList)

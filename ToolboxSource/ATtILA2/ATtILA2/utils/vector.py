@@ -651,7 +651,7 @@ def addCalculateField(inFeatures,fieldName,fieldType,calcExpression,codeBlock='#
     if not fieldList: # if the list of fields that exactly match the validated fieldname is empty, then add the field
         arcpyLog(arcpy.AddField_management, (inFeatures,fieldName, fieldType), 'arcpy.AddField_management', logFile)
     else: # Otherwise warn the user that the field will be recalculated.
-        AddMsg("The field {0} already exists in {1}, its values will be recalculated.".format(fieldName,inFeatures))
+        AddMsg(f"The field {fieldName} already exists in {inFeatures}, its values will be recalculated.")
     arcpyLog(arcpy.CalculateField_management, (inFeatures,fieldName,calcExpression,"PYTHON",codeBlock), 'arcpy.CalculateField_management', logFile)
     return fieldName   
 
@@ -700,7 +700,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
        
         #Select the Reporting Unit and the intersecting polygons in FinalPatch_poly_diss
         per = '[PER UNIT]'
-        AddMsg(f"{timer.now()} The following steps are performed for each reporting unit:", 0, logFile)    
+        AddMsg(f"{timer.now()} The following steps will be performed for each reporting unit:", 0, logFile)    
         AddMsg("\n---")
         AddMsg(f"{timer.now()} {per} 1) Create a feature layer of the reporting unit.", 0, logFile)
         AddMsg(f"{timer.now()} {per} 2) Select centroid points that are in the reporting unit layer.", 0, logFile)
@@ -717,6 +717,8 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         AddMsg(f"{timer.now()} {per}     d3) MDCP = sum(distList)/PWN", 0, logFile)
         AddMsg(f"{timer.now()} {per}     d3) PWON = numPatch - PWN", 0, logFile)
         AddMsg("---\n")
+        
+        AddMsg(f"{timer.now()} Starting calculations per reporting unit...", 0, logFile)
         
         for aZone in zoneAreaDict.keys():
             pwnCount = 0
