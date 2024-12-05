@@ -2303,7 +2303,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             log.arcpyLog(arcpy.CalculateField_management,(inCensusDataset,classField,1),"arcpy.CalculateField_management",logFile)
             
             # Perform population count calculation for the reporting unit
-            AddMsg(f"{timer.now()} Calculating population counts within reporting units. Intermediate: {basename(popTable_RU)}", 0, logFile)
+            AddMsg(f"{timer.now()} Calculating population within reporting units. Intermediate: {basename(popTable_RU)}", 0, logFile)
             calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,inCensusDataset,inPopField,
                                       classField,popTable_RU,metricConst,index,logFile)
         
@@ -2399,7 +2399,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # Calculate the percent population within floodplain
         vector.addCalculateField(outTable,metricConst.populationProportionFieldName,"DOUBLE",calcExpression,codeBlock,logFile)   
 
-        AddMsg(f"{timer.now()} Calculation complete")
+        AddMsg(f"{timer.now()} Calculation complete", 0, logFile)
         
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -2653,7 +2653,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             if arcpy.Exists("tempPoly"):
                 log.arcpyLog(arcpy.Delete_management,(tmpRasterPolygon), "arcpy.Delete_management", logFile)
                 
-            AddMsg(f"{timer.now()} Calculation complete for Class:{m.upper()}")
+            AddMsg(f"{timer.now()} Calculation complete for Class:{m.upper()}", 0, logFile)
             
         if logFile:
             AddMsg("Summarizing the ATtILA metric output table to log file", 0)
@@ -4272,8 +4272,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         popTable_RU = files.nameIntermediateFile([metricConst.popCntTableName,'Dataset'],cleanupList)
         
         ### Metric Calculation
-        AddMsg(f"{timer.now()} Calculating population within each reporting unit. Intermediate: {basename(popTable_RU)}", 0, logFile)        
-        
+                
         # tool gui does not have a snapRaster parameter. When the census dataset is a raster, the snapRaster will
         # be set to the census raster. To record this correctly in the log file, set up the snapRaster variable.
         snapRaster = None
@@ -4281,6 +4280,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         ## if census data are a raster
         if descCensus.datasetType == "RasterDataset":
+            AddMsg(f"{timer.now()} Setting the environment snap raster and processing cell size to match {basename(inCensusDataset)}.", 0, logFile)
             # set the raster environments so the raster operations align with the census grid cell boundaries
             env.snapRaster = inCensusDataset
             env.cellSize = descCensus.meanCellWidth
@@ -4290,6 +4290,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             processingCellSize = str(descCensus.meanCellWidth)
         
             # calculate the population for the reporting unit using zonal statistics as table
+            AddMsg(f"{timer.now()} Calculating population within each reporting unit. Intermediate: {basename(popTable_RU)}", 0, logFile)        
             log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_RU, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
         
             # Rename the population count field.
@@ -4299,19 +4300,18 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             # Set variables for the zone population calculations
             index = 1
             popTable_ZN = files.nameIntermediateFile([metricConst.popCntTableName,'Dataset'],cleanupList)
-        
-        
+            
+            AddMsg(f"{timer.now()} Preparing for zonal population calculations.", 0, logFile)
             ## if zone data are raster and groupByZoneYN is True then we convert zones to polygon
             if descZone.datasetType == "RasterDataset" and groupByZoneYN == 'true':
                 
                 # Convert the Raster zones to Polygon
-                AddMsg(f"{timer.now()} Setting 0 value cells in {descZone.basename} to NoData")
+                AddMsg(f"{timer.now()} Setting 0 value cells in {descZone.basename} to NoData.", 0, logFile)
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
                 whereClause = f"{delimitedVALUE} = 0"
                 nullGrid = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, inZoneDataset, whereClause), 'arcpy.sa.SetNull', logFile)  
                 tempName = f"{metricConst.shortName}_{descZone.baseName}_Poly_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                
                 
                 # This may fail if a polygon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
                 maxVertices = 250000
@@ -4324,60 +4324,48 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 
                 inZoneDataset = tempPolygonFeature
-                
-                ###-DE Just replaced the inZoneDataset. Need a new describe object
                 descZone = arcpy.Describe(inZoneDataset)
-                
-                ###-DE when converting an Integer grid to a polygon using the Value field, the name of the Value field changes to 'gridcode' in the polygon feature
                 zoneIdField = 'gridcode'
             
             
             if descZone.datasetType == "RasterDataset":
                 # Use SetNull to eliminate non-zone areas and to replace the in-zone cells with values from the 
                 # PopulationRaster. The snap raster, and cell size have already been set to match the census raster
-                AddMsg(f"{timer.now()} Setting non-zone areas to NULL", 0, logFile)
+                AddMsg(f"{timer.now()} Setting non-zone areas to NULL. Replace zone areas with population values.", 0, logFile)
                 delimitedVALUE = arcpy.AddFieldDelimiters(inZoneDataset,"VALUE")
                 whereClause = delimitedVALUE+" = 0"
                 inCensusDataset = log.arcpyLog(arcpy.sa.SetNull, (inZoneDataset, inCensusDataset, whereClause), 'arcpy.sa.SetNull', logFile)
         
                 if globalConstants.intermediateName in processed:
-                    namePrefix = f"{metricConst.zonePopName}_"
-                    scratchName = arcpy.CreateScratchName(namePrefix, "", "RasterDataset")
+                    scratchName = arcpy.CreateScratchName(metricConst.zonePopName, "", "RasterDataset")
                     inCensusDataset.save(scratchName)
                     AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}", 0, logFile)
                     
-                AddMsg(f"{timer.now()} Calculating population for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
+                AddMsg(f"{timer.now()} Calculating population within zones for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                 log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
         
-        
             else: # zone feature is a polygon
-                # Assign the reporting unit ID to intersecting zone polygon segments using Identity
-        
-                ## If groupby, then dissolve by zoneIdField
-                if  groupByZoneYN == "true":
-                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
-                    tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
+                # Replace the inZoneDataset with a dissolved copy
+                tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
+                tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
+                
+                if  groupByZoneYN == "true": # then dissolve by zoneIdField
                     AddMsg(f"{timer.now()} Dissolving {basename(inZoneDataset)} by Zone ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
-                    arcpy.management.Dissolve(inZoneDataset, tempDissolveFeature, zoneIdField)
+                    log.arcpyLog(arcpy.management.Dissolve, (inZoneDataset, tempDissolveFeature, zoneIdField), "arcpy.management.Dissolve", logFile)
         
-                ## Else dissolve all
-                else:
-                    tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
-                    tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
+                else: # dissolve all
                     AddMsg(f"{timer.now()} Dissolving all zone features. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     log.arcpyLog(arcpy.management.Dissolve, (inZoneDataset, tempDissolveFeature), 'arcpy.management.Dissolve', logFile)
         
                 inZoneDataset = tempDissolveFeature
-        
+                
+                # Assign the reporting unit ID to intersecting zone polygon segments using Identity
                 tempName = f"{metricConst.shortName}_{fileNameBase}_Identity_"
                 tempPolygonFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 AddMsg(f"{timer.now()} Assigning reporting unit IDs to intersecting zone features. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                 log.arcpyLog(arcpy.Identity_analysis, (inZoneDataset, inReportingUnitFeature, tempPolygonFeature), 'arcpy.Identity_analysis', logFile)
         
                 inReportingUnitFeature = tempPolygonFeature
-        
-        
-                AddMsg(f"{timer.now()} Calculating population within zones for each reporting unit", 0, logFile)
             
                 # calculate the population for the reporting unit using zonal statistics as table
                 # The snap raster, and cell size have been set to match the census raster
@@ -4403,24 +4391,26 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     calcExpression = f'int(!{currentOID}!)'
                     log.arcpyLog(arcpy.CalculateField_management, (inReportingUnitFeature, tempOID, calcExpression, "PYTHON3", "", 'TEXT'), 'arcpy.CalculateField_management', logFile)  
             
-                    AddMsg(f"{timer.now()} Calculating population within zone areas for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
+                    AddMsg(f"{timer.now()} Using ZonalStatisticsAsTable for final population counts. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                     log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, tempOID, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
+                    
+                    AddMsg(f"{timer.now()} Attaching reporting unit ID field to {basename(popTable_ZN)}.", 0, logFile)
                     log.arcpyLog(arcpy.JoinField_management, (popTable_ZN, tempOID, inReportingUnitFeature, tempOID, [reportingUnitIdField, zoneIdField]), 'arcpy.JoinField_management', logFile)
-            
+                    AddMsg(f"{timer.now()} Joining reporting unit population table ({basename(popTable_RU)}) to the zone population table ({basename(popTable_ZN)}).", 0, logFile)
                     log.arcpyLog(arcpy.JoinField_management, (popTable_ZN, reportingUnitIdField, popTable_RU, reportingUnitIdField, popCntFields[0]), 'arcpy.JoinField_management', logFile)
                     popTable_RU = popTable_ZN
                 else:
-                    AddMsg(f"{timer.now()} Calculating population for each reporting unit. Intermediate: {basename(popTable_ZN)}", 0, logFile)
+                    AddMsg(f"{timer.now()} Using ZonalStatisticsAsTable for final population counts. Intermediate: {basename(popTable_ZN)}", 0, logFile)
                     log.arcpyLog(arcpy.sa.ZonalStatisticsAsTable, (inReportingUnitFeature, reportingUnitIdField, inCensusDataset, popTable_ZN, "DATA", "SUM"), 'arcpy.sa.ZonalStatisticsAsTable', logFile)
         
             # Rename the population count field.
             outPopField = metricConst.populationCountFieldNames[index]
             log.arcpyLog(arcpy.AlterField_management, (popTable_ZN, "SUM", outPopField, outPopField), 'arcpy.AlterField_management', logFile)
         
-        ### End census features are raster ###
+            ### End census features are raster ###
         
         else: # census features are polygons
-        
+            
             # Create a copy of the census feature class that we can add new fields to for calculations.
             fieldMappings = arcpy.FieldMappings()
             fieldMappings.addTable(inCensusDataset)
@@ -4438,7 +4428,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             log.arcpyLog(arcpy.CalculateField_management, (inCensusDataset,classField,1), 'arcpy.CalculateField_management', logFile)
         
             # Perform population count calculation for the reporting unit
-            AddMsg(f"{timer.now()} Calculating population counts within reporting units. Intermediate: {basename(popTable_RU)}", 0, logFile)
+            AddMsg(f"{timer.now()} Calculating population within reporting units. Intermediate: {basename(popTable_RU)}", 0, logFile)
             calculate.getPolygonPopCount(inReportingUnitFeature,reportingUnitIdField,inCensusDataset,inPopField,classField,popTable_RU,metricConst,index, logFile)
         
             # Set variables for the zone population calculations   
@@ -4446,6 +4436,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
             popTable_ZN = files.nameIntermediateFile([metricConst.popCntTableName,'Dataset'],cleanupList)
         
+            AddMsg(f"{timer.now()} Preparing for zonal population calculations.", 0, logFile)
             ## If zone is a raster and census is a polygon we convert zones to polygon
             ## If zone dataset is raster
             if descZone.datasetType == "RasterDataset":
@@ -4459,42 +4450,19 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
                 # This may fail if a polygon created is too large. Need a routine to more elegantly reduce the maxVertices in any one polygon
                 maxVertices = 250000
-                AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature. Intermediate {basename(tempPolygonFeature)}", 0, logFile)
+                AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                 try:
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 except:
-                    AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature with maximum vertices technique. Intermediate {basename(tempPolygonFeature)}", 0, logFile)
+                    AddMsg(f"{timer.now()} Converting non-zero cells in {descZone.basename} to a polygon feature with maximum vertices technique. Intermediate: {basename(tempPolygonFeature)}", 0, logFile)
                     maxVertices = maxVertices / 2
                     log.arcpyLog(arcpy.RasterToPolygon_conversion, (nullGrid,tempPolygonFeature,"NO_SIMPLIFY","VALUE","",maxVertices), 'arcpy.RasterToPolygon_conversion', logFile)
                 
                 inZoneDataset = tempPolygonFeature
-                ###-DE Just replaced the inZoneDataset. Need a new describe object
                 descZone = arcpy.Describe(inZoneDataset)
-                
-                ###-DE when converting an Integer grid to a polygon using the Value field, the name of the Value field changes to 'gridcode' in the polygon feature
                 zoneIdField = 'gridcode'
         
             else: # zone input is a polygon dataset
-                # Create a copy of the zone feature class that we can add new fields to for calculations.
-                # To reduce operation overhead and disk space, keep only the first field of the zone feature and the zone Id field if one is provided
-                fieldMappings = arcpy.FieldMappings()
-                fieldMappings.addTable(inZoneDataset)
-                zoneFields = [fieldMappings.fields[0].name]
-                if groupByZoneYN == "true":
-                    zoneFields.append(zoneIdField)
-                    
-                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
-        
-                tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
-                tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                
-                AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
-                log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
-                
-                inZoneDataset = tempZoneinFeature
-                
-                fileNameBase = descZone.baseName
-        
                 ## If groupby, then dissolve by zoneIDField
                 if  groupByZoneYN == "true":
                     tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_Dissolve_"
@@ -4565,7 +4533,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         
         # Build and populate final output table.
-        AddMsg(f"{timer.now()} Calculating the percent of the population that is within a zone for each reporting unit", 0, logFile)
+        AddMsg(f"{timer.now()} Calculating the percent of the reporting unit population that is within a zone.", 0, logFile)
         
         fieldMappings = arcpy.FieldMappings()
         fieldMappings.addTable(popTable_RU)
@@ -4630,7 +4598,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         # Calculate the percent population within zone        
         vector.addCalculateField(outTable,metricConst.populationProportionFieldName + suffix, "FLOAT", calcExpression, codeBlock, logFile)   
         
-        AddMsg(f"{timer.now()} Calculation complete")
+        AddMsg(f"{timer.now()} Calculation complete", 0, logFile)
         
         # check for NULL values in output table
         num_NULL = 0
