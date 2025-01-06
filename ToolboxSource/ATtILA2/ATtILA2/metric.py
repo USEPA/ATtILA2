@@ -1127,7 +1127,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                     self.inReportingUnitFeature = log.arcpyLog(arcpy.Dissolve_management, (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), "arcpy.Dissolve_management", logFile)
                     
                 # Generate a default filename for the buffer feature class
-                self.bufferName = "%s_Buffer%s_" % (self.metricConst.shortName, self.inBufferDistance.replace(" ",""))
+                self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
                 
                 # Generate the buffer area to use in the metric calculation
                 if enforceBoundary == "true":
@@ -4238,22 +4238,23 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             bufferDistanceVal = 0
         
         elif bufferDistanceVal == 0:
+            pass # no need to create a copy; not altering the input feature class or its attribute table.
             
-            fieldMappings = arcpy.FieldMappings()
-            fieldMappings.addTable(inZoneDataset)
-            zoneFields = [fieldMappings.fields[0].name]
-            if groupByZoneYN == "true":
-                zoneFields.append(zoneIdField)
-                
-            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
-        
-            tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
-            tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        
-            AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
-            log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
-        
-            inZoneDataset = tempZoneinFeature
+            # fieldMappings = arcpy.FieldMappings()
+            # fieldMappings.addTable(inZoneDataset)
+            # zoneFields = [fieldMappings.fields[0].name]
+            # if groupByZoneYN == "true":
+            #     zoneFields.append(zoneIdField)
+            #
+            # [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
+            #
+            # tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
+            # tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
+            #
+            # AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
+            # log.arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
+            #
+            # inZoneDataset = tempZoneinFeature
         
         else:
             # Change the buffer distance to an integer if appropriate. This reduces the output field name string length by eliminating '_0'.
@@ -4552,7 +4553,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         if groupByZoneYN == "" or groupByZoneYN == 'false':
             # Construct a list of fields to retain in the output metrics table
             keepFields = metricConst.populationCountFieldNames
-            keepFields.append(reportingUnitIdField)
+            #keepFields.append(reportingUnitIdField) # the ID field gets repeated multiple times in output table when this line is executed
             
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
         

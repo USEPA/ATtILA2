@@ -110,7 +110,7 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
             arcpyLog(arcpy.Delete_management, (bufferedFeatures), "arcpy.Delete_management", logFile)
         except:
             pass
-      
+
 
 def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, unitID, cleanupList, timer, logFile):
     """Returns a feature class that contains only those portions of each reporting unit that are within a buffered 
@@ -170,12 +170,12 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 inFC = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion, (inFC, env.workspace, basename(copyFCName)), "arcpy.FeatureClassToFeatureClass_conversion", logFile)
                 inFCDesc = arcpy.Describe(inFC)
                 inFCName = inFCDesc.baseName
-            else:
-                inFCName = f"{toolShortName}_{inFCDesc.baseName}"
+
+            inFCNamePrefix = f"{toolShortName}_{inFCName}"
             
             # Start by intersecting the input features and the reporting units 
-            firstIntersectionName = files.nameIntermediateFile([f"{inFCName}_intersect_","FeatureClass"], cleanupList)
-            AddMsg(f"{timer.now()} Intersecting {inFCDesc.baseName} and reporting units: {basename(firstIntersectionName)}", 0, logFile)
+            firstIntersectionName = files.nameIntermediateFile([f"{inFCNamePrefix}_intersect_","FeatureClass"], cleanupList)
+            AddMsg(f"{timer.now()} Intersecting {inFCName} and reporting units. Intermediate: {basename(firstIntersectionName)}", 0, logFile)
             
             # If Parallel Processing Factor environment setting is enabled and there is no intersecting features between
             # the reporting units and the stream feature, the Intersect operation will fail. Skip to the next stream feature
@@ -212,9 +212,9 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 arcpyLog(arcpy.CalculateField_management, (intersectResult,newUnitID,arcpy.AddFieldDelimiters(intersectResult,unitID)), "arcpy.CalculateField_management", logFile)
 
             # Buffer these in-memory selected features and merge the output into multipart features by reporting unit ID
-            bufferPrefix = f"{inFCName}_buffer_"
+            bufferPrefix = f"{inFCNamePrefix}_buffer_"
             bufferName = files.nameIntermediateFile([bufferPrefix,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Buffering intersected features: {basename(bufferName)}", 0, logFile)
+            AddMsg(f"{timer.now()} Buffering intersected features. Intermediate: {basename(bufferName)}", 0, logFile)
             
             # If the input features are polygons, we need to erase the the input polygons from the buffer output
             inGeom = inFCDesc.shapeType
@@ -226,40 +226,55 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 sysExecutable = arcpy.glob.os.path.basename(arcpy.sys.executable)
                 if licenseLevel in ["AlreadyInitialized","Available"] or sysExecutable.upper() == "PYTHON.EXE":
                     bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                    AddMsg("{0} Repairing buffer areas for input areal features.".format(timer.now()), 0, logFile)
+                    AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
                     arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
                 else:
                     bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                    AddMsg("{0} Repairing buffer areas for input areal features.".format(timer.now()), 0, logFile)
+                    AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
                     arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
-                    bufferErase = files.nameIntermediateFile([f"{inFCName}_bufferErase_","FeatureClass"],cleanupList)
-                    AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas: {basename(bufferErase)}", 0, logFile)
+                    bufferErase = files.nameIntermediateFile([f"{inFCNamePrefix}_bufferErase_","FeatureClass"],cleanupList)
+                    AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas. Intermediate: {basename(bufferErase)}", 0, logFile)
                     newBufferFeatures = arcpyLog(arcpy.Erase_analysis, (bufferResult,inFC,bufferErase), "arcpy.Erase_analysis", logFile)
                     bufferResult = newBufferFeatures
             else:
                 bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                AddMsg("{0} Repairing buffer areas for input linear features.".format(timer.now()), 0, logFile)
+                AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.", 0, logFile)
                 arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
             
             
             # Intersect the buffers with the reporting units
-            secondIntersectionName = files.nameIntermediateFile([f"{inFCName}_2ndintersect_","FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Intersecting buffer features and reporting units: {basename(secondIntersectionName)}", 0, logFile)
+            secondIntersectionName = files.nameIntermediateFile([f"{inFCNamePrefix}_2ndintersect_","FeatureClass"],cleanupList)
+            AddMsg(f"{timer.now()} Intersecting buffer features and reporting units. Intermediate: {basename(secondIntersectionName)}", 0, logFile)
             secondIntersectResult = arcpyLog(arcpy.Intersect_analysis, ([repUnits,bufferResult],secondIntersectionName,"ALL","","INPUT"), "arcpy.Intersect_analysis", logFile)            
+
+            # # Select only those intersected features whose reporting unit IDs match 
+            # # This ensures that buffer areas that fall outside of the input feature's reporting unit are excluded
+            # if len(inFeaturesList) > 1:
+            #     finalOutputName = files.nameIntermediateFile([inFCNamePrefix+"_final_","FeatureClass"],cleanupList)
+            # else: 
+            #     finalOutputName = outFeatures # If this is the only one, it's already named.
+            #
+            # AddMsg(f"{timer.now()} Trimming buffer zones to reporting unit boundaries. Intermediate: {basename(finalOutputName)}", 0, logFile)    
+            # whereClause = arcpy.AddFieldDelimiters(secondIntersectResult,unitID) + " = " + arcpy.AddFieldDelimiters(secondIntersectResult,newUnitID)
+            # finalOutput = arcpyLog(arcpy.MakeFeatureLayer_management, (secondIntersectResult,finalOutputName,whereClause), "arcpy.MakeFeatureLayer_management", logFile)
+            #
+            # # keep track of list of outputs.  
+            # outputList.append(finalOutput)
+
 
             # Select only those intersected features whose reporting unit IDs match 
             # This ensures that buffer areas that fall outside of the input feature's reporting unit are excluded
             AddMsg(f"{timer.now()} Trimming buffer zones to reporting unit boundaries", 0, logFile)
             whereClause = arcpy.AddFieldDelimiters(secondIntersectResult,unitID) + " = " + arcpy.AddFieldDelimiters(secondIntersectResult,newUnitID)
             matchingBuffers = arcpyLog(arcpy.MakeFeatureLayer_management, (secondIntersectResult,"matchingBuffers",whereClause), "arcpy.MakeFeatureLayer_management", logFile)
-
+            
             # Dissolve those by reporting Unit ID.  
             if len(inFeaturesList) > 1:
-                finalOutputName = files.nameIntermediateFile([inFCName+"_final_","FeatureClass"],cleanupList)
+                finalOutputName = files.nameIntermediateFile([inFCNamePrefix+"_final_","FeatureClass"],cleanupList)
             else: 
                 finalOutputName = outFeatures # If this is the only one, it's already named.
             
-            AddMsg(f"{timer.now()} Dissolving second intersection by reporting unit: {basename(finalOutputName)}", 0, logFile)
+            AddMsg(f"{timer.now()} Dissolving second intersection by reporting unit. Intermediate: {basename(finalOutputName)}", 0, logFile)
             finalOutput = arcpyLog(arcpy.Dissolve_management, (matchingBuffers,finalOutputName,unitID), "arcpy.Dissolve_management", logFile)
             
             # Clean up the feature layer selection for the next iteration.
@@ -271,12 +286,12 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
         # merge and dissolve buffer features from all input feature classes into a single feature class.
         if len(outputList) > 1:
             mergeName = files.nameIntermediateFile([f"{toolShortName}_merge_","FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Merging buffer zones from all input Stream features: {basename(mergeName)}", 0, logFile)
+            AddMsg(f"{timer.now()} Merging buffer zones from all input Stream features. Intermediate: {basename(mergeName)}", 0, logFile)
             mergeOutput = arcpyLog(arcpy.Merge_management, (outputList,mergeName), "arcpy.Merge_management", logFile)
-            AddMsg(f"{timer.now()} Dissolving merged buffer zones: {basename(outFeatures)}", 0, logFile)
+            AddMsg(f"{timer.now()} Dissolving merged buffer zones. Intermediate: {basename(outFeatures)}", 0, logFile)
             finalOutput = arcpyLog(arcpy.Dissolve_management, (mergeOutput,outFeatures,unitID), "arcpy.Dissolve_management", logFile)
             # If any of the input features are polygons, we need to perform a final erase of the interior of these polygons from the output.
-            AddMsg("{0} Removing interior waterbody areas from dissolve result.".format(timer.now()), 0, logFile)
+            AddMsg(f"{timer.now()} Removing interior waterbody areas from dissolve result.", 0, logFile)
             if len(eraseList) > 0:
                 #  Merge all eraseFeatures so we only have to do this once.
                 eraseName = files.nameIntermediateFile([f"{toolShortName}_erasePolygons_","FeatureClass"],cleanupList)
@@ -356,12 +371,12 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
             if inFCDesc.shapeType == "Polygon":
                 eraseList.append(inFC)
             
-            inFCName = toolShortName+"_"+inFCDesc.baseName 
+            inFCNamePrefix = toolShortName+"_"+inFCDesc.baseName 
             
             # Buffer these features and merge the outputs
-            namePrefix = inFCName+"_Buffer_"
+            namePrefix = inFCNamePrefix+"_Buffer_"
             bufferName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Buffering selected features: {basename(bufferName)}", 0, logFile)
+            AddMsg(f"{timer.now()} Buffering selected features. Intermediate: {basename(bufferName)}", 0, logFile)
             
             # If the input features are polygons, we need to erase the the input polygons from the buffer output
             inGeom = inFCDesc.shapeType
@@ -386,22 +401,22 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
             
             # remove the temporary stream layer
             arcpyLog(arcpy.Delete_management, (inFeatureLayer), "arcpy.Delete_management", logFile)
-        
-        # Create a copy of the identity feature class that we can add new fields to for calculations.
-        fieldMappings = arcpy.FieldMappings()
-        fieldMappings.addTable(bufferResult)
-        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != "BUFF_DIST"]
-        
+
+                
         # merge buffer features from all input feature classes into a single feature class.
         # Even if there is only one input, the merge will create a copy of the buffer theme without any unnecessary fields.
         # It is essentially a FeatureClassToFeatureClass operation with fieldMappings.
+        fieldMappings = arcpy.FieldMappings()
+        fieldMappings.addTable(bufferResult)
+        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != "BUFF_DIST"]
+
         namePrefix = toolShortName+"_Merge_"
         mergeName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
         
         if len(inFeaturesList) > 1:
-            AddMsg(f"{timer.now()} Merging buffer zones from all input Stream features: {basename(mergeName)}", 0, logFile)
+            AddMsg(f"{timer.now()} Merging buffer zones from all input Stream features. Intermediate: {basename(mergeName)}", 0, logFile)
         else:
-            AddMsg(f"{timer.now()} Removing unnecessary fields from buffered feature: {basename(mergeName)}", 0, logFile)
+            AddMsg(f"{timer.now()} Removing unnecessary fields from buffered feature. Intermediate: {basename(mergeName)}", 0, logFile)
         
         mergeOutput = arcpyLog(arcpy.Merge_management, (mergeList,mergeName,fieldMappings), "arcpy.Merge_management", logFile)
 
@@ -410,7 +425,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
         # to eliminate buffer areas outside of the reporting unit boundaries
         namePrefix = toolShortName+"_Intersect_"
         intersectName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Assigning Reporting unit ID values to buffer zones: {basename(intersectName)}", 0, logFile)
+        AddMsg(f"{timer.now()} Assigning Reporting unit ID values to buffer zones. Intermediate: {basename(intersectName)}", 0, logFile)
         intersectFeatureClass = arcpyLog(arcpy.Intersect_analysis, ([repUnits,mergeOutput],intersectName,"ALL","","INPUT"), "arcpy.Intersect_analysis", logFile) 
         
         if len(eraseList) > 0:
@@ -420,14 +435,14 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
                 #  Merge all eraseFeatures so we only have to do this once.
                 namePrefix = toolShortName+"_ErasePolygons_"
                 erasePolygonsName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-                AddMsg(f"{timer.now()} Creating a single erase feature from all polygon Stream features: {basename(erasePolygonsName)}", 0, logFile)
+                AddMsg(f"{timer.now()} Creating a single erase feature from all polygon Stream features. Intermediate: {basename(erasePolygonsName)}", 0, logFile)
                 eraseFeatureClass = arcpyLog(arcpy.Merge_management, (eraseList, erasePolygonsName), "arcpy.Merge_management", logFile)
             else:
                 eraseFeatureClass = eraseList[0]
 
             namePrefix = toolShortName+"_Erase_"
             erasedOutputName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Removing interior waterbody areas from buffer result: {basename(erasedOutputName)}", 0, logFile) 
+            AddMsg(f"{timer.now()} Removing interior waterbody areas from buffer result. Intermediate: {basename(erasedOutputName)}", 0, logFile) 
     
             try:
                 erasedOutput = arcpyLog(arcpy.Erase_analysis, (intersectFeatureClass, eraseFeatureClass, erasedOutputName), "arcpy.Erase_analysis", logFile)
