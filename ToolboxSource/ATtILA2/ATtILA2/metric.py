@@ -4553,12 +4553,11 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         if groupByZoneYN == "" or groupByZoneYN == 'false':
             # Construct a list of fields to retain in the output metrics table
             keepFields = metricConst.populationCountFieldNames
-            #keepFields.append(reportingUnitIdField) # the ID field gets repeated multiple times in output table when this line is executed
-            
+            keepFields.append(reportingUnitIdField)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
         
             log.arcpyLog(arcpy.TableToTable_conversion, (popTable_RU,os.path.dirname(outTable),basename(outTable),"",fieldMappings), 'arcpy.TableToTable_conversion', logFile)
-        
+            
             # Compile a list of fields that will be transferred from the zone population table into the output table
             fromFields = [popCntFields[index]]
             toFields = [popCntFields[index] + suffix]
@@ -4570,9 +4569,22 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             keepFields = [zoneIdField, reportingUnitIdField] + metricConst.populationCountFieldNames
         
             newFieldMap = arcpy.FieldMappings()
+            
+            # A phenomena occurs when the PWZM tool is run first with the Group by option unchecked and then run again with the 
+            # Group by option checked; the output table for the second run will have multiple listings for the reportingUnitIdField 
+            # when this occurs. If the pattern is repeated, more and more reporting unit id fields will be added to the Group by 
+            # output table. The following is a brute force fix. Additional time may result in determining the exact cause.
+            addIdField = True
+
             for f in keepFields:
                 i = fieldMappings.findFieldMapIndex(f)
-                newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
+                if f == reportingUnitIdField and addIdField == True:
+                    newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
+                    addIdField = False
+                elif f == reportingUnitIdField and addIdField == False:
+                    continue
+                else:
+                    newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
         
         
             log.arcpyLog(arcpy.TableToTable_conversion, (popTable_RU,os.path.dirname(outTable),basename(outTable), "", newFieldMap), 'arcpy.TableToTable_conversion', logFile)
