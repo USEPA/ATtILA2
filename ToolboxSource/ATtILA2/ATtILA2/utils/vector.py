@@ -211,36 +211,62 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                 # Copy the field values from the old to the new field
                 arcpyLog(arcpy.CalculateField_management, (intersectResult,newUnitID,arcpy.AddFieldDelimiters(intersectResult,unitID)), "arcpy.CalculateField_management", logFile)
 
-            # Buffer these in-memory selected features and merge the output into multipart features by reporting unit ID
-            bufferPrefix = f"{inFCNamePrefix}_buffer_"
-            bufferName = files.nameIntermediateFile([bufferPrefix,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Buffering intersected features. Intermediate: {basename(bufferName)}", 0, logFile)
-            
-            # If the input features are polygons, we need to erase the the input polygons from the buffer output
-            inGeom = inFCDesc.shapeType
-            if inGeom == "Polygon":
-                # When we buffer polygons, we want to exclude the area of the polygon itself.  This can be done using the 
-                # "OUTSIDE_ONLY" option in the buffer tool, but that is only available with an advanced license.  Check for
-                # the right license level, revert to buffer/erase option if it's not available.
-                licenseLevel = arcpy.CheckProduct("ArcInfo")
-                sysExecutable = arcpy.glob.os.path.basename(arcpy.sys.executable)
-                if licenseLevel in ["AlreadyInitialized","Available"] or sysExecutable.upper() == "PYTHON.EXE":
-                    bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                    AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
-                    arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
+            try:
+                # Buffer these in-memory selected features and merge the output into multipart features by reporting unit ID
+                bufferPrefix = f"{inFCNamePrefix}_buffer_"
+                bufferName = files.nameIntermediateFile([bufferPrefix,"FeatureClass"],cleanupList)
+                AddMsg(f"{timer.now()} Buffering intersected features. Intermediate: {basename(bufferName)}", 0, logFile)
+                
+                # If the input features are polygons, we need to erase the the input polygons from the buffer output
+                inGeom = inFCDesc.shapeType
+                if inGeom == "Polygon":
+                    # When we buffer polygons, we want to exclude the area of the polygon itself.  This can be done using the 
+                    # "OUTSIDE_ONLY" option in the buffer tool, but that is only available with an advanced license.  Check for
+                    # the right license level, revert to buffer/erase option if it's not available.
+                    licenseLevel = arcpy.CheckProduct("ArcInfo")
+                    sysExecutable = arcpy.glob.os.path.basename(arcpy.sys.executable)
+                    if licenseLevel in ["AlreadyInitialized","Available"] or sysExecutable.upper() == "PYTHON.EXE":
+                        bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
+                        AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
+                        arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
+                    else:
+                        bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
+                        AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
+                        arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
+                        bufferErase = files.nameIntermediateFile([f"{inFCNamePrefix}_bufferErase_","FeatureClass"],cleanupList)
+                        AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas. Intermediate: {basename(bufferErase)}", 0, logFile)
+                        newBufferFeatures = arcpyLog(arcpy.Erase_analysis, (bufferResult,inFC,bufferErase), "arcpy.Erase_analysis", logFile)
+                        bufferResult = newBufferFeatures
                 else:
                     bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                    AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
+                    AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.", 0, logFile)
                     arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
-                    bufferErase = files.nameIntermediateFile([f"{inFCNamePrefix}_bufferErase_","FeatureClass"],cleanupList)
-                    AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas. Intermediate: {basename(bufferErase)}", 0, logFile)
-                    newBufferFeatures = arcpyLog(arcpy.Erase_analysis, (bufferResult,inFC,bufferErase), "arcpy.Erase_analysis", logFile)
-                    bufferResult = newBufferFeatures
-            else:
-                bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
-                AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.", 0, logFile)
-                arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
-            
+            except:
+                AddMsg(f"{timer.now()} BUFFER FAILED: Repairing geometry for {basename(firstIntersectionName)} and trying buffer again.", 0, logFile)
+                arcpyLog(arcpy.management.RepairGeometry, (intersectResult), "arcpy.management.RepairGeometry", logFile)
+
+                inGeom = inFCDesc.shapeType
+                if inGeom == "Polygon":
+                    # When we buffer polygons, we want to exclude the area of the polygon itself.  This can be done using the 
+                    # "OUTSIDE_ONLY" option in the buffer tool, but that is only available with an advanced license.  Check for
+                    # the right license level, revert to buffer/erase option if it's not available.
+                    licenseLevel = arcpy.CheckProduct("ArcInfo")
+                    if licenseLevel in ["AlreadyInitialized","Available"]:
+                        bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
+                        AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
+                        arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
+                    else:
+                        bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
+                        AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
+                        arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
+                        bufferErase = files.nameIntermediateFile([f"{inFCName}_bufferErase_","FeatureClass"],cleanupList)
+                        AddMsg(f"{timer.now()} Erasing polygon areas from buffer areas: {basename(bufferErase)}", 0, logFile)
+                        newBufferFeatures = arcpyLog(arcpy.Erase_analysis, (bufferResult,inFC,bufferErase), "arcpy.Erase_analysis", logFile)
+                        bufferResult = newBufferFeatures
+                else:
+                    bufferResult = arcpyLog(arcpy.Buffer_analysis, (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), "arcpy.Buffer_analysis", logFile)
+                    AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.".format(timer.now()), 0, logFile)
+                    arcpyLog(arcpy.RepairGeometry_management, (bufferResult), "arcpy.RepairGeometry_management", logFile)
             
             # Intersect the buffers with the reporting units
             secondIntersectionName = files.nameIntermediateFile([f"{inFCNamePrefix}_2ndintersect_","FeatureClass"],cleanupList)

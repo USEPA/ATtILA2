@@ -572,7 +572,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
             # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
             lccValuesDict = flcpCalc.lccObj.values
             # Get the grid values for the input land cover grid
-            landCoverValues = raster.getRasterValues(inLandCoverGrid)
+            landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
             # get the list of excluded values that are found in the input land cover raster
             excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
             
@@ -1175,7 +1175,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
             # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
             lccValuesDict = rlcpCalc.lccObj.values
             # Get the grid values for the input land cover grid
-            landCoverValues = raster.getRasterValues(inLandCoverGrid)
+            landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
             # get the list of excluded values that are found in the input land cover raster
             excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
             
@@ -1320,7 +1320,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
             # Get the lccObj values dictionary to determine if a grid code is to be included in the effective reporting unit area total    
             lccValuesDict = splcpCalc.lccObj.values
             # Get the grid values for the input land cover grid
-            landCoverValues = raster.getRasterValues(inLandCoverGrid)
+            landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
             # get the list of excluded values that are found in the input land cover raster
             excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
             
@@ -2477,7 +2477,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
         lccValuesDict = lccObj.values
         # create a list of all the grid values in the selected land cover grid
-        landCoverValues = raster.getRasterValues(inLandCoverGrid)
+        landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
 
@@ -2924,7 +2924,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
         lccValuesDict = lccObj.values
         # create a list of all the grid values in the selected land cover grid
-        landCoverValues = raster.getRasterValues(inLandCoverGrid)
+        landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
         excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
                 
@@ -3804,7 +3804,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
             AddMsg("Clean up complete")
 
 
-def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups):
+def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, chkAllRdsYN, outWorkspace, fnPrefix, optionalFieldGroups):
     """ Process Roads for EnviroAtlas Analyses
     
         This script is associated with an ArcToolbox script tool.
@@ -3829,7 +3829,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         metricConst = metricConstants.prfeaConstants()
         
         # copy input parameters to pass to the log file routine
-        parametersList = [toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
+        parametersList = [toolPath, versionName, inStreetsgdb, chkWalkableYN, chkIntDensYN, chkIACYN, chkAllRdsYN, outWorkspace, fnPrefix, optionalFieldGroups] #check this last one with logfile in the tool
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace+"\\"+fnPrefix, toolPath) #toolPath?
         
@@ -4109,6 +4109,27 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                         
             intermediateList.append(value0FCName)
             addToActiveMap.append(iacFC)
+        
+        
+        if chkAllRdsYN == "true":
+            AddMsg(f"{timer.now()} Processing all roads.", 0, logFile)
+            AllRdsFCName = f"{fnPrefix}{metricConst.outNameRoadsAllRds}{ext}"
+
+            if chkWalkableYN == "true" or chkIntDensYN == "true" or chkIACYN == "true":
+            # this is probably unnecessary, but it makes sure everything is reset
+                AddMsg(f"{timer.now()} Clearing and resetting selections for {inputStreets}.")
+                log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'CLEAR_SELECTION'), 'arcpy.SelectLayerByAttribute_management', logFile)
+
+            whereClause = metricConst.AllRdsSelectDict[versionName]
+            AllRdsMsg = metricConst.AllRdsMsgDict[versionName]
+
+                
+            log.arcpyLog(arcpy.SelectLayerByAttribute_management, (streetLayer, 'NEW_SELECTION', whereClause, "INVERT"), 'arcpy.SelectLayerByAttribute_management', logFile)
+            AddMsg(f"{timer.now()} {AllRdsMsg}", 0, logFile)
+
+            AddMsg(f"{timer.now()} Saving selected features to: {AllRdsFCName}", 0, logFile)
+            AllRdsFC = log.arcpyLog(arcpy.CopyFeatures_management, (streetLayer, AllRdsFCName), 'arcpy.CopyFeatures_management', logFile)
+            addToActiveMap.append(AllRdsFC)
             
         if logFile:
             log.writeEnvironments(logFile, None, None, extentList=[inputStreets])
@@ -4825,7 +4846,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
 #        lccValuesDict = lccObj.values
         # create a list of all the grid values in the selected land cover grid
-#        landCoverValues = raster.getRasterValues(inLandCoverGrid)
+#        landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
 #        excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
         
@@ -5028,7 +5049,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
 #         # Get the lccObj values dictionary. This contains all the properties of each value specified in the Land Cover Classification XML    
 # #        lccValuesDict = lccObj.values
 #         # create a list of all the grid values in the selected land cover grid
-# #        landCoverValues = raster.getRasterValues(inLandCoverGrid)
+# #        landCoverValues = raster.getRasterValues(inLandCoverGrid, logFile)
 #         # get the frozenset of excluded values (i.e., values marked as EXCLUDED in the Land Cover Classification XML)
 # #        excludedValuesList = lccValuesDict.getExcludedValueIds().intersection(landCoverValues)
 #

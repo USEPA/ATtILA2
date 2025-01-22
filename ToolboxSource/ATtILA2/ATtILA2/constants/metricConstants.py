@@ -672,6 +672,7 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
     outNameRoadsWalkable = "_RdsWalkable" 
     outNameRoadsIntDens = "_RdsIntDens"
     outNameRoadsIAC = "_RdsIAC"
+    outNameRoadsAllRds = "_AllRds"
     value0_LANES = "IAC_Lanes" 
      
     typeCodesString = "'AIRPORT',"\
@@ -722,6 +723,18 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
         "NAVTEQ 2011": "FUNC_CLASS IN ('1','2') Or FERRY_TYPE <> 'H' Or SPEED_CAT IN ('1', '2', '3') Or AR_PEDEST = 'N' Or RAMP = 'Y' Or CONTRACC = 'Y' Or TOLLWAY ='Y'"
         }
     
+    AllRdsSelectDict = {
+        "ESRI StreetMap": "RestrictCars = 'Y' And RestrictBuses = 'Y' And RestrictTaxis = 'Y' And RestrictDeliveries = 'Y' And RestrictTrucks = 'Y' And RestrictCarpools = 'Y' And RestrictEmergencies = 'Y' And RestrictMotorcycles = 'Y' Or FerryType <> 'H'",
+        "NAVTEQ 2019": "RestrictCars = 'Y' And RestrictBuses = 'Y' And RestrictTaxis = 'Y' And RestrictDeliveries = 'Y' And RestrictTrucks = 'Y' And RestrictCarpools = 'Y' And RestrictEmergencies = 'Y' And RestrictMotorcycles = 'Y' Or FerryType <> 'H'", 
+        "NAVTEQ 2011": "AR_AUTO = 'N' And AR_BUS = 'N' And AR_TAXIS = 'N' And AR_DELIV = 'N' And AR_TRUCKS = 'N' And AR_CARPOOL = 'N' And AR_EMERVEH = 'N' And AR_MOTOR = 'N' Or FERRY_TYPE <> 'H'"   
+    }
+
+    AllRdsMsgDict = {
+        "ESRI StreetMap": "Selecting and removing features where RestrictCars = Y And RestrictBuses = Y And RestrictTaxis = Y And RestrictDeliveries = Y And RestrictTrucks = Y And RestrictCarpools = Y And RestrictEmergencies = Y And RestrictMotorcycles = Y And FerryType <> H",
+        "NAVTEQ 2019": "Selecting and removing features where RestrictCars = Y And RestrictBuses = Y And RestrictTaxis = Y And RestrictDeliveries = Y And RestrictTrucks = Y And RestrictCarpools = Y And RestrictEmergencies = Y And RestrictMotorcycles = Y And FerryType <> H", 
+        "NAVTEQ 2011": "Selecting and removing features where AR_AUTO = N And AR_BUS = N And AR_TAXIS = N And AR_DELIV = N And AR_TRUCKS = N And AR_CARPOOL = N And AR_EMERVEH = N And AR_MOTOR = N Or FERRY_TYPE <> H"
+    }
+    
     walkMsgDict = {
         "ESRI StreetMap": "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'",
         "NAVTEQ 2019": "Selecting and removing features where FuncClass < 3; SpeedCat < 4; RestrictPedestrians = 'Y'; FerryType <> 'H'; Ramp = 'Y'; ContrAcc = 'Y'; TollWay = 'Y'",
@@ -765,6 +778,7 @@ class prfeaConstants(baseMetricConstants): #Process All Streets (NAVTEQ 2011, NA
         gc.chkWalkableYN,
         gc.chkIntDensYN,
         gc.chkIACYN,
+        gc.chkAllRdsYN,
         gc.outWorkspace,
         gc.fnPrefix,
         gc.optionalFieldGroups

@@ -54,7 +54,7 @@ def getIdOutField(inFeature, inField):
 def checkGridValuesInLCC(inLandCoverGrid, lccObj, logFile, ignoreHighest=False):
     """ Checks input grid values. Warns user if values are undefined in LCC XML file. """
 
-    gridValuesList = raster.getRasterValues(inLandCoverGrid)
+    gridValuesList = raster.getRasterValues(inLandCoverGrid, logFile)
     
     if ignoreHighest:
         gridValuesList.sort()

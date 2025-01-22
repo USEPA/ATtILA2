@@ -12,6 +12,9 @@ import arcpy as _arcpy
 from arcpy.sa.Functions import CreateConstantRaster
 from . import files
 from .log import arcpyLog
+from ATtILA2.datetimeutil import DateTimer
+
+timer = DateTimer()
 
 
 def getRasterPointFromRowColumn(raster, row, column):
@@ -56,7 +59,7 @@ def getRasterPointFromRowColumn(raster, row, column):
     return point
 
 
-def getRasterValues(inRaster):
+def getRasterValues(inRaster, logFile=None):
     """Utility for creating a python list of values from a raster's VALUE field.
     
     ** Description: **
@@ -75,23 +78,29 @@ def getRasterValues(inRaster):
         
     """
     
-    # warn user if input land cover grid has values not defined in LCC file
-    rows = _arcpy.SearchCursor(inRaster) 
-
-    valuesList = []
-    for row in rows:
-        valuesList.append(row.getValue("VALUE"))
-
-    del row
-    del rows
-        
-    return valuesList
-
-    ### New Method
-    # valueList = [row[0] for row in arcpy.da.SearchCursor(inRaster, ['Value'])]
-    # return valueList
+    # Build an attribute table for the inRaster if it is missing one
+    tmpRaster = Raster(inRaster)
+    if tmpRaster.hasRAT == False:
+        AddMsg(f"{timer.now()} Building attribute table for {basename(inRaster)}.")
+        arcpyLog(arcpy.management.BuildRasterAttributeTable, (inRaster), "arcpy.management.BuildRasterAttributeTable", logFile)
     
-## end of the code copied from pylet-master\pylet\arcpyutil\raster.py
+    # Step through the attribute table and gather all values in a list    
+    
+    ## Old Method
+    # rows = _arcpy.SearchCursor(inRaster) 
+    #
+    # valuesList = []
+    # for row in rows:
+    #     valuesList.append(row.getValue("VALUE"))
+    #
+    # del row
+    # del rows
+    #
+    # return valuesList
+
+    ## New Method
+    valueList = [row[0] for row in arcpy.da.SearchCursor(inRaster, ['Value'])]
+    return valueList
 
 
 def splitRasterYN(inRaster, maxSide):
@@ -313,7 +322,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     lccValuesDict = lccObj.values
     
     #landCoverValues = raster.getRasterValues(inLandCoverGrid)
-    landCoverValues = getRasterValues(inLandCoverGrid)
+    landCoverValues = getRasterValues(inLandCoverGrid, logFile)
 
     # get the grid codes for this specified metric
     classValuesList = lccClassesDict[m].uniqueValueIds.intersection(landCoverValues)
@@ -366,7 +375,7 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
 def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, maxSeparation, minPatchSize, 
                       timer, scratchNameReference, logFile):
     # create a list of all the grid values in the selected landcover grid
-    landCoverValues = getRasterValues(inLandCoverGrid)
+    landCoverValues = getRasterValues(inLandCoverGrid, logFile)
     
     # for the selected land cover class, get the class codes found in the input landcover grid
     lccValuesDict = lccObj.values
