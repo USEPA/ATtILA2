@@ -5,11 +5,17 @@ errorLookup = {
 'ERROR 010092':'''You have an invalid output extent.  This error can occur in the following circumstances:
   1) Some input datasets do not overlap
   2) The extent in your environment settings does not overlap the input datasets
-  3) Another extent related issue\n'''}
+  3) Another extent related issue\n''', 
+  
+'ERROR 002836': '''This error can occur when geometry errors are present in an input dataset. 
+We recommend running 'Repair Geometry' on the inputs and trying again. \n'''
+  }
 
 errorCommentPrefix = "Error Comments:\n---------------\n"
 errorDetailsPrefix = "\nError Details:\n--------------\n"
-errorUnknown = "Unexpected Error"
+errorUnknown = '''Unknown Error. More assistance may be available in the ESRI error documentation or on ATtILA's webpage (https://github.com/USEPA/ATtILA2/wiki/Troubleshooting)
+Please report details to: https://ecomments.epa.gov/enviroatlas/ and include 'ATtILA' in the subject line.'''
+
 
 linearUnitConversionError = '''Unable to determine conversion factor necessary to convert output linear units to metric units.
 

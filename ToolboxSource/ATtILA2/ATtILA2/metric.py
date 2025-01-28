@@ -65,8 +65,10 @@ class metricCalc:
             AddMsg("Processing cell size and the cell size for the input Land cover grid are not equal. "\
                    "For the most accurate results, it is highly recommended to use the cell size of the input Land cover grid as the Processing cell size.", 1, self.logFile)
         
-        # Run the setup
+        # # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        # raster.buildRAT(inLandCoverGrid, self.logFile)
         
+        # Run the setup
         self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                  os.path.dirname(outTable),
                                                                                  [metricsToRun,optionalFieldGroups])
@@ -213,7 +215,7 @@ def runLandCoverProportionsORIGINAL(inReportingUnitFeature, reportingUnitIdField
         # Run Calculation
         lcpCalc.run()
     except Exception as e:
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore()
@@ -233,6 +235,9 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
                           outTable, perCapitaYN, inCensusDataset, inPopField, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None.
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # Create new subclass of metric calculation
         class metricCalcLCP(metricCalc):        
@@ -334,7 +339,7 @@ def runLandCoverProportions(toolPath, inReportingUnitFeature, reportingUnitIdFie
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not lcpCalc.cleanupList[0] == "KeepIntermediates":
@@ -362,6 +367,9 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
                           inSlopeGrid, inSlopeThresholdValue, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # # This block of code can be used if we want to change the Slope Threshold input to a double parameter type
         # # If we do that, we'd also have to change the tool validation property to comment out the inZeroAndAboveIntegerIndex = 7 line 
@@ -429,7 +437,7 @@ def runLandCoverOnSlopeProportions(toolPath, inReportingUnitFeature, reportingUn
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -454,6 +462,9 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
                           inFloodplainGeodataset, outTable, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
           
         #If clipLCGrid is selected, clip the input raster to the extent of the reporting unit theme or the to the extent
         #of the selected reporting unit(s). If the metric is susceptible to edge-effects (e.g., core and edge metrics, 
@@ -615,7 +626,7 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
  
     finally:
         if not flcpCalc.cleanupList[0] == "KeepIntermediates":
@@ -648,6 +659,9 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
                           inPatchSize, inMaxSeparation, outTable, mdcpYN, processingCellSize, snapRaster, optionalFieldGroups, clipLCGrid]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         AddMsg(f"{timer.start()} Setting up initial environment variables", 0, logFile)
         
@@ -870,7 +884,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -923,6 +937,9 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         lccClassesDict = lccObj.classes
         
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
                 
         # alert user if the LCC XML document has any values within a class definition that are also tagged as 'excluded' in the values node.
         settings.checkExcludedValuesInClass(metricsBaseNameList, lccObj, lccClassesDict, logFile)
@@ -1079,7 +1096,7 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -1102,6 +1119,9 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                           inStreamFeatures, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
@@ -1215,7 +1235,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not rlcpCalc.cleanupList[0] == "KeepIntermediates":
@@ -1242,6 +1262,9 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                           ruLinkField, inBufferDistance, enforceBoundary, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # append the buffer distance value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + inBufferDistance.split()[0]
@@ -1368,7 +1391,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not splcpCalc.cleanupList[0] == "KeepIntermediates":
@@ -1394,6 +1417,9 @@ def runLandCoverCoefficientCalculator(toolPath, inReportingUnitFeature, reportin
                           metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # Create new LCC metric calculation subclass
         class metricCalcLCC(metricCalc):
@@ -1442,7 +1468,7 @@ def runLandCoverCoefficientCalculator(toolPath, inReportingUnitFeature, reportin
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -1685,7 +1711,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not cleanupList[0] == "KeepIntermediates":
@@ -1846,7 +1872,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
         
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not cleanupList[0] == "KeepIntermediates":
@@ -1986,6 +2012,9 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
+        
         metricsToRun = metricConst.fixedMetricsToRun
         
         lcdCalc = metricLCDCalc(inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, metricsToRun, outTable, 
@@ -1999,7 +2028,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -2128,7 +2157,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not cleanupList[0] == "KeepIntermediates":
@@ -2423,7 +2452,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         if not cleanupList[0] == "KeepIntermediates":
@@ -2463,6 +2492,9 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
                           minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
          
@@ -2586,7 +2618,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             if transformMethod != "":
                 tmpRasterPolygon = log.arcpyLog(arcpy.conversion.RasterToPolygon,(viewGrid,"tempPoly","NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None),"arcpy.conversion.RasterToPolygon",logFile)
                 log.arcpyLog(arcpy.Project_management,("tempPoly",viewPolygonFeature,spatialCensus,transformMethod),"arcpy.Project_management",logFile)
-                log.arcpyLog(arcpy.Delete_management,(tmpRasterPolygon),"arcpy.Delete_management",logFile)
+                log.arcpyLog(arcpy.Delete_management,(tmpRasterPolygon,),"arcpy.Delete_management",logFile)
             else:
                 log.arcpyLog(arcpy.conversion.RasterToPolygon,(viewGrid,viewPolygonFeature,"NO_SIMPLIFY","Value","SINGLE_OUTER_PART",None),"arcpy.conversion.RasterToPolygon",logFile)
             
@@ -2651,7 +2683,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
            
             # delete temporary features
             if arcpy.Exists("tempPoly"):
-                log.arcpyLog(arcpy.Delete_management,(tmpRasterPolygon), "arcpy.Delete_management", logFile)
+                log.arcpyLog(arcpy.Delete_management,(tmpRasterPolygon,), "arcpy.Delete_management", logFile)
                 
             AddMsg(f"{timer.now()} Calculation complete for Class:{m.upper()}", 0, logFile)
             
@@ -2680,7 +2712,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
  
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -2704,6 +2736,9 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                           inFacilityFeature, viewRadius, viewThreshold, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # append the view threshold value to the field suffix
         metricConst.fieldParameters[1] = metricConst.fieldSuffix + viewThreshold
@@ -2876,7 +2911,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
  
     finally:
         if not flcvCalc.cleanupList[0] == "KeepIntermediates":
@@ -2907,6 +2942,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         # create a log file if requested, otherwise logFile = None
         outTable = os.path.join(str(outWorkspace), metricConst.name)
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         ### Initialization
         # Start the timer
@@ -3147,7 +3185,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -3334,7 +3372,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
  
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -3499,7 +3537,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
     
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
     
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -3791,7 +3829,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
 
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         arcpy.Delete_management("in_memory")
@@ -4152,7 +4190,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
  
     finally:
 
@@ -4669,7 +4707,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
     
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
     
     finally:
         if not cleanupList[0] == "KeepIntermediates":
@@ -4790,7 +4828,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
                 
-        errors.standardErrorHandling(e)       
+        errors.standardErrorHandling(e, logFile)       
 
     finally:
         
@@ -4826,6 +4864,9 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
                           laneWidth, laneDistFld, bufferDist, removeLinesYN, cutoffLength, overWrite, outWorkspace,  processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outWorkspace, toolPath)
+        
+        # Check to see if the inLandCoverGrid has an attribute table. If not, build one
+        raster.buildRAT(inLandCoverGrid, logFile)
         
         # create a list of input themes to find the intersection extent
         if logFile:
@@ -5011,7 +5052,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             logFile.write("Python Traceback Message below:")
             logFile.write(traceback.format_exc())
             
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
  
     finally:
         setupAndRestore.standardRestore(logFile)
@@ -5080,7 +5121,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
 #
 #
 #     except Exception as e:
-#         errors.standardErrorHandling(e)
+#         errors.standardErrorHandling(e, logFile)
 #
 #     finally:
 #         setupAndRestore.standardRestore()

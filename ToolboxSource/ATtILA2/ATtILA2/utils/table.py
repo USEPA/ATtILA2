@@ -177,7 +177,7 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
         return outTable, outValueField
 
     except Exception as e:
-        errors.standardErrorHandling(e)
+        errors.standardErrorHandling(e, logFile)
 
     finally:
         env.snapRaster = tempEnvironment0

@@ -7,6 +7,12 @@ import arcpy
 import sys
 import traceback
 
+#new imports
+from .utils import log
+from .utils import messages
+from .utils.messages import AddMsg
+
+
 class attilaException(Exception):
     """ Custom exception """
 
@@ -21,7 +27,7 @@ def getErrorComments(e):
     return errorConstants.errorUnknown
 
 
-def standardErrorHandling(exception):
+def standardErrorHandling(exception, logFile=None):
     
     errorComments = ''
     
@@ -44,7 +50,8 @@ def standardErrorHandling(exception):
         msg = errorConstants.errorDetailsPrefix + tbinfo
         
     # Return python error messages for use in script tool
-    arcpy.AddError(msg)
+    AddMsg(f"{msg}", 2, logFile)
+    #arcpy.AddError(msg)
     
     # From ESRI's example, maybe this will return scripting errors?
     if not arcpy.GetMessages(2) == "":

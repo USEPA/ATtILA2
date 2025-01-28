@@ -17,6 +17,18 @@ from ATtILA2.datetimeutil import DateTimer
 timer = DateTimer()
 
 
+def buildRAT(inRaster, logFile=None):
+    # inRaster is the catalog path to an integer raster
+    inRasterObj = Raster(inRaster)
+    
+    # Build an attribute table for the inRaster if it is missing one
+    if inRasterObj.hasRAT == False:
+        AddMsg(f"{timer.now()} Building attribute table for {inRasterObj.name}.", 0, logFile)
+        arcpyLog(arcpy.management.BuildRasterAttributeTable, (inRaster, "NONE"), "arcpy.management.BuildRasterAttributeTable", logFile)
+
+    return inRasterObj.hasRAT
+
+
 def getRasterPointFromRowColumn(raster, row, column):
     """ Get an arcpy `Point`_ object from an arcpy `Raster`_ object and zero based row and column indexes.
 
@@ -78,29 +90,21 @@ def getRasterValues(inRaster, logFile=None):
         
     """
     
-    # Build an attribute table for the inRaster if it is missing one
-    tmpRaster = Raster(inRaster)
-    if tmpRaster.hasRAT == False:
-        AddMsg(f"{timer.now()} Building attribute table for {basename(inRaster)}.")
-        arcpyLog(arcpy.management.BuildRasterAttributeTable, (inRaster), "arcpy.management.BuildRasterAttributeTable", logFile)
-    
     # Step through the attribute table and gather all values in a list    
+    rows = _arcpy.SearchCursor(inRaster) 
     
-    ## Old Method
-    # rows = _arcpy.SearchCursor(inRaster) 
-    #
-    # valuesList = []
-    # for row in rows:
-    #     valuesList.append(row.getValue("VALUE"))
-    #
-    # del row
-    # del rows
-    #
-    # return valuesList
+    valuesList = []
+    for row in rows:
+        valuesList.append(row.getValue("VALUE"))
+    
+    del row
+    del rows
+    
+    return valuesList
 
-    ## New Method
-    valueList = [row[0] for row in arcpy.da.SearchCursor(inRaster, ['Value'])]
-    return valueList
+    # ## New Method
+    # valueList = [row[0] for row in arcpy.da.SearchCursor(inRaster, ['Value'])]
+    # return valueList
 
 
 def splitRasterYN(inRaster, maxSide):
