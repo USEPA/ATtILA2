@@ -2,9 +2,11 @@
 
 <p>
   <a href="https://www.epa.gov/enviroatlas/attila-toolbox" target="_blank">
-    <img width="800" src="/USEPA/ATtILA2/wiki/ATtILA2help/lib/ATtILA_EnviroAtlasGraphicHiRes.png" title="https://www.epa.gov/enviroatlas/attila-toolbox" url="https://www.epa.gov/enviroatlas/attila-toolbox">
+    <img width="800" src="https://github.com/USEPA/ATtILA2/wiki/ATtILA2help/lib/ATtILA_EnviroAtlasGraphicHiRes.png" title="https://www.epa.gov/enviroatlas/attila-toolbox" url="https://www.epa.gov/enviroatlas/attila-toolbox">
   </a>
 </p>
+
+[<img src="https://enviroatlas.epa.gov/enviroatlas/interactivemap/images/logo.png"     title="EnviroAtlas" width=400 >](https://www.epa.gov/enviroatlas)
 
 ## Overview
 
