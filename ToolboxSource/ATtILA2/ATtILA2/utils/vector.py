@@ -242,7 +242,7 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.", 0, logFile)
                     arcpyLog(arcpy.RepairGeometry_management, (bufferResult,), "arcpy.RepairGeometry_management", logFile)
             except:
-                AddMsg(f"{timer.now()} BUFFER FAILED: Repairing geometry for {basename(firstIntersectionName)} and trying buffer again.", 0, logFile)
+                AddMsg(f"{timer.now()} BUFFER FAILED: Repairing geometry for {basename(firstIntersectionName)} and trying buffer again.", 1, logFile)
                 arcpyLog(arcpy.management.RepairGeometry, (intersectResult,), "arcpy.management.RepairGeometry", logFile)
 
                 inGeom = inFCDesc.shapeType

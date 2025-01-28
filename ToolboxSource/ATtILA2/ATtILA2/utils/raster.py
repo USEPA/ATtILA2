@@ -21,10 +21,17 @@ def buildRAT(inRaster, logFile=None):
     # inRaster is the catalog path to an integer raster
     inRasterObj = Raster(inRaster)
     
+    statisticsList = inRasterObj.getStatistics()
+    
     # Build an attribute table for the inRaster if it is missing one
     if inRasterObj.hasRAT == False:
+        
         AddMsg(f"{timer.now()} Building attribute table for {inRasterObj.name}.", 0, logFile)
         arcpyLog(arcpy.management.BuildRasterAttributeTable, (inRaster, "NONE"), "arcpy.management.BuildRasterAttributeTable", logFile)
+        
+    if len(statisticsList) == 0:
+        AddMsg(f"{timer.now()} Calculating statistics for {inRasterObj.name}.", 0, logFile)
+        arcpyLog(arcpy.management.CalculateStatistics, (inRaster, ), "arcpy.management.CalculateStatistics", logFile)
 
     return inRasterObj.hasRAT
 

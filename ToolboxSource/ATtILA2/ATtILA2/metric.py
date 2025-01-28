@@ -57,7 +57,7 @@ class metricCalc:
               metricsToRun, outTable, processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile, ignoreHighest=False):
         self.timer = DateTimer()
         self.logFile = logFile
-        AddMsg(f"{self.timer.start()} Setting up environment variables", 0, self.logFile)
+        AddMsg(f"{self.timer.now()} Setting up environment variables", 0, self.logFile)
         
         # Check to see if the user has specified a Processing cell size other than the cell size of the inLandCoverGrid
         inLandCoverGridCellSize = Raster(inLandCoverGrid).meanCellWidth
@@ -215,7 +215,7 @@ def runLandCoverProportionsORIGINAL(inReportingUnitFeature, reportingUnitIdField
         # Run Calculation
         lcpCalc.run()
     except Exception as e:
-        errors.standardErrorHandling(e, logFile)
+        errors.standardErrorHandling(e)
 
     finally:
         setupAndRestore.standardRestore()
@@ -663,7 +663,7 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
         raster.buildRAT(inLandCoverGrid, logFile)
         
-        AddMsg(f"{timer.start()} Setting up initial environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up initial environment variables", 0, logFile)
         
         # index the reportingUnitIdField to speed query results
         ruIdIndex = "ruIdIndex_ATtILA"
@@ -1503,7 +1503,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             extentList = [inReportingUnitFeature, inRoadFeature, inStreamFeature]
         
         # Set the output workspace
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         _tempEnvironment4 = env.outputMFlag
@@ -1760,7 +1760,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             extentList = [inReportingUnitFeature, inLineFeature]
         
         # Set the output workspace
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         _tempEnvironment4 = env.outputMFlag
@@ -1907,7 +1907,7 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                          processingCellSize, snapRaster, optionalFieldGroups, metricConst, logFile):
                 self.timer = DateTimer()
                 self.logFile = logFile
-                AddMsg(f"{self.timer.start()} Setting up environment variables", 0, logFile)
+                AddMsg(f"{self.timer.now()} Setting up environment variables", 0, logFile)
                 
                 # Run the setup
                 self.metricsBaseNameList, self.optionalGroupsList = setupAndRestore.standardSetup(snapRaster, 
@@ -2061,7 +2061,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
             extentList = [inReportingUnitFeature, inCensusFeature, inCensusFeature2]
         
         # Set the output workspace
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         _tempEnvironment1 = env.workspace
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
         # Strip the description from the "additional option" and determine whether intermediates are stored.
@@ -2202,7 +2202,7 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         if logFile:
             extentList = [inReportingUnitFeature, inCensusDataset, inFloodplainDataset]
         
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         _tempEnvironment0 = env.snapRaster
         _tempEnvironment1 = env.workspace
         _tempEnvironment2 = env.cellSize
@@ -2496,7 +2496,7 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
         raster.buildRAT(inLandCoverGrid, logFile)
         
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
          
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster, processingCellSize,
                                                                                 os.path.dirname(outTable),
@@ -2949,7 +2949,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         processingCellSize = Raster(inLandCoverGrid).meanCellWidth
         snapRaster = inLandCoverGrid
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
@@ -3211,7 +3211,7 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         
         # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
         # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
@@ -3407,7 +3407,7 @@ def runCreateWalkabilityCostRaster(toolPath, inWalkFeatures, inImpassableFeature
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
     
         # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
         # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
@@ -3581,7 +3581,7 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
 
         # set up dummy variables to pass to standardSetup in setupAndRestore. SetupAndRestore will set the environmental
         # variables as desired and pass back the optionalGroupsList to use for intermediate products retention.
@@ -3899,7 +3899,7 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             actvMap = None
 
         # Set the environmental variables to desired condition 
-        AddMsg(f"{timer.start()} Setting up initial environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up initial environment variables", 0, logFile)
         
         # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
         currentFactor = str(env.parallelProcessingFactor)
@@ -4232,7 +4232,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         
         if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:
             _tempEnvironment0 = env.snapRaster
@@ -4738,7 +4738,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
         parametersList = [inReportingUnitFeature, reportingUnitIdField, inValueRaster, statisticsType, outTable, fieldPrefix, optionalFieldGroups]
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         timer = DateTimer() 
-        AddMsg(f"{timer.start()} Setting up environment variables", 0, logFile)
+        AddMsg(f"{timer.now()} Setting up environment variables", 0, logFile)
         # Ask Don about the environment set up. This is probably not the best way to do it.
         _tempEnvironment0 = env.snapRaster
         _tempEnvironment1 = env.workspace
@@ -4875,7 +4875,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         ### Initialization
         # Start the timer
         timer = DateTimer()
-        AddMsg(timer.start() + " Setting up environment variables")
+        AddMsg(timer.now() + " Setting up environment variables")
         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
                                                                                [metricsToRun,optionalFieldGroups], logFile,
                                                                                inRoadFeature)
@@ -5079,7 +5079,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
 #         ### Initialization
 #         # Start the timer
 #         timer = DateTimer()
-#         AddMsg(timer.start() + " Setting up environment variables")
+#         AddMsg(timer.now() + " Setting up environment variables")
 #         metricsBaseNameList, optionalGroupsList = setupAndRestore.standardSetup(snapRaster,processingCellSize,outWorkspace,
 #                                                                                [metricsToRun,optionalFieldGroups] )
 #

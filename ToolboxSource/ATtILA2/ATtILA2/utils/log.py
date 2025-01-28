@@ -8,8 +8,8 @@ from ATtILA2.constants import errorConstants
 from datetime import datetime
 from ATtILA2.datetimeutil import DateTimer
 from .messages import AddMsg
-import pandas
-from pandas import DataFrame
+# import pandas
+# from pandas import DataFrame
 from pandas.api.types import is_numeric_dtype
 from ATtILA2.utils import pandasutil
 
@@ -37,6 +37,8 @@ def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset, t
             logFile.write('SPECS: {0} ; {1} ; {2}\n\n'.format(infoATtILA, infoArcGIS, infoSystem))
             
             logFile.write('TOOL: {0} ; {1} ; {2}\n\n'.format(metricConst.name, metricConst.shortName.upper(), toolPath))
+            
+            logFile.write(f'Started: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
             
             # populate the log file by capturing the tool's parameters.
             labelsList = metricConst.parameterLabels
