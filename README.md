@@ -6,15 +6,33 @@
   </a>
 </p>
 
-[<img src="https://enviroatlas.epa.gov/enviroatlas/interactivemap/images/logo.png"     title="EnviroAtlas" width=400 >](https://www.epa.gov/enviroatlas)
+The information provided here is for the ATtILA for ArcGIS Pro v3.0 toolbox BETA version. The latest stable release is available at https://github.com/USEPA/ATtILA2/releases/tag/v2.0 or as a zipped file at https://www.epa.gov/enviroatlas/attila-toolbox. 
+
+For more information on the ATtILA for ArcGIS Pro toolbox, see our [wiki page](https://github.com/USEPA/ATtILA2/wiki), or [factsheet](https://www.epa.gov/system/files/documents/2023-05/Attilatoolsets.pdf).
+
 
 ## Overview
 
-ATtILA for ArcGIS Pro is an Esri ArcGIS toolbox that allows users to easily calculate many common landscape metrics. GIS expertise is not required, but some experience with ArcGIS is recommended. Three metric groups (toolsets) are currently included in ATtILA: [Landscape Characteristics](<v3_Landscape-Characteristics>), [People in the Landscape](<v3_People-in-the-Landscape>), and [Riparian Characteristics](<v3_Riparian-Characteristics>), along with a [Utilities](<v3_Utilities>) section. ATtILA for ArcGIS Pro is written using the Python programming language and is designed to accommodate spatial data from a variety of sources.
+ATtILA for ArcGIS Pro is an Esri ArcGIS toolbox that allows users to easily calculate many common landscape metrics. GIS expertise is not required, but some experience with ArcGIS is recommended. Three metric groups (toolsets) are currently included in ATtILA: [Landscape Characteristics](https://github.com/USEPA/ATtILA2/wiki/v3_Landscape-Characteristics), [People in the Landscape](https://github.com/USEPA/ATtILA2/wiki/v3_People-in-the-Landscape), and [Riparian Characteristics](https://github.com/USEPA/ATtILA2/wiki/v3_Riparian-Characteristics), along with a [Utilities](https://github.com/USEPA/ATtILA2/wiki/v3_Utilities) section. ATtILA for ArcGIS Pro is written using the Python programming language and is designed to accommodate spatial data from a variety of sources.
 
-Download the latest version here: https://github.com/USEPA/ATtILA2/releases or as a zipped file at https://www.epa.gov/enviroatlas/attila-toolbox.  
 
-***
+
+## Requirements
+
+The ATtILA for ArcGIS Pro toolbox was developed for ArcGIS Pro 2.9 or later. It has been tested on versions up to 3.3
+
+The Spatial Analyst or 3D Analyst extensions are required.
+
+
+
+## Installation
+
+The ATtILA for ArcGIS Pro toolbox can be added to a new or existing ArcGIS Pro project.
+
+[https://pro.arcgis.com/en/pro-app/help/analysis/geoprocessing/basics/use-a-custom-geoprocessing-tool.htm](https://pro.arcgis.com/en/pro-app/help/analysis/geoprocessing/basics/use-a-custom-geoprocessing-tool.htm)
+
+
+
 
 ## Contact
 
@@ -23,11 +41,11 @@ Office of Research and Development
 Durham, NC 27709  
 https://ecomments.epa.gov/enviroatlas/  
 
-***
+
 
 ## Credits 
 
-Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (former EPA), Baohong Ji (former Woolpert), and Torrin Hultgren (GDIT), with special assistance from Ellen D'Amico (EPA), Doug Browning (former EPA Student Services Contractor), Allison Killea (former Student Services Contractor), and Jacob Tafrate (EPA ORISE Participant).
+Python code for ATtILA was written by Don Ebert (EPA), Michael Jackson (former EPA), Baohong Ji (former Woolpert), and Torrin Hultgren (GDIT), with special assistance from Ellen D'Amico (EPA), Doug Browning (former EPA Student Services Contractor), Allison Killea (former Student Services Contractor), and Jacob Tafrate (ORAU Student Services Contractor).
 
 David Gottlieb (former EPA Student Services Contractor) wrote the code for the Land Cover Coding Editor.
 
@@ -53,7 +71,7 @@ Molly Jenkins (EPA ORISE Participant), Brittany Jackson (EPA Student Services Co
 
 Jeremy Baynes (EPA), Barbara Rosenbaum (Woolpert), Anne Neale (EPA), Laura Jackson (former EPA), Megan Culler (EPA ORISE Participant), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (former Student Services Contractor), Taylor Minich (EPA), James Wickham (EPA), Megan Mehaffey (EPA), and Torrin Hultgren (GDIT) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.   
 
-***
+
 
 ## License
 
@@ -67,14 +85,9 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
 
-***
+
 
 ## EPA Disclaimer  
 
 *The United States Environmental Protection Agency (EPA) GitHub project code is provided on an "as is" basis and the user assumes responsibility for its use. EPA has relinquished control of the information and no longer has responsibility to protect the integrity, confidentiality, or availability of the information. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA. The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.*
 
-***
-[![arrow_up](/USEPA/ATtILA2/wiki/ATtILA2help/lib/arrow_up.png "Top of the page") Top of the page][Page Top] &nbsp; &nbsp; | &nbsp; &nbsp;  [![arrow_right](/USEPA/ATtILA2/wiki/ATtILA2help/lib/arrow_right.png "Next page") Installing ATtILA][Next]
-***
-[Page Top]: #analytical-tools-interface-for-landscape-assessments-attila
-[Next]: <v3_Installing-ATtILA>
