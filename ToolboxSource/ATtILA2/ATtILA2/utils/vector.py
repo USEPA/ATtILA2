@@ -107,7 +107,7 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
             # Clean up the search cursor object
             del Rows
             # Delete the temporary buffered features layer from the scratch workspace.  
-            arcpyLog(arcpy.Delete_management, (bufferedFeatures,), "arcpy.Delete_management", logFile)
+            arcpy.Delete_management(bufferedFeatures)
         except:
             pass
 

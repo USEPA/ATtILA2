@@ -29,6 +29,8 @@ def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset, t
         logFile = createLogFile(outDataset, logTimeStamp)
         
         if logFile:
+            logFile.write(f'Started: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
+            
             # start the log file by capturing ATtILA, ArcGIS, and System information
             infoATtILA = '{0} v{1}'.format(globalConstants.titleATtILA, globalConstants.attilaVersion)
             arcInstall = arcpy.GetInstallInfo()
@@ -38,11 +40,11 @@ def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset, t
             
             logFile.write('TOOL: {0} ; {1} ; {2}\n\n'.format(metricConst.name, metricConst.shortName.upper(), toolPath))
             
-            logFile.write(f'Started: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
-            
             # populate the log file by capturing the tool's parameters.
             labelsList = metricConst.parameterLabels
             logWriteParameters(logFile, parametersList, labelsList, metricConst)
+            
+            logFile.write('PROCESSING STEPS:\n\n')
     else:
         logFile = None
     
@@ -263,11 +265,25 @@ def logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst):
 def logWriteParameters(logFile, parametersList, labelsList, metricConst):
     ''' Write tool parameter inputs to log file. '''
     
-    # Begin the Parameters section with a formated script that captures all of the parameters used for
+    # Begin the Parameters section with a list of tool parameters formatted as:
+    # 'PARAMETER: label = value' (e.g., PARAMETER: Reporting unit feature = Watersheds)
+    for l, p in zip(labelsList, parametersList):
+        if p:
+            p = p.replace("'"," ")
+            # strip off any directory path information from the filename
+            x = p.rfind('\\')
+            if x != -1: p = p[x+1:]
+            
+            if l != globalConstants.toolScriptPath: # do not include toolPath in the PARAMETERS section
+                logFile.write(f'PARAMETER: {l} = {p}\n')
+    
+    logFile.write('\n')
+    
+    # Finish the Parameters section with a formated script that captures all of the parameters used for
     # the current tool run. The formating will include all of the necessary import statements, the variable 
     # assignments, and the command to launch the tool
     
-    logFile.write('SCRIPT START:\n')
+    logFile.write('SAMPLE PYTHON SCRIPT:\n')
     
     # to neatly format the script with the variables listed in a comma-delimited column under the tool function
     # line, we need to know how far to indent the variables. Construct a string of spaces to pad the left side of the
@@ -316,23 +332,8 @@ def logWriteParameters(logFile, parametersList, labelsList, metricConst):
     
     logFile.write(f'{metricConst.toolFUNC}(\n{variableCommaString}\n{padding}) \n\n')
     
-    logFile.write('SCRIPT END:\n\n')
+    logFile.write('SAMPLE PYTHON SCRIPT END:\n\n')
     
-    
-    # Finish the Parameters section with a list of tool parameters formatted as:
-    # 'PARAMETER: label = value' (e.g., PARAMETER: Reporting unit feature = Watersheds)
-    for l, p in zip(labelsList, parametersList):
-        if p:
-            p = p.replace("'"," ")
-            # strip off any directory path information from the filename
-            x = p.rfind('\\')
-            if x != -1: p = p[x+1:]
-            
-            if l != globalConstants.toolScriptPath: # do not include toolPath in the PARAMETERS section
-                logFile.write(f'PARAMETER: {l} = {p}\n')
-    
-    logFile.write('\n')
-
 
 def arcpyLog(function, arguments, fxStr, logFile, logOnly=True):
     """ Performs an ArcPy function and writes its syntax as a string to tool history/details and/or a log file.

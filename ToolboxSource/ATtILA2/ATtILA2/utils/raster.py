@@ -585,8 +585,8 @@ def getPatchViewGrid(m, classValuesList, excludedValuesList, inLandCoverGrid, la
         categoryDict = {0: "Other", 1: m}
         updateCategoryLabels(patchGrid, categoryDict)
         
-    else:
-        AddMsg("ViewPatch grid not saved")
+    # else:
+    #     AddMsg("ViewPatch grid not saved")
             
     return viewGrid
 
