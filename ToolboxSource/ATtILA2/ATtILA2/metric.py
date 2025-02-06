@@ -4434,7 +4434,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     ## Dissolve Identity features by zoneIdField, reportingUnitIdField
                     tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_IdentityDissolve_"
                     tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                    AddMsg(f"{timer.now()} Dissolving Identity features by Zone ID field and Reporting unit field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
+                    AddMsg(f"{timer.now()} Dissolving Identity features by Zone ID field and Reporting unit ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                     log.arcpyLog(arcpy.management.Dissolve, (inReportingUnitFeature, tempDissolveFeature, [zoneIdField, reportingUnitIdField]), 'arcpy.management.Dissolve', logFile)
             
                     inReportingUnitFeature = tempDissolveFeature
@@ -4561,7 +4561,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 ## Dissolve Identity features by zoneIdField, reportingUnitIdField
                 tempDissolveName = f"{metricConst.shortName}_{fileNameBase}_IdentityDissolve_"
                 tempDissolveFeature = files.nameIntermediateFile([tempDissolveName,"FeatureClass"],cleanupList)
-                AddMsg(f"{timer.now()} Dissolving {basename(tempPolygonFeature)} by Zone ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
+                AddMsg(f"{timer.now()} Dissolving {basename(tempPolygonFeature)} by Zone ID field and Reporting unit ID field. Intermediate: {basename(tempDissolveFeature)}", 0, logFile)
                 log.arcpyLog(arcpy.management.Dissolve, (tempPolygonFeature, tempDissolveFeature, [zoneIdField, reportingUnitIdField]), 'arcpy.management.Dissolve', logFile)
         
                 tempPolygonFeature = tempDissolveFeature
