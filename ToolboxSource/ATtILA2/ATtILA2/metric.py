@@ -3142,8 +3142,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 # instead of the saved raster name (e.g., Reclass_NI_91 instead of NI_9_Zone0). The technique below appears
                 # to alleviate that problem without adding substantial time to the reclassification operation.
                 nbrZoneGrid = (Reclassify(proximityGrid, "VALUE", rngRemap) * 1)
-                # capture the reclass operation to the log file. The usual arcpyLog technique won't work
-                logFile.write(f'{timer.now()}   [CMD] (Reclassify({proximityGridName}, VALUE, {rngRemap}) * 1)\n')
+                if logFile:
+                    # capture the reclass operation to the log file. The usual arcpyLog technique won't work
+                    logFile.write(f'{timer.now()}   [CMD] (Reclassify({proximityGridName}, VALUE, {rngRemap}) * 1)\n')
                 namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxZoneRaserOutName}"
                 if overWrite == "false":
                     namePrefix = f"{namePrefix}_"
@@ -3340,8 +3341,9 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
         # raster is added to a map, the layer name is displayed in the TOC instead. Multiplying the result by 1  
         # appears to alleviate that problem without adding substantial time to the overall operation.
         den = (arcpy.sa.KernelDensity(intersectFeatureName, "NONE", int(cellSize), int(searchRadius), areaUnits) * 1)
-        # capture the operation to the log file. The usual arcpyLog technique won't work
-        logFile.write(f'{timer.now()}   [CMD] (arcpy.sa.KernelDensity({intersectFeatureName}, "NONE", int({cellSize}), int({searchRadius}), areaUnits) * 1) * 1)\n')
+        if logFile:
+            # capture the operation to the log file. The usual arcpyLog technique won't work
+            logFile.write(f'{timer.now()}   [CMD] (arcpy.sa.KernelDensity({intersectFeatureName}, "NONE", int({cellSize}), int({searchRadius}), areaUnits) * 1) * 1)\n')
 
         # Save the kernel density raster
         den.save(outRaster)
