@@ -375,3 +375,50 @@ def arcpyLog(function, arguments, fxStr, logFile, logOnly=True):
             AddMsg('{0} {1}{2}'.format(timer.now(), fxStr, paramStr), 0, logFile)
     
     return result
+
+
+def logArcpy(function, arguments, fxStr, logFile, logOnly=True):
+    """ Performs an ArcPy function and writes its syntax as a string to tool history/details and/or a log file.
+    
+    **Description:**
+
+        Performs an ArcPy operation given the ArcPy function and a tuple of its arguments. The full syntax
+        of the ArcPy command is written to the tool details pane and/or a log file if one is provided. If the 
+        tuple contains only one argument, the argument must end in a comma (e.g., (inReportingUnitFeature,))
+        
+    **Arguments:**
+    
+        * *function* - the ArcPy function without enclosing quotation marks (e.g., arcpy.gp.TabulateArea_sa)
+        * *arguments* - a tuple of function arguments
+                        If the tuple has only one value (i.e., only one argument), a comma after the value 
+                        is necessary in order for Python to handle it as a tuple instead of a string (e.g., (inValue,)) 
+                        This is official Python syntax
+        * *fxStr* - the ArcPy function as a string
+        * *logFile* - CatalogPath and name of the text log file. It can be None
+        * *logOnly* - Boolean. If False then messages will be written to the tool's view details pane and to the
+                      log file if the optional LOG FILE is selected
+        
+    **Returns:**
+
+        * results of ArcPy function or None if one is not produced
+        
+    """
+    
+    ### Running arcpy functions via the old arcpyLog became unstable as ArcGIS Pro transitioned to higher versions past 3.2
+    ### logArcpy will take the same input as arcpyLog but will not perform the arcpy operation. It will just record the
+    ### procedure and inputs to the log file if one exists
+    
+    # # perform the arcpy operation
+    # result = function(*arguments)
+    
+    if logFile: # record processing step if the user choose LOGFILE in the Additional options
+        # parse the arguments tuple into a comma-delimited string enclosed in parentheses
+        paramStr = '(' + ', '.join([str(item) for item in arguments]) + ')'
+        
+        if logOnly: # write the arcpy function only to the log file
+            logFile.write(f'{timer.now()}   [CMD] {fxStr}{paramStr}\n')
+        else: # write the ArcPy function with its arguments to the Tool Details pane and to a log file
+            AddMsg(f'{timer.now()} {fxStr}{paramStr}', 0, logFile)
+    
+    # return result
+    return

@@ -12,7 +12,7 @@ import arcpy
 from . import fields
 from ATtILA2.constants import globalConstants
 from ATtILA2.datetimeutil import DateTimer
-from ATtILA2.utils.log import arcpyLog
+from ATtILA2.utils.log import logArcpy
 from ATtILA2.utils.messages import AddMsg
 
 timer = DateTimer()
@@ -52,30 +52,36 @@ def createMetricOutputTable(outTable, outIdField, metricsBaseNameList, metricsFi
         
     # need to strip the dbf extension if the outpath is a geodatabase; 
     # should control this in the validate step or with an arcpy.ValidateTableName call
-    newTable = arcpyLog(arcpy.CreateTable_management, (outTablePath, outTableName), 'arcpy.CreateTable_management', logFile)
+    newTable = arcpy.CreateTable_management(outTablePath, outTableName)
+    logArcpy(arcpy.CreateTable_management, (outTablePath, outTableName), 'arcpy.CreateTable_management', logFile)
     
     # Field objects in ArcGIS 10 service pack 0 have a type property that is incompatible with some of the AddField 
     # tool's Field Type keywords. This addresses that issue
     outIdFieldType = fields.convertFieldTypeKeyword(outIdField)
     
-    arcpyLog(arcpy.AddField_management,(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale),'arcpy.AddField_management', logFile)
+    arcpy.AddField_management(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale)
+    logArcpy(arcpy.AddField_management,(newTable, outIdField.name, outIdFieldType, outIdField.precision, outIdField.scale),'arcpy.AddField_management', logFile)
     
     # add metric fields to the output table.
-    [arcpyLog(arcpy.AddField_management,(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
+    [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], metricFieldParams[4])for mBaseName in metricsBaseNameList]
+    [logArcpy(arcpy.AddField_management,(newTable, metricsFieldnameDict[mBaseName][0], metricFieldParams[2], metricFieldParams[3], 
                                 metricFieldParams[4]), 'arcpy.AddField_management', logFile )for mBaseName in metricsBaseNameList]
 
     # add any metric specific additional fields to the output table
     if additionalFields:
         for aFldParams in additionalFields:
-            [arcpyLog(arcpy.AddField_management, (newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
+            [arcpy.AddField_management(newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], aFldParams[3], aFldParams[4]) for mBaseName in metricsBaseNameList]
+            [logArcpy(arcpy.AddField_management, (newTable, aFldParams[0]+metricsFieldnameDict[mBaseName][1]+aFldParams[1], aFldParams[2], 
                                        aFldParams[3], aFldParams[4]), 'arcpy.AddField_management', logFile)for mBaseName in metricsBaseNameList]
 
     # add any optional fields to the output table
     if qaCheckFlds:
-        [arcpyLog(arcpy.AddField_management, (newTable, qaFld[0], qaFld[1], qaFld[2]), 'arcpy.AddField_management', logFile) for qaFld in qaCheckFlds]
+        [arcpy.AddField_management(newTable, qaFld[0], qaFld[1], qaFld[2]) for qaFld in qaCheckFlds]
+        [logArcpy(arcpy.AddField_management, (newTable, qaFld[0], qaFld[1], qaFld[2]), 'arcpy.AddField_management', logFile) for qaFld in qaCheckFlds]
         
     if addAreaFldParams:
-        [arcpyLog(arcpy.AddField_management, (newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
+        [arcpy.AddField_management(newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], addAreaFldParams[2], addAreaFldParams[3]) for mBaseName in metricsBaseNameList]
+        [logArcpy(arcpy.AddField_management, (newTable, metricsFieldnameDict[mBaseName][0]+addAreaFldParams[0], addAreaFldParams[1], 
                                    addAreaFldParams[2], addAreaFldParams[3]), 'arcpy.AddField_management', logFile)for mBaseName in metricsBaseNameList]
          
     # delete the 'Field1' field if it exists in the new output table.
@@ -130,16 +136,21 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             env.cellSize = desc.meanCellWidth
 
             # calculate the population for the polygon features using zonal statistics as table
-            arcpyLog(arcpy.sa.ZonalStatisticsAsTable,(inPolygonFeature, inPolygonIdField, inValueDataset, outTable, "DATA", "SUM"),"arcpy.sa.ZonalStatisticsAsTable",logFile)
+            arcpy.sa.ZonalStatisticsAsTable(inPolygonFeature, inPolygonIdField, inValueDataset, outTable, "DATA", "SUM")
+            logArcpy(arcpy.sa.ZonalStatisticsAsTable,(inPolygonFeature, inPolygonIdField, inValueDataset, outTable, "DATA", "SUM"),"arcpy.sa.ZonalStatisticsAsTable",logFile)
 
             # Rename the population count field.
             outValueField = metricConst.valueCountFieldNames[index]
             try:
-                arcpyLog(arcpy.AlterField_management,(outTable, "SUM", outValueField, outValueField),"arcpy.AlterField_management",logFile)
+                arcpy.AlterField_management(outTable, "SUM", outValueField, outValueField)
+                logArcpy(arcpy.AlterField_management,(outTable, "SUM", outValueField, outValueField),"arcpy.AlterField_management",logFile)
             except:
-                arcpyLog(arcpy.AddField_management,(outTable, outValueField, "DOUBLE"),"arcpy.AddField_management",logFile)
-                arcpyLog(arcpy.CalculateField_management,(outTable, outValueField, '!SUM!'),"arcpy.CalculateField_management",logFile)
-                arcpyLog(arcpy.DeleteField_management,(outTable, ["SUM"]),"arcpy.DeleteField_management",logFile)
+                arcpy.AddField_management(outTable, outValueField, "DOUBLE")
+                logArcpy(arcpy.AddField_management,(outTable, outValueField, "DOUBLE"),"arcpy.AddField_management",logFile)
+                arcpy.CalculateField_management(outTable, outValueField, '!SUM!')
+                logArcpy(arcpy.CalculateField_management,(outTable, outValueField, '!SUM!'),"arcpy.CalculateField_management",logFile)
+                arcpy.DeleteField_management(outTable, ["SUM"])
+                logArcpy(arcpy.DeleteField_management,(outTable, ["SUM"]),"arcpy.DeleteField_management",logFile)
         
         else: # census features are polygons
             # Create a copy of the census feature class that we can add new fields to for calculations.
@@ -149,30 +160,32 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating a working copy of {basename(inValueDataset)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-            inValueDataset = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,
-                                      (inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings),
-                                      "arcpy.FeatureClassToFeatureClass_conversion",
-                                      logFile)
+            logArcpy(arcpy.FeatureClassToFeatureClass_conversion,(inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings),"arcpy.FeatureClassToFeatureClass_conversion",logFile)
+            inValueDataset = arcpy.FeatureClassToFeatureClass_conversion(inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings)
 
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
-            arcpyLog(arcpy.AddField_management,(inValueDataset,classField,"SHORT"),"arcpy.AddField_management",logFile)
-            arcpyLog(arcpy.CalculateField_management,(inValueDataset,classField,1),"arcpy.CalculateField_management",logFile)
+            arcpy.AddField_management(inValueDataset,classField,"SHORT")
+            logArcpy(arcpy.AddField_management,(inValueDataset,classField,"SHORT"),"arcpy.AddField_management",logFile)
+            arcpy.CalculateField_management(inValueDataset,classField,1)
+            logArcpy(arcpy.CalculateField_management,(inValueDataset,classField,1),"arcpy.CalculateField_management",logFile)
             
             # Construct a table with a field containing the area weighted value count for each input polygon unit
-            arcpyLog(arcpy.TabulateIntersection_analysis,
-                     (inPolygonFeature,[inPolygonIdField],inValueDataset,outTable,[classField],[inValueField]),
-                     "arcpy.TabulateIntersection_analysis",
-                     logFile)
+            arcpy.TabulateIntersection_analysis(inPolygonFeature,[inPolygonIdField],inValueDataset,outTable,[classField],[inValueField])
+            logArcpy(arcpy.TabulateIntersection_analysis,(inPolygonFeature,[inPolygonIdField],inValueDataset,outTable,[classField],[inValueField]),"arcpy.TabulateIntersection_analysis",logFile)
             
             # Rename the population count field.
             outValueField = metricConst.valueCountFieldNames[index]
             try:
-                arcpyLog(arcpy.AlterField_management,(outTable, inValueField, outValueField, outValueField),"arcpy.AlterField_management",logFile)
+                arcpy.AlterField_management(outTable, inValueField, outValueField, outValueField)
+                logArcpy(arcpy.AlterField_management,(outTable, inValueField, outValueField, outValueField),"arcpy.AlterField_management",logFile)
             except:
-                arcpyLog(arcpy.AddField_management,(outTable, outValueField, "DOUBLE"),"arcpy.AddField_management",logFile)
-                arcpyLog(arcpy.CalculateField_management,(outTable, outValueField, '!SUM!'),"arcpy.CalculateField_management",logFile)
-                arcpyLog(arcpy.DeleteField_management,(outTable, ["SUM"]),"arcpy.DeleteField_management",logFile)
+                arcpy.AddField_management(outTable, outValueField, "DOUBLE")
+                logArcpy(arcpy.AddField_management,(outTable, outValueField, "DOUBLE"),"arcpy.AddField_management",logFile)
+                arcpy.CalculateField_management(outTable, outValueField, '!SUM!')
+                logArcpy(arcpy.CalculateField_management,(outTable, outValueField, '!SUM!'),"arcpy.CalculateField_management",logFile)
+                arcpy.DeleteField_management(outTable, ["SUM"])
+                logArcpy(arcpy.DeleteField_management,(outTable, ["SUM"]),"arcpy.DeleteField_management",logFile)
             
         return outTable, outValueField
 
@@ -644,7 +657,9 @@ def transferField(fromTable,toTable,fromFields,toFields,joinField,classField="#"
                 # Get the properties of the source field
                 fromFieldObj = arcpy.ListFields(fromTable,fromField)[0]
                 # Add the new field to the output table with the appropriate properties and the valid name
-                arcpyLog(arcpy.AddField_management,
+                arcpy.AddField_management(toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
+                          fromFieldObj.length,"",fromFieldObj.isNullable,fromFieldObj.required,fromFieldObj.domain)
+                logArcpy(arcpy.AddField_management,
                          (toTable,classToField,fromFieldObj.type,fromFieldObj.precision,fromFieldObj.scale,
                           fromFieldObj.length,"",fromFieldObj.isNullable,fromFieldObj.required,fromFieldObj.domain),
                          "arcpy.AddField_management",logFile)
@@ -707,11 +722,13 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField,logFile=
         # Get the properties of the from field for transfer
         fromField = arcpy.ListFields(fromTable,fromField)[0]
         # Add the new field with the new name
-        arcpyLog(arcpy.AddField_management,(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
-                              fromField.length,"",fromField.isNullable,fromField.required,
-                              fromField.domain), "arcpy.AddField_management", logFile)        
+        arcpy.AddField_management(fromTable,toField,fromField.type,fromField.precision,fromField.scale,fromField.length,"",fromField.isNullable,fromField.required,fromField.domain)
+        logArcpy(arcpy.AddField_management,(fromTable,toField,fromField.type,fromField.precision,fromField.scale,
+                                            fromField.length,"",fromField.isNullable,fromField.required,fromField.domain), 
+                                            "arcpy.AddField_management", logFile)
         # Calculate the field
-        arcpyLog(arcpy.CalculateField_management,(fromTable,toField,'!'+ fromField.name +'!',"PYTHON"),"arcpy.CalculateField_management", logFile)
+        arcpy.CalculateField_management(fromTable,toField,'!'+ fromField.name +'!',"PYTHON")
+        logArcpy(arcpy.CalculateField_management,(fromTable,toField,'!'+ fromField.name +'!',"PYTHON"),"arcpy.CalculateField_management", logFile)
     # Perform the joinfield
     """ If the joinField field is not found in toTable, it is assumed that
     the joinField was an object ID field that was lost in a format conversion"""
@@ -720,10 +737,12 @@ def addJoinCalculateField(fromTable,toTable,fromField,toField,joinField,logFile=
         uIDFields = arcpy.ListFields(toTable,"",'OID')
     uIDField = uIDFields[0] # This is an arcpy field object
     joinField_In_toTable = uIDField.name    
-    arcpyLog(arcpy.JoinField_management,(toTable,joinField_In_toTable,fromTable,joinField,toField),"arcpy.JoinField_management",logFile)
+    arcpy.JoinField_management(toTable,joinField_In_toTable,fromTable,joinField,toField)
+    logArcpy(arcpy.JoinField_management,(toTable,joinField_In_toTable,fromTable,joinField,toField),"arcpy.JoinField_management",logFile)
     # If we added a temp field
     if fromField != toField:
-        arcpyLog(arcpy.DeleteField_management,(fromTable,toField),"arcpy.DeleteField_management",logFile)
+        arcpy.DeleteField_management(fromTable,toField)
+        logArcpy(arcpy.DeleteField_management,(fromTable,toField),"arcpy.DeleteField_management",logFile)
     
 def getClassFieldName(fieldName,classVal,table):
     '''This function generates a valid fieldname based on the combination of a desired fieldname and a class value

@@ -12,7 +12,7 @@ from . import files
 from . import vector
 from . import table
 from .messages import AddMsg
-from .log import arcpyLog
+from .log import logArcpy
 from os.path import basename
 
 
@@ -545,7 +545,8 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     outLines, lineLengthFieldName = vector.splitDissolveMerge(inLines,inAreas,areaUID,outLines,inLengthField,lineClass,logFile)
 
     # Next join the reporting units layer to the merged roads layer
-    arcpyLog(arcpy.JoinField_management,(outLines, areaUID.name, inAreas, areaUID.name, [unitArea]),"arcpy.JoinField_management",logFile)
+    arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])
+    logArcpy(arcpy.JoinField_management,(outLines, areaUID.name, inAreas, areaUID.name, [unitArea]),"arcpy.JoinField_management",logFile)
     # Set up a calculation expression for density.
     calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
     densityField = vector.addCalculateField(outLines,densityField,"DOUBLE",calcExpression,'#',logFile)
@@ -1098,9 +1099,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     tempName = f"{metricConst.shortName}_{desc.baseName}"
     tempCensusFeature = files.nameIntermediateFile([f"{tempName}{index}_","FeatureClass"],cleanupList)
     AddMsg(f"{timer.now()} Creating a working copy of {basename(inCensusFeature)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-    inCensusFeature = arcpyLog(arcpy.FeatureClassToFeatureClass_conversion,(inCensusFeature,tempWorkspace,
-                                                                         os.path.basename(tempCensusFeature),"",
-                                                                         fieldMappings),"arcpy.FeatureClassToFeatureClass_conversion",logFile)
+    logArcpy(arcpy.FeatureClassToFeatureClass_conversion,(inCensusFeature,tempWorkspace,os.path.basename(tempCensusFeature),"",fieldMappings),"arcpy.FeatureClassToFeatureClass_conversion",logFile)
+    inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,os.path.basename(tempCensusFeature),"",fieldMappings)
 
     # Add and populate the area field (or just recalculate if it already exists
     popArea = vector.addAreaField(inCensusFeature,'popArea',logFile)
@@ -1113,7 +1113,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Intersect the reporting units with the population features.
     intersectOutput = files.nameIntermediateFile([f"{metricConst.intersectOutputName}{index}_","FeatureClass"],cleanupList)
     AddMsg(f"{timer.now()} Intersecting {basename(str(inReportingUnitFeature))} with {basename(tempCensusFeature)}. Intermediate: {basename(intersectOutput)}", 0, logFile)
-    arcpyLog(arcpy.Intersect_analysis,([inReportingUnitFeature,inCensusFeature], intersectOutput),"arcpy.Intersect_analysis",logFile)
+    arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
+    logArcpy(arcpy.Intersect_analysis,([inReportingUnitFeature,inCensusFeature], intersectOutput),"arcpy.Intersect_analysis",logFile)
 
     # Add and populate the area field of the intersected polygons
     intArea = vector.addAreaField(intersectOutput,'intArea',logFile)
@@ -1138,7 +1139,8 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     uIDField = uIDFields[0] # This is an arcpy field object
     reportingUnitIdField = uIDField.name
 
-    arcpyLog(arcpy.Statistics_analysis, (intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField), "arcpy.Statistics_analysis", logFile)
+    arcpy.Statistics_analysis(intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField)
+    logArcpy(arcpy.Statistics_analysis, (intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField), "arcpy.Statistics_analysis", logFile)
 
     # Compile a list of fields that will be transferred from the intersected feature class into the output table
     fromFields = ["SUM_" + intPopField]
@@ -1185,18 +1187,21 @@ def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopFi
     """
     # Construct a table with a field containing the area weighted population count for each input polygon unit
     try:
-        arcpyLog(arcpy.TabulateIntersection_analysis, (inPolygonFeature,[inPolygonIdField],inCensusFeature,outTable,[classField],[inPopField]), 'arcpy.TabulateIntersection_analysis', logFile)
+        arcpy.TabulateIntersection_analysis(inPolygonFeature,[inPolygonIdField],inCensusFeature,outTable,[classField],[inPopField])
+        logArcpy(arcpy.TabulateIntersection_analysis, (inPolygonFeature,[inPolygonIdField],inCensusFeature,outTable,[classField],[inPopField]), 'arcpy.TabulateIntersection_analysis', logFile)
     except:
         raise errors.attilaException(errorConstants.tabulateIntersectionError)
 
     # Rename the population count field.
     outPopField = metricConst.populationCountFieldNames[index]
-    arcpyLog(arcpy.AlterField_management, (outTable, inPopField, outPopField, outPopField), 'arcpy.AlterField_management', logFile)
+    arcpy.AlterField_management(outTable, inPopField, outPopField, outPopField)
+    logArcpy(arcpy.AlterField_management, (outTable, inPopField, outPopField, outPopField), 'arcpy.AlterField_management', logFile)
 
 def replaceNullValues(inTable,inField,newValue,logFile=None):
     # Replace NULL values in a field with the supplied value
     whereClause = inField+" IS NULL"
-    updateCursor = arcpyLog(arcpy.UpdateCursor,(inTable, whereClause, "", inField),"arcpy.UpdateCursor",logFile)
+    updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
+    logArcpy(arcpy.UpdateCursor,(inTable, whereClause, "", inField),"arcpy.UpdateCursor",logFile)
     for updateRow in updateCursor:
         updateRow.setValue(inField, newValue)
         # Persist all of the updates for this row.
@@ -1281,8 +1286,8 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     # view radius buffer
     
     AddMsg(f"{timer.now()} Joining {basename(facilityLCPTable)} to {arcpy.Describe(facilityRUIDTable).baseName} to maintain a record for all facilities.", 0, logFile)
-    arcpyLog(arcpy.management.JoinField, (facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID"), "arcpy.management.JoinField", logFile)
-    
+    arcpy.management.JoinField(facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID")
+    logArcpy(arcpy.management.JoinField, (facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID"), "arcpy.management.JoinField", logFile)
     
     # Summarizing facilities with low views by Reporting Unit
     stats = []
@@ -1295,8 +1300,8 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     namePrefix = f"{metricConst.statsResultTable}{viewRadius.split()[0]}_"
     statsResultTable = files.nameIntermediateFile([namePrefix,"Dataset"], cleanupList)
     AddMsg(f"{timer.now()} Summarizing facilities with low views by Reporting Unit. Intermediate: {basename(statsResultTable)}", 0, logFile)
-    #arcpyLog(arcpy.Statistics_analysis,(lcpTableWithRUID, statsResultTable, stats, reportingUnitIdField),"arcpy.Statistics_analysis",logFile)
-    arcpyLog(arcpy.Statistics_analysis,(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField),"arcpy.Statistics_analysis",logFile)
+    arcpy.Statistics_analysis(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField)
+    logArcpy(arcpy.Statistics_analysis,(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField),"arcpy.Statistics_analysis",logFile)
 
 ###  This commented out section can be used if INFO tables are not an option for ATtILA metric tables  ###  
 #    #Rename the fields in the result table
