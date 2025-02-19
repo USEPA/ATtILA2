@@ -377,7 +377,7 @@ def arcpyLog(function, arguments, fxStr, logFile, logOnly=True):
     return result
 
 
-def logArcpy(function, arguments, fxStr, logFile, logOnly=True):
+def logArcpy(fxStr, arguments, logFile, logOnly=True):
     """ Performs an ArcPy function and writes its syntax as a string to tool history/details and/or a log file.
     
     **Description:**
@@ -403,13 +403,6 @@ def logArcpy(function, arguments, fxStr, logFile, logOnly=True):
         * results of ArcPy function or None if one is not produced
         
     """
-    
-    ### Running arcpy functions via the old arcpyLog became unstable as ArcGIS Pro transitioned to higher versions past 3.2
-    ### logArcpy will take the same input as arcpyLog but will not perform the arcpy operation. It will just record the
-    ### procedure and inputs to the log file if one exists
-    
-    # # perform the arcpy operation
-    # result = function(*arguments)
     
     if logFile: # record processing step if the user choose LOGFILE in the Additional options
         # parse the arguments tuple into a comma-delimited string enclosed in parentheses
