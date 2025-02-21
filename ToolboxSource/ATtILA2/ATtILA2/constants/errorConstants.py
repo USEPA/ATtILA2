@@ -8,7 +8,13 @@ errorLookup = {
   3) Another extent related issue\n''', 
   
 'ERROR 002836': '''This error can occur when geometry errors are present in an input dataset. 
-We recommend running 'Repair Geometry' on the inputs and trying again. \n'''
+We recommend running 'Repair Geometry' on the inputs and trying again. \n''', 
+
+'ERROR 000012': '''An ID field has been set to 'OBJECTID'. This can cause some ATtILA tools to fail. 
+We recommend selecting a different ID field and retrying to run the tool. \n''', 
+
+'ERROR 003911': '''This error may be the result of a field named 'OBJECTID' chosen as an input field parameter. 
+If this is the case, select a different input field, or try renaming or copying the 'OBJECTID' field. \n  '''
   }
 
 errorCommentPrefix = "Error Comments:\n---------------\n"

@@ -515,13 +515,9 @@ def runFloodplainLandCoverProportions(toolPath, inReportingUnitFeature, reportin
                 if self.addQAFields:
                     AddMsg(f"{self.timer.now()} Tabulating the area of the floodplains within each reporting unit", 0, self.logFile)
                     fpTabAreaTable = files.nameIntermediateFile([self.metricConst.fpTabAreaName, "Dataset"], self.cleanupList)   
-            
+
+                    log.logArcpy("arcpy.sa.TabulateArea",(self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize),logFile)            
                     arcpy.sa.TabulateArea(self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize)
-                    
-                    log.logArcpy(arcpy.sa.TabulateArea, 
-                                 (self.inReportingUnitFeature, self.reportingUnitIdField, self.inFloodplainGeodataset, "VALUE", fpTabAreaTable, processingCellSize),
-                                 "arcpy.sa.TabulateArea", 
-                                 logFile)
             
                     # This technique allows the use of all non-zero values in a grid to designate floodplain areas instead of just '1'. 
                     self.excludedValueFields = ["VALUE_0"]
@@ -3119,21 +3115,22 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
             AddMsg(f"{timer.now()} Calculating the proportion of land cover class within {inNeighborhoodSize} x {inNeighborhoodSize} cell neighborhood.", 0, logFile)
             log.logArcpy("arcpy.sa.RasterCalculator",("[nbrCntGrid]", ["x"], (f' (x / {maxCellCount}) * 100') ), logFile)
             proximityGrid = arcpy.sa.RasterCalculator([nbrCntGrid], ["x"], (f' (x / {maxCellCount}) * 100') )
-        
-            if burnIn == "true":
-                AddMsg(f"{timer.now()} Burning excluded areas into proportions grid.", 0, logFile)
-                delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
-                whereClause = delimitedVALUE+" = 0"
-                log.logArcpy("arcpy.sa.Con",(burnInGrid, proximityGrid, burnInGrid, whereClause), logFile)
-                proximityGrid = arcpy.sa.Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
-        
-        
             
-            # get output grid name. Add it to the list of features to add to the Contents pane
+            # get output grid name
             namePrefix = f"{m.upper()}_{inNeighborhoodSize}{metricConst.proxRasterOutName}"
             if overWrite == "false":
                 namePrefix = f"{namePrefix}_"
             proximityGridName = files.getRasterName(namePrefix)
+            
+            if burnIn == "true":
+                AddMsg(f"{timer.now()} Burning excluded areas into proportions grid.", 0, logFile)
+                delimitedVALUE = arcpy.AddFieldDelimiters(burnInGrid,"VALUE")
+                whereClause = delimitedVALUE+" = 0"
+                log.logArcpy("arcpy.sa.Con",(burnInGrid, proximityGridName, burnInGrid, whereClause), logFile)
+                proximityGrid = arcpy.sa.Con(burnInGrid, proximityGrid, burnInGrid, whereClause)
+        
+        
+            # Add output grid name to the list of features to add to the Contents pane
             datasetList = arcpy.ListDatasets()
             if proximityGridName in datasetList:
                 arcpy.Delete_management(proximityGridName)

@@ -1113,7 +1113,7 @@ def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFea
     # Intersect the reporting units with the population features.
     intersectOutput = files.nameIntermediateFile([f"{metricConst.intersectOutputName}{index}_","FeatureClass"],cleanupList)
     AddMsg(f"{timer.now()} Intersecting {basename(str(inReportingUnitFeature))} with {basename(tempCensusFeature)}. Intermediate: {basename(intersectOutput)}", 0, logFile)
-    logArcpy("arcpy.Intersect_analysis",([inReportingUnitFeature,inCensusFeature], intersectOutput),"arcpy.Intersect_analysis",logFile)
+    logArcpy("arcpy.Intersect_analysis",([inReportingUnitFeature,inCensusFeature], intersectOutput),logFile)
     arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
 
     # Add and populate the area field of the intersected polygons

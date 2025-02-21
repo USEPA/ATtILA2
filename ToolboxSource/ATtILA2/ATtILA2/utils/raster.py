@@ -465,6 +465,7 @@ def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, m
 
     # add the excluded class areas back to the raster if present
     if excludedValuesList:
+        AddMsg(f"{timer.now()} Adding excluded class areas to patch raster.", 0, logFile)
         logArcpy("arcpy.sa.Con", (f"reclassGrid == {excludedValue}", reclassGrid, regionOtherFinal), logFile)
         regionOtherExcluded = arcpy.sa.Con(reclassGrid == excludedValue, reclassGrid, regionOtherFinal)
     else:
