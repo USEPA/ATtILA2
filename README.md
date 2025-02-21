@@ -63,13 +63,13 @@ The following programmers were not directly involved with the project, but gave 
 - Schultz, Ron. 2003. Bearing extension.   
 - Jenness, Jeff. 2005. Distance/Azimuth Tools (Version 1.4b), Jenness Enterprises.  
 
-Tim Wade (former EPA), Deborah Chaloud (former EPA), Megan Culler (EPA ORISE Participant), Steven Jett (Woolpert), Barbara Rosenbaum (Woolpert), Caroline Erickson (former EPA) and Bob Ohman (former EPA Senior Environmental Employment Program) wrote the help files for the  many versions of ATtILA.  
+Tim Wade (former EPA), Deborah Chaloud (former EPA), Megan Culler (GDIT), Steven Jett (Woolpert), Barbara Rosenbaum (Woolpert), Caroline Erickson (former EPA) and Bob Ohman (former EPA Senior Environmental Employment Program) wrote the help files for the  many versions of ATtILA.  
 
 Rose Marie Moore (former EPA), Anne Neale (EPA), Jeremy Baynes (EPA), and Barbara Rosenbaum (Woolpert) gave assistance with overall planning and budgeting. 
 
 Molly Jenkins (EPA ORISE Participant), Brittany Jackson (EPA Student Services Contractor), and Sandra Bryce (Woolpert) provided invaluable assistance with ATtILA's webpage, wiki, and documentation. 
 
-Jeremy Baynes (EPA), Barbara Rosenbaum (Woolpert), Anne Neale (EPA), Laura Jackson (former EPA), Megan Culler (EPA ORISE Participant), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (former Student Services Contractor), Taylor Minich (EPA), James Wickham (EPA), Megan Mehaffey (EPA), and Torrin Hultgren (GDIT) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.   
+Jeremy Baynes (EPA), Barbara Rosenbaum (Woolpert), Anne Neale (EPA), Laura Jackson (former EPA), Megan Culler (GDIT), Jessica Daniel (EPA), Wei-Lun Tsai (EPA), Allison Killea (former Student Services Contractor), Taylor Minich (EPA), James Wickham (EPA), Megan Mehaffey (EPA), and Torrin Hultgren (GDIT) provided insightful and useful feedback regarding the myriad decisions that arose during ATtILA's development.   
 
 
 
