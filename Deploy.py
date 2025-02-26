@@ -1,10 +1,10 @@
 """ Deployment Script
 
-    This script zips the ATtILA2 toolbox for a deployable module following these steps:
+    This script zips the ATtILA toolbox for a deployable module following these steps:
     
     Into an empty directory, copy the following files and folders:
     
-        ..\ATtILA2\src\ATtILA2.tbx
+        ..\ATtILA2\src\ATtILA v3.tbx
     
         ..\ATtILA2\src\ToolboxSource Folder
             it should contain just two subfolders (ATtILA2 and LandCoverClassifications) and no files except those in the two subfolders
@@ -73,7 +73,7 @@ def main(_argv):
     dateStr = d.strftime("%Y%b%d")
     
     outputDir = 'ATtILA_Deployment'
-    toolbox = 'ATtILA v2.tbx'
+    toolbox = 'ATtILA v3.tbx'
     readme = 'README.txt'
     tbSource = 'ToolboxSource'
     # pylet = '../pylet'
@@ -93,7 +93,7 @@ def main(_argv):
     copyFolder(tbSource,outputDir,ignoreFiles)
     # copyFolder(pylet,os.path.join(outputDir,tbSource),ignoreFiles)
     
-    # Rename the ATtILA2.py file
+    # Rename the ATtILA#.py file
     inName = os.path.join(outputDir,'ToolboxSource\\ATtILA2\\scripts\\RENAME-TO--ATtILA2.py--ON-DEPLOY.py')
     outName = os.path.join(outputDir,'ToolboxSource\\ATtILA2\\scripts\\ATtILA2.py')
     os.rename(inName,outName)

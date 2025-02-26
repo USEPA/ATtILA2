@@ -6,7 +6,7 @@
   </a>
 </p>
 
-The information provided here is for the BETA version of the ATtILA for ArcGIS Pro v3.0 toolbox. The latest stable release is available at https://github.com/USEPA/ATtILA2/releases/tag/v2.0 or as a zipped file at https://www.epa.gov/enviroatlas/attila-toolbox. 
+The information provided here is for version 3.0 of the ATtILA for ArcGIS Pro toolbox. This stable release and earlier versions are available at https://github.com/USEPA/ATtILA2/releases or as a zipped file at https://www.epa.gov/enviroatlas/attila-toolbox. 
 
 For more information on the ATtILA for ArcGIS Pro toolbox, see our [wiki page](https://github.com/USEPA/ATtILA2/wiki), or [factsheet](https://www.epa.gov/system/files/documents/2023-05/Attilatoolsets.pdf).
 
