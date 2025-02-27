@@ -14,8 +14,8 @@ We recommend running 'Repair Geometry' on the inputs and trying again. \n''',
 We recommend selecting a different ID field and retrying to run the tool. \n''', 
 
 'ERROR 003911': '''This error may be the result of a field named 'OBJECTID' chosen as an input field parameter. 
-If this is the case, select a different input field, or try renaming or copying the 'OBJECTID' field. \n  '''
-  }
+If this is the case, select a different input field, or try renaming or copying the 'OBJECTID' field. \n  ''', 
+'FAKE ERROR' : '' }
 
 errorCommentPrefix = "Error Comments:\n---------------\n"
 errorDetailsPrefix = "\nError Details:\n--------------\n"
