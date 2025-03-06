@@ -19,7 +19,7 @@ ATtILA for ArcGIS Pro is an Esri ArcGIS toolbox that allows users to easily calc
 
 ## Requirements
 
-The ATtILA for ArcGIS Pro toolbox was developed for ArcGIS Pro 2.9 or later. It has been tested on versions up to 3.3
+The ATtILA for ArcGIS Pro toolbox was developed for ArcGIS Pro 3.0 or later. It has been tested on versions up to 3.3
 
 The Spatial Analyst or 3D Analyst extensions are required.
 
