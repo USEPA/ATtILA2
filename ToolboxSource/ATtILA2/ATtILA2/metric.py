@@ -4176,8 +4176,8 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
             elif versionName == 'NAVTEQ 2019': #NAVTEQ2019 #(pickup updating messages here) 
                 #try running the join first
                 AddMsg(f"{timer.now()} Adding {ToFromFields[0]} and {ToFromFields[1]} from {link}.", 0, logFile)
-                log.logArcpy('arcpy.management.JoinField', (streetLayer, metricConst.Streets_linkfield, link, metricConst.Link_linkfield), logFile)
-                arcpy.management.JoinField(streetLayer, metricConst.Streets_linkfield, link, metricConst.Link_linkfield)
+                log.logArcpy('arcpy.management.AddJoin', (streetLayer, metricConst.Streets_linkfield, link, metricConst.Link_linkfield), logFile)
+                arcpy.management.AddJoin(streetLayer, metricConst.Streets_linkfield, link, metricConst.Link_linkfield)
                 
                 AddMsg(f"{timer.now()} Selecting features where FuncClass = 1, 2, 3, or 4.", 0, logFile)
                 log.logArcpy('arcpy.SelectLayerByAttribute_management', (streetLayer, 'NEW_SELECTION', "FuncClass <= 4"), logFile)
@@ -4197,12 +4197,11 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
                 arcpy.SelectLayerByAttribute_management(streetLayer, 'REMOVE_FROM_SELECTION', "FerryType <> 'H'")
             
             # Write the selected features to a new feature class
-            AddMsg(f"{timer.now()} Copying remaining selected features to {iacFCName}", 0, logFile)
-            log.logArcpy('arcpy.CopyFeatures_management', (streetLayer, iacFCName), logFile)
-            iacFC = arcpy.CopyFeatures_management(streetLayer, iacFCName)
-            
-            arcpy.management.RemoveJoin(streetLayer)
-            # need to reset the ToFromFiels in case the iacFC is a shapefile
+            AddMsg(f"{timer.now()} Exporting remaining selected features to {iacFCName}", 0, logFile)
+            log.logArcpy('arcpy.conversion.ExportFeatures', (streetLayer, iacFCName), logFile)
+            iacFC = arcpy.conversion.ExportFeatures(streetLayer, iacFCName)    
+                
+            # need to reset the ToFromFields in case the iacFC is a shapefile
             ToFromFields = metricConst.laneFieldDict[f"{versionName}{ext}"]
         
             for f in ToFromFields:
