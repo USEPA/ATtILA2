@@ -4933,7 +4933,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
 
         originalFields = [field.name for field in arcpy.ListFields(outTable)]
         
-        if len(statsTypeList) > 1: 
+        if len(statsTypeList) > 1 and "ALL" not in statsTypeList: 
             AddMsg(f"{timer.now()} Trimming unnecessary fields", 0, logFile) 
             keepFields2 =  statsTypeList + originalFields[0:5] + [metricConst.qaName]   # Keep basic info fields and user defined statistics
             log.logArcpy('arcpy.DeleteField_management', (outTable, keepFields2, "KEEP_FIELDS"), logFile)
