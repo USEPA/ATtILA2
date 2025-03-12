@@ -28,6 +28,7 @@ class polygons:
     Blockgroups = os.path.join(inGDB, "Blockgroups")
     Blockgroups_Fresno = os.path.join(inGDB, "Blockgroups_Fresno")
     Census2010 = os.path.join(inGDB, "Census2010")
+    Census2020 = os.path.join(inGDB, "Census2020")
     MockLakes = os.path.join(inGDB, "Mock_Lakes")
     Parks = os.path.join(inGDB, "Parks")
     Population = os.path.join(inGDB, "Population")
