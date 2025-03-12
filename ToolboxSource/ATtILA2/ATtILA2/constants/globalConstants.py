@@ -53,7 +53,7 @@ idFields =  ['OBJECTID', 'FID', 'ID']
 metricScriptOpening = '''
 import arcpy
 from arcpy.sa import *
-arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")    
+arcpy.ImportToolbox("Installation Path\\ATtILA v#.tbx")    
 from ATtILA2 import metric
 
 '''
@@ -61,7 +61,7 @@ from ATtILA2 import metric
 # This is the script opening for the log file if the tool is run from the ATtILA\scripts folder
 basicScriptOpening = '''
 import arcpy
-arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")
+arcpy.ImportToolbox("Installation Path\\ATtILA v#.tbx")
 
 '''
 
@@ -69,7 +69,7 @@ arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")
 spatialScriptOpening = '''
 import arcpy
 from arcpy.sa import *
-arcpy.ImportToolbox("Installation Path\\ATtILA v{#}.tbx")
+arcpy.ImportToolbox("Installation Path\\ATtILA v#.tbx")
 
 '''
 

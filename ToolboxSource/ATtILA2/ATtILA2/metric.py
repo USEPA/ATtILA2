@@ -2090,12 +2090,14 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Add and populate the area field (or just recalculate if it already exists
-        ruArea = vector.addAreaField(inReportingUnitFeature,metricConst.areaFieldname,logFile)
+        ruAreaFld = metricConst.areaFieldname
+        log.logArcpy("arcpy.management.CalculateGeometryAttributes",(inReportingUnitFeature, [[ruAreaFld, "AREA"]],"", "SQUARE_KILOMETERS"), logFile)
+        arcpy.management.CalculateGeometryAttributes(inReportingUnitFeature, [[ruAreaFld, "AREA"]],"", "SQUARE_KILOMETERS")
         
         # Build the final output table.
-        AddMsg(f"{timer.now()} Creating output table", 0, logFile)
-        log.logArcpy("arcpy.TableToTable_conversion",(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable)),logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        AddMsg(f"{timer.now()} Creating output table: {basename(outTable)}", 0, logFile)
+        log.logArcpy("arcpy.conversion.ExportTable",(inReportingUnitFeature,outTable),logFile)
+        arcpy.conversion.ExportTable(inReportingUnitFeature,outTable)
         
         AddMsg(f"{timer.now()} Calculating population density", 0, logFile)
         # Create an index value to keep track of intermediate outputs and fieldnames.
@@ -2104,16 +2106,16 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         if popChangeYN == "true":
             index = "1"
         # Perform population density calculation for first (only?) population feature class
-        calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,
-                                      env.workspace,outTable,metricConst,cleanupList,index,timer,logFile)
+        calculate.getWeightedPopDensity(inReportingUnitFeature,reportingUnitIdField,ruAreaFld,inCensusFeature,inPopField,
+                                        outTable,metricConst,cleanupList,index,timer,logFile)
 
         #if popChangeYN is checked:
         if popChangeYN == "true":
             index = "2"
             AddMsg(f"{timer.now()} Calculating population density for second feature class", 0, logFile)
             # Perform population density calculation for second population feature class
-            calculate.getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature2,inPopField2,
-                                          env.workspace,outTable,metricConst,cleanupList,index,timer,logFile)
+            calculate.getWeightedPopDensity(inReportingUnitFeature,reportingUnitIdField,ruAreaFld,inCensusFeature2,inPopField2,
+                                            outTable,metricConst,cleanupList,index,timer,logFile)
             
             AddMsg(f"{timer.now()} Calculating population change", 0, logFile)
             # Set up a calculation expression for population change
