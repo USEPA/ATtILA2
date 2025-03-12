@@ -190,8 +190,8 @@ class PDM_options:
     'Census_feature' : [polygons.Census2010], 
     'Population_field' : ['Pop'], 
     'POPCHG' : ["false", "true"], 
-    'Census_T2_feature': [polygons.Census2010], 
-    'Population_T2_field' : ['HISP'], 
+    'Census_T2_feature': [polygons.Census2020], 
+    'Population_T2_field' : ['P0010001'], 
     'optionalFieldGroups' : [" ",
                             "'LOGFILE  -  Record Process Steps Taken During Metric Calculation'", 
                             "'INTERMEDIATES  -  Retain Intermediate Layers Generated During Metric Calculation'", 
@@ -262,7 +262,7 @@ class PWZM_options:
     
      }]
 class RD_options:
-     testInputs = {
+    testInputs = {
     'inReportingUnitFeature' : [polygons.Watersheds],
     'reportingUnitIdField' : ['HUC_12'],
     'Road_feature' : [lines.Roads], 
