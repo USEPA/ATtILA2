@@ -1099,7 +1099,7 @@ def getWeightedPopDensity(inReportingUnitFeature,reportingUnitIdField,ruAreaFld,
     AddMsg(f"{timer.now()} Transferring values from {basename(populationTable)} to {basename(outTable)}.", 0, logFile)
     table.transferField(populationTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
     
-    AddMsg(f"{timer.now()} Performing final density calculation.", 0, logFile)
+    AddMsg(f"{timer.now()} Performing density calculation.", 0, logFile)
     # Set up a calculation expression for the final density calculation
     calcExpression = "!" + toField + "!/!" + ruAreaFld + "!"
     # Calculate the population density

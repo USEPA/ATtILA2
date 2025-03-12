@@ -78,7 +78,7 @@ def main(_argv):
     tbSource = 'ToolboxSource'
     # pylet = '../pylet'
     outputZip = 'ATtILA_'+dateStr+'.zip'
-    ignoreFiles = shutil.ignore_patterns('.git*','.settings','.project','.pydevproject','*.lfn','*.wsp','tests',
+    ignoreFiles = shutil.ignore_patterns('.git*','.settings','.project','.pydevproject','*.lfn','*.wsp','tests','QA_Scripts',
                                          'AutoSave','apidoc','CutAndPaste','*.bak','*.bat', '*.pyc', '__pycache__')
     
     # First create our output directory for staging the deployment.
