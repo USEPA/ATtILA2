@@ -1876,7 +1876,7 @@ class NoReportingUnitValidator(object):
                     self.parameters[indx].enabled = False 
                     
         if self.menuInParameters:
-            for val in self.menuInParameters.values():
+            for val in list(self.menuInParameters.values()):
                 for indx in val:
                     self.parameters[indx].enabled = False 
             
@@ -1922,7 +1922,7 @@ class NoReportingUnitValidator(object):
         if self.menu1Index:
             menuKey = self.menu1Parameter.value
             
-            for val in self.menuInParameters.values():
+            for val in list(self.menuInParameters.values()):
                 for indx in val:
                     if indx in self.menuInParameters[menuKey]:
                         self.parameters[indx].enabled = True
@@ -2203,7 +2203,7 @@ class NoReportingUnitValidator(object):
                         self.parameters[indx].value = ''
 
         if self.menuInParameters:
-            for val in self.menuInParameters.values():
+            for val in list(self.menuInParameters.values()):
                 for indx in val:
                     if not self.parameters[indx].enabled:
                         self.parameters[indx].clearMessage()

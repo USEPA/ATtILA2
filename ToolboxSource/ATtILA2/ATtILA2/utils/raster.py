@@ -366,8 +366,9 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     
     AddMsg(f"{timer.now()} Step 2 of 4: Setting Class areas to Null", 0, logFile)
     delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
-    logArcpy('SetNull', (reclassGrid, 1, f"delimitedVALUE = 3"), logFile)
-    otherGrid = SetNull(reclassGrid, 1, delimitedVALUE+" = 3")
+    logArcpy('SetNull', (reclassGrid, 1, f"{delimitedVALUE} = 3"), logFile)
+    whereClause = f"{delimitedVALUE} = 3"
+    otherGrid = SetNull(reclassGrid, 1, whereClause)
     
     AddMsg(f"{timer.now()} Step 3 of 4: Finding distance from Other", 0, logFile)
     logArcpy('EucDistance', (otherGrid,), logFile)

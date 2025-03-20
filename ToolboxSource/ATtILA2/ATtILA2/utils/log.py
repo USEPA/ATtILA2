@@ -34,7 +34,7 @@ def setupLogFile(optionalFieldGroups, metricConst, parametersList, outDataset, t
             # start the log file by capturing ATtILA, ArcGIS, and System information
             infoATtILA = '{0} v{1}'.format(globalConstants.titleATtILA, globalConstants.attilaVersion)
             arcInstall = arcpy.GetInstallInfo()
-            infoArcGIS = '{0} {1} License={2} Build={3}'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel'], arcInstall['BuildNumber'])
+            infoArcGIS = '{0} {1} License={2} Build={3}'.format(arcInstall['ProductName'], arcInstall['Version'], arcInstall['LicenseLevel'], arcInstall['BuildNumber']) 
             infoSystem = platform.platform()
             logFile.write('SPECS: {0} ; {1} ; {2}\n\n'.format(infoATtILA, infoArcGIS, infoSystem))
             

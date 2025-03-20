@@ -45,7 +45,7 @@ def main(_argv):
             strlist.append(str(r))
         values = ",".join(strlist)
         arcpy.MakeFeatureLayer_management(inputLayer, "No Polygons Overlap",OID + " NOT IN (" + values + ")")
-        totallyrs = str(len(nonoverlapGroupDict.keys()))
+        totallyrs = str(len(list(nonoverlapGroupDict.keys())))
         arcpy.AddWarning(totallyrs + " layers will be required to be created to ensure no overlaps")
         if checkOnly == "false":
 #        if not checkOnly:

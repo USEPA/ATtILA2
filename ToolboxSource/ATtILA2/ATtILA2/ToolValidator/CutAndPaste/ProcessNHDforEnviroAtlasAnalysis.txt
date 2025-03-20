@@ -36,7 +36,7 @@ class ToolValidator(object):
         has been changed."""
         menuKey = self.menuParameter.value
             
-        for val in self.menuInParameters.values():
+        for val in list(self.menuInParameters.values()):
           for indx in val:
             if indx in self.menuInParameters[menuKey]:
               self.params[indx].enabled = True
@@ -47,7 +47,7 @@ class ToolValidator(object):
     def updateMessages(self):
         """Modify the messages created by internal validation for each tool
         parameter. This method is called after internal validation."""
-        for val in self.menuInParameters.values():
+        for val in list(self.menuInParameters.values()):
           for indx in val:
             if not self.params[indx].enabled:
               self.params[indx].clearMessage()

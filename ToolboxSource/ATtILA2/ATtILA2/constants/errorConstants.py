@@ -14,7 +14,18 @@ We recommend running 'Repair Geometry' on the inputs and trying again. \n''',
 We recommend selecting a different ID field and retrying to run the tool. \n''', 
 
 'ERROR 003911': '''This error may be the result of a field named 'OBJECTID' chosen as an input field parameter. 
-If this is the case, select a different input field, or try renaming or copying the 'OBJECTID' field. \n  '''
+If this is the case, select a different input field, or try renaming or copying the 'OBJECTID' field. \n  ''',
+
+'ERROR 010819': '''This error can occur when the ATtILA toolbox is located in a folder with spaces in its directory path (e.g., C:\Destination Folder). 
+This became an issue with ATtILA in ArcGIS Pro 3.4 or later projects. 
+
+We recommend the following steps before rerunning this tool:
+  1) Remove the ATtILA toolbox from the project
+  2) Save and close the project
+  3) Move the ATtILA toolbox and its associated ToolboxSource folder to a folder without spaces in its directory path (e.g., C:\DestinationFolder)
+  4) Re-open the project and re-add the ATtILA toolbox from its new location
+
+If the problem persists, please report details to: https://ecomments.epa.gov/enviroatlas/ and include 'ATtILA' in the subject line. \n'''
   }
 
 errorCommentPrefix = "Error Comments:\n---------------\n"
