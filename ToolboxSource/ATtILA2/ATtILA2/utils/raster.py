@@ -871,7 +871,7 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
     onePark = arcpy.management.SelectLayerByAttribute("selectedLayer", 'NEW_SELECTION', whereClause, None)
     
     arcpy.Buffer_analysis(onePark, "in_memory/oneParkBuff", f'{buffDist} Meters', dissolve_option='NONE')
-    
+   
     # with arcpy.EnvManager(extent = oneParkBuffName):
     with arcpy.EnvManager(extent = "in_memory/oneParkBuff"):
         costDist = arcpy.sa.CostDistance(onePark, costRaster, distNumber)

@@ -1146,10 +1146,11 @@ def getMinimumFieldMappings(layerList):
         * *fieldMappings* - fieldMappings object consisting of one FieldMap
     '''
     fieldMappings = arcpy.FieldMappings()
-    fieldMappings.addTable(layerList[0])
+    fieldMappings.addTable(layerList[0]) #This does not work in Pro v3.4. No fields are found in the fieldMappings
     fmFields = fieldMappings.fields
-    firstName = fmFields[0].name
-    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != firstName]
+    if fmFields:
+        firstName = fmFields[0].name
+        [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != firstName]
     
     return fieldMappings
 

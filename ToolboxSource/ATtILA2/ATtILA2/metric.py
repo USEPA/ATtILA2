@@ -3835,7 +3835,15 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         
         # mosaic the produced park/populations rasters
         if len(mosaicRasters) == 0:
-            AddMsg(f"No individual park population access rasters were generated. Exiting...\n", 1, logFile)
+            # check for spaces in directory path
+            thisPath = os.getcwd()
+            if " " in thisPath:
+                AddMsg(f"\nNo individual park population access rasters were generated.", 1, logFile)
+                AddMsg(f"This error can occur when the ATtILA toolbox is located in a folder with spaces in its directory path.",1,logFile)
+                AddMsg(f'Current ATtILA installation directory: {thisPath.split("ToolboxSource")[0]}',1,logFile)
+                AddMsg(f"Exiting...\n", 1, logFile)
+            else:
+                AddMsg(f"\nNo individual park population access rasters were generated. Exiting...\n", 1, logFile)
         else:
             AddMsg(f"{timer.now()} Merging {(len(mosaicRasters))} calculated park/population rasters. Output: {basename(outRaster)}.", 0, logFile)
             outWS = env.workspace
