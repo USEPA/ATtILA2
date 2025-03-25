@@ -2,12 +2,12 @@
 
 """
 titleATtILA = "ATtILA"
-attilaVersion = "3.0"
+attilaVersion = "3.1"
 toolboxAlias = "ATtILAv3"
 arcExecutable = "ArcGISPro.exe"
 descriptionDelim = "  -  "
 areaFieldParameters = ["_A","DOUBLE",15,0]
-tbxFileSuffix = ".tbx"
+tbxFileSuffix = ".atbx"
 tbxFileDelim = "__"
 tbxSriptToolDelim = "#"
 qaCheckName = "QAFIELDS"
