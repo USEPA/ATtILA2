@@ -1,0 +1,9 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: U.S. Environmental Protection Agency
+  given-names: Office of Research and Development
+title: ATtILA for ArcGIS Pro
+version: v3.0.0
+date-released: 2025-03-24
+doi: 10.5281/zenodo.8048192
