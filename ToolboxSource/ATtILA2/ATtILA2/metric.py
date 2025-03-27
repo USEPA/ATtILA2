@@ -1538,7 +1538,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
         log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
@@ -1557,11 +1557,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         # off. This is more appropriate than altering the user's input data.
         desc = arcpy.Describe(inRoadFeature)
         if desc.HasM or desc.HasZ:
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inRoadFeature)
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != roadClassField]
+            
             tempName = f"{metricConst.shortName}_{arcpy.Describe(inRoadFeature).baseName}_"
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-            log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inRoadFeature, env.workspace, basename(tempLineFeature)),logFile)
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature, env.workspace, basename(tempLineFeature))
+            AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+            log.logArcpy("arcpy.conversion.ExportFeatures",(inRoadFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"),logFile)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature, basename(tempLineFeature), field_mapping=fieldMappings)
 
 
         # Calculate the density of the roads by reporting unit.
@@ -1598,11 +1602,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             # off. This is more appropriate than altering the user's input data.
             desc = arcpy.Describe(inStreamFeature)
             if desc.HasM or desc.HasZ:
+                fieldMappings = arcpy.FieldMappings()
+                fieldMappings.addTable(inStreamFeature)
+                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type == 'OID']
+                
                 tempName = f"{metricConst.shortName}_{desc.baseName}_"
                 tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-                log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inStreamFeature, env.workspace, basename(tempLineFeature)), logFile)
-                inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, basename(tempLineFeature))
+                AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+                log.logArcpy("arcpy.conversion.ExportFeatures",(inStreamFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"), logFile)
+                inStreamFeature = arcpy.conversion.ExportFeatures(inStreamFeature, basename(tempLineFeature), field_mapping=fieldMappings)
 
             
             AddMsg(f"{timer.now()} Calculating Stream and Road Crossings (STXRD)", 0, logFile)
@@ -1653,11 +1661,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
                 # off. This is more appropriate than altering the user's input data.
                 desc = arcpy.Describe(inStreamFeature)
                 if desc.HasM or desc.HasZ:
+                    fieldMappings = arcpy.FieldMappings()
+                    fieldMappings.addTable(inStreamFeature)
+                    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type == 'OID']
+
                     tempName = f"{metricConst.shortName}_{desc.baseName}_"
                     tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                    AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-                    log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inStreamFeature,env.workspace,os.path.basename(tempLineFeature)), logFile)
-                    inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
+                    AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+                    log.logArcpy("arcpy.conversion.ExportFeatures",(inStreamFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"), logFile)
+                    inStreamFeature = arcpy.conversion.ExportFeatures(inStreamFeature, basename(tempLineFeature), field_mapping=fieldMappings)
                 
                 # Calculate the density of the streams by reporting unit.
                 # Get a unique name for the merged streams:
@@ -1790,7 +1802,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_" 
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
         log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature,os.path.basename(tempReportingUnitFeature),reportingUnitIdField,"","MULTI_PART"),logFile)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
@@ -1816,11 +1828,15 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # from being stripped off for several data types.
         desc = arcpy.Describe(inLineFeature)
         if desc.HasM or desc.HasZ:
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inLineFeature)
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != strmOrderField]
+
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-            log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inLineFeature, env.workspace, basename(tempLineFeature)),logFile)
-            inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, basename(tempLineFeature))
+            AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+            log.logArcpy("arcpy.conversion.ExportFeatures",(inLineFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"),logFile)
+            inLineFeature = arcpy.conversion.ExportFeatures(inLineFeature, basename(tempLineFeature), field_mapping=fieldMappings)
 
         # Calculate the density of the streams by reporting unit.
         # Get a unique name for the merged streams and prep for cleanup:
@@ -2085,7 +2101,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
         log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
         inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
@@ -2325,8 +2341,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating a working copy of {basename(inCensusDataset)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-            log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings),logFile)
-            inCensusDataset = arcpy.FeatureClassToFeatureClass_conversion(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings)
+            log.logArcpy("arcpy.conversion.ExportFeatures",(inCensusDataset, basename(tempCensusFeature),"","",fieldMappings),logFile)
+            inCensusDataset = arcpy.conversion.ExportFeatures(inCensusDataset,basename(tempCensusFeature),"","",fieldMappings)
             
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
@@ -2378,8 +2394,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
                 tempName = f"{metricConst.shortName}_{descFldpln.baseName}_Work_"
                 tempFldplnFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 AddMsg(f"{timer.now()} Creating a working copy of {basename(inFloodplainDataset)}. Intermediate: {basename(tempFldplnFeature)}", 0, logFile)
-                log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inFloodplainDataset,env.workspace,basename(tempFldplnFeature),"",fieldMappings),logFile)
-                inFloodplainDataset = arcpy.FeatureClassToFeatureClass_conversion(inFloodplainDataset,env.workspace, basename(tempFldplnFeature),"", fieldMappings)
+                log.logArcpy("arcpy.conversion.ExportFeatures",(inFloodplainDataset,env.workspace,basename(tempFldplnFeature),"","",fieldMappings),logFile)
+                inFloodplainDataset = arcpy.conversion.ExportFeatures(inFloodplainDataset, basename(tempFldplnFeature),"","", fieldMappings)
                 
             # Add a field and calculate it to a value of 1. This field will use as the classField in Tabulate Intersection operation below
             classField = "tmpClass"
@@ -2794,18 +2810,22 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityCopyName+self.viewRadius.split()[0]+"_"
                 self.inPointFacilityName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
-                AddMsg(f"{self.timer.now()} Creating a copy of the Facility feature. Intermediate: {basename(self.inPointFacilityName)}", 0, self.logFile)
-                log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(self.inFacilityFeature,arcpy.env.workspace,basename(self.inPointFacilityName)),logFile)
-                self.inPointFacilityFeature = arcpy.FeatureClassToFeatureClass_conversion(self.inFacilityFeature,arcpy.env.workspace, basename(self.inPointFacilityName))
+                AddMsg(f"{self.timer.now()} Creating working copy of the Facility feature. Intermediate: {basename(self.inPointFacilityName)}", 0, self.logFile)
+                fieldMappings = arcpy.FieldMappings()
+                fieldMappings.addTable(self.inFacilityFeature)
+                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
 
-                # Delete all fields from the copied facilities feature
-                AddMsg(f"{self.timer.now()} Deleting unnecessary fields from {basename(self.inPointFacilityName)}", 0, self.logFile)
-                self.facilityFields = arcpy.ListFields(self.inPointFacilityFeature)
-                self.deleteFieldList = []
-                for aFld in self.facilityFields:
-                    if aFld.required != True:
-                        self.deleteFieldList.append(aFld.name)
-                utils.fields.deleteFields(self.inPointFacilityFeature, self.deleteFieldList)        
+                log.logArcpy("arcpy.conversion.ExportFeatures",(self.inFacilityFeature, basename(self.inPointFacilityName), f"field_mapping={fieldMappings}"),logFile)
+                self.inPointFacilityFeature = arcpy.conversion.ExportFeatures(self.inFacilityFeature, basename(self.inPointFacilityName), field_mapping=fieldMappings)
+
+                # # Delete all fields from the copied facilities feature
+                # AddMsg(f"{self.timer.now()} Deleting unnecessary fields from {basename(self.inPointFacilityName)}", 0, self.logFile)
+                # self.facilityFields = arcpy.ListFields(self.inPointFacilityFeature)
+                # self.deleteFieldList = []
+                # for aFld in self.facilityFields:
+                #     if aFld.required != True:
+                #         self.deleteFieldList.append(aFld.name)
+                # utils.fields.deleteFields(self.inPointFacilityFeature, self.deleteFieldList)        
         
                 # Intersect the point theme with the reporting unit theme to transfer the reporting unit id to the points
                 # Get a unique name with full path for the output features - will default to current workspace:
@@ -3321,8 +3341,13 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
                     namePrefix = f"{metricConst.shortName}_{inBaseName}_"
                     copyFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
                     AddMsg(f"{timer.now()} Copying {inBaseName} to {basename(copyFeatureName)}.", 0, logFile)
-                    log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inLineFeature,env.workspace,basename(copyFeatureName)),logFile)
-                    inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature,env.workspace,basename(copyFeatureName))
+                    
+                    fieldMappings = arcpy.FieldMappings()
+                    fieldMappings.addTable(inLineFeature)
+                    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
+
+                    log.logArcpy("arcpy.conversion.ExportFeatures",(inLineFeature, basename(copyFeatureName), f"field_mapping={fieldMappings}"),logFile)
+                    inRoadFeature = arcpy.conversion.ExportFeatures(inLineFeature, basename(copyFeatureName), field_mapping=fieldMappings)
 
                 # No merge field was supplied. Add a field to the copied inRoadFeature and populate it with a constant value
                 AddMsg(f"{timer.now()} Adding a dummy field to {arcpy.Describe(inRoadFeature).baseName} and assigning value 1 to all records.", 0, logFile)
@@ -3692,14 +3717,14 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         desc = arcpy.Describe(inParkFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempParkFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
         
         if dissolveParkYN == 'true':
             log.logArcpy('arcpy.Dissolve_management', (inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES"), logFile)
             inParkFeature = arcpy.Dissolve_management(inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES")
         else:
-            log.logArcpy('arcpy.FeatureClassToFeatureClass_conversion', (inParkFeature, env.workspace, basename(tempParkFeature)), logFile)
-            inParkFeature = arcpy.FeatureClassToFeatureClass_conversion(inParkFeature, env.workspace, basename(tempParkFeature))
+            log.logArcpy('arcpy.conversion.ExportFeatures', (inParkFeature, basename(tempParkFeature)), logFile)
+            inParkFeature = arcpy.conversion.ExportFeatures(inParkFeature, basename(tempParkFeature))
         
         # use the OID for identifying Parks
         idFlds = [aFld for aFld in arcpy.ListFields(inParkFeature) if aFld.type == "OID"]
@@ -4415,7 +4440,7 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             # tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             #
             # AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
-            # log.logArcpy(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
+            # log.logArcpy(arcpy.conversion.ExportFeatures, (inZoneDataset, basename(tempZoneinFeature), '', '', fieldMappings), 'arcpy.conversion.ExportFeatures', logFile)
             #
             # inZoneDataset = tempZoneinFeature
         
@@ -4604,8 +4629,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating a working copy of {descCensus.baseName}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-            log.logArcpy('arcpy.FeatureClassToFeatureClass_conversion',(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings),logFile)
-            inCensusDataset = arcpy.FeatureClassToFeatureClass_conversion(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings)
+            log.logArcpy('arcpy.conversion.ExportFeatures',(inCensusDataset,basename(tempCensusFeature),"","",fieldMappings),logFile)
+            inCensusDataset = arcpy.conversion.ExportFeatures(inCensusDataset,basename(tempCensusFeature),"","",fieldMappings)
         
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
@@ -5076,11 +5101,11 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         fieldMappings = arcpy.FieldMappings()
         fieldMappings.addTable(inRoadFeature)
         
-        AddMsg("%s Creating a working copy of %s..." % (timer.now(), os.path.basename(inRoadFeature)))
+        AddMsg(f"{timer.now()} Creating a working copy of {basename(inRoadFeature)}...")
         
         if inRoadWidthOption == "Distance":
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.required != True]
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,basename(tempRoadFeature),"","",fieldMappings)
             
             AddMsg("%s Adding field, HalfWidth, and calculating its value... " % (timer.now()))   
             halfRoadWidth = float(widthLinearUnit.split()[0]) / 2
@@ -5091,7 +5116,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             
         elif inRoadWidthOption == "Field: Lane Count":
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneCntFld]
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,basename(tempRoadFeature),"","",fieldMappings)
             
             AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.now()))
             arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
@@ -5106,7 +5131,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             
         else:
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneDistFld]
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,basename(tempRoadFeature),"","",fieldMappings)
             
             
             # input field should be a linear distance string. Part 0 = distance value. Part 1 = distance units

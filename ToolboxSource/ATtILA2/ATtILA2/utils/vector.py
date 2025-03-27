@@ -169,9 +169,14 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
             if inFCDesc.HasM or inFCDesc.HasZ:
                 copyFCNameBase = f"{toolShortName}_{inFCName}_"
                 copyFCName = files.nameIntermediateFile([copyFCNameBase,"FeatureClass"], cleanupList)
-                AddMsg(f"{timer.now()} Creating a copy of {inFCName} without M or Z values: {basename(copyFCName)}", 0, logFile)
-                logArcpy("arcpy.FeatureClassToFeatureClass_conversion", (inFC, env.workspace, basename(copyFCName)), logFile)
-                inFC = arcpy.FeatureClassToFeatureClass_conversion(inFC, env.workspace, basename(copyFCName))
+                AddMsg(f"{timer.now()} Creating working copy of {inFCName} without M or Z values: {basename(copyFCName)}", 0, logFile)
+                
+                fieldMappings = arcpy.FieldMappings()
+                fieldMappings.addTable(inFC)
+                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
+
+                logArcpy("arcpy.conversion.ExportFeatures", (inFC, basename(copyFCName), f"field_mapping={fieldMappings}"), logFile)
+                inFC = arcpy.conversion.ExportFeatures(inFC, basename(copyFCName), field_mapping=fieldMappings)
                 inFCDesc = arcpy.Describe(inFC)
                 inFCName = inFCDesc.baseName
 
@@ -362,10 +367,10 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     logArcpy('arcpy.Erase_analysis', (preEraseOutput,eraseFeatureClass,outFeatures), logFile)
                     finalOutput = arcpy.Erase_analysis(preEraseOutput,eraseFeatureClass,outFeatures)
                 except:
-                    logArcpy('arcpy.FeatureClassToFeatureClass_conversion', (eraseFeatureClass,"%scratchworkspace%","badEraseFeatures"), logFile)
-                    badEraseFeatures = arcpy.FeatureClassToFeatureClass_conversion(eraseFeatureClass,"%scratchworkspace%","badEraseFeatures")
-                    logArcpy('arcpy.FeatureClassToFeatureClass_conversion', (preEraseOutput,"%scratchworkspace%","badBuffer"), logFile)
-                    badBuffer = arcpy.FeatureClassToFeatureClass_conversion(preEraseOutput,"%scratchworkspace%","badBuffer")
+                    logArcpy('arcpy.conversion.ExportFeatures', (eraseFeatureClass,"badEraseFeatures"), logFile)
+                    badEraseFeatures = arcpy.conversion.ExportFeatures(eraseFeatureClass,"badEraseFeatures")
+                    logArcpy('arcpy.conversion.ExportFeatures', (preEraseOutput,"badBuffer"), logFile)
+                    badBuffer = arcpy.conversion.ExportFeatures(preEraseOutput,"badBuffer")
                     # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
                     logArcpy('arcpy.RepairGeometry_management', (badBuffer,"DELETE_NULL"), logFile)
                     arcpy.RepairGeometry_management(badBuffer,"DELETE_NULL")
@@ -484,7 +489,7 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
                 
         # merge buffer features from all input feature classes into a single feature class.
         # Even if there is only one input, the merge will create a copy of the buffer theme without any unnecessary fields.
-        # It is essentially a FeatureClassToFeatureClass operation with fieldMappings.
+        # It is essentially a arcpy.conversion.ExportFeatures operation with fieldMappings.
         fieldMappings = arcpy.FieldMappings()
         fieldMappings.addTable(bufferResult)
         [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != "BUFF_DIST"]
@@ -530,11 +535,11 @@ def bufferFeaturesWithoutBorders(inFeatures, repUnits, outFeatures, bufferDist, 
                 logArcpy("arcpy.Erase_analysis", (intersectFeatureClass, eraseFeatureClass, erasedOutputName), logFile)
                 erasedOutput = arcpy.Erase_analysis(intersectFeatureClass, eraseFeatureClass, erasedOutputName)
             except:
-                logArcpy("arcpy.FeatureClassToFeatureClass_conversion", (eraseFeatureClass,"%scratchworkspace%","badEraseFeatures"), logFile)
-                badEraseFeatures = arcpy.FeatureClassToFeatureClass_conversion(eraseFeatureClass,"%scratchworkspace%","badEraseFeatures")
+                logArcpy("arcpy.conversion.ExportFeatures", (eraseFeatureClass,"badEraseFeatures"), logFile)
+                badEraseFeatures = arcpy.conversion.ExportFeatures(eraseFeatureClass,"badEraseFeatures")
                 
-                logArcpy("arcpy.FeatureClassToFeatureClass_conversion", (intersectFeatureClass,"%scratchworkspace%","badBuffer"), logFile)
-                badBuffer = arcpy.FeatureClassToFeatureClass_conversion(intersectFeatureClass,"%scratchworkspace%","badBuffer")
+                logArcpy("arcpy.conversion.ExportFeatures", (intersectFeatureClass,"badBuffer"), logFile)
+                badBuffer = arcpy.conversion.ExportFeatures(intersectFeatureClass,"badBuffer")
                 
                 # There is a small chance that this buffer operation will produce a feature class with invalid geometry.  Try a repair.
                 logArcpy("arcpy.RepairGeometry_management", (badBuffer,"DELETE_NULL"), logFile)
@@ -1179,7 +1184,7 @@ def getMinimumFieldMappings(layerList):
 #
 #         if inRoadWidthOption == "Distance":
 #             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.required != True]
-#             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+#             inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,os.path.basename(tempRoadFeature),"",fieldMappings)
 #
 #             AddMsg("%s Adding field, HalfWidth, and calculating its value... " % (timer.now()))   
 #             halfRoadWidth = float(widthLinearUnit.split()[0]) / 2
@@ -1190,7 +1195,7 @@ def getMinimumFieldMappings(layerList):
 #
 #         elif inRoadWidthOption == "Field: Lane Count":
 #             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneCntFld]
-#             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+#             inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,os.path.basename(tempRoadFeature),"",fieldMappings)
 #
 #             AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.now()))
 #             arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
@@ -1205,7 +1210,7 @@ def getMinimumFieldMappings(layerList):
 #
 #         else:
 #             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneDistFld]
-#             inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+#             inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,os.path.basename(tempRoadFeature),"",fieldMappings)
 #
 #
 #             # input field should be a linear distance string. Part 0 = distance value. Part 1 = distance units

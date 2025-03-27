@@ -157,8 +157,8 @@ def createPolygonValueCountTable(inPolygonFeature,inPolygonIdField,inValueDatase
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating a working copy of {basename(inValueDataset)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-            logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings),logFile)
-            inValueDataset = arcpy.FeatureClassToFeatureClass_conversion(inValueDataset,env.workspace,os.path.basename(tempCensusFeature),"",fieldMappings)
+            logArcpy("arcpy.conversion.ExportFeatures",(inValueDataset, basename(tempCensusFeature),f"fieldMappings={fieldMappings}"),logFile)
+            inValueDataset = arcpy.conversion.ExportFeatures(inValueDataset, basename(tempCensusFeature),field_mapping=fieldMappings)
 
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
