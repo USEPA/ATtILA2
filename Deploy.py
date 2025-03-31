@@ -4,7 +4,7 @@
     
     Into an empty directory, copy the following files and folders:
     
-        ..\ATtILA2\src\ATtILA v3.tbx
+        ..\ATtILA2\src\ATtILA v3.1.atbx
     
         ..\ATtILA2\src\ToolboxSource Folder
             it should contain just two subfolders (ATtILA2 and LandCoverClassifications) and no files except those in the two subfolders
@@ -73,7 +73,7 @@ def main(_argv):
     dateStr = d.strftime("%Y%b%d")
     
     outputDir = 'ATtILA_Deployment'
-    toolbox = 'ATtILA v3.tbx'
+    toolbox = 'ATtILA v3.1.atbx'
     manual = 'User Manual.pdf'
     readme = 'README.txt'
     tbSource = 'ToolboxSource'

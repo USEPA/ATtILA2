@@ -4,7 +4,7 @@
 import arcpy
 import os
 from os.path import basename
-from arcpy.sa import Con,EucDistance,Raster,Reclassify,RegionGroup,RemapValue,SetNull,Extent, IsNull
+from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,SetNull,Extent, IsNull
 from . import *
 from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
@@ -371,8 +371,8 @@ def getEdgeCoreGrid(m, lccObj, lccClassesDict, inLandCoverGrid, PatchEdgeWidth_s
     otherGrid = SetNull(reclassGrid, 1, whereClause)
     
     AddMsg(f"{timer.now()} Step 3 of 4: Finding distance from Other", 0, logFile)
-    logArcpy('EucDistance', (otherGrid,), logFile)
-    distGrid = EucDistance(otherGrid)
+    logArcpy('arcpy.sa.DistanceAccumulation', (otherGrid,), logFile)
+    distGrid = arcpy.sa.DistanceAccumulation(otherGrid)
     
     AddMsg(f"{timer.now()} Step 4 of 4: Delimiting Class areas to Edge = 3 and Core = 4", 0, logFile)
     edgeDist = (float(PatchEdgeWidth_str) + 0.5) * Raster(inLandCoverGrid).meanCellWidth
@@ -443,8 +443,8 @@ def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, m
         whereClause = f"{delimitedVALUE} < {classValue}"
         logArcpy("arcpy.sa.SetNull", (reclassGrid, 1, whereClause), logFile)
         classRaster = arcpy.sa.SetNull(reclassGrid, 1, whereClause)
-        logArcpy("arcpy.sa.EucDistance", (classRaster, maxSep, fltProcessingCellSize), logFile)
-        eucDistanceRaster = arcpy.sa.EucDistance(classRaster, maxSep, fltProcessingCellSize)
+        logArcpy("arcpy.sa.DistanceAccumulation", (classRaster, f"source_maximum_accumulation={maxSep}"), logFile)
+        eucDistanceRaster = arcpy.sa.DistanceAccumulation(classRaster, source_maximum_accumulation=maxSep)
 
         # Run Region Group analysis on UserEuclidPlus, ignores 0/NoData values
         AddMsg(f"{timer.now()} Assigning unique numbers to each unconnected cluster of Class:{m}.", 0, logFile)
@@ -874,7 +874,7 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
    
     # with arcpy.EnvManager(extent = oneParkBuffName):
     with arcpy.EnvManager(extent = "in_memory/oneParkBuff"):
-        costDist = arcpy.sa.CostDistance(onePark, costRaster, distNumber)
+        costDist = arcpy.sa.DistanceAccumulation(onePark, in_cost_raster=costRaster, source_maximum_accumulation=distNumber)
         
         # Identify park area in square meters (value already determined in parks prep process step)
         with arcpy.da.SearchCursor(onePark,calcAreaFld) as cursor:

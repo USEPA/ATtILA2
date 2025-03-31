@@ -88,6 +88,13 @@ class metricCalc:
         # Set whether to add QA Fields as a class attribute
         self.addQAFields = globalConstants.qaCheckName in self.optionalGroupsList
         
+        # # Set up a table with the ID values of every reporting unit in the inReportingUnitFeature. This table will be
+        # # used to have an entry for each RU in the outTable
+        # fieldMappings = arcpy.FieldMappings()
+        # fieldMappings.addTable(inReportingUnitFeature)
+        # [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != reportingUnitIdField]
+        # self.allReportingUnitsTable = arcpy.conversion.ExportTable(inReportingUnitFeature, "allReportingUnitsTable", field_mapping=fieldMappings)
+        
         # Save other input parameters as class attributes
         self.outTable = outTable
         self.inReportingUnitFeature = inReportingUnitFeature
@@ -1582,8 +1589,8 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
 
         # Build and populate final output table.
         AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
-        log.logArcpy("arcpy.TableToTable_conversion",(inReportingUnitFeature,os.path.dirname(outTable),basename(outTable)), logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),basename(outTable))
+        log.logArcpy("arcpy.conversion.ExportTable",(inReportingUnitFeature, outTable), logFile)
+        arcpy.conversion.ExportTable(inReportingUnitFeature, outTable)
         
         # Get a list of unique road class values
         if roadClassField:
@@ -1604,7 +1611,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             if desc.HasM or desc.HasZ:
                 fieldMappings = arcpy.FieldMappings()
                 fieldMappings.addTable(inStreamFeature)
-                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type == 'OID']
+                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
                 
                 tempName = f"{metricConst.shortName}_{desc.baseName}_"
                 tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
@@ -1663,7 +1670,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
                 if desc.HasM or desc.HasZ:
                     fieldMappings = arcpy.FieldMappings()
                     fieldMappings.addTable(inStreamFeature)
-                    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type == 'OID']
+                    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
 
                     tempName = f"{metricConst.shortName}_{desc.baseName}_"
                     tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
@@ -1850,8 +1857,8 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
 
         # Build and populate final output table.
         AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
-        log.logArcpy("arcpy.TableToTable_conversion",(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable)),logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        log.logArcpy("arcpy.conversion.ExportTable",(inReportingUnitFeature, outTable),logFile)
+        arcpy.conversion.ExportTable(inReportingUnitFeature, outTable)
         # Get a list of unique road class values
         if strmOrderField:
             orderValues = fields.getUniqueValues(mergedInLines,strmOrderField)
@@ -2430,8 +2437,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         fieldMappings.addTable(popTable_RU)
         [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
 
-        log.logArcpy("arcpy.TableToTable_conversion",(popTable_RU,os.path.dirname(outTable), basename(outTable), "", fieldMappings), logFile)
-        arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable), basename(outTable), "", fieldMappings)
+        log.logArcpy("arcpy.conversion.ExportTable",(popTable_RU, outTable, f"field_mapping={fieldMappings}"), logFile)
+        arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=fieldMappings)
         
         # Compile a list of fields that will be transferred from the floodplain population table into the output table
         fromFields = [popCntFields[index]]
@@ -4784,8 +4791,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             keepFields.append(reportingUnitIdField)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
         
-            log.logArcpy('arcpy.TableToTable_conversion', (popTable_RU,os.path.dirname(outTable),basename(outTable),"",fieldMappings), logFile)
-            arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable),basename(outTable),"",fieldMappings)
+            log.logArcpy('arcpy.conversion.ExportTable', (popTable_RU, outTable, f"field_mapping={fieldMappings}"), logFile)
+            arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=fieldMappings)
             
             # Compile a list of fields that will be transferred from the zone population table into the output table
             fromFields = [popCntFields[index]]
@@ -4816,8 +4823,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                     newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
         
         
-            log.logArcpy('arcpy.TableToTable_conversion', (popTable_RU,os.path.dirname(outTable),basename(outTable), "", newFieldMap), logFile)
-            arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable),basename(outTable), "", newFieldMap)
+            log.logArcpy('arcpy.conversion.ExportTable', (popTable_RU, outTable, f"field_mapping={newFieldMap}"), logFile)
+            arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=newFieldMap)
         
         
             ## rename count field to include buffer

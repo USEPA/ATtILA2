@@ -1265,7 +1265,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
 #         newFieldName = metricsFieldnameDict[mBaseName][0]
 #         arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
 #    
-#     arcpy.TableToTable_conversion(statsResultTable,os.path.dirname(outTable),os.path.basename(outTable))
+#     arcpy.conversion.ExportTable(statsResultTable,outTable)
 
     # Use the try: finally: section of code when INFO tables are possible as outputs.
     try:
