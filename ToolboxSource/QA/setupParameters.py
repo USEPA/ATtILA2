@@ -3,7 +3,6 @@ import arcpy
 currentDir = os.getcwd()
 parentDir = os.path.dirname(currentDir) #Navigate two levels above
 
-
 class setup: 
     ATtILA_pth = None # Path to ATtILA.tbx
     inGDB = None
@@ -17,10 +16,6 @@ class setup:
     NHD_H_0509_HUC4 = None # Path to HUC 0509 NHD gdb
     NHD_plus = None # Path to NHD plus dataset for multiple shapefiles NHD test
     NHD_Shapefile_folder = None # Path to single shapefile NHD folder
-
-#class OLDPoints: 
-#    Daycares = os.path.join(setup.setup.inGDB, "Daycares")
-#    SampleSites = os.path.join(setup.setup.inGDB, "SampleSites")
 
 class points:
     def __init__(self): 
@@ -125,8 +120,3 @@ class OUTS:
     toolPath = ' Testing'
     outGDB = '_Test.gdb'
 
-
-arcpy.AddMessage(currentDir)
-arcpy.AddMessage(parentDir)
-arcpy.AddMessage(setup.lccFilePath)
-#print(r"C:\Users\Jtafrate\OneDrive - Environmental Protection Agency (EPA)\Profile\Documents\QA_ATtILAToolDevelopment\ATtILA_JTVersion\ToolboxSource\LandCoverClassifications\NLCD LAND.xml")
