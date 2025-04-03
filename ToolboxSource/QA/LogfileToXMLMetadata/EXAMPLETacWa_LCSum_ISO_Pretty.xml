@@ -1,0 +1,666 @@
+<?xml version="1.0" ?>
+<metadata>
+	<eainfo>
+		<overview xmlns="">
+			<eadetcit>https://www.epa.gov/enviroatlas/enviroatlas-fact-sheets</eadetcit>
+			<eaover>These layers describe the land cover within each block group. 
+
+Processing steps completed using python scripts. 
+
+A comprehensive list of metric creation steps is included in the Processing Steps.</eaover>
+		</overview>
+		<detailed xmlns="" Name="TacWA_LCSum">
+			<enttyp>
+				<enttypl Sync="TRUE">TacWA_LCSum</enttypl>
+				<enttypt Sync="TRUE">Table</enttypt>
+				<enttypc Sync="TRUE">526</enttypc>
+				<enttypd>Land Cover summaries by block group.</enttypd>
+				<enttypds>US EPA</enttypds>
+			</enttyp>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">OBJECTID</attrlabl>
+				<attalias Sync="TRUE">OBJECTID</attalias>
+				<attrtype Sync="TRUE">OID</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef Sync="TRUE">Internal feature number.</attrdef>
+				<attrdefs Sync="TRUE">Esri</attrdefs>
+				<attrdomv>
+					<udom Sync="TRUE">Sequential unique whole numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Imp_M</attrlabl>
+				<attalias Sync="TRUE">VALUE_20</attalias>
+				<attrtype Sync="TRUE">Double</attrtype>
+				<attwidth Sync="TRUE">8</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Impervious area (m2).</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>58319</rdommin>
+						<rdommax>12115538</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">MFor_M</attrlabl>
+				<attalias Sync="TRUE">MFor_M</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Tree cover area (m2). Includes trees/forest and woody wetlands, where evaluated.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>6594</rdommin>
+						<rdommax>144969688</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Green_M</attrlabl>
+				<attalias Sync="TRUE">Green_M</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Greenspace area (m2). Includes trees/forest, shrubs, grass/herbaceous, agriculture, woody wetlands, and emergent wetlands, where evaluated.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>32515</rdommin>
+						<rdommax>218791108</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Ag_M</attrlabl>
+				<attalias Sync="TRUE">Ag_M</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Agriculture area (m2). Includes orchards, where evaluated.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<edom xmlns="">
+						<edomv>-888888</edomv>
+						<edomvd>This layer was not calculated in the community. The record is here as a place holder</edomvd>
+						<edomvds>US EPA</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Wet_M</attrlabl>
+				<attalias Sync="TRUE">Wet_M</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Wetland area (m2). Includes woody and emergent wetlands, where evaluated.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>0</rdommin>
+						<rdommax>9297305</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">MFor_P</attrlabl>
+				<attalias Sync="TRUE">MFor_P</attalias>
+				<attrtype Sync="TRUE">Single</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Percent tree cover</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>1.59</rdommin>
+						<rdommax>81.86</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Green_P</attrlabl>
+				<attalias Sync="TRUE">Green_P</attalias>
+				<attrtype Sync="TRUE">Single</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Percent green space.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>13.2</rdommin>
+						<rdommax>97.1</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Imp_P</attrlabl>
+				<attalias Sync="TRUE">Imp_P</attalias>
+				<attrtype Sync="TRUE">Single</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Percent impervious area.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>0.98</rdommin>
+						<rdommax>86.67</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Ag_P</attrlabl>
+				<attalias Sync="TRUE">Ag_P</attalias>
+				<attrtype Sync="TRUE">Single</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Percent agriculture.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<edom xmlns="">
+						<edomv>-888888</edomv>
+						<edomvd>This layer was not calculated in the community. The record is here as a place holder</edomvd>
+						<edomvds>US EPA</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Wet_P</attrlabl>
+				<attalias Sync="TRUE">Wet_P</attalias>
+				<attrtype Sync="TRUE">Single</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Percent wetlands.</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>0.0</rdommin>
+						<rdommax>24.29</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">MFor_PC</attrlabl>
+				<attalias Sync="TRUE">MFor_PC</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Tree cover per capita (m2/person).</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>4</rdommin>
+						<rdommax>1015142</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Green_PC</attrlabl>
+				<attalias Sync="TRUE">Green_PC</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Green space per capita (m2/person).</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>22</rdommin>
+						<rdommax>1717250</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Imp_PC</attrlabl>
+				<attalias Sync="TRUE">Imp_PC</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Impervious area per capita (m2/person).</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<rdom xmlns="">
+						<rdommin>61</rdommin>
+						<rdommax>983452</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">Ag_PC</attrlabl>
+				<attalias Sync="TRUE">Ag_PC</attalias>
+				<attrtype Sync="TRUE">Integer</attrtype>
+				<attwidth Sync="TRUE">4</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Agricultural area per capita (m2/person).</attrdef>
+				<attrdefs>US EPA</attrdefs>
+				<attrdomv>
+					<edom xmlns="">
+						<edomv>-888888</edomv>
+						<edomvd>This layer was not calculated in the community. The record is here as a place holder</edomvd>
+						<edomvds>US EPA</edomvds>
+					</edom>
+				</attrdomv>
+			</attr>
+			<attr xmlns="">
+				<attrlabl Sync="TRUE">bgrp</attrlabl>
+				<attalias Sync="TRUE">bgrp</attalias>
+				<attrtype Sync="TRUE">String</attrtype>
+				<attwidth Sync="TRUE">12</attwidth>
+				<atprecis Sync="TRUE">0</atprecis>
+				<attscale Sync="TRUE">0</attscale>
+				<attrdef>Census Block Group Identifier; A concatenation of the current state Federal Information Processing Standard (FIPS) code, county FIPS code, census tract FIPS code, and block group FIPS code.</attrdef>
+				<attrdefs>US Census Bureau</attrdefs>
+				<attrdomv>
+					<codesetd xmlns="">
+						<codesetn>NCITS.38-200x (R2004), Codes for the Identification of the States, the District of Columbia, Puerto Rico, and the Insular Areas of the United States (Formerly FIPS 5-2), INCITS.31-200x (R2007), Codes for the Identification of the Counties and Equivalent Areas of the United States, Puerto Rico, and the Insular Areas of the United States (Formerly FIPS 6-4), and the census tract code found in TRACTCE10 and block group number found in BLKGRPCE10</codesetn>
+						<codesets>US Census Bureau</codesets>
+					</codesetd>
+				</attrdomv>
+			</attr>
+		</detailed>
+	</eainfo>
+	<mdChar>
+		<CharSetCd value="004"/>
+	</mdChar>
+	<mdHrLv>
+		<ScopeCd value="005"/>
+	</mdHrLv>
+	<mdContact xmlns="">
+		<rpIndName>EnviroAtlas Coordinator</rpIndName>
+		<rpOrgName>U.S. Environmental Protection Agency, Office of Research and Development - Center for Public Health and Environmental Assessment (CPHEA), EnviroAtlas</rpOrgName>
+		<rpPosName>Geospatial Data Owner</rpPosName>
+		<rpCntInfo xmlns="">
+			<cntPhone>
+				<voiceNum tddtty="">(919) 541-3832</voiceNum>
+			</cntPhone>
+			<cntAddress addressType="both">
+				<delPoint>109 T.W. Alexander Drive</delPoint>
+				<city>Research Triangle Park</city>
+				<adminArea>NC</adminArea>
+				<postCode>27709</postCode>
+				<eMailAdd>EnviroAtlas@epa.gov</eMailAdd>
+			</cntAddress>
+			<cntInstr>https://www.epa.gov/enviroatlas</cntInstr>
+		</rpCntInfo>
+		<role>
+			<RoleCd value="007"/>
+		</role>
+	</mdContact>
+	<mdDateSt Sync="FALSE">2024-09-03</mdDateSt>
+	<distInfo xmlns="">
+		<distTranOps xmlns="">
+			<onLineSrc xmlns="">
+				<linkage>https://enviroatlas.epa.gov/download/TacWA_metrics_Mar2023_CSV_Shapes.zip</linkage>
+				<protocol>download</protocol>
+				<orFunct>
+					<OnFunctCd value="001"/>
+				</orFunct>
+			</onLineSrc>
+			<onLineSrc xmlns="">
+				<linkage>https://enviroatlas.epa.gov/arcgis/rest/services/Communities/Community_BGmetrics/MapServer</linkage>
+				<protocol>ESRI:ArcGIS</protocol>
+				<orFunct>
+					<OnFunctCd value="003"/>
+				</orFunct>
+			</onLineSrc>
+			<onLineSrc xmlns="">
+				<linkage>https://www.epa.gov/enviroatlas/enviroatlas-data</linkage>
+				<protocol>information</protocol>
+				<orFunct>
+					<OnFunctCd value="002"/>
+				</orFunct>
+			</onLineSrc>
+			<onLineSrc xmlns="">
+				<linkage>https://www.epa.gov/enviroatlas</linkage>
+				<protocol>information</protocol>
+				<orFunct>
+					<OnFunctCd value="002"/>
+				</orFunct>
+			</onLineSrc>
+			<onLineSrc xmlns="">
+				<linkage>https://enviroatlas.epa.gov/download/TacWA_metrics_Mar2023_FGDB.zip</linkage>
+				<protocol>download</protocol>
+				<orFunct>
+					<OnFunctCd value="001"/>
+				</orFunct>
+			</onLineSrc>
+		</distTranOps>
+		<distFormat xmlns="">
+			<formatName Sync="TRUE">File Geodatabase Table</formatName>
+		</distFormat>
+	</distInfo>
+	<dataIdInfo>
+		<idCitation xmlns="">
+			<resTitle>EnviroAtlas - Tacoma, WA - Land Cover by Block Group</resTitle>
+			<citRespParty xmlns="">
+				<rpOrgName>U.S. Environmental Protection Agency (US EPA)</rpOrgName>
+				<role>
+					<RoleCd value="006"/>
+				</role>
+			</citRespParty>
+			<citRespParty xmlns="">
+				<rpOrgName>U.S. EPA Office of Research and Development (ORD) - Center for Public Health and Environmental Assessment (CPHEA)</rpOrgName>
+				<rpCntInfo xmlns="">
+					<cntAddress addressType="">
+						<delPoint>Research Triangle Park, NC</delPoint>
+					</cntAddress>
+				</rpCntInfo>
+				<role>
+					<RoleCd value="010"/>
+				</role>
+			</citRespParty>
+			<presForm xmlns="">
+				<PresFormCd value="011" Sync="TRUE"/>
+			</presForm>
+			<date>
+				<pubDate>2022-07-06</pubDate>
+			</date>
+		</idCitation>
+		<idStatus>
+			<ProgCd value="001"/>
+		</idStatus>
+		<idPoC xmlns="">
+			<rpIndName>EnviroAtlas Coordinator</rpIndName>
+			<rpOrgName>U.S. Environmental Protection Agency, Office of Research and Development - Center for Public Health and Environmental Assessment (CPHEA), EnviroAtlas</rpOrgName>
+			<rpPosName>Geospatial Data Owner</rpPosName>
+			<rpCntInfo xmlns="">
+				<cntPhone>
+					<voiceNum tddtty="">(919) 541-3832</voiceNum>
+				</cntPhone>
+				<cntAddress addressType="both">
+					<delPoint>109 T.W. Alexander Drive</delPoint>
+					<city>Research Triangle Park</city>
+					<adminArea>NC</adminArea>
+					<postCode>27709</postCode>
+					<eMailAdd>EnviroAtlas@epa.gov</eMailAdd>
+				</cntAddress>
+				<cntInstr>https://www.epa.gov/enviroatlas</cntInstr>
+			</rpCntInfo>
+			<role>
+				<RoleCd value="010">Publisher</RoleCd>
+			</role>
+		</idPoC>
+		<resMaint xmlns="">
+			<maintFreq>
+				<MaintFreqCd value="009"/>
+			</maintFreq>
+		</resMaint>
+		<placeKeys xmlns="">
+			<thesaName xmlns="">
+				<resTitle>EPA Place Names</resTitle>
+				<date>
+					<pubDate>2015-01-31</pubDate>
+				</date>
+				<citOnlineRes xmlns="">
+					<linkage>https://ofmpub.epa.gov/sor_internet/registry/termreg/searchandretrieve/taxonomies/search.do?search=&amp;searchString=&amp;taxonomyName=WBT%20-%20Geographic%20Locations</linkage>
+					<orFunct>
+						<OnFunctCd value="002"/>
+					</orFunct>
+					<orName>Web Taxonomy - Geographic Locations</orName>
+				</citOnlineRes>
+			</thesaName>
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<keyword>Tacoma, WA</keyword>
+			<keyword>Washington</keyword>
+		</placeKeys>
+		<themeKeys xmlns="">
+			<thesaName xmlns="">
+				<resTitle>EPA GIS Keyword Thesaurus</resTitle>
+				<date>
+					<pubDate>2007-11-02</pubDate>
+				</date>
+				<citOnlineRes xmlns="">
+					<linkage>https://ofmpub.epa.gov/sor_internet/registry/termreg/searchandretrieve/taxonomies/search.do?search=&amp;searchString=&amp;taxonomyName=WBT%20-%20Geographic%20Locations</linkage>
+					<orFunct>
+						<OnFunctCd value="002"/>
+					</orFunct>
+					<orName>EPA Metadata Technical Specification</orName>
+				</citOnlineRes>
+			</thesaName>
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<keyword>Ecosystem</keyword>
+			<keyword>Environment</keyword>
+			<keyword>Natural Resources</keyword>
+		</themeKeys>
+		<resConst>
+			<Consts xmlns="">
+				<useLimit>None. Please check sources, scale, accuracy, currency and other available information. Please confirm that you are using the most recent copy of both data and metadata.  Acknowledgement of the EPA would be appreciated.</useLimit>
+			</Consts>
+		</resConst>
+		<dataLang>
+			<languageCode value="eng"/>
+			<countryCode value="USA" Sync="TRUE"/>
+		</dataLang>
+		<dataChar>
+			<CharSetCd value="004"/>
+		</dataChar>
+		<resConst>
+			<LegConsts xmlns="">
+				<accessConsts>
+					<RestrictCd value="009">Unrestricted License</RestrictCd>
+				</accessConsts>
+				<othConsts>https://edg.epa.gov/EPA_Data_License.html</othConsts>
+				<useLimit>EPA Public Domain License</useLimit>
+			</LegConsts>
+		</resConst>
+		<themeKeys xmlns="">
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<thesaName xmlns="">
+				<resTitle>Federal Program Inventory</resTitle>
+				<date>
+					<pubDate>2013-09-16</pubDate>
+				</date>
+				<citOnlineRes xmlns="">
+					<linkage>https://www.performance.gov/federalprograminventory</linkage>
+					<orFunct>
+						<OnFunctCd value="002"/>
+					</orFunct>
+					<orName>Federal Program Inventory</orName>
+				</citOnlineRes>
+			</thesaName>
+			<keyword>020:072</keyword>
+		</themeKeys>
+		<idPurp>The purpose of this dataset is to show the differences in land cover amounts between the block groups in the EnviroAtlas community boundary.
+
+The overall goal of EnviroAtlas is to employ and develop the best available science to map indicators of ecosystem services production, demand, and drivers for the nation.</idPurp>
+		<idAbs>This EnviroAtlas dataset describes the breakdown of the land cover classes with each Census Block Group. In this community, forest is defined as Trees &amp;amp; Forest,  and Woody Wetlands. Green space is defined as Trees &amp;amp; Forest, Grass &amp;amp; Herbaceous, Woody Wetlands,  and Emergent Wetlands.Wetlands are defined as Woody Wetlands and Emergent Wetlands. This dataset also includes the area per capita for each block group for some land cover types.
+
+This dataset was produced by the US EPA to support research and online mapping activities related to EnviroAtlas. EnviroAtlas (https://www.epa.gov/enviroatlas) allows the user to interact with a web-based, easy-to-use, mapping application to view and analyze multiple ecosystem services for the contiguous United States. The dataset is available as downloadable data (https://edg.epa.gov/data/Public/ORD/EnviroAtlas) or as an EnviroAtlas map service. Additional descriptive information about each attribute in this dataset can be found in its associated EnviroAtlas Fact Sheet (https://www.epa.gov/enviroatlas/enviroatlas-fact-sheets).</idAbs>
+		<resConst>
+			<SecConsts xmlns="">
+				<class>
+					<ClasscationCd value="001">Unclassified</ClasscationCd>
+				</class>
+				<classSys>https://project-open-data.github.io/schema/#accessLevel</classSys>
+			</SecConsts>
+		</resConst>
+		<themeKeys xmlns="">
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<thesaName xmlns="">
+				<resTitle>User</resTitle>
+				<date>
+					<pubDate>2022-01-11</pubDate>
+				</date>
+			</thesaName>
+			<keyword>Census Block Groups</keyword>
+			<keyword>Communities</keyword>
+			<keyword>Ecosystem Services</keyword>
+			<keyword>EnviroAtlas</keyword>
+			<keyword>Environment</keyword>
+			<keyword>Environmental Atlas</keyword>
+			<keyword>Green Space</keyword>
+			<keyword>Land Cover</keyword>
+		</themeKeys>
+		<envirDesc Sync="TRUE">Microsoft Windows 10 Version 10.0 (Build 22621) ; Esri ArcGIS 13.3.0.52636</envirDesc>
+		<spatRpType>
+			<SpatRepTypCd value="003" Sync="TRUE"/>
+		</spatRpType>
+		<dataExt xmlns="">
+			<geoEle xmlns="">
+				<GeoBndBox esriExtentType="search">
+					<westBL>-122.76678</westBL>
+					<eastBL>-121.90338</eastBL>
+					<northBL>47.39917</northBL>
+					<southBL>46.86297</southBL>
+					<exTypeCode>1</exTypeCode>
+				</GeoBndBox>
+			</geoEle>
+			<tempEle>
+				<TempExtent>
+					<exTemp>
+						<TM_Period xmlns="">
+							<tmBegin>2011-01-01T00:00:00</tmBegin>
+							<tmEnd>2011-12-31T00:00:00</tmEnd>
+						</TM_Period>
+					</exTemp>
+				</TempExtent>
+			</tempEle>
+		</dataExt>
+		<suppInfo>This dataset can be joined to the EnviroAtlas feature class TacWA_BG using the field 'bgrp.'</suppInfo>
+		<tpCat>
+			<TopicCatCd value="007"/>
+		</tpCat>
+	</dataIdInfo>
+	<mdMaint xmlns="">
+		<maintFreq>
+			<MaintFreqCd value="009"/>
+		</maintFreq>
+		<dateNext>2025-07-30T00:00:00</dateNext>
+	</mdMaint>
+	<dqInfo xmlns="">
+		<dqScope>
+			<scpLvl>
+				<ScopeCd value="005"/>
+			</scpLvl>
+		</dqScope>
+		<report xmlns="" type="DQConcConsis" dimension="">
+			<measDesc>Tests for integrity have not been performed.</measDesc>
+			<measResult>
+				<ConResult xmlns="">
+					<conSpec xmlns="">
+						<resTitle>EPA National Geospatial Data Policy</resTitle>
+					</conSpec>
+					<conExpl>Features have been reviewed by U.S. EPA EnviroAtlas Project Managers for public release.</conExpl>
+					<conPass>1</conPass>
+				</ConResult>
+			</measResult>
+		</report>
+		<report xmlns="" type="DQCompOm" dimension="">
+			<measDesc>Features represented have not been tested for completeness</measDesc>
+			<measResult>
+				<ConResult xmlns="">
+					<conSpec xmlns="">
+						<resTitle>EPA National Geospatial Data Policy</resTitle>
+					</conSpec>
+					<conExpl>Features have been reviewed by U.S. EPA EnviroAtlas Project Managers for public release.</conExpl>
+					<conPass>1</conPass>
+				</ConResult>
+			</measResult>
+		</report>
+		<dataLineage>
+			<prcStep xmlns="">
+				<stepDesc>Begin with the Census Block Groups and the 1-Meter Land Cover Classification for the EnviroAtlas community.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Convert the Block Groups to Raster snapped to the land cover, with 1 meter pixels.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Tabulate the area of each land cover class within each block group.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Rename VALUE_## fields to their abbreviated land cover class and &quot;_M&quot;. If any of the LC classes were not evaluated in the community, add the field for that LC and calculate all records = 0. In this community, Shrubs, Agriculture, and Orchards were not evaluated.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Use the block group tabulate area table to calculate block group land cover combinations: LandA_M = Impervious + Soil &amp;amp; Barren + Trees &amp;amp; Forest + Shrubs + Grass and Herbaceous + Agriculture + Orchards + Woody Wetlands + Emergent Wetlands; MFor_M = Trees &amp;amp; Forest + Woody Wetlands + Orchards; Green_M = Trees &amp;amp; Forest + Shrubs + Grass and Herbaceous + Agriculture + Orchards + Woody Wetlands + Emergent Wetlands; Ag_M = Agriculture + Orchards; Wet_M = Woody Wetlands + Emergent Wetlands. Note, if certain classes were not evaluated in this community, they will have 0 values in these fields.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Calculate the percentage of the block group area that is forest, impervious, green space, wetlands, and agriculture using the total land area. Note, if certain classes were not evaluated in this community, they will have 0 values in these fields.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Calculate the area per capita of impervious, forest, green space, and agriculture cover using SUM_POP10 from the block group shapefile. Note, if certain classes were not evaluated in this community, they will have 0 values in these fields.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Calculate fields where SUMPOP10 = 0: Area Per Capita fields = -99999.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Calculate fields Ag_M, Ag_P, and Ag_PC = -888888 to indicate that Agriculture was not evaluated in this community's land cover.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+			<prcStep xmlns="">
+				<stepDesc>Copy the table to the final geodatabase, removing extraneous fields.</stepDesc>
+				<stepDateTm>2022-07-06T00:00:00</stepDateTm>
+			</prcStep>
+		</dataLineage>
+	</dqInfo>
+	<Esri>
+		<scaleRange>
+			<minScale>150000000</minScale>
+			<maxScale>5000</maxScale>
+		</scaleRange>
+		<DataProperties>
+			<itemProps>
+				<imsContentType export="False"/>
+				<itemName Sync="TRUE">TacWA_LCSum</itemName>
+				<itemLocation>
+					<linkage Sync="TRUE">file://\\LZ66MCULLER\C$\Users\mculler\OneDrive - Environmental Protection Agency (EPA)\Documents\1_PROJECTS\FGDC to ISO for community metadata\TacWA_LCSum.gdb</linkage>
+					<protocol Sync="TRUE">Local Area Network</protocol>
+				</itemLocation>
+			</itemProps>
+		</DataProperties>
+		<ArcGISFormat>1.0</ArcGISFormat>
+		<ArcGISProfile>ISO19115_3</ArcGISProfile>
+		<SyncDate>20240830</SyncDate>
+		<SyncTime>16402700</SyncTime>
+		<ModDate>20240903</ModDate>
+		<ModTime>11264800</ModTime>
+	</Esri>
+	<mdLang>
+		<languageCode value="eng"/>
+		<countryCode value="USA" Sync="TRUE"/>
+	</mdLang>
+	<mdHrLvName Sync="TRUE">dataset</mdHrLvName>
+	<mdFileID>{af294d26-bc74-48a5-8506-30a2219be65b}</mdFileID>
+	<refSysInfo>
+		<RefSystem dimension="">
+			<refSysID xmlns="">
+				<identCode code="102039"/>
+			</refSysID>
+		</RefSystem>
+	</refSysInfo>
+</metadata>

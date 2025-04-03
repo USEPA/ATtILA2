@@ -1,0 +1,325 @@
+<?xml version="1.0" ?>
+<metadata>
+	<eainfo>
+		<overview xmlns="">
+			<eadetcit>https://www.epa.gov/enviroatlas/enviroatlas-fact-sheets</eadetcit>
+			<eaover>These layers describe the land cover within each block group. 
+
+Processing steps completed using python scripts. 
+
+A comprehensive list of metric creation steps is included in the Processing Steps.</eaover>
+		</overview>
+		<detailed xmlns="" Name="">
+			<enttyp>
+				<enttypl Sync="TRUE"/>
+				<enttypt Sync="TRUE"/>
+				<enttypc Sync="TRUE"/>
+				<enttypd/>
+				<enttypds>US EPA</enttypds>
+			</enttyp>
+		</detailed>
+	</eainfo>
+	<mdChar>
+		<CharSetCd value="004"/>
+	</mdChar>
+	<mdHrLv>
+		<ScopeCd value="005"/>
+	</mdHrLv>
+	<mdContact xmlns="">
+		<rpIndName>EnviroAtlas Coordinator</rpIndName>
+		<rpOrgName>U.S. Environmental Protection Agency, Office of Research and Development - Center for Public Health and Environmental Assessment (CPHEA), EnviroAtlas</rpOrgName>
+		<rpPosName>Geospatial Data Owner</rpPosName>
+		<rpCntInfo xmlns="">
+			<cntPhone>
+				<voiceNum tddtty="">(919) 541-3832</voiceNum>
+			</cntPhone>
+			<cntAddress addressType="both">
+				<delPoint>109 T.W. Alexander Drive</delPoint>
+				<city>Research Triangle Park</city>
+				<adminArea>NC</adminArea>
+				<postCode>27709</postCode>
+				<eMailAdd>EnviroAtlas@epa.gov</eMailAdd>
+			</cntAddress>
+			<cntInstr>https://www.epa.gov/enviroatlas</cntInstr>
+		</rpCntInfo>
+		<role>
+			<RoleCd value="007"/>
+		</role>
+	</mdContact>
+	<mdDateSt Sync="FALSE">2024-09-03</mdDateSt>
+	<distInfo xmlns="">
+		<distTranOps xmlns=""/>
+		<distFormat xmlns="">
+			<formatName Sync="TRUE">File Geodatabase Table</formatName>
+		</distFormat>
+	</distInfo>
+	<dataIdInfo>
+		<idCitation xmlns="">
+			<resTitle>EnviroAtlas - Tacoma, WA - Land Cover by Block Group</resTitle>
+			<citRespParty xmlns="">
+				<rpOrgName>U.S. Environmental Protection Agency (US EPA)</rpOrgName>
+				<role>
+					<RoleCd value="006"/>
+				</role>
+			</citRespParty>
+			<citRespParty xmlns="">
+				<rpOrgName>U.S. EPA Office of Research and Development (ORD) - Center for Public Health and Environmental Assessment (CPHEA)</rpOrgName>
+				<rpCntInfo xmlns="">
+					<cntAddress addressType="">
+						<delPoint>Research Triangle Park, NC</delPoint>
+					</cntAddress>
+				</rpCntInfo>
+				<role>
+					<RoleCd value="010"/>
+				</role>
+			</citRespParty>
+			<presForm xmlns="">
+				<PresFormCd value="011" Sync="TRUE"/>
+			</presForm>
+			<date>
+				<pubDate>2022-07-06</pubDate>
+			</date>
+		</idCitation>
+		<idStatus>
+			<ProgCd value="001"/>
+		</idStatus>
+		<idPoC xmlns="">
+			<rpIndName>EnviroAtlas Coordinator</rpIndName>
+			<rpOrgName>U.S. Environmental Protection Agency, Office of Research and Development - Center for Public Health and Environmental Assessment (CPHEA), EnviroAtlas</rpOrgName>
+			<rpPosName>Geospatial Data Owner</rpPosName>
+			<rpCntInfo xmlns="">
+				<cntPhone>
+					<voiceNum tddtty="">(919) 541-3832</voiceNum>
+				</cntPhone>
+				<cntAddress addressType="both">
+					<delPoint>109 T.W. Alexander Drive</delPoint>
+					<city>Research Triangle Park</city>
+					<adminArea>NC</adminArea>
+					<postCode>27709</postCode>
+					<eMailAdd>EnviroAtlas@epa.gov</eMailAdd>
+				</cntAddress>
+				<cntInstr>https://www.epa.gov/enviroatlas</cntInstr>
+			</rpCntInfo>
+			<role>
+				<RoleCd value="010">Publisher</RoleCd>
+			</role>
+		</idPoC>
+		<resMaint xmlns="">
+			<maintFreq>
+				<MaintFreqCd value="009"/>
+			</maintFreq>
+		</resMaint>
+		<placeKeys xmlns="">
+			<thesaName xmlns="">
+				<resTitle>EPA Place Names</resTitle>
+				<date>
+					<pubDate>2015-01-31</pubDate>
+				</date>
+				<citOnlineRes xmlns="">
+					<linkage>https://ofmpub.epa.gov/sor_internet/registry/termreg/searchandretrieve/taxonomies/search.do?search=&amp;searchString=&amp;taxonomyName=WBT%20-%20Geographic%20Locations</linkage>
+					<orFunct>
+						<OnFunctCd value="002"/>
+					</orFunct>
+					<orName>Web Taxonomy - Geographic Locations</orName>
+				</citOnlineRes>
+			</thesaName>
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<keyword>MISSING</keyword>
+			<keyword>MISSING</keyword>
+		</placeKeys>
+		<themeKeys xmlns="">
+			<thesaName xmlns="">
+				<resTitle>EPA GIS Keyword Thesaurus</resTitle>
+				<date>
+					<pubDate>2007-11-02</pubDate>
+				</date>
+				<citOnlineRes xmlns="">
+					<linkage>https://ofmpub.epa.gov/sor_internet/registry/termreg/searchandretrieve/taxonomies/search.do?search=&amp;searchString=&amp;taxonomyName=WBT%20-%20Geographic%20Locations</linkage>
+					<orFunct>
+						<OnFunctCd value="002"/>
+					</orFunct>
+					<orName>EPA Metadata Technical Specification</orName>
+				</citOnlineRes>
+			</thesaName>
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<keyword>Ecosystem</keyword>
+			<keyword>Environment</keyword>
+			<keyword>Natural Resources</keyword>
+		</themeKeys>
+		<resConst>
+			<Consts xmlns="">
+				<useLimit>None. Please check sources, scale, accuracy, currency and other available information. Please confirm that you are using the most recent copy of both data and metadata.  Acknowledgement of the EPA would be appreciated.</useLimit>
+			</Consts>
+		</resConst>
+		<dataLang>
+			<languageCode value="eng"/>
+			<countryCode value="USA" Sync="TRUE"/>
+		</dataLang>
+		<dataChar>
+			<CharSetCd value="004"/>
+		</dataChar>
+		<resConst>
+			<LegConsts xmlns="">
+				<accessConsts>
+					<RestrictCd value="009">Unrestricted License</RestrictCd>
+				</accessConsts>
+				<othConsts>https://edg.epa.gov/EPA_Data_License.html</othConsts>
+				<useLimit>EPA Public Domain License</useLimit>
+			</LegConsts>
+		</resConst>
+		<themeKeys xmlns="">
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<thesaName xmlns="">
+				<resTitle>Federal Program Inventory</resTitle>
+				<date>
+					<pubDate>2013-09-16</pubDate>
+				</date>
+				<citOnlineRes xmlns="">
+					<linkage>https://www.performance.gov/federalprograminventory</linkage>
+					<orFunct>
+						<OnFunctCd value="002"/>
+					</orFunct>
+					<orName>Federal Program Inventory</orName>
+				</citOnlineRes>
+			</thesaName>
+			<keyword>020:072</keyword>
+		</themeKeys>
+		<idPurp>The purpose of this dataset is to show the differences in land cover amounts between the block groups in the EnviroAtlas community boundary.
+
+The overall goal of EnviroAtlas is to employ and develop the best available science to map indicators of ecosystem services production, demand, and drivers for the nation.</idPurp>
+		<idAbs>This EnviroAtlas dataset describes the breakdown of the land cover classes with each Census Block Group. In this community, forest is defined as Trees &amp;amp; Forest,  and Woody Wetlands. Green space is defined as Trees &amp;amp; Forest, Grass &amp;amp; Herbaceous, Woody Wetlands,  and Emergent Wetlands.Wetlands are defined as Woody Wetlands and Emergent Wetlands. This dataset also includes the area per capita for each block group for some land cover types.
+
+This dataset was produced by the US EPA to support research and online mapping activities related to EnviroAtlas. EnviroAtlas (https://www.epa.gov/enviroatlas) allows the user to interact with a web-based, easy-to-use, mapping application to view and analyze multiple ecosystem services for the contiguous United States. The dataset is available as downloadable data (https://edg.epa.gov/data/Public/ORD/EnviroAtlas) or as an EnviroAtlas map service. Additional descriptive information about each attribute in this dataset can be found in its associated EnviroAtlas Fact Sheet (https://www.epa.gov/enviroatlas/enviroatlas-fact-sheets).</idAbs>
+		<resConst>
+			<SecConsts xmlns="">
+				<class>
+					<ClasscationCd value="001">Unclassified</ClasscationCd>
+				</class>
+				<classSys>https://project-open-data.github.io/schema/#accessLevel</classSys>
+			</SecConsts>
+		</resConst>
+		<themeKeys xmlns="">
+			<thesaLang>
+				<languageCode value="eng"/>
+				<countryCode value="US"/>
+			</thesaLang>
+			<thesaName xmlns="">
+				<resTitle>User</resTitle>
+				<date>
+					<pubDate>2022-01-11</pubDate>
+				</date>
+			</thesaName>
+		</themeKeys>
+		<envirDesc Sync="TRUE">Microsoft Windows 10 Version 10.0 (Build 22621) ; Esri ArcGIS 13.3.0.52636</envirDesc>
+		<spatRpType>
+			<SpatRepTypCd value="003" Sync="TRUE"/>
+		</spatRpType>
+		<dataExt xmlns="">
+			<geoEle xmlns="">
+				<GeoBndBox esriExtentType="search">
+					<westBL/>
+					<eastBL/>
+					<northBL/>
+					<southBL/>
+					<exTypeCode>1</exTypeCode>
+				</GeoBndBox>
+			</geoEle>
+			<tempEle>
+				<TempExtent>
+					<exTemp>
+						<TM_Period xmlns="">
+							<tmBegin>2011-01-01T00:00:00</tmBegin>
+							<tmEnd>2011-12-31T00:00:00</tmEnd>
+						</TM_Period>
+					</exTemp>
+				</TempExtent>
+			</tempEle>
+		</dataExt>
+		<suppInfo/>
+		<tpCat>
+			<TopicCatCd value="007"/>
+		</tpCat>
+	</dataIdInfo>
+	<mdMaint xmlns="">
+		<maintFreq>
+			<MaintFreqCd value="009"/>
+		</maintFreq>
+		<dateNext>2025-07-30T00:00:00</dateNext>
+	</mdMaint>
+	<dqInfo xmlns="">
+		<dqScope>
+			<scpLvl>
+				<ScopeCd value="005"/>
+			</scpLvl>
+		</dqScope>
+		<report xmlns="" type="DQConcConsis" dimension="">
+			<measDesc>Tests for integrity have not been performed.</measDesc>
+			<measResult>
+				<ConResult xmlns="">
+					<conSpec xmlns="">
+						<resTitle>EPA National Geospatial Data Policy</resTitle>
+					</conSpec>
+					<conExpl>Features have been reviewed by U.S. EPA EnviroAtlas Project Managers for public release.</conExpl>
+					<conPass>1</conPass>
+				</ConResult>
+			</measResult>
+		</report>
+		<report xmlns="" type="DQCompOm" dimension="">
+			<measDesc>Features represented have not been tested for completeness</measDesc>
+			<measResult>
+				<ConResult xmlns="">
+					<conSpec xmlns="">
+						<resTitle>EPA National Geospatial Data Policy</resTitle>
+					</conSpec>
+					<conExpl>Features have been reviewed by U.S. EPA EnviroAtlas Project Managers for public release.</conExpl>
+					<conPass>1</conPass>
+				</ConResult>
+			</measResult>
+		</report>
+		<dataLineage/>
+	</dqInfo>
+	<Esri>
+		<scaleRange>
+			<minScale/>
+			<maxScale/>
+		</scaleRange>
+		<DataProperties>
+			<itemProps>
+				<imsContentType export="False"/>
+				<itemName Sync="TRUE">TacWA_LCSum</itemName>
+				<itemLocation>
+					<linkage Sync="TRUE">file://\\LZ66MCULLER\C$\Users\mculler\OneDrive - Environmental Protection Agency (EPA)\Documents\1_PROJECTS\FGDC to ISO for community metadata\TacWA_LCSum.gdb</linkage>
+					<protocol Sync="TRUE">Local Area Network</protocol>
+				</itemLocation>
+			</itemProps>
+		</DataProperties>
+		<ArcGISFormat>1.0</ArcGISFormat>
+		<ArcGISProfile>ISO19115_3</ArcGISProfile>
+		<SyncDate>MISSING</SyncDate>
+		<SyncTime>MISSING</SyncTime>
+		<ModDate>MISSING</ModDate>
+		<ModTime>MISSING</ModTime>
+	</Esri>
+	<mdLang>
+		<languageCode value="eng"/>
+		<countryCode value="USA" Sync="TRUE"/>
+	</mdLang>
+	<mdHrLvName Sync="TRUE">dataset</mdHrLvName>
+	<mdFileID></mdFileID>
+	<refSysInfo>
+		<RefSystem dimension="">
+			<refSysID xmlns="">
+				<identCode code="102039"/>
+			</refSysID>
+		</RefSystem>
+	</refSysInfo>
+</metadata>
