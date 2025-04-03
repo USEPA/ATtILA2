@@ -38,46 +38,46 @@ def buildRAT(inRaster, logFile=None):
     return inRasterObj.hasRAT
 
 
-def getRasterPointFromRowColumn(raster, row, column):
-    """ Get an arcpy `Point`_ object from an arcpy `Raster`_ object and zero based row and column indexes.
-
-        **Description:**
-        
-        The row and column are zero-based and start in the upper left corner.  The arcpy `Point`_ object returned has
-        X and Y coordinates representing the cell identified by the specified row and column.
-        
-        
-        **Arguments:**
-        
-        * *raster* - arcpy `Raster`_ object
-        * *row* - integer representing the zero based index of the row
-        * *column* - integer representing the zero based index of the column
-        
-        
-        **Returns:** 
-        
-        * arcpy `Point`_ object 
-        
-        .. _Point: http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/Point/000v000000mv000000/
-        .. _Raster: http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/Raster/000v000000wt000000/
-
-        
-    """    
-
-    
-    extent = raster.extent    
-    upperLeftX = extent.XMin
-    upperLeftY = extent.YMax
-
-    xDistanceFromUpperLeft = column * raster.meanCellWidth
-    yDistanceFromUpperLeft = row * raster.meanCellHeight
-    
-    x = upperLeftX + xDistanceFromUpperLeft
-    y = upperLeftY - yDistanceFromUpperLeft
-
-    point = _arcpy.Point(x,y)
-    
-    return point
+# def getRasterPointFromRowColumn(raster, row, column):
+#     """ Get an arcpy `Point`_ object from an arcpy `Raster`_ object and zero based row and column indexes.
+#
+#         **Description:**
+#
+#         The row and column are zero-based and start in the upper left corner.  The arcpy `Point`_ object returned has
+#         X and Y coordinates representing the cell identified by the specified row and column.
+#
+#
+#         **Arguments:**
+#
+#         * *raster* - arcpy `Raster`_ object
+#         * *row* - integer representing the zero based index of the row
+#         * *column* - integer representing the zero based index of the column
+#
+#
+#         **Returns:** 
+#
+#         * arcpy `Point`_ object 
+#
+#         .. _Point: http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/Point/000v000000mv000000/
+#         .. _Raster: http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#/Raster/000v000000wt000000/
+#
+#
+#     """    
+#
+#
+#     extent = raster.extent    
+#     upperLeftX = extent.XMin
+#     upperLeftY = extent.YMax
+#
+#     xDistanceFromUpperLeft = column * raster.meanCellWidth
+#     yDistanceFromUpperLeft = row * raster.meanCellHeight
+#
+#     x = upperLeftX + xDistanceFromUpperLeft
+#     y = upperLeftY - yDistanceFromUpperLeft
+#
+#     point = _arcpy.Point(x,y)
+#
+#     return point
 
 
 def getRasterValues(inRaster, logFile=None):
@@ -116,57 +116,57 @@ def getRasterValues(inRaster, logFile=None):
     # return valueList
 
 
-def splitRasterYN(inRaster, maxSide):
-    """Check if the raster is too large to perform a polygon conversion without first tiling the raster.
-    
-    ** Description: **
-    
-    **Arguments:**
-    
-        * *inRaster* - any raster dataset
-        * *maxSide* - integer value
-        
-    **Returns:**
-    
-        * *boolean - True, if the raster is too large
-        * *list - binary values indicating if number of raster columns and the number of raster rows exceed the specified maximum side 
-    
-    """
-    splitYN = True
-    columns = arcpy.GetRasterProperties_management(inRaster, 'COLUMNCOUNT').getOutput(0)
-    xsplit = int(float(columns) / maxSide) + 1
-    rows = arcpy.GetRasterProperties_management(inRaster, 'ROWCOUNT').getOutput(0)
-    ysplit = int (float(rows) / maxSide) + 1
-    xySplits = [xsplit, ysplit]
-     
-    if xsplit*ysplit == 1:
-        splitYN = False
-        
-    return splitYN, xySplits
+# def splitRasterYN(inRaster, maxSide):
+#     """Check if the raster is too large to perform a polygon conversion without first tiling the raster.
+#
+#     ** Description: **
+#
+#     **Arguments:**
+#
+#         * *inRaster* - any raster dataset
+#         * *maxSide* - integer value
+#
+#     **Returns:**
+#
+#         * *boolean - True, if the raster is too large
+#         * *list - binary values indicating if number of raster columns and the number of raster rows exceed the specified maximum side 
+#
+#     """
+#     splitYN = True
+#     columns = arcpy.GetRasterProperties_management(inRaster, 'COLUMNCOUNT').getOutput(0)
+#     xsplit = int(float(columns) / maxSide) + 1
+#     rows = arcpy.GetRasterProperties_management(inRaster, 'ROWCOUNT').getOutput(0)
+#     ysplit = int (float(rows) / maxSide) + 1
+#     xySplits = [xsplit, ysplit]
+#
+#     if xsplit*ysplit == 1:
+#         splitYN = False
+#
+#     return splitYN, xySplits
 
 
-def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDistance=None):
-    if arcpy.Exists(outName):
-        arcpy.Delete_management(outName)
-        
-    if inBufferDistance:
-        # Buffering Reporting unit features...
-        cellSize = Raster(inLandCoverGrid).meanCellWidth
-        linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
-        bufferFloat = cellSize * (int(inBufferDistance)+1)
-        bufferDistance = "%s %s" % (bufferFloat, linearUnits)
-        clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
-        clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
-        
-        # Clipping input grid to desired extent...
-        clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, clipBuffer, "", "NONE")
-        arcpy.Delete_management(clipBuffer)
-    else:
-        clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, inReportingUnitFeature, "", "NONE")
-    
-    arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
-    
-    return clippedGrid
+# def clipGridByBuffer(inReportingUnitFeature,outName,inLandCoverGrid,inBufferDistance=None):
+#     if arcpy.Exists(outName):
+#         arcpy.Delete_management(outName)
+#
+#     if inBufferDistance:
+#         # Buffering Reporting unit features...
+#         cellSize = Raster(inLandCoverGrid).meanCellWidth
+#         linearUnits = arcpy.Describe(inLandCoverGrid).spatialReference.linearUnitName
+#         bufferFloat = cellSize * (int(inBufferDistance)+1)
+#         bufferDistance = "%s %s" % (bufferFloat, linearUnits)
+#         clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
+#         clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
+#
+#         # Clipping input grid to desired extent...
+#         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, clipBuffer, "", "NONE")
+#         arcpy.Delete_management(clipBuffer)
+#     else:
+#         clippedGrid = arcpy.Clip_management(inLandCoverGrid, "#", outName, inReportingUnitFeature, "", "NONE")
+#
+#     arcpy.BuildRasterAttributeTable_management(clippedGrid, "Overwrite")
+#
+#     return clippedGrid
 
 
 def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile, inBufferDistance=None):
@@ -271,32 +271,32 @@ def buildWhereValueClause(inRaster, valueList, exclude=False):
     return whereClause
 
 
-def addValuetoExcluded(aValue, lccObj):
-    ''' This function adds a value to the list of values tagged as excluded in an LCC XML file.
-    
-    ** Description: **
-    
-        This function will retrieve the frozen set of values tagged as excluded in the LCC XML file,
-        convert the frozen set to a list, and append the supplied value to that list. The new list
-        of values is returned.
-    
-    **Arguments:**
-    
-        * *number* - an integer or float value
-        * *lccObj* - a class object of the selected land cover classification file 
-        
-    **Returns:**
-    
-        * *list - a python list
-        
-    '''
-    
-    lccValuesDict = lccObj.values
-    excludedValuesFrozen = lccValuesDict.getExcludedValueIds()
-    excludedValues = [item for item in excludedValuesFrozen]
-    excludedValues.append(aValue)
-    
-    return excludedValues
+# def addValuetoExcluded(aValue, lccObj):
+#     ''' This function adds a value to the list of values tagged as excluded in an LCC XML file.
+#
+#     ** Description: **
+#
+#         This function will retrieve the frozen set of values tagged as excluded in the LCC XML file,
+#         convert the frozen set to a list, and append the supplied value to that list. The new list
+#         of values is returned.
+#
+#     **Arguments:**
+#
+#         * *number* - an integer or float value
+#         * *lccObj* - a class object of the selected land cover classification file 
+#
+#     **Returns:**
+#
+#         * *list - a python list
+#
+#     '''
+#
+#     lccValuesDict = lccObj.values
+#     excludedValuesFrozen = lccValuesDict.getExcludedValueIds()
+#     excludedValues = [item for item in excludedValuesFrozen]
+#     excludedValues.append(aValue)
+#
+#     return excludedValues
 
 
 def getMaximumValue(inRaster, lccObj, addOne=False):
@@ -437,7 +437,7 @@ def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, m
         regionOther = RegionGroup(reclassGrid == classValue,"EIGHT","CROSS","ADD_LINK","0")
     else:
         AddMsg(f"{timer.now()} Connecting clusters of Class:{m} within maximum separation distance.", 0, logFile)
-        fltProcessingCellSize = Raster(inLandCoverGrid).meanCellWidth
+        # fltProcessingCellSize = Raster(inLandCoverGrid).meanCellWidth
         maxSep = intMaxSeparation * Raster(inLandCoverGrid).meanCellWidth
         delimitedVALUE = arcpy.AddFieldDelimiters(reclassGrid,"VALUE")
         whereClause = f"{delimitedVALUE} < {classValue}"
@@ -640,138 +640,138 @@ def updateCategoryLabels(Raster, categoryDict):
         row = rows.next()
 
 
-def getCircleCellCount(inRaster, radiusInCells):
-    maxCellCount = lookupCircleCellCount(radiusInCells)
-    
-    if maxCellCount == 0:
-        maxCellCount = calcCircleCellCount(inRaster, radiusInCells)
-        
-    return maxCellCount
+# def getCircleCellCount(inRaster, radiusInCells):
+#     maxCellCount = lookupCircleCellCount(radiusInCells)
+#
+#     if maxCellCount == 0:
+#         maxCellCount = calcCircleCellCount(inRaster, radiusInCells)
+#
+#     return maxCellCount
 
-def calcCircleCellCount(inRaster,radiusInCells):
-    """Utility for calculating the maximum cell count for a circular neighborhood of a given radius.
-    
-    ** Description: **
-        
-        This function will create a constant raster with a value of 1, the cell resolution of the
-        Raster parameter, and the smallest extent possible to generate one full circular neighborhood area
-        with the supplied radius in cell count.
-        
-        The generated constant raster will be used in a focal statistics circle neighboorhood operation to 
-        determine the maximum cell count possible for the neighborhood. The maximum cell count is returned.
-    
-    **Arguments:**
-    
-        * *inRaster* - any raster dataset with an attribute table.
-        * *radiusInCells* - integer value
-   
-    **Returns:**
-    
-        * *integer - maximum cell count for circle neighborhood
-        
-    """
-    
-    from arcpy import env
-    
-    # Prepare to replace and reset the environmental output coordinate system
-    tempEnvOCS = env.outputCoordinateSystem
-    
-    # determine the smallest needed extent to generate one full circular buffer
-    # adding 1 to the input radius will give the smallest needed. adding 3 will give some wiggle room
-    inRasterDesc = arcpy.Describe(inRaster)
-    cellSize = inRasterDesc.meanCellHeight    
-    diameterCellCount = (2 * radiusInCells) + 3
-    extentWidth = cellSize * diameterCellCount
-    
-    xMin = inRasterDesc.extent.XMin
-    yMin = inRasterDesc.extent.YMin
-    xMax = xMin + extentWidth
-    yMax = yMin + extentWidth
-    
-    outExtent = Extent(xMin, yMin, xMax, yMax)
-    
-    # Extent units will be in the linear units of the environmental output coordinate system
-    # Temporarily set them to match the input raster
-    env.outputCoordinateSystem = inRasterDesc.spatialReference
-    
-    oneRaster = CreateConstantRaster(1, "INTEGER", cellSize, outExtent)
-    #oneRaster.save("oneRaster")
-    
-    neighborhood = arcpy.sa.NbrCircle(radiusInCells, "CELL")
-    nbrCntGrid = arcpy.sa.FocalStatistics(oneRaster == 1, neighborhood, "SUM", "NODATA")
-    #nbrCntGrid.save("nbrCntGrid")
-    
-    circleCellCount = nbrCntGrid.maximum
-    
-    # reset the environments
-    env.outputCoordinateSystem = tempEnvOCS
-    
-    return circleCellCount
+# def calcCircleCellCount(inRaster,radiusInCells):
+#     """Utility for calculating the maximum cell count for a circular neighborhood of a given radius.
+#
+#     ** Description: **
+#
+#         This function will create a constant raster with a value of 1, the cell resolution of the
+#         Raster parameter, and the smallest extent possible to generate one full circular neighborhood area
+#         with the supplied radius in cell count.
+#
+#         The generated constant raster will be used in a focal statistics circle neighboorhood operation to 
+#         determine the maximum cell count possible for the neighborhood. The maximum cell count is returned.
+#
+#     **Arguments:**
+#
+#         * *inRaster* - any raster dataset with an attribute table.
+#         * *radiusInCells* - integer value
+#
+#     **Returns:**
+#
+#         * *integer - maximum cell count for circle neighborhood
+#
+#     """
+#
+#     from arcpy import env
+#
+#     # Prepare to replace and reset the environmental output coordinate system
+#     tempEnvOCS = env.outputCoordinateSystem
+#
+#     # determine the smallest needed extent to generate one full circular buffer
+#     # adding 1 to the input radius will give the smallest needed. adding 3 will give some wiggle room
+#     inRasterDesc = arcpy.Describe(inRaster)
+#     cellSize = inRasterDesc.meanCellHeight    
+#     diameterCellCount = (2 * radiusInCells) + 3
+#     extentWidth = cellSize * diameterCellCount
+#
+#     xMin = inRasterDesc.extent.XMin
+#     yMin = inRasterDesc.extent.YMin
+#     xMax = xMin + extentWidth
+#     yMax = yMin + extentWidth
+#
+#     outExtent = Extent(xMin, yMin, xMax, yMax)
+#
+#     # Extent units will be in the linear units of the environmental output coordinate system
+#     # Temporarily set them to match the input raster
+#     env.outputCoordinateSystem = inRasterDesc.spatialReference
+#
+#     oneRaster = CreateConstantRaster(1, "INTEGER", cellSize, outExtent)
+#     #oneRaster.save("oneRaster")
+#
+#     neighborhood = arcpy.sa.NbrCircle(radiusInCells, "CELL")
+#     nbrCntGrid = arcpy.sa.FocalStatistics(oneRaster == 1, neighborhood, "SUM", "NODATA")
+#     #nbrCntGrid.save("nbrCntGrid")
+#
+#     circleCellCount = nbrCntGrid.maximum
+#
+#     # reset the environments
+#     env.outputCoordinateSystem = tempEnvOCS
+#
+#     return circleCellCount
 
 
-def lookupCircleCellCount(radiusInCells):
-    radiusCellCountDict = dict({
-                                1: 5,
-                                2: 13,
-                                3: 29,
-                                4: 49,
-                                5: 81,
-                                6: 113,
-                                7: 149,
-                                8: 197,
-                                9: 253,
-                                10: 317,
-                                11: 377,
-                                12: 441,
-                                13: 529,
-                                14: 613,
-                                15: 709,
-                                16: 797,
-                                17: 901,
-                                18: 1009,
-                                19: 1129,
-                                20: 1257,
-                                21: 1373,
-                                22: 1517,
-                                23: 1653,
-                                24: 1793,
-                                25: 1961,
-                                26: 2121,
-                                27: 2289,
-                                28: 2453,
-                                29: 2629,
-                                30: 2821,
-                                31: 3001,
-                                32: 3209,
-                                33: 3409,
-                                40: 5025,
-                                45: 6361,
-                                50: 7845,
-                                55: 9477,
-                                60: 11289,
-                                66: 13673,
-                                70: 15373,
-                                75: 17665,
-                                80: 20081,
-                                90: 25445,
-                                100: 31417,
-                                125: 49077,
-                                150: 70681,
-                                200: 125629,
-                                250: 196321,
-                                300: 282697,
-                                333: 348281,
-                                350: 384765,
-                                400: 502625,
-                                450: 636121,
-                                500: 785349,
-                                750: 1767121,
-                                1000: 3141549
-                                })
-    
-    circleCellCount = radiusCellCountDict.get(radiusInCells, 0)
-
-    return circleCellCount
+# def lookupCircleCellCount(radiusInCells):
+#     radiusCellCountDict = dict({
+#                                 1: 5,
+#                                 2: 13,
+#                                 3: 29,
+#                                 4: 49,
+#                                 5: 81,
+#                                 6: 113,
+#                                 7: 149,
+#                                 8: 197,
+#                                 9: 253,
+#                                 10: 317,
+#                                 11: 377,
+#                                 12: 441,
+#                                 13: 529,
+#                                 14: 613,
+#                                 15: 709,
+#                                 16: 797,
+#                                 17: 901,
+#                                 18: 1009,
+#                                 19: 1129,
+#                                 20: 1257,
+#                                 21: 1373,
+#                                 22: 1517,
+#                                 23: 1653,
+#                                 24: 1793,
+#                                 25: 1961,
+#                                 26: 2121,
+#                                 27: 2289,
+#                                 28: 2453,
+#                                 29: 2629,
+#                                 30: 2821,
+#                                 31: 3001,
+#                                 32: 3209,
+#                                 33: 3409,
+#                                 40: 5025,
+#                                 45: 6361,
+#                                 50: 7845,
+#                                 55: 9477,
+#                                 60: 11289,
+#                                 66: 13673,
+#                                 70: 15373,
+#                                 75: 17665,
+#                                 80: 20081,
+#                                 90: 25445,
+#                                 100: 31417,
+#                                 125: 49077,
+#                                 150: 70681,
+#                                 200: 125629,
+#                                 250: 196321,
+#                                 300: 282697,
+#                                 333: 348281,
+#                                 350: 384765,
+#                                 400: 502625,
+#                                 450: 636121,
+#                                 500: 785349,
+#                                 750: 1767121,
+#                                 1000: 3141549
+#                                 })
+#
+#     circleCellCount = radiusCellCountDict.get(radiusInCells, 0)
+#
+#     return circleCellCount
 
 
 def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellSize, cleanupList, timer, logFile):

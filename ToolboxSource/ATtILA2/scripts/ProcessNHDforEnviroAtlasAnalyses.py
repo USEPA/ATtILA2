@@ -92,14 +92,14 @@ def main(_argv):
     timer.start()
     
     try:
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        tempEnvironment0 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # tempEnvironment0 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+        #     env.parallelProcessingFactor = 0
             
         ### COLLECT THE NAMES OF THE WORKSPACES TO PROCESS
         
@@ -403,7 +403,7 @@ def main(_argv):
         errors.standardErrorHandling(e)
  
     finally:
-        env.parallelProcessingFactor = tempEnvironment0
+        # env.parallelProcessingFactor = tempEnvironment0
         
         for (intermediateResult) in intermediateList:
             arcpy.Delete_management(intermediateResult)

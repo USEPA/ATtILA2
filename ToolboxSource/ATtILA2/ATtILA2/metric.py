@@ -1150,8 +1150,8 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
                     AddMsg(f"Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", self.logFile)
-                    log.logArcpy("arcpy.Dissolve_management", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
+                    log.logArcpy("arcpy.analysis.PairwiseDissolve", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
+                    self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
@@ -1296,8 +1296,8 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                     self.namePrefix = f"{self.metricConst.shortName}_Dissolve{self.inBufferDistance.split()[0]}_"
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
                     AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {basename(self.dissolveName)}", 0, self.logFile)
-                    log.logArcpy("arcpy.Dissolve_management", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
+                    log.logArcpy("arcpy.analysis.PairwiseDissolve", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
+                    self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
@@ -1529,15 +1529,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        _tempEnvironment6 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # _tempEnvironment6 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -1546,8 +1546,8 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
+        inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         # If the field is numeric, it creates a text version of the field.
@@ -1745,7 +1745,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             env.workspace = _tempEnvironment1
             env.outputMFlag = _tempEnvironment4
             env.outputZFlag = _tempEnvironment5
-            env.parallelProcessingFactor = _tempEnvironment6
+            # env.parallelProcessingFactor = _tempEnvironment6
 
 
 def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField="", 
@@ -1793,15 +1793,15 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        _tempEnvironment6 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # _tempEnvironment6 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -1810,8 +1810,8 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         tempName = f"{metricConst.shortName}_{desc.baseName}_" 
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature,os.path.basename(tempReportingUnitFeature),reportingUnitIdField,"","MULTI_PART"),logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(inReportingUnitFeature,basename(tempReportingUnitFeature),reportingUnitIdField,"","MULTI_PART"),logFile)
+        inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         uIDField = settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
@@ -1910,7 +1910,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             env.workspace = _tempEnvironment1
             env.outputMFlag = _tempEnvironment4
             env.outputZFlag = _tempEnvironment5
-            env.parallelProcessingFactor = _tempEnvironment6
+            # env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
@@ -2092,15 +2092,15 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        _tempEnvironment6 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # _tempEnvironment6 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -2109,8 +2109,8 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
         AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
+        inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Add and populate the area field (or just recalculate if it already exists
         ruAreaFld = metricConst.areaFieldname
@@ -2196,7 +2196,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         
         if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
             env.workspace = _tempEnvironment1
-            env.parallelProcessingFactor = _tempEnvironment6
+            # env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
@@ -2230,14 +2230,14 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         _tempEnvironment2 = env.cellSize
         _tempEnvironment6 = env.parallelProcessingFactor
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # set the workspace for ATtILA intermediary files
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -2810,8 +2810,8 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                     self.namePrefix = self.metricConst.shortName + "_FacDissolve"+self.inBufferDistance.split()[0]+"_"
                     self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                     AddMsg(f"{self.timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", 0, self.logFile)
-                    log.logArcpy("arcpy.Dissolve_management",(self.inReportingUnitFeature,self.dissolveName,self.reportingUnitIdField,"","MULTI_PART"),logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName,self.reportingUnitIdField,"","MULTI_PART")
+                    log.logArcpy("arcpy.analysis.PairwiseDissolve",(self.inReportingUnitFeature,self.dissolveName,self.reportingUnitIdField,"","MULTI_PART"),logFile)
+                    self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName,self.reportingUnitIdField,"","MULTI_PART")
 
                 # Make a temporary facility point layer so that a field of the same name as reportingUnitIdField could be deleted
                 # Get a unique name with full path for the output features - will default to current workspace:
@@ -3727,8 +3727,8 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
         
         if dissolveParkYN == 'true':
-            log.logArcpy('arcpy.Dissolve_management', (inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES"), logFile)
-            inParkFeature = arcpy.Dissolve_management(inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES")
+            log.logArcpy('arcpy.analysis.PairwiseDissolve', (inParkFeature, basename(tempParkFeature),"","","SINGLE_PART"), logFile)
+            inParkFeature = arcpy.analysis.PairwiseDissolve(inParkFeature, basename(tempParkFeature),"","","SINGLE_PART")
         else:
             log.logArcpy('arcpy.conversion.ExportFeatures', (inParkFeature, basename(tempParkFeature)), logFile)
             inParkFeature = arcpy.conversion.ExportFeatures(inParkFeature, basename(tempParkFeature))
@@ -3995,13 +3995,13 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         # Set the environmental variables to desired condition 
         AddMsg(f"{timer.now()} Setting up initial environment variables", 0, logFile)
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+        #     env.parallelProcessingFactor = 0
         
         env.overwriteOutput = True
         env.workspace = outWorkspace
@@ -4376,14 +4376,14 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             _tempEnvironment2 = env.cellSize
             _tempEnvironment6 = env.parallelProcessingFactor
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # set the workspace for ATtILA intermediary files
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -5225,8 +5225,8 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         
         tempName = "%s_%s" % (metricConst.shortName, '_RoadBuffer')
         finalBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        log.logArcpy("arcpy.Dissolve_management",(mergeBuffFeature, finalBuffFeature),logFile)      
-        arcpy.Dissolve_management(mergeBuffFeature, finalBuffFeature)
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(mergeBuffFeature, finalBuffFeature),logFile)      
+        arcpy.analysis.PairwiseDissolve(mergeBuffFeature, finalBuffFeature)
         
         
 
