@@ -34,7 +34,8 @@ arcpy.env.workspace = Output_GDB_pth
 #Define ATtILA metric
 def runATtILA(paramDict, iteration):
   outTable = os.path.join(Output_GDB_pth, f"{fileName}{iteration+1}")
-  arcpy.AddMessage(f"***Starting {toolAbbv}: run {iteration+1} of {len(paramCombosList)}***")
+  arcpy.AddMessage(f"\n\n***Starting {toolAbbv}: run {iteration+1} of {len(paramCombosList)}***\n")
+  arcpy.AddMessage(f"Test inputs: {paramDict}\n")
   metric.runSelectZonalStatistics(
                   toolPath,
                   paramDict["inReportingUnitFeature"],
@@ -50,7 +51,7 @@ for Dict_iteration, dictionary in enumerate(SZS_options.testInputs):
   paramCombosList = list(itertools.product(*dictionary.values()))
   arcpy.AddMessage(f"\nStarting parameter combination dictionary {Dict_iteration+1}\n")
   arcpy.AddMessage("*********************************************************")
-  arcpy.AddMessage(f"Testing {len(paramCombosList)} parameter combinations\n")
+  arcpy.AddMessage(f"Testing {len(paramCombosList)} parameter combinations")
   failedList = [] #failed list to store failed parameter set dictionaries
   Progress = loopProgress(len(paramCombosList)) #This should not be LoopProgress = loopProgress(len(paramCombosList)). Creates a reassignment error if it needs to be rewritten in this nested structure.  
 
@@ -74,3 +75,4 @@ for Dict_iteration, dictionary in enumerate(SZS_options.testInputs):
   
   arcpy.AddMessage(f"\n{len(failedList)} Errors found in parameter combination dictionary {Dict_iteration+1}. Continuing to the next parameter combination set\n")
 
+arcpy.AddMessage(f"Finished all combination sets")

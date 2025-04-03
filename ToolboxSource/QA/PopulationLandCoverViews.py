@@ -34,7 +34,8 @@ arcpy.env.workspace = Output_GDB_pth
 #Define ATtILA metric
 def runATtILA(paramDict, iteration): 
   outTable = os.path.join(Output_GDB_pth, f"{fileName}{iteration+1}")
-  arcpy.AddMessage(f"***Starting {toolAbbv}: run {iteration+1} of {len(paramCombosList)}***")
+  arcpy.AddMessage(f"\n\n***Starting {toolAbbv}: run {iteration+1} of {len(paramCombosList)}***\n")
+  arcpy.AddMessage(f"Test inputs: {paramDict}\n")
   metric.runPopulationLandCoverViews(
                               toolPath,
                               paramDict["inReportingUnitFeature"],
@@ -56,7 +57,7 @@ paramCombosList = list(itertools.product(*PLCV_options.testInputs.values()))
 
 failedList = [] #failed list to store failed parameter set dictionaries
 loopProgress = loopProgress(len(paramCombosList))
-arcpy.AddMessage(f"Testing {len(paramCombosList)} parameter combinations\n")
+arcpy.AddMessage(f"Testing {len(paramCombosList)} parameter combinations")
 
 
 for iteration, params in enumerate(paramCombosList): 

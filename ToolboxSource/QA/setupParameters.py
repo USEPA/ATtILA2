@@ -23,11 +23,27 @@ class points:
             raise ValueError("setup.inGDB not set properly")
         
     @property    
-    def Daycares(self): 
-        return os.path.join(setup.inGDB, "Daycares")
+    def Brownfields(self): 
+        return os.path.join(setup.inGDB, "Brownfields")
+    @property    
+    def Contaminated_Sites(self): 
+        return os.path.join(setup.inGDB, "Contaminated_Sites")
+    @property    
+    def EV_Charging_Stations(self): 
+        return os.path.join(setup.inGDB, "EV_Charging_Stations")
+    @property    
+    def Gasoline_Service_Stations(self): 
+        return os.path.join(setup.inGDB, "Gasoline_Service_Stations")
+    @property
+    def Post_Secondary_Schools(self): 
+        return os.path.join(setup.inGDB, "Post_Secondary_Schools")
+    @property
+    def Public_Schools(self): 
+        return os.path.join(setup.inGDB, "Public_Schools")
     @property
     def SampleSites(self): 
         return os.path.join(setup.inGDB, "SampleSites")
+    
 class lines: 
     @property   
     def Roads(self):
@@ -38,19 +54,17 @@ class lines:
     @property 
     def Roads_Walkable(self):
         return os.path.join(setup.inGDB, "Roads_Walkable")
+    @property
+    def Runways(self): 
+        return os.path.join(setup.inGDB, "Runways")
     @property 
-    def StreamLines(self): 
+    def Stream_Lines(self): 
         return os.path.join(setup.inGDB, "Stream_Lines")
     @property 
     def WaterLines(self): 
         return os.path.join(setup.inGDB, "Water_Lines")
+    
 class polygons: 
-    @property 
-    def Blockgroups(self): 
-        return os.path.join(setup.inGDB, "Blockgroups")
-    @property 
-    def Blockgroups_Fresno(self):
-        return os.path.join(setup.inGDB, "Blockgroups_Fresno")
     @property 
     def Census2010(self):
         return os.path.join(setup.inGDB, "Census2010")
@@ -58,54 +72,37 @@ class polygons:
     def Census2020(self): 
         return os.path.join(setup.inGDB, "Census2020")
     @property 
-    def MockLakes(self): 
-        return os.path.join(setup.inGDB, "Mock_Lakes")
+    def Floodplain_Polygons(self): 
+        return os.path.join(setup.inGDB, "Floodplain_Polygons")
     @property 
     def Parks(self): 
         return os.path.join(setup.inGDB, "Parks")
     @property 
-    def Population(self): 
-        return os.path.join(setup.inGDB, "Population")
+    def Railroads(self): 
+        return os.path.join(setup.inGDB, "Railroads")
     @property 
-    def StreamPolygons(self):
+    def Stream_Polygons(self):
         return os.path.join(setup.inGDB, "Stream_Polygons")
     @property 
     def ThreeParks(self):
         return os.path.join(setup.inGDB, "ThreeParks")
     @property 
-    def WaterPolygons(self):
+    def Water_Polygons(self):
         return os.path.join(setup.inGDB, "Water_Polygons")
     @property 
     def Watersheds(self):
         return os.path.join(setup.inGDB, "Watersheds")
-    @property 
-    def Floodplain_Polygons(self):
-        return os.path.join(setup.inGDB, "Floodplain_Polygons")
+    
 class rasters:
     @property
     def DASY_Population(self):
         return os.path.join(setup.inGDB, "DASY_Population")
     @property
-    def DASY_Population_Fresno(self):
-        return os.path.join(setup.inGDB, "DASY_Population_Fresno")
-    @property
-    def Floodplain_NLCD(self):
-        return os.path.join(setup.inGDB, "Floodplain_NLCD")
-    @property
-    def Floodplain_Raster(self): 
+    def Floodplain_Raster(self):
         return os.path.join(setup.inGDB, "Floodplain_Raster")
-    @property
-    def MULC_2017(self):
-        return os.path.join(setup.inGDB, "MULC_2017")
     @property
     def NLCD_2016(self):
         return os.path.join(setup.inGDB, "NLCD_2016")
-    @property
-    def NLCD_Subset(self): 
-        return os.path.join(setup.inGDB, "NLCD_Subset")
-    @property
-    def nonzeroFloodplain(self):
-        return os.path.join(setup.inGDB, "nonzeroFloodplain")
     @property
     def Population_Raster(self): 
         return os.path.join(setup.inGDB, "Population_Raster")
