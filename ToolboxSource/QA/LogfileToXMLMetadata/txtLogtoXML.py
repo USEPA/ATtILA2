@@ -17,7 +17,10 @@ Currently this scrit works for the following tools
 
     *** Currently QA fields and AREA fields if selected will give a MISSING DESCRIPTION 
 """
+
+
 # Import Packages
+import os
 from lxml import etree
 import arcpy
 import xml.dom.minidom
@@ -31,9 +34,12 @@ from AttrDictISO import AttrDict # use the copy in each folder
 from GlobalConstantsISO import *
 import difflib
 
-
+#Make this so it joins workspace and the outputfile name in thee export.
 template = sys.argv[1]
 path = sys.argv[2]
+outWorkspace = sys.argv[3]
+outFile = sys.argv[4]
+
 # file path to ATtILA logfile
 #path = r"C:\Users\Jtafrate\OneDrive - Environmental Protection Agency (EPA)\Profile\Documents\QA_ATtILAToolDevelopment\OutputTest\LCOSP_13_20250327_14-00-59.txt"
 
@@ -576,7 +582,8 @@ print(xmlstr)
 #print('Done')
 
 def saveXML(xmlstring):
-    save_path_file = sys.argv[3]
+    save_path_file = os.path.join(outWorkspace, outTable)
+    arcpy.AddMessage(f"saved xml metadata to {save_path_file}")
  
     with open(save_path_file, "w") as f: 
         f.write(xmlstring) 
