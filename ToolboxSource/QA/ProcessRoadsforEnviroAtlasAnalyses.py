@@ -34,7 +34,7 @@ arcpy.env.workspace = Output_GDB_pth
 #Define ATtILA metric
 def runATtILA(paramDict, iteration): 
   arcpy.AddMessage(f"\n\n***Starting {toolAbbv}: run {iteration+1} of {len(paramCombosList)}***\n")
-  arcpy.AddMessage(f"Test inputs: {paramDict}\n")
+  arcpy.AddMessage(f"Test inputs: {paramDict}\n\n")
 
   Version = paramDict["Version"] #Set the Road_geodatabase from the Version
   if Version == "NAVTEQ 2011": 

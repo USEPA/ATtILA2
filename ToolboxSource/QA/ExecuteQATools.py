@@ -33,7 +33,7 @@ def main(_argv):
             runpy.run_path(script)
         else: 
             arcpy.AddWarning("Script not found")
-    arcpy.AddMessage(f"QA scripts completed for {inputStrings}. For more details refer to logfiles located in {sys.argv[2]}.")
+    arcpy.AddMessage(f"\n\nQA scripts completed for {inputStrings}. For more details refer to logfiles located in {sys.argv[2]}.")
 
 if __name__ == "__main__": 
     main(sys.argv)

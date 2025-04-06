@@ -36,7 +36,7 @@ def runATtILA(paramDict, iteration):
   outTable = os.path.join(Output_GDB_pth, f"{fileName}{iteration+1}") 
 
   arcpy.AddMessage(f"\n\n***Starting {toolAbbv}: run {iteration+1} of {len(paramCombosList)}***\n")
-  arcpy.AddMessage(f"Test inputs: {paramDict}\n")
+  arcpy.AddMessage(f"Test inputs: {paramDict}\n\n")
   metric.runPatchMetrics(
                               toolPath,
                               paramDict["inReportingUnitFeature"],

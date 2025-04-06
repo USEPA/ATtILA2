@@ -252,7 +252,7 @@ class PWZM_options:
     'Population_feature' : [rasters.Population_Raster, polygons.Census2010], 
     'Population_field' : ['Pop'],
     'Zone_feature' : [rasters.Floodplain_Raster], 
-    'Buffer_distance' : [" "],
+    'Buffer_distance' : ["0 Meters"],
     'Group_by_zone' : ["true", "false"],
     'Zone_ID_field' : ["Value"],
     'optionalFieldGroups' : [" ",
