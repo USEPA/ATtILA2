@@ -4,12 +4,11 @@
 import arcpy
 import os
 from os.path import basename
-from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,SetNull,Extent, IsNull
+from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,SetNull,IsNull
 from . import *
 from .messages import AddMsg
 ## this is the code copied from pylet-master\pylet\arcpyutil\raster.py
 import arcpy as _arcpy
-from arcpy.sa.Functions import CreateConstantRaster
 from . import files
 from .log import logArcpy
 from ATtILA2.datetimeutil import DateTimer
@@ -189,8 +188,8 @@ def clipRaster(inReportingUnitFeature, inRaster, DateTimer, metricConst, logFile
         bufferDistance = f"{bufferFloat} {linearUnits}"
         clipBufferName = arcpy.CreateScratchName("tmpClipBuffer","","FeatureClass")
         
-        logArcpy('arcpy.Buffer_analysis', (inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL"), logFile)
-        clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance, "#", "#", "ALL")
+        logArcpy('arcpy.Buffer_analysis', (inReportingUnitFeature, clipBufferName, bufferDistance), logFile)
+        clipBuffer = arcpy.Buffer_analysis(inReportingUnitFeature, clipBufferName, bufferDistance)
         
         # Clipping input grid to desired extent...
         logArcpy('arcpy.Clip_management', (inRaster, "#", scratchName, clipBuffer, "", "NONE"), logFile)
@@ -870,7 +869,7 @@ def getParkRaster(metricConst,inParkFeature,oidFld,parkID,buffDist,costRaster,di
 
     onePark = arcpy.management.SelectLayerByAttribute("selectedLayer", 'NEW_SELECTION', whereClause, None)
     
-    arcpy.Buffer_analysis(onePark, "in_memory/oneParkBuff", f'{buffDist} Meters', dissolve_option='NONE')
+    arcpy.Buffer_analysis(onePark, "in_memory/oneParkBuff", f'{buffDist} Meters')
    
     # with arcpy.EnvManager(extent = oneParkBuffName):
     with arcpy.EnvManager(extent = "in_memory/oneParkBuff"):

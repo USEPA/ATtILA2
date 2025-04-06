@@ -4,7 +4,7 @@
 import os
 import arcpy
 import time
-from arcpy.sa import Raster, Con
+from arcpy.sa import Raster
 from . import errors
 from . import setupAndRestore
 from .utils import lcc
@@ -26,7 +26,6 @@ from .datetimeutil import DateTimer
 from .constants import metricConstants
 from .constants import globalConstants
 from .constants import errorConstants
-from . import utils
 from .utils.tabarea import TabulateAreaTable
 from datetime import datetime
 import traceback
@@ -1148,7 +1147,7 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                 if self.duplicateIds:
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
-                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
+                    self.dissolveName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
                     AddMsg(f"Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", self.logFile)
                     log.logArcpy("arcpy.analysis.PairwiseDissolve", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
                     self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
@@ -1294,7 +1293,7 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                 if self.duplicateIds:
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = f"{self.metricConst.shortName}_Dissolve{self.inBufferDistance.split()[0]}_"
-                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
+                    self.dissolveName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
                     AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {basename(self.dissolveName)}", 0, self.logFile)
                     log.logArcpy("arcpy.analysis.PairwiseDissolve", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
                     self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
@@ -2808,7 +2807,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 if self.duplicateIds:
                     # Get a unique name with full path for the output features - will default to current workspace:            
                     self.namePrefix = self.metricConst.shortName + "_FacDissolve"+self.inBufferDistance.split()[0]+"_"
-                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                    self.dissolveName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                     AddMsg(f"{self.timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", 0, self.logFile)
                     log.logArcpy("arcpy.analysis.PairwiseDissolve",(self.inReportingUnitFeature,self.dissolveName,self.reportingUnitIdField,"","MULTI_PART"),logFile)
                     self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName,self.reportingUnitIdField,"","MULTI_PART")
@@ -2816,7 +2815,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 # Make a temporary facility point layer so that a field of the same name as reportingUnitIdField could be deleted
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityCopyName+self.viewRadius.split()[0]+"_"
-                self.inPointFacilityName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.inPointFacilityName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 AddMsg(f"{self.timer.now()} Creating working copy of the Facility feature. Intermediate: {basename(self.inPointFacilityName)}", 0, self.logFile)
                 fieldMappings = arcpy.FieldMappings()
                 fieldMappings.addTable(self.inFacilityFeature)
@@ -2837,7 +2836,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 # Intersect the point theme with the reporting unit theme to transfer the reporting unit id to the points
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityWithRUIDName+self.viewRadius.split()[0]+"_"
-                self.intersectResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.intersectResultName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 AddMsg(f"{self.timer.now()} Assigning reporting unit ID to {basename(self.inPointFacilityName)}. Intermediate: {basename(self.intersectResultName)}", 0, self.logFile)
                 log.logArcpy("arcpy.Intersect_analysis",([self.inPointFacilityFeature,self.inReportingUnitFeature],self.intersectResultName,"NO_FID","","POINT"),logFile)
                 self.intersectResult = arcpy.Intersect_analysis([self.inPointFacilityFeature,self.inReportingUnitFeature],self.intersectResultName,"NO_FID","","POINT")
@@ -2845,7 +2844,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 # Buffer the facility features with the reporting unit IDs to desired distance
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.viewBufferName+self.viewRadius.split()[0]+"_"
-                self.bufferResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.bufferResultName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 AddMsg(f"{self.timer.now()} Buffering {basename(self.intersectResultName)} to {viewRadius}. Intermediate: {basename(self.bufferResultName)}", 0, self.logFile)
                 log.logArcpy("arcpy.Buffer_analysis",(self.intersectResult,self.bufferResultName,viewRadius,"","","NONE","", "PLANAR"), logFile)
                 self.bufferResult = arcpy.Buffer_analysis(self.intersectResult,self.bufferResultName,viewRadius,"","","NONE","", "PLANAR")
@@ -2863,13 +2862,13 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 
                 # Get a unique name with full path for the land cover proportions table - will default to current workspace:
                 self.namePrefix = self.metricConst.lcpTableName+self.viewRadius.split()[0]+"_"
-                self.facilityLCPTable = utils.files.nameIntermediateFile([self.namePrefix,"Dataset"], flcvCalc.cleanupList)
+                self.facilityLCPTable = files.nameIntermediateFile([self.namePrefix,"Dataset"], flcvCalc.cleanupList)
                 
                 # add QA fields and class area fields to the land cover proportions table
                 self.facilityOptionsList = ["QAFIELDS"]
                 
                 # tag the facility ID field for the land cover proportions table
-                self.facilityIdField = utils.fields.getFieldByName(self.bufferResult, "ORIG_FID")
+                self.facilityIdField = fields.getFieldByName(self.bufferResult, "ORIG_FID")
                 
                 # Save the output metric field name parameters and replace them with the land cover proportions field name parameters
                 self.oldFieldParameters = self.metricConst.fieldParameters
@@ -2984,7 +2983,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
     """ Interface for script executing Generate Proximity Polygons utility """
     
     from arcpy import env
-    from arcpy.sa import Reclassify,RegionGroup,RemapValue,RemapRange
+    from arcpy.sa import Reclassify,RemapValue,RemapRange
 
     try:
         # retrieve the attribute constants associated with this metric
@@ -3108,6 +3107,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                     if overWrite == "false":
                         namePrefix = f"{namePrefix}_"
                     scratchName = files.getRasterName(namePrefix)
+                    if arcpy.Exists(scratchName):
+                        # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                        arcpy.Delete_management(scratchName)
                     AddMsg(f"{timer.now()} Saving intermediate grid: {basename(scratchName)}", 0, logFile)
                     burnInGrid.save(scratchName)
                     AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}")
@@ -3165,6 +3167,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 arcpy.Delete_management(proximityGridName)
             AddMsg(f"{timer.now()} Saving proportions grid: {basename(proximityGridName)}.", 0, logFile)
             try:
+                if arcpy.Exists(proximityGridName):
+                    # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                    arcpy.Delete_management(proximityGridName)
                 proximityGrid.save(proximityGridName)
             except:
                 raise errors.attilaException(errorConstants.rasterOutputFormatError) 
@@ -3182,6 +3187,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                     arcpy.Delete_management(scratchName)
                 AddMsg(f"{timer.now()} Saving intermediate grid: {basename(scratchName)}.", 0, logFile)
                 try:
+                    if arcpy.Exists(scratchName):
+                        # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                        arcpy.Delete_management(scratchName)
                     nbrCntGrid.save(scratchName)
                 except:
                     raise errors.attilaException(errorConstants.rasterOutputFormatError)
@@ -3216,6 +3224,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 if scratchName in datasetList:
                     arcpy.Delete_management(scratchName)
                 try:
+                    if arcpy.Exists(scratchName):
+                        # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                        arcpy.Delete_management(scratchName)
                     AddMsg(f"{timer.now()} Saving {zoneBin_str}% breaks zone raster: {basename(scratchName)}", 0, logFile)
                     nbrZoneGrid.save(scratchName)
                 except:
@@ -5022,7 +5033,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
             logFile.close()
             AddMsg('Log file closed')
             
-        # again ask about environemnt stuff     
+        # again ask about environment stuff     
         if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
             env.snapRaster = _tempEnvironment0
             env.workspace = _tempEnvironment1
@@ -5035,7 +5046,6 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
                       cutoffLength="#", overWrite="", outWorkspace='#',  processingCellSize="#", snapRaster="#", optionalFieldGroups="#"):
     """ Interface for script executing Near Road Land Cover Proportions tool """
     
-    from arcpy import env
 #    from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup

@@ -9,11 +9,11 @@ from os.path import basename
 
 import arcpy
 
+from ..constants import globalConstants
+from ..datetimeutil import DateTimer
 from . import fields
-from ATtILA2.constants import globalConstants
-from ATtILA2.datetimeutil import DateTimer
-from ATtILA2.utils.log import logArcpy
-from ATtILA2.utils.messages import AddMsg
+from .log import logArcpy
+from .messages import AddMsg
 
 timer = DateTimer()
 

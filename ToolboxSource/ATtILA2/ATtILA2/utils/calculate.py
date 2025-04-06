@@ -1,16 +1,15 @@
 """ Utilities specific to area
 
 """
-from ATtILA2.constants import globalConstants
 
 import arcpy
 from ATtILA2.setupAndRestore import _tempEnvironment3
+from ATtILA2.constants import globalConstants, errorConstants
 from ATtILA2 import errors
-from ATtILA2.constants import errorConstants
 from . import messages
 from . import files
 from . import vector
-from . import table
+from .table import transferField
 from .messages import AddMsg
 from .log import logArcpy
 from os.path import basename
@@ -1097,7 +1096,7 @@ def getWeightedPopDensity(inReportingUnitFeature,reportingUnitIdField,ruAreaFld,
     toField = 'POPCNT' + index
     # Transfer the values to the output table
     AddMsg(f"{timer.now()} Transferring values from {basename(populationTable)} to {basename(outTable)}.", 0, logFile)
-    table.transferField(populationTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
+    transferField(populationTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
     
     AddMsg(f"{timer.now()} Performing density calculation.", 0, logFile)
     # Set up a calculation expression for the final density calculation
@@ -1214,8 +1213,6 @@ def belowValue(inTable, sourceField, threshold, addedField, logFile=None):
 
 def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,
                    reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict, timer, logFile):
-
-    import os 
 
     # assign some metric constants to variables
     lowSuffix = metricConst.fieldSuffix

@@ -42,8 +42,8 @@ def bufferFeaturesByID(inFeatures, repUnits, outFeatures, bufferDist, ruIDField,
         # By using the "LIST" option and the unit ID field, the output contains a single multipart feature for every 
         # reporting unit.  The output is written to the user's scratch workspace.
         AddMsg(f"{timer.now()} Buffering input features: in_memory/bFeats", 0, logFile)
-        logArcpy("arcpy.Buffer_analysis", (inFeatures,"in_memory/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField), logFile) 
-        bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"in_memory/bFeats", bufferDist,"FULL","ROUND","LIST",ruLinkField)
+        logArcpy("arcpy.Buffer_analysis", (inFeatures,"in_memory/bFeats", bufferDist,"FULL","ROUND"), logFile) 
+        bufferedFeatures = arcpy.Buffer_analysis(inFeatures,"in_memory/bFeats", bufferDist,"FULL","ROUND")
         
         # If the input features are polygons, we need to erase the the input polyons from the buffer output
         inGeom = arcpy.Describe(inFeatures).shapeType
@@ -240,14 +240,14 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     licenseLevel = arcpy.CheckProduct("ArcInfo")
                     sysExecutable = arcpy.glob.os.path.basename(arcpy.sys.executable)
                     if licenseLevel in ["AlreadyInitialized","Available"] or sysExecutable.upper() == "PYTHON.EXE":
-                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), logFile)
-                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID])
+                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND"), logFile)
+                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY")
                         AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
                         logArcpy("arcpy.RepairGeometry_management", (bufferResult,), logFile)
                         arcpy.RepairGeometry_management(bufferResult)
                     else:
-                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), logFile)
-                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND"), logFile)
+                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND")
                         AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
                         logArcpy("arcpy.RepairGeometry_management", (bufferResult,), logFile)
                         arcpy.RepairGeometry_management(bufferResult)
@@ -257,8 +257,8 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                         newBufferFeatures = arcpy.analysis.PairwiseErase(bufferResult,inFC,bufferErase)
                         bufferResult = newBufferFeatures
                 else:
-                    logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), logFile)
-                    bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                    logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND"), logFile)
+                    bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND")
                     AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.", 0, logFile)
                     logArcpy("arcpy.RepairGeometry_management", (bufferResult,), logFile)
                     arcpy.RepairGeometry_management(bufferResult)
@@ -274,14 +274,14 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                     # the right license level, revert to buffer/erase option if it's not available.
                     licenseLevel = arcpy.CheckProduct("ArcInfo")
                     if licenseLevel in ["AlreadyInitialized","Available"]:
-                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID]), logFile)
-                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND","LIST",[newUnitID])
+                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND"), logFile)
+                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"OUTSIDE_ONLY","ROUND")
                         AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
                         logArcpy("arcpy.RepairGeometry_management", (bufferResult,), logFile)
                         arcpy.RepairGeometry_management(bufferResult)
                     else:
-                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), logFile)
-                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                        logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND"), logFile)
+                        bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND")
                         AddMsg(f"{timer.now()} Repairing buffer areas for input areal features.", 0, logFile)
                         logArcpy("arcpy.RepairGeometry_management", (bufferResult,), logFile)
                         arcpy.RepairGeometry_management(bufferResult)
@@ -291,8 +291,8 @@ def bufferFeaturesByIntersect(inFeatures, repUnits, outFeatures, bufferDist, uni
                         newBufferFeatures = arcpy.analysis.PairwiseErase(bufferResult,inFC,bufferErase)
                         bufferResult = newBufferFeatures
                 else:
-                    logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID]), logFile)
-                    bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND","LIST",[newUnitID])
+                    logArcpy("arcpy.Buffer_analysis", (intersectResult,bufferName,bufferDist,"FULL","ROUND"), logFile)
+                    bufferResult = arcpy.Buffer_analysis(intersectResult,bufferName,bufferDist,"FULL","ROUND")
                     AddMsg(f"{timer.now()} Repairing buffer areas for input linear features.".format(timer.now()), 0, logFile)
                     logArcpy("arcpy.RepairGeometry_management", (bufferResult,), logFile)
                     arcpy.RepairGeometry_management(bufferResult)
@@ -672,8 +672,8 @@ def roadsNearStreams(inStreamFeature,mergedStreams,bufferDist,inRoadFeature,inRe
     '''
     # For RNS metric, first buffer all the streams by the desired distance
     AddMsg(f"{timer.now()} Buffering stream features. Intermediate: {basename(streamBuffer)}", 0, logFile)
-    logArcpy("arcpy.Buffer_analysis", (inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND","ALL","#"), logFile)
-    arcpy.Buffer_analysis(inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND","ALL","#")
+    logArcpy("arcpy.Buffer_analysis", (inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND"), logFile)
+    arcpy.Buffer_analysis(inStreamFeature,streamBuffer,bufferDist,"FULL","ROUND")
     
     # Intersect the stream buffers with the input road layer to find road segments in the buffer zone
     AddMsg(f"{timer.now()} Intersecting road features with stream buffers.", 0, logFile)
@@ -824,7 +824,6 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         
         # Initialize custom progress indicator
         totalRUs = len(zoneAreaDict)
-        #mdcpLoopProgress = messages.loopProgress(totalRUs, logFile)
         mdcpLoopProgress = messages.loopProgress(totalRUs)
         
         noPatches = 0
