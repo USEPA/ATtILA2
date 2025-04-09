@@ -127,8 +127,8 @@ A comprehensive list of metric creation steps is included in the Processing Step
 				<languageCode value="eng"/>
 				<countryCode value="US"/>
 			</thesaLang>
-			<keyword>MISSING</keyword>
-			<keyword>MISSING</keyword>
+			<keyword>NEEDED</keyword>
+			<keyword>NEEDED</keyword>
 		</placeKeys>
 		<themeKeys xmlns="">
 			<thesaName xmlns="">
@@ -304,10 +304,10 @@ This dataset was produced by the US EPA to support research and online mapping a
 		</DataProperties>
 		<ArcGISFormat>1.0</ArcGISFormat>
 		<ArcGISProfile>ISO19115_3</ArcGISProfile>
-		<SyncDate>MISSING</SyncDate>
-		<SyncTime>MISSING</SyncTime>
-		<ModDate>MISSING</ModDate>
-		<ModTime>MISSING</ModTime>
+		<SyncDate>NEEDED</SyncDate>
+		<SyncTime>NEEDED</SyncTime>
+		<ModDate>NEEDED</ModDate>
+		<ModTime>NEEDED</ModTime>
 	</Esri>
 	<mdLang>
 		<languageCode value="eng"/>

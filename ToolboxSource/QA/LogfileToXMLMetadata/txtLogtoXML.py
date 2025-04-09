@@ -13,9 +13,9 @@ Currently this scrit works for the following tools
     - Stream Density (Working)
     - Select Zonal Statistics (Working)
 
-    (All other tools prcessing steps and table information is filled in. Use code 'MISSING' to find items like idAbs which can be filled in manually) 
+    (All other tools prcessing steps and table information is filled in. Use code 'NEEDED' to find items like idAbs which can be filled in manually) 
 
-    *** Currently QA fields and AREA fields if selected will give a MISSING DESCRIPTION 
+    *** Currently QA fields and AREA fields if selected will give a DESCRIPTION NEEDED 
 """
 
 
@@ -39,9 +39,6 @@ template = sys.argv[1]
 path = sys.argv[2]
 outWorkspace = sys.argv[3]
 outFile = sys.argv[4]
-
-# file path to ATtILA logfile
-#path = r"C:\Users\Jtafrate\OneDrive - Environmental Protection Agency (EPA)\Profile\Documents\QA_ATtILAToolDevelopment\OutputTest\LCOSP_13_20250327_14-00-59.txt"
 
 def log_extract(file): # takes file path for .txt file, must be run first
     txt_file = open(file, "r")
@@ -110,10 +107,10 @@ def XML_metadata():
             linkage = etree.SubElement(onlineSrc, 'linkage')
             linkage.text = item
             protocol = etree.SubElement(onlineSrc, 'protocol')
-            protocol.text = 'MISSING'
+            protocol.text = 'NEEDED'
             orFunct = etree.SubElement(onlineSrc, 'orFunct')
             onFunctCd = etree.SubElement(orFunct, 'onFunctCd')
-            onFunctCd.attrib['value'] = 'MISSING'
+            onFunctCd.attrib['value'] = 'NEEDED'
 
     def update_idinfo():
         title = root.find('dataIdInfo').find('idCitation').find('resTitle') 
@@ -176,7 +173,7 @@ def XML_metadata():
         if constant != NPConstants: 
             enttypt.text = 'Table'
         else: 
-            enttypt.text = 'MISSING'
+            enttypt.text = 'NEEDED'
         enttypc = detailed.find('enttyp').find('enttypc')
         # add the text here once the logfiles are updated to include the count of rows.
 
@@ -204,19 +201,19 @@ def XML_metadata():
                 attrtype.text = 'INSERT DATA TYPE'
                 attwidth = etree.SubElement(attr, 'attwidth') #Aks Jeremy/Don about this
                 attwidth.attrib['Sync'] = 'TRUE'
-                attwidth.text = 'MISSING'
+                attwidth.text = 'NEEDED'
                 atprecis = etree.SubElement(attr, 'atprecis') #Ask Jeremy/Don about this
                 atprecis.attrib['Sync'] = 'TRUE'
-                atprecis.text = 'MISSING'
+                atprecis.text = 'NEEDED'
                 attscale = etree.SubElement(attr, 'attscale') #Ask Jeremy/Don about this
                 attscale.attrib['Sync'] = 'TRUE'
-                attscale.text = 'MISSING'
+                attscale.text = 'NEEDED'
 
                 attrdef = etree.SubElement(attr, 'attrdef')
                 if item in AttrDict.keys(): 
                     attrdef.text = AttrDict[item].format(num=num) 
                 else:
-                    attrdef.text = 'MISSING DESCRIPTION'
+                    attrdef.text = 'DESCRIPTION NEEDED'
                     
                 attrdefs = etree.SubElement(attr, 'attrdefs')
                 attrdefs.text = 'US EPA'
@@ -283,7 +280,7 @@ def XML_metadata():
                     elif lookup_name in AttrDict.keys(): 
                         attrdef.text = AttrDict[lookup_name].format(slope=slope)
                     else:
-                        attrdef.text = 'MISSING DESCRIPTION'
+                        attrdef.text = 'DESCRIPTION NEEDED'
                     #update attrdefs
                     attrdefs = etree.SubElement(attr, 'attrdefs')
                     if fieldName == 'HUC_12': 
@@ -303,7 +300,7 @@ def XML_metadata():
                     else:
                         codesetd = etree.SubElement(attrdomv, 'codesetd')
                         codesets = etree.SubElement(codesetd, 'codesets')
-                        codesets.text = 'MISSING'
+                        codesets.text = 'NEEDED'
                 
                     detailed.append(attr)
             return None     
@@ -359,7 +356,7 @@ def XML_metadata():
                     elif lookup_name in AttrDict.keys(): 
                         attrdef.text = AttrDict[lookup_name].format(dist=dist)
                     else:
-                        attrdef.text = 'MISSING DESCRIPTION'
+                        attrdef.text = 'DESCRIPTION NEEDED'
                     #update attrdefs
                     attrdefs = etree.SubElement(attr, 'attrdefs')
                     if fieldName == 'HUC_12': 
@@ -379,7 +376,7 @@ def XML_metadata():
                     else:
                         codesetd = etree.SubElement(attrdomv, 'codesetd')
                         codesets = etree.SubElement(codesetd, 'codesets')
-                        codesets.text = 'MISSING'
+                        codesets.text = 'NEEDED'
                 
                     detailed.append(attr)
             return None                     
@@ -432,7 +429,7 @@ def XML_metadata():
                     if lastMatch: 
                         attrdef.text = AttrDict[lastMatch]
                     else:  
-                        attrdef.text = 'MISSING DESCRIPTION'
+                        attrdef.text = 'DESCRIPTION NEEDED'
 
                     attrdefs = etree.SubElement(attr, 'attrdefs')
                     if fieldName == 'HUC_12': 
@@ -453,7 +450,7 @@ def XML_metadata():
                     else:
                         codesetd = etree.SubElement(attrdomv, 'codesetd')
                         codesets = etree.SubElement(codesetd, 'codesets')
-                        codesets.text = 'MISSING'
+                        codesets.text = 'NEEDED'
                 
                     detailed.append(attr)
             return None 
@@ -500,7 +497,7 @@ def XML_metadata():
                     if fieldName in AttrDict.keys(): 
                         attrdef.text = AttrDict[fieldName] 
                     else:
-                        attrdef.text = 'MISSING DESCRIPTION'
+                        attrdef.text = 'DESCRIPTION NEEDED'
                     
                     attrdefs = etree.SubElement(attr, 'attrdefs')
                     if fieldName == 'HUC_12': 
@@ -582,8 +579,8 @@ print(xmlstr)
 #print('Done')
 
 def saveXML(xmlstring):
-    save_path_file = os.path.join(outWorkspace, outTable)
-    arcpy.AddMessage(f"saved xml metadata to {save_path_file}")
+    save_path_file = os.path.join(str(outWorkspace),str(outFile))
+    arcpy.AddMessage(f"XML metadata saved to {save_path_file}")
  
     with open(save_path_file, "w") as f: 
         f.write(xmlstring) 

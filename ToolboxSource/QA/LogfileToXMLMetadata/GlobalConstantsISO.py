@@ -138,14 +138,14 @@ class SZSConstants(BaseConstants):
     
 class PAAAConstants(BaseConstants): #These need updating
     themekey_list = ['Utilities']
-    title = 'MISSING'
-    abstract = ("MISSING")
+    title = 'NEEDED'
+    abstract = ("NEEDED")
     purpose = ("ATtILA is an easy to use Esri ArcGIS toolbox that calculates landscape and landscape/human interaction metrics, including many of those found in EnviroAtlas."
                 " The overall goal of EnviroAtlas is to employ and develop the best available science to map indicators of ecosystem services production, demand, and drivers for the nation."
     )
 
 class Unknown(BaseConstants): 
-    themekey_list = ['MISSING']
-    title = 'MISSING'
-    abstract = ('MISSING')
-    purpose = ("MISSING")
+    themekey_list = ['NEEDED']
+    title = 'NEEDED'
+    abstract = ('NEEDED')
+    purpose = ("NEEDED")
