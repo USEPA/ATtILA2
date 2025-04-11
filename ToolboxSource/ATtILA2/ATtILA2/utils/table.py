@@ -767,3 +767,62 @@ def getClassFieldName(fieldName,classVal,table):
         # Revalidate - to ensure there aren't duplicate fields.
         validFieldName = arcpy.ValidateFieldName(testFieldName, table)
     return validFieldName
+
+
+def addMissingRows(outTable, allIdList, ruIDField, missingValue, logFile=None):
+    '''This function inserts a row of missing data values in the ATtILA output table for each reporting unit found in the 
+       inReportingUnitFeature, but is missing in the output table.
+    **Description:**
+        The expectation for the ATtILA output table is one row per reporting unit found in the input Reporting Unit Feature layer.
+        In instances where data from other input layers (e.g. land cover or stream features) do not occur within a reporting
+        unit, ESRI functions, such as Tabulate Area, do not return a table row for that reporting unit. It is therefore
+        possible to have an ATtILA output table with fewer rows than expected. This function will find the missing reporting
+        unit ids, and insert a new row in the output table for the missing entry. The data fields for the new row will 
+        contain a missing data value defined in the global constants module.  
+    **Arguments:**
+        * *outTable* - the ATtILA metric output table where missing rows will be added
+        * *allIdList* - the list of all unique ID values found in the inReportingUnitFeature's ID field
+        * *ruIDField* - the reporting unit id field in the ATtILA metric output table
+        * *missingValue* - the value to insert into all row fields following the reporting unit id field
+    '''    
+    # get the list of non-OID type fields in the ATtILA output table
+    newTableFields = [f for f in arcpy.ListFields(outTable) if f.type != 'OID']
+    # get a list of those field names
+    newTableFieldNames = [f.name for f in newTableFields]
+    
+    # set up a list to contain one missingValue item for each field in the output table following the reporting unit id field.
+    fieldValues = []
+    
+    # Works as long as fields are numeric or string types. All ATtILA output fields should be either of those two.
+    for f in newTableFields[1:]: # skip the first field. that should be the reporting unit id field.
+        if f.type in ['BigInteger','Double','Integer','Single','SmallInteger']:
+            # append the missingValue to the list
+            fieldValues.append(missingValue)
+        else:
+            # append a string representation of the missingValue to the list
+            fieldValues.append(f"{missingValue}")
+
+    # collect the reporting unit id values found in the output table
+    if isinstance(ruIDField,str):
+        newTableRUIDs = [row[0] for row in arcpy.da.SearchCursor(outTable, ruIDField)]
+    else:
+        newTableRUIDs = [row[0] for row in arcpy.da.SearchCursor(outTable, ruIDField.name)]
+    
+    # generate a list of the reporting unit id values found in the inReportingUnitFeature, but not in the output table
+    missingIDs = [aID for aID in allIdList if aID not in newTableRUIDs]   
+    
+    AddMsg(f"Adding {len(missingIDs)} rows to the ATtILA metric output table. Data fields will be set to {missingValue}.", 1, logFile)         
+
+    with arcpy.da.InsertCursor(outTable, newTableFieldNames) as cursor:
+        for mID in missingIDs:
+            # put a list together where the first value is the reporting unit id followed by x number of missing values; 
+            # x is the number of remaining fields in the output table
+            newList = [mID] + fieldValues
+            cursor.insertRow(newList)
+
+    
+    
+            
+    
+    
+    

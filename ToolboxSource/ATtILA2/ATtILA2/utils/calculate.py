@@ -547,7 +547,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     logArcpy("arcpy.JoinField_management",(outLines, areaUID.name, inAreas, areaUID.name, [unitArea]),logFile)
     arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])
     # Set up a calculation expression for density.
-    calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
+    calcExpression = f"!{lineLengthFieldName}!/!{unitArea}!"
     densityField = vector.addCalculateField(outLines,densityField,"DOUBLE",calcExpression,'#',logFile)
 
     if iaField: # if a field has been specified for calculating total impervious area.
@@ -1148,19 +1148,28 @@ def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopFi
     logArcpy('arcpy.AlterField_management', (outTable, inPopField, outPopField, outPopField), logFile)
     arcpy.AlterField_management(outTable, inPopField, outPopField, outPopField)
 
+# def replaceNullValues(inTable,inField,newValue,logFile=None):
+#     # Replace NULL values in a field with the supplied value
+#     whereClause = inField+" IS NULL"
+#     logArcpy("arcpy.UpdateCursor",(inTable, whereClause, "", inField),logFile)
+#     updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
+#     for updateRow in updateCursor:
+#         updateRow.setValue(inField, newValue)
+#         # Persist all of the updates for this row.
+#         updateCursor.updateRow(updateRow)
+#         # Clean up our row element for memory management and to remove locks
+#         del updateRow
+#     # Clean up our row element for memory management and to remove locks
+#     del updateCursor
+
 def replaceNullValues(inTable,inField,newValue,logFile=None):
     # Replace NULL values in a field with the supplied value
-    whereClause = inField+" IS NULL"
-    logArcpy("arcpy.UpdateCursor",(inTable, whereClause, "", inField),logFile)
-    updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
-    for updateRow in updateCursor:
-        updateRow.setValue(inField, newValue)
-        # Persist all of the updates for this row.
-        updateCursor.updateRow(updateRow)
-        # Clean up our row element for memory management and to remove locks
-        del updateRow
-    # Clean up our row element for memory management and to remove locks
-    del updateCursor
+    whereClause = f"{inField} IS NULL"
+    logArcpy("arcpy.da.UpdateCursor",(inTable, inField, whereClause),logFile)
+    with arcpy.da.UpdateCursor(inTable, inField, whereClause) as cursor:
+        for row in cursor:
+            row[0] = newValue
+            cursor.updateRow(row)
 
 def percentageValue(inTable, numeratorField, denominatorField, percentField, logFile=None):
     # Set up a calculate percentage expression 

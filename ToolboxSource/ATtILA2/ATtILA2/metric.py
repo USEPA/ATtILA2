@@ -87,12 +87,9 @@ class metricCalc:
         # Set whether to add QA Fields as a class attribute
         self.addQAFields = globalConstants.qaCheckName in self.optionalGroupsList
         
-        # # Set up a table with the ID values of every reporting unit in the inReportingUnitFeature. This table will be
-        # # used to have an entry for each RU in the outTable
-        # fieldMappings = arcpy.FieldMappings()
-        # fieldMappings.addTable(inReportingUnitFeature)
-        # [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != reportingUnitIdField]
-        # self.allReportingUnitsTable = arcpy.conversion.ExportTable(inReportingUnitFeature, "allReportingUnitsTable", field_mapping=fieldMappings)
+        # Gather a list of all of the ID values for the input reporting unit layer
+        self.allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        self.inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
         
         # Save other input parameters as class attributes
         self.outTable = outTable
@@ -138,7 +135,7 @@ class metricCalc:
 
 
     def _makeAttilaOutTable(self):
-        AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {os.path.basename(self.outTable)}", 0, self.logFile)
+        AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {basename(self.outTable)}", 0, self.logFile)
         # Internal function to construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -167,6 +164,18 @@ class metricCalc:
             self.metricConst.idFields = self.metricConst.idFields + [self.reportingUnitIdField]
             log.logWriteOutputTableInfo(self.newTable, self.logFile, self.metricConst)
             AddMsg("Summary complete", 0)
+        
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missings data value from globalConstants. 
+        # Be sure the output fields (i.e., field type and size) can accept that value
+        newTableRowCount = int(arcpy.management.GetCount(self.outTable).getOutput(0))
+        RUCount = len(self.allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {self.inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, self.logFile)
+            table.addMissingRows(self.outTable, self.allRUIDs, self.outIdField, globalConstants.missingDataValue, self.logFile)
     
     def _logEnvironments(self):
         if self.logFile:
@@ -940,6 +949,10 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         # get the dictionary with the LCC CLASSES attributes
         lccClassesDict = lccObj.classes
         
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
+        
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
@@ -1090,6 +1103,17 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
         
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, outIdField, globalConstants.missingDataValue, logFile)
+
         
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)
@@ -1933,6 +1957,10 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                                                                                                   os.path.dirname(outTable), 
                                                                                                   [metricsToRun,optionalFieldGroups])
                 
+                # Gather a list of all of the ID values for the input reporting unit layer
+                self.allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+                self.inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
+                
                 # Save other input parameters as class attributes
                 self.outTable = outTable
                 self.inReportingUnitFeature = inReportingUnitFeature
@@ -1998,6 +2026,19 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                     self.metricConst.idFields = self.metricConst.idFields + [self.reportingUnitIdField]
                     log.logWriteOutputTableInfo(self.newTable, self.logFile, self.metricConst)
                     AddMsg("Summary complete", 0)
+                
+                # add rows for any missing reporting units from the original input to the output table
+                # rows can be dropped from the output if other input data does not intersect with a reporting unit
+                # These added rows will not be used for row counts or field statistics in the optional log file
+                # All fields in any new row will contain a missings data value from globalConstants. 
+                # Be sure the output fields (i.e., field type and size) can accept that value
+                newTableRowCount = int(arcpy.management.GetCount(self.outTable).getOutput(0))
+                RUCount = len(self.allRUIDs)
+                rowsMissingCount = RUCount - newTableRowCount
+                if rowsMissingCount != 0:
+                    AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {self.inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, self.logFile)
+                    table.addMissingRows(self.outTable, self.allRUIDs, self.outIdField, globalConstants.missingDataValue, self.logFile)
+
                     
             # Function to run all the steps in the calculation process
             def run(self):
@@ -2216,6 +2257,10 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         parametersList = [toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
         
         # create a list of input themes to find the intersection extent. 
         # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
@@ -2445,10 +2490,17 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # Transfer the values to the output table
         table.transferField(popTable_FP,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
         
+        # set zone population to zero if it is NULL. It will only be null if a reporting unit has a population value, but no population was found in the zone area
+        ## does not work if the outTable is a DBF file. There are no NULL values in DBF fields.
+        calculate.replaceNullValues(outTable, popCntFields[1], globalConstants.missingDataValue, logFile)
+        
         # Set up a calculation expression for population change
-        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}!)"
-        codeBlock = """def getPopPercent(pop1,pop2):
-                            if pop1 == 0:
+        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}!,{globalConstants.missingDataValue})"
+        
+        codeBlock = """def getPopPercent(pop1,pop2,missingDataValue):
+                            if pop2 == missingDataValue:
+                                return missingDataValue
+                            elif pop1 == 0:
                                 if pop2 == 0:
                                     return 0
                                 else:
@@ -2475,6 +2527,17 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
+            
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
             
     except Exception as e:
         if logFile:
@@ -2523,6 +2586,10 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
                           minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
         
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
         raster.buildRAT(inLandCoverGrid, logFile)
@@ -2756,6 +2823,17 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
 
             # write the metric class grid values to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
+            
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
                 
     except Exception as e:
         if logFile:
@@ -4375,6 +4453,10 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                           inZoneDataset, inBufferDistance, groupByZoneYN, zoneIdField, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
             
         ### Initialization
         # Start the timer
@@ -4445,22 +4527,6 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         elif bufferDistanceVal == 0:
             pass # no need to create a copy; not altering the input feature class or its attribute table.
-            
-            # fieldMappings = arcpy.FieldMappings()
-            # fieldMappings.addTable(inZoneDataset)
-            # zoneFields = [fieldMappings.fields[0].name]
-            # if groupByZoneYN == "true":
-            #     zoneFields.append(zoneIdField)
-            #
-            # [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
-            #
-            # tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
-            # tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            #
-            # AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
-            # log.logArcpy(arcpy.conversion.ExportFeatures, (inZoneDataset, basename(tempZoneinFeature), '', '', fieldMappings), 'arcpy.conversion.ExportFeatures', logFile)
-            #
-            # inZoneDataset = tempZoneinFeature
         
         else:
             # Change the buffer distance to an integer if appropriate. This reduces the output field name string length by eliminating '_0'.
@@ -4833,7 +4899,6 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 else:
                     newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
         
-        
             log.logArcpy('arcpy.conversion.ExportTable', (popTable_RU, outTable, f"field_mapping={newFieldMap}"), logFile)
             arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=newFieldMap)
         
@@ -4842,14 +4907,18 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             log.logArcpy('arcpy.AlterField_management', (outTable, popCntFields[index], popCntFields[index] + suffix, popCntFields[index] + suffix ), logFile)
             arcpy.AlterField_management(outTable, popCntFields[index], popCntFields[index] + suffix, popCntFields[index] + suffix )
         
-        
-        
+        # set zone population to zero if it is NULL. It will only be null if a reporting unit has a population value, but no population was found in the zone area
+        ## does not work if the outTable is a DBF file. There are no NULL values in DBF fields.
+        calculate.replaceNullValues(outTable, popCntFields[index] + suffix, globalConstants.missingDataValue, logFile)
+                
         # Set up a calculation expression for population change        
-        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}{suffix}!)"
+        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}{suffix}!,{globalConstants.missingDataValue})"
         
-        codeBlock = """def getPopPercent(pop1,pop2):
-                if pop1 is None or pop2 is None:
-                    return None
+        codeBlock = """def getPopPercent(pop1,pop2,missingDataValue):
+                if pop2 is missingDataValue:
+                    return missingDataValue
+                elif pop1 is None or pop2 is None:
+                    return missingDataValue
                 elif pop1 == 0 and pop2 == 0:
                     return 0
                 elif pop1 == 0 and pop2 != 0:
@@ -4889,6 +4958,18 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
+        
+        if groupByZoneYN == 'false':  
+            # add rows for any missing reporting units from the original input to the output table
+            # rows can be dropped from the output if other input data does not intersect with a reporting unit
+            # These added rows will not be used for row counts or field statistics in the optional log file
+            # All fields in any new row will contain a missing data value.
+            newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+            RUCount = len(allRUIDs)
+            rowsMissingCount = RUCount - newTableRowCount
+            if rowsMissingCount != 0:
+                AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+                table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
     
     except Exception as e:
         if logFile:
