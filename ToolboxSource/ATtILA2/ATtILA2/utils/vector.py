@@ -835,7 +835,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         AddMsg("\n---")
         AddMsg(f"{timer.now()} {per} 1) Create a feature layer of the reporting unit.", 0, logFile)
         AddMsg(f"{timer.now()} {per} 2) Select centroid points that are in the reporting unit layer.", 0, logFile)
-        AddMsg(f"{timer.now()} {per} 3) If number of selected centroids is zero, Set MDCP, PWN, and PWON to -9999.", 0, logFile)
+        AddMsg(f"{timer.now()} {per} 3) If number of selected centroids is zero, Set MDCP, PWN, and PWON to -88888.", 0, logFile)
         AddMsg(f"{timer.now()} {per} 4) If number of selected centroids is greater than zero:", 0, logFile)
         AddMsg(f"{timer.now()} {per}   4a) Select patch polygons that intersect the selected centroids.", 0, logFile)
         AddMsg(f"{timer.now()} {per}   4b) Clip the selected patches to the reporting unit boundary.", 0, logFile) 
@@ -851,15 +851,15 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         
         AddMsg(f"{timer.now()} Starting calculations per reporting unit...", 0, logFile)
         
-        for aZone in zoneAreaDict.keys():
+        for aZone in pmResultsDict.keys(): #only perform calculations for reporting units that had land cover data in their borders
             pwnCount = 0
             pwonCount = 0
             meanDist = 0
                 
             if isinstance(aZone, int): # reporting unit id is an integer - convert to string for SQL expression
-                squery = "%s = %s" % (delimitedField, str(aZone))
+                squery = f"{delimitedField} = {aZone}"
             else: # reporting unit id is a string - enclose it in single quotes for SQL expression
-                squery = "%s = '%s'" % (delimitedField, str(aZone))
+                squery = f"{delimitedField} = '{aZone}'"
             
             #Create a feature layer of the single reporting unit
             if arcpy.Exists("inaReportingUnitLayer"):
@@ -875,10 +875,10 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             
             # Check to see if any patches exist within reporting unit
             if centroidCount == 0:
-                # arcpy.AddWarning("No patches found in %s. MDCP set to -9999" % (str(aZone)))
-                meanDist = -9999
-                pwnCount = -9999
-                pwonCount = -9999
+                # arcpy.AddWarning("No patches found in %s. MDCP set to -88888" % (str(aZone)))
+                meanDist = -88888
+                pwnCount = -88888
+                pwonCount = -88888
                 noPatches += 1
             
             else:
@@ -949,10 +949,10 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
                         pwonCount = totalNumPatches - pwnCount
                      
                 except:
-                    AddMsg("Near Distance routine failed in %s" % (str(aZone)), 1, logFile)
-                    meanDist = -9999
-                    pwnCount = -9999
-                    pwonCount = -9999
+                    AddMsg(f"Near Distance routine failed in {aZone}", 1, logFile)
+                    meanDist = -88888
+                    pwnCount = -88888
+                    pwonCount = -88888
                     
                 finally:
                     arcpy.Delete_management(nearPatchTable)
@@ -974,7 +974,7 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
             mdcpLoopProgress.update()
             
         if noPatches > 0:
-            AddMsg(f"{noPatches} reporting units contained no patches. MDCP was set to -9999 for these units.", 1, logFile)
+            AddMsg(f"{noPatches} reporting units contained no patches. MDCP was set to -88888 for these units.", 1, logFile)
         
         if singlePatch > 0:
             AddMsg(f"{singlePatch} reporting units contained a single patch. MDCP was set to 0 for these units.", 1, logFile)
@@ -986,12 +986,12 @@ def tabulateMDCP(inPatchRaster, inReportingUnitFeature, reportingUnitIdField, ra
         arcpy.Delete_management(patchDissolvedLayer)
     
     else:
-        AddMsg("No reporting units contained patches. Setting MDCP to -9999 for all units.", 1, logFile)
+        AddMsg("No reporting units contained patches. Setting MDCP to -99999 for all units.", 1, logFile)
         
         for aZone in zoneAreaDict.keys():
-            meanDist = -9999
-            pwnCount = -9999
-            pwonCount = -9999
+            meanDist = -99999
+            pwnCount = -99999
+            pwonCount = -99999
             
             resultDict[aZone] = f"{pwnCount},{pwonCount},{meanDist}"
               

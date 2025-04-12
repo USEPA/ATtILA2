@@ -904,17 +904,18 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                 # delete the temp table in case the geoprocessing overwrite output option is turned off
                 arcpy.Delete_management("temptable")
             tabareaTable = "temptable"
-            arcpy.sa.TabulateArea(selectedRUName, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
-
-            #Delete the single reporting unit feature layer
-            arcpy.Delete_management("subwatersheds_Layer")
-            arcpy.Delete_management(selectedRUName)
-
-            rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
-            if rowcount == 0:
-                AddMsg(f"No land cover grid data found in {aZone}", 1)
-
-            else:
+            
+            # if a reporting unit does not overlap with the land cover grid, the tabulate area operation will fail. 
+            # use a try...except operation to handle this situation
+            try:
+                arcpy.sa.TabulateArea(selectedRUName, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
+                rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
+            except:
+                # AddMsg(f"No land cover grid data found in {aZone}", 1)
+                rowcount = 0
+                #resultsDict[aZone] = (mv,mv,mv,mv,mv,mv,mv,mv,mv,zoneAreaDict[aZone])
+           
+            if rowcount != 0:
                 #Loop through each row in the table and calculate the patch metrics 
                 rows = arcpy.SearchCursor(tabareaTable)
                 row = rows.next()
@@ -954,14 +955,17 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
 
                     row = rows.next()
 
-            resultsDict[aZone] = (lrgProportion,numPatch,avePatch,mdnPatch,patchDensity,lrgPatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
+                resultsDict[aZone] = (lrgProportion,numPatch,avePatch,mdnPatch,patchDensity,lrgPatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
 
             if arcpy.Exists(selectedRUName):
                 arcpy.Delete_management(selectedRUName)
 
             if arcpy.Exists(tabareaTable):
                 arcpy.Delete_management(tabareaTable)
-
+                
+            if arcpy.Exists("subwatersheds_Layer"):
+                arcpy.Delete_management("subwatersheds_Layer")
+                
             loopProgress.update()
 
         # Restore the original environment extent

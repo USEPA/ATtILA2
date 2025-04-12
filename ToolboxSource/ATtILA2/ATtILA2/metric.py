@@ -673,6 +673,10 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
+        
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
         raster.buildRAT(inLandCoverGrid, logFile)
         
@@ -885,7 +889,17 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             
             # write the class definitions to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
-        
+            
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
         
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)     
