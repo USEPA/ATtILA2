@@ -116,7 +116,7 @@ def logWriteOutputTableInfo(newTable, logFile, metricConst):
     # Report the newTable row count
     nRows = int(arcpy.GetCount_management(newTable).getOutput(0))
     logFile.write('\n')
-    logFile.write(f'TABLE ROW COUNT: {nRows}\n')     
+    logFile.write(f'TABLE ROW COUNT: {nRows}\n\n')     
 
 
 def writeIntersectExtent(logFile, extentList):

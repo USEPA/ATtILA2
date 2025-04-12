@@ -1175,6 +1175,14 @@ def replaceNullValues(inTable,inField,newValue,logFile=None):
             row[0] = newValue
             cursor.updateRow(row)
 
+def replaceNullsInFields(inTable, fields, newValue, logFile=None):
+    with arcpy.da.UpdateCursor(inTable, fields) as cursor:
+        for row in cursor:
+            for i, fld in enumerate(fields):
+                if row[i] is None:
+                    row[i] = newValue
+                cursor.updateRow(row)
+
 def percentageValue(inTable, numeratorField, denominatorField, percentField, logFile=None):
     # Set up a calculate percentage expression 
     calcExpression = "getValuePercent(!"+numeratorField+"!,!"+denominatorField+"!)"
@@ -1245,7 +1253,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
 
     # joining the facilityLCPTable to the facilityRUIDTable will maintain a record for all input facilities. NULL values
     # will be assigned to any facility that did not have any land cover data (i.e., at least 1 raster cell center) in its
-    # view radius buffer
+    # view radius buffer. This only true if the reporting unit also has at least one facility in it.
     
     AddMsg(f"{timer.now()} Joining {basename(facilityLCPTable)} to {arcpy.Describe(facilityRUIDTable).baseName} to maintain a record for all facilities.", 0, logFile)
     logArcpy("arcpy.management.JoinField", (facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID"), logFile)
@@ -1265,76 +1273,108 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     logArcpy("arcpy.Statistics_analysis",(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField),logFile)
     arcpy.Statistics_analysis(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField)
 
-###  This commented out section can be used if INFO tables are not an option for ATtILA metric tables  ###  
-#    #Rename the fields in the result table
-#     cntFldName = metricConst.facilityCountFieldName
-#     arcpy.AlterField_management(statsResultTable, "FREQUENCY", cntFldName, cntFldName)
-#      
-#     for mBaseName in metricsBaseNameList:
-#         oldFieldName = "SUM_" + mBaseName + metricConst.belowFieldSuffix
-#         newFieldName = metricsFieldnameDict[mBaseName][0]
-#         arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
-#    
-#     arcpy.conversion.ExportTable(statsResultTable,outTable)
+    # INFO tables have been blocked as a possible output format. The following code can be utilized.
+    #Rename the fields in the result table
+    arcpy.AlterField_management(statsResultTable, "FREQUENCY", cntFldName, cntFldName)
+    
+    statFields = []
+    for mBaseName in metricsBaseNameList:
+        oldFieldName = f"SUM_{mBaseName}{metricConst.belowFieldSuffix}"
+        newFieldName = metricsFieldnameDict[mBaseName][0]
+        statFields.append(newFieldName)
+        arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
+        
+        oldFieldName = f"SUM_{mBaseName}{metricConst.aboveFieldSuffix}"
+        newFieldName = f"{mBaseName}{metricConst.highSuffix}{viewThreshold}"
+        statFields.append(newFieldName)
+        arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
+    
+    # reporting units may contain facilities, but if no land cover occurs in their buffer area, NULL values will be in the stats table
+    AddMsg(f"{timer.now()} Setting any null values in {basename(statsResultTable)} to -99999", 0, logFile)    
+    replaceNullsInFields(statsResultTable, statFields, -99999)
+    
+    # Report to the user if land cover data was not available for all facilities within a reporting unit.
+    # If full land cover data was available, the number of facilities in a reporting unit will equal the low and high counts.
+    
+    AddMsg(f"{timer.now()} Checking for reporting units with only partial land cover and facilities overlap.")
+    statFields.insert(0, cntFldName)
 
-    # Use the try: finally: section of code when INFO tables are possible as outputs.
-    try:
-        setWarning = False
+    with arcpy.da.SearchCursor(statsResultTable, statFields) as cursor:
+        for row in cursor:
+            # if (lowValue + highValue != facilityCount)
+            if row[1] + row[2] != row[0]:
+                arcpy.AddWarning(f"One or more facilities did not have land cover data within its view radius. "\
+                                 f"Check that the view radius is sufficiently large enough to contain at least one cell center "\
+                                 f"of the land cover grid or that the land cover raster extends beneath all facility features. "\
+                                 f"Problematic reporting units have a value in the {cntFldName} field higher than the sum "\
+                                 f"of the values in the '{lowSuffix}' and '{highSuffix}' fields.")
 
-        # Create the search cursor to query the contents of the BELOW THRESHOLD statistics table
-        inTableRows = arcpy.SearchCursor(statsResultTable)
+                break
+   
+    # Copy the stats table to a table with the requested name
+    AddMsg(f"{timer.now()} Saving final output table: {basename(outTable)}", 0, logFile)
+    logArcpy('arcpy.conversion.ExportTable', (statsResultTable,outTable), 0, logFile)
+    arcpy.conversion.ExportTable(statsResultTable,outTable)
 
-        # create the insert cursor to add data to the output table
-        outTableRows = arcpy.InsertCursor(newTable)        
 
-        for inRow in inTableRows:
-            # initiate a row to add to the metric output table
-            outTableRow = outTableRows.newRow()
-
-            # set the reporting unit id value in the output row
-            outTableRow.setValue(reportingUnitIdField, inRow.getValue(reportingUnitIdField))
-
-            # set the number of facilities in the reporting unit in the output row 
-            facilityCount = inRow.getValue("FREQUENCY")
-            outTableRow.setValue(cntFldName, facilityCount)
-
-            # set the number of facilities in the reporting unit with below threshold views and above threshold views
-            # in the output row. Do this for each selected metric class 
-            for mBaseName in metricsBaseNameList:
-                metricFieldName = metricsFieldnameDict[mBaseName][0]
-
-                # assemble the name for the high count field    
-                outClassName = metricsFieldnameDict[mBaseName][1]
-                highFieldName = metricConst.highField[0]+outClassName+metricConst.highField[1]
-
-                belowStatsFieldName = "SUM_" + mBaseName + belowSuffix
-                lowValue = inRow.getValue(belowStatsFieldName)
-                outTableRow.setValue(metricFieldName, lowValue )
-
-                aboveStatsFieldName = "SUM_" + mBaseName + aboveSuffix
-                highValue = inRow.getValue(aboveStatsFieldName)
-                outTableRow.setValue(highFieldName, highValue)
-
-            # commit the row to the output table
-            outTableRows.insertRow(outTableRow)
-
-            if (lowValue + highValue != facilityCount):
-                setWarning = True
-
-        if (setWarning):
-            arcpy.AddWarning("One or more facilities did not have land cover data within its view radius. "\
-                             "Check that the view radius is sufficiently large enough to contain at least one cell center "\
-                             "of the land cover grid or that the land cover raster extends beneath all facility features. "\
-                             "Problematic reporting units have a value in the "+ cntFldName +" field higher than the sum "\
-                             "of the values in the '"+ lowSuffix +"' and '"+ highSuffix +"' fields.")
-
-    finally:
-
-        # delete cursor and row objects to remove locks on the data
-        try:
-            del outTableRows
-            del outTableRow
-            del inRow
-            del inTableRows
-        except:
-            pass
+    # # Use the try: finally: section of code when INFO tables are possible as outputs.
+    # try:
+    #     setWarning = False
+    #
+    #     # Create the search cursor to query the contents of the BELOW THRESHOLD statistics table
+    #     inTableRows = arcpy.SearchCursor(statsResultTable)
+    #
+    #     # create the insert cursor to add data to the output table
+    #     outTableRows = arcpy.InsertCursor(newTable)        
+    #
+    #     for inRow in inTableRows:
+    #         # initiate a row to add to the metric output table
+    #         outTableRow = outTableRows.newRow()
+    #
+    #         # set the reporting unit id value in the output row
+    #         outTableRow.setValue(reportingUnitIdField, inRow.getValue(reportingUnitIdField))
+    #
+    #         # set the number of facilities in the reporting unit in the output row 
+    #         facilityCount = inRow.getValue("FREQUENCY")
+    #         outTableRow.setValue(cntFldName, facilityCount)
+    #
+    #         # set the number of facilities in the reporting unit with below threshold views and above threshold views
+    #         # in the output row. Do this for each selected metric class 
+    #         for mBaseName in metricsBaseNameList:
+    #             metricFieldName = metricsFieldnameDict[mBaseName][0]
+    #
+    #             # assemble the name for the high count field    
+    #             outClassName = metricsFieldnameDict[mBaseName][1]
+    #             highFieldName = metricConst.highField[0]+outClassName+metricConst.highField[1]
+    #
+    #             belowStatsFieldName = "SUM_" + mBaseName + belowSuffix
+    #             lowValue = inRow.getValue(belowStatsFieldName)
+    #             outTableRow.setValue(metricFieldName, lowValue )
+    #
+    #             aboveStatsFieldName = "SUM_" + mBaseName + aboveSuffix
+    #             highValue = inRow.getValue(aboveStatsFieldName)
+    #             outTableRow.setValue(highFieldName, highValue)
+    #
+    #         # commit the row to the output table
+    #         outTableRows.insertRow(outTableRow)
+    #
+    #         if (lowValue + highValue != facilityCount):
+    #             setWarning = True
+    #
+    #     if (setWarning):
+    #         arcpy.AddWarning("One or more facilities did not have land cover data within its view radius. "\
+    #                          "Check that the view radius is sufficiently large enough to contain at least one cell center "\
+    #                          "of the land cover grid or that the land cover raster extends beneath all facility features. "\
+    #                          "Problematic reporting units have a value in the "+ cntFldName +" field higher than the sum "\
+    #                          "of the values in the '"+ lowSuffix +"' and '"+ highSuffix +"' fields.")
+    #
+    # finally:
+    #
+    #     # delete cursor and row objects to remove locks on the data
+    #     try:
+    #         del outTableRows
+    #         del outTableRow
+    #         del inRow
+    #         del inTableRows
+    #     except:
+    #         pass
