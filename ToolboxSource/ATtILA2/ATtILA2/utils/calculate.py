@@ -1265,6 +1265,8 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
         stats.append([mBaseName + belowSuffix, "Sum"])
 
         stats.append([mBaseName + aboveSuffix, "Sum"])
+        
+    stats.append([metricConst.overlapName, "MIN"])
 
     # Get a unique name with full path for the output features - will default to current workspace:
     namePrefix = f"{metricConst.statsResultTable}{viewRadius.split()[0]}_"
@@ -1288,6 +1290,9 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
         newFieldName = f"{mBaseName}{metricConst.highSuffix}{viewThreshold}"
         statFields.append(newFieldName)
         arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
+
+    arcpy.AlterField_management(statsResultTable, "MIN_FLCV_OVER", "MIN_OVER", "MIN_OVER" )
+    statFields.append("MIN_OVER")
     
     # reporting units may contain facilities, but if no land cover occurs in their buffer area, NULL values will be in the stats table
     AddMsg(f"{timer.now()} Setting any null values in {basename(statsResultTable)} to -99999", 0, logFile)    
@@ -1299,18 +1304,45 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     AddMsg(f"{timer.now()} Checking for reporting units with only partial land cover and facilities overlap.")
     statFields.insert(0, cntFldName)
 
-    with arcpy.da.SearchCursor(statsResultTable, statFields) as cursor:
+    # with arcpy.da.SearchCursor(statsResultTable, statFields) as cursor:
+    #     for row in cursor:
+    #         # if (lowValue + highValue != facilityCount)
+    #         if row[1] + row[2] != row[0]:
+    #             arcpy.AddWarning(f"One or more facilities did not have land cover data within its view radius. "\
+    #                              f"Check that the view radius is sufficiently large enough to contain at least one cell center "\
+    #                              f"of the land cover grid or that the land cover raster extends beneath all facility features. "\
+    #                              f"Problematic reporting units have a value in the {cntFldName} field higher than the sum "\
+    #                              f"of the values in the '{lowSuffix}' and '{highSuffix}' fields.")
+    #
+    #             break
+    
+    sumWarning = False
+    overlapWarning = False
+    minIndex = statFields.index('MIN_OVER')
+    with arcpy.da.UpdateCursor(statsResultTable, statFields) as cursor:
         for row in cursor:
             # if (lowValue + highValue != facilityCount)
             if row[1] + row[2] != row[0]:
-                arcpy.AddWarning(f"One or more facilities did not have land cover data within its view radius. "\
-                                 f"Check that the view radius is sufficiently large enough to contain at least one cell center "\
-                                 f"of the land cover grid or that the land cover raster extends beneath all facility features. "\
-                                 f"Problematic reporting units have a value in the {cntFldName} field higher than the sum "\
-                                 f"of the values in the '{lowSuffix}' and '{highSuffix}' fields.")
-
-                break
-   
+                if row[1] != -99999: # -99999 fields have no land cover for any facility view area
+                    for i in range(1,len(statFields)):
+                        row[i] = -88888 # -88888 fields have missing land cover for one or more facilities
+                    sumWarning = True
+            cursor.updateRow(row)
+            # if all facilities have some land cover, warn the user if one or more view areas have land cover on the low end
+            if row[minIndex] >= 0 and row[minIndex] < 90:
+                overlapWarning = True
+                
+    if sumWarning:            
+        arcpy.AddWarning(f"One or more reporting units did not have land cover data within the view radius for all facilities. "\
+                         f"Setting metric values for these reporting units to -88888 due to insufficient data.")
+    
+    if overlapWarning:            
+        arcpy.AddWarning(f"One or more facilities had less than 90% overlap between its view area and the land cover raster. "\
+                         f"The 'MIN_OVER' field in {basename(outTable)} analyzes the amount of overlap between the land cover "\
+                         f"raster and all facilities in a reporting unit and reports out the lowest value found. If 'INTERMEDIATES' "\
+                         f"was selected as an 'Additional Option', the saved flcv_FacilityRUID layer will show the amount "\
+                         f"of overlap for each facility.")
+               
     # Copy the stats table to a table with the requested name
     AddMsg(f"{timer.now()} Saving final output table: {basename(outTable)}", 0, logFile)
     logArcpy('arcpy.conversion.ExportTable', (statsResultTable,outTable), 0, logFile)
