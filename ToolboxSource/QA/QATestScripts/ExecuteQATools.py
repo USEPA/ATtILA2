@@ -6,7 +6,8 @@ import runpy
 from setupParameters import *
 
 currentDir = os.getcwd()
-parentDir = os.path.dirname(os.path.dirname(currentDir)) #Navigate two levels above
+parentDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir))) #Navigate three levels above
+arcpy.AddMessage(parentDir)
 ATtILA_pth = os.path.join(parentDir, 'ATtILA v3.tbx')
 
 setup.ATtILA_pth = ATtILA_pth
