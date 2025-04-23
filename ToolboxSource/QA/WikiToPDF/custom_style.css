@@ -1,0 +1,107 @@
+
+</script>
+
+<style>
+
+table {
+        margin: auto;
+        border-collapse: collapse;
+        border-spacing: 0;
+        width: fit-content;
+        max-width: 85%;
+        border-top: 2.27px solid black;
+        border-bottom: 2.27px solid black;
+        overflow-x: auto;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+th,
+tr { border-bottom: 0.5px solid lightgrey;}
+td {
+        border: 0 none !important;
+        text-align: left;
+        padding: 0.5rem;
+        line-height: 1.1;
+}
+table > tbody > tr:first-child > td,
+table > tbody > tr:first-child > th {
+        border-top: 1.36px solid black !important;
+}
+table > tbody > tr:last-child > td,
+table > tbody > tr:last-child > th {
+        border-bottom: 1.36px solid black !important;
+}
+thead th {
+    background-color: white !important;
+    font-weight: 700;
+}
+tr:nth-child(even) { background-color: #eeeeee ; }
+
+.title {
+text-align: center;
+border: none;
+}
+
+.subtitle {
+font-size: 30px;
+text-align: center;
+}
+
+.author {
+font-size: 21px;
+text-align: center;
+}
+
+div.abstract-title {
+display: none;
+}
+
+
+div.sourceCode {
+font-size: 18px;
+width:90%;
+margin: auto;
+border-radius: 10px;
+padding: 10px;
+}
+
+pre.sourceCode {
+padding: 0px;
+border: None;
+width:100%;
+border-radius: None;
+}
+
+pre {
+font-size: 18px;
+width:90%;
+margin: auto;
+}
+
+
+body {
+min-width: 90% !important;
+counter-reset: figures;
+font-size:18pt }
+
+figcaption {
+counter-increment: figures;
+font-size: 14pt;
+font-style: italic;
+}
+
+figcaption::before {
+content: 'Figure ' counter(figures) '. ';
+}
+
+h2 {
+margin-top: 0;
+}
+
+
+h1 {
+margin-top: 5px;
+border-bottom: 1px solid darkgrey;
+page-break-before:always}
+</style>
+
+
