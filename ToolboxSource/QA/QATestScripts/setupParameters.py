@@ -1,14 +1,14 @@
 import os
 import arcpy
 currentDir = os.getcwd()
-parentDir = os.path.dirname(currentDir) #Navigate two levels above
+parentDir = parentDir = os.path.dirname(os.path.dirname(os.path.dirname(currentDir))) #Navigate two levels above
 
 class setup: 
     ATtILA_pth = None # Path to ATtILA.tbx
     inGDB = None
     outFolder = None
     _lccName = 'NLCD LAND'
-    lccFilePath = os.path.join(parentDir, "LandCoverClassifications\\NLCD LAND.xml")
+    lccFilePath = os.path.join(parentDir, "ToolboxSource\\LandCoverClassifications\\NLCD LAND.xml")
     NAVTEQ_2011 = None # Path to NAVTEQ 2011 test data
     NAVTEQ_2019 = None # Path to NAVTEQ 2019 test data
     ESRI_StreetMaps = None # Path to ESRI StreetMaps test data
