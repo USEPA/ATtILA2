@@ -451,14 +451,14 @@ def createPatchRaster(m, lccObj, lccClassesDict, inLandCoverGrid, metricConst, m
         UserEuclidRegionGroup = arcpy.sa.RegionGroup(eucDistanceRaster >= 0,"EIGHT","CROSS","ADD_LINK","0")
 
         # Maintain the original boundaries of each patch
-        logArcpy("arcpy.sa.Con", (f"reclassGrid == {classValue}",UserEuclidRegionGroup, reclassGrid), logFile)
+        logArcpy("regionOther = arcpy.sa.Con", (f"reclassGrid == {classValue}",UserEuclidRegionGroup, reclassGrid), logFile)
         regionOther = arcpy.sa.Con(reclassGrid == classValue,UserEuclidRegionGroup, reclassGrid)
 
     if intMinPatchSize > 1:
         AddMsg(f"{timer.now()} Eliminating clusters below minimum patch size.", 0, logFile)
         delimitedCOUNT = arcpy.AddFieldDelimiters(regionOther,"COUNT")
         whereClause = f"{delimitedCOUNT} < {intMinPatchSize}"
-        logArcpy("arcpy.sa.Con", (regionOther, otherValue, regionOther, whereClause), logFile)
+        logArcpy("arcpy.sa.Con", ("regionOther", otherValue, "regionOther", whereClause), logFile)
         regionOtherFinal = arcpy.sa.Con(regionOther, otherValue, regionOther, whereClause)
     else:
         regionOtherFinal = regionOther
@@ -847,9 +847,9 @@ def getWalkabilityGrid(vectorFeatures, inValue, inBaseValue, fileNameBase, cellS
     elif len(rastersToMerge) == 2: # inputs were a combination of polyline and polygon features
         AddMsg(f"{timer.now()} Combining converted rasters and setting output cell values to {inValue} where features exist. Everywhere else will be set to {inBaseValue}. Intermediate: {basename(resultRasterName)}", 0, logFile)
         rasterTwo = Raster(rastersToMerge[1])
-        logArcpy('arcpy.sa.Con', (f'IsNull({rasterOne})', inBaseValue, inValue), logFile)
+        logArcpy('conOne = arcpy.sa.Con', (f'IsNull({rasterOne})', inBaseValue, inValue), logFile)
         conOne = arcpy.sa.Con(IsNull(rasterOne), inBaseValue, inValue)
-        logArcpy('arcpy.sa.Con', (f'IsNull({rasterTwo})', conOne, inValue), logFile)
+        logArcpy('arcpy.sa.Con', (f'IsNull({rasterTwo})', 'conOne', inValue), logFile)
         resultRaster = arcpy.sa.Con(IsNull(rasterTwo), conOne, inValue)
         
     resultRaster.save(resultRasterName)

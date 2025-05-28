@@ -104,6 +104,9 @@ class rasters:
     def NLCD_2016(self):
         return os.path.join(setup.inGDB, "NLCD_2016")
     @property
+    def NLCD_2011(self):
+        return os.path.join(setup.inGDB, "NLCD_2011")
+    @property
     def Population_Raster(self): 
         return os.path.join(setup.inGDB, "Population_Raster")
     @property
