@@ -23,7 +23,7 @@ def getSortedFieldMappings(tablePath, putTheseFirst):
         Example of usage::
         
             fieldMappings = fields.getSortedFieldMappings(inTablePath, putTheseFirst)
-            arcpy.TableToTable_conversion(inTablePath, outWorkspace, outName, None, fieldMappings)        
+            arcpy.conversion.ExportTable(inTablePath, outName, field_mapping=fieldMappings)        
         
     **Arguments:**
         

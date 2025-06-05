@@ -2,12 +2,12 @@
 
 """
 titleATtILA = "ATtILA"
-attilaVersion = "3.0"
+attilaVersion = "3.1"
 toolboxAlias = "ATtILAv3"
 arcExecutable = "ArcGISPro.exe"
 descriptionDelim = "  -  "
 areaFieldParameters = ["_A","DOUBLE",15,0]
-tbxFileSuffix = ".tbx"
+tbxFileSuffix = ".atbx"
 tbxFileDelim = "__"
 tbxSriptToolDelim = "#"
 qaCheckName = "QAFIELDS"
@@ -30,6 +30,7 @@ ruTabulateAreaTableAbbv = "_TabAreaRU"
 dummyFieldName = "_dummy"
 scratchGDBFilename = "attilaScratchWorkspace.gdb"
 allGridValuesTools = ["lccc", "lcd"]
+missingDataValue = -99999
 
 # These are the extensions Esri recognizes as rasters. They may not all be acceptable when saving a calculated grid. Tools
 # such as Intersection Density can only save its output with ".img", or ".tif" extensions when saving to a folder. An 

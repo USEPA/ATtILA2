@@ -4,7 +4,7 @@
 import os
 import arcpy
 import time
-from arcpy.sa import Raster, Con
+from arcpy.sa import Raster
 from . import errors
 from . import setupAndRestore
 from .utils import lcc
@@ -26,7 +26,6 @@ from .datetimeutil import DateTimer
 from .constants import metricConstants
 from .constants import globalConstants
 from .constants import errorConstants
-from . import utils
 from .utils.tabarea import TabulateAreaTable
 from datetime import datetime
 import traceback
@@ -88,6 +87,10 @@ class metricCalc:
         # Set whether to add QA Fields as a class attribute
         self.addQAFields = globalConstants.qaCheckName in self.optionalGroupsList
         
+        # Gather a list of all of the ID values for the input reporting unit layer
+        self.allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        self.inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
+        
         # Save other input parameters as class attributes
         self.outTable = outTable
         self.inReportingUnitFeature = inReportingUnitFeature
@@ -132,7 +135,7 @@ class metricCalc:
 
 
     def _makeAttilaOutTable(self):
-        AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {os.path.basename(self.outTable)}", 0, self.logFile)
+        AddMsg(f"{self.timer.now()} Constructing the ATtILA metric output table: {basename(self.outTable)}", 0, self.logFile)
         # Internal function to construct the ATtILA metric output table
         self.newTable, self.metricsFieldnameDict = table.tableWriterByClass(self.outTable,
                                                                                   self.metricsBaseNameList,
@@ -161,6 +164,18 @@ class metricCalc:
             self.metricConst.idFields = self.metricConst.idFields + [self.reportingUnitIdField]
             log.logWriteOutputTableInfo(self.newTable, self.logFile, self.metricConst)
             AddMsg("Summary complete", 0)
+        
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missings data value from globalConstants. 
+        # Be sure the output fields (i.e., field type and size) can accept that value
+        newTableRowCount = int(arcpy.management.GetCount(self.outTable).getOutput(0))
+        RUCount = len(self.allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {self.inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, self.logFile)
+            table.addMissingRows(self.outTable, self.allRUIDs, self.outIdField, globalConstants.missingDataValue, self.logFile)
     
     def _logEnvironments(self):
         if self.logFile:
@@ -658,6 +673,10 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
+        
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
         raster.buildRAT(inLandCoverGrid, logFile)
         
@@ -870,7 +889,17 @@ def runPatchMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inLa
             
             # write the class definitions to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
-        
+            
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
         
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)     
@@ -933,6 +962,10 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
         
         # get the dictionary with the LCC CLASSES attributes
         lccClassesDict = lccObj.classes
+        
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
         
         outIdField = settings.getIdOutField(inReportingUnitFeature, reportingUnitIdField)
         
@@ -1084,6 +1117,17 @@ def runCoreAndEdgeMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
         
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, outIdField, globalConstants.missingDataValue, logFile)
+
         
         if clipLCGrid == "true":
             arcpy.Delete_management(scratchName)
@@ -1141,10 +1185,10 @@ def runRiparianLandCoverProportions(toolPath, inReportingUnitFeature, reportingU
                 if self.duplicateIds:
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = self.metricConst.shortName + "_Dissolve"+self.inBufferDistance.split()[0]
-                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
+                    self.dissolveName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], rlcpCalc.cleanupList)
                     AddMsg(f"Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", self.logFile)
-                    log.logArcpy("arcpy.Dissolve_management", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
+                    log.logArcpy("arcpy.analysis.PairwiseDissolve", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
+                    self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
@@ -1287,10 +1331,10 @@ def runSamplePointLandCoverProportions(toolPath, inReportingUnitFeature, reporti
                 if self.duplicateIds:
                     # Get a unique name with full path for the output features - will default to current workspace:
                     self.namePrefix = f"{self.metricConst.shortName}_Dissolve{self.inBufferDistance.split()[0]}_"
-                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
+                    self.dissolveName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], splcpCalc.cleanupList)
                     AddMsg(f"{timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features: {basename(self.dissolveName)}", 0, self.logFile)
-                    log.logArcpy("arcpy.Dissolve_management", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
+                    log.logArcpy("arcpy.analysis.PairwiseDissolve", (self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART"), logFile)
+                    self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName, self.reportingUnitIdField,"","MULTI_PART")
                     
                 # Generate a default filename for the buffer feature class
                 self.bufferName = f"{self.metricConst.shortName}_Buffer{self.inBufferDistance.replace(' ','')}_"
@@ -1522,15 +1566,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        _tempEnvironment6 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # _tempEnvironment6 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -1538,9 +1582,9 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
+        inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         # If the field is numeric, it creates a text version of the field.
@@ -1557,11 +1601,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
         # off. This is more appropriate than altering the user's input data.
         desc = arcpy.Describe(inRoadFeature)
         if desc.HasM or desc.HasZ:
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inRoadFeature)
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != roadClassField]
+            
             tempName = f"{metricConst.shortName}_{arcpy.Describe(inRoadFeature).baseName}_"
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-            log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inRoadFeature, env.workspace, basename(tempLineFeature)),logFile)
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature, env.workspace, basename(tempLineFeature))
+            AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+            log.logArcpy("arcpy.conversion.ExportFeatures",(inRoadFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"),logFile)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature, basename(tempLineFeature), field_mapping=fieldMappings)
 
 
         # Calculate the density of the roads by reporting unit.
@@ -1578,8 +1626,8 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
 
         # Build and populate final output table.
         AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
-        log.logArcpy("arcpy.TableToTable_conversion",(inReportingUnitFeature,os.path.dirname(outTable),basename(outTable)), logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),basename(outTable))
+        log.logArcpy("arcpy.conversion.ExportTable",(inReportingUnitFeature, outTable), logFile)
+        arcpy.conversion.ExportTable(inReportingUnitFeature, outTable)
         
         # Get a list of unique road class values
         if roadClassField:
@@ -1598,11 +1646,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             # off. This is more appropriate than altering the user's input data.
             desc = arcpy.Describe(inStreamFeature)
             if desc.HasM or desc.HasZ:
+                fieldMappings = arcpy.FieldMappings()
+                fieldMappings.addTable(inStreamFeature)
+                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
+                
                 tempName = f"{metricConst.shortName}_{desc.baseName}_"
                 tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-                log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inStreamFeature, env.workspace, basename(tempLineFeature)), logFile)
-                inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, basename(tempLineFeature))
+                AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+                log.logArcpy("arcpy.conversion.ExportFeatures",(inStreamFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"), logFile)
+                inStreamFeature = arcpy.conversion.ExportFeatures(inStreamFeature, basename(tempLineFeature), field_mapping=fieldMappings)
 
             
             AddMsg(f"{timer.now()} Calculating Stream and Road Crossings (STXRD)", 0, logFile)
@@ -1653,11 +1705,15 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
                 # off. This is more appropriate than altering the user's input data.
                 desc = arcpy.Describe(inStreamFeature)
                 if desc.HasM or desc.HasZ:
+                    fieldMappings = arcpy.FieldMappings()
+                    fieldMappings.addTable(inStreamFeature)
+                    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
+
                     tempName = f"{metricConst.shortName}_{desc.baseName}_"
                     tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-                    AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-                    log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inStreamFeature,env.workspace,os.path.basename(tempLineFeature)), logFile)
-                    inStreamFeature = arcpy.FeatureClassToFeatureClass_conversion(inStreamFeature, env.workspace, os.path.basename(tempLineFeature))
+                    AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+                    log.logArcpy("arcpy.conversion.ExportFeatures",(inStreamFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"), logFile)
+                    inStreamFeature = arcpy.conversion.ExportFeatures(inStreamFeature, basename(tempLineFeature), field_mapping=fieldMappings)
                 
                 # Calculate the density of the streams by reporting unit.
                 # Get a unique name for the merged streams:
@@ -1726,7 +1782,7 @@ def runRoadDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdFi
             env.workspace = _tempEnvironment1
             env.outputMFlag = _tempEnvironment4
             env.outputZFlag = _tempEnvironment5
-            env.parallelProcessingFactor = _tempEnvironment6
+            # env.parallelProcessingFactor = _tempEnvironment6
 
 
 def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitIdField, inLineFeature, outTable, strmOrderField="", 
@@ -1774,15 +1830,15 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        _tempEnvironment6 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # _tempEnvironment6 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -1790,9 +1846,9 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_" 
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature,os.path.basename(tempReportingUnitFeature),reportingUnitIdField,"","MULTI_PART"),logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, os.path.basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(inReportingUnitFeature,basename(tempReportingUnitFeature),reportingUnitIdField,"","MULTI_PART"),logFile)
+        inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Get the field properties for the unitID, this will be frequently used
         uIDField = settings.processUIDField(inReportingUnitFeature,reportingUnitIdField)
@@ -1816,11 +1872,15 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
         # from being stripped off for several data types.
         desc = arcpy.Describe(inLineFeature)
         if desc.HasM or desc.HasZ:
+            fieldMappings = arcpy.FieldMappings()
+            fieldMappings.addTable(inLineFeature)
+            [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != strmOrderField]
+
             tempName = f"{metricConst.shortName}_{desc.baseName}_"
             tempLineFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
-            log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inLineFeature, env.workspace, basename(tempLineFeature)),logFile)
-            inLineFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature, env.workspace, basename(tempLineFeature))
+            AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempLineFeature)}", 0, logFile)
+            log.logArcpy("arcpy.conversion.ExportFeatures",(inLineFeature, basename(tempLineFeature), f"field_mapping={fieldMappings}"),logFile)
+            inLineFeature = arcpy.conversion.ExportFeatures(inLineFeature, basename(tempLineFeature), field_mapping=fieldMappings)
 
         # Calculate the density of the streams by reporting unit.
         # Get a unique name for the merged streams and prep for cleanup:
@@ -1834,8 +1894,8 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
 
         # Build and populate final output table.
         AddMsg(f"{timer.now()} Compiling calculated values into output table", 0, logFile)
-        log.logArcpy("arcpy.TableToTable_conversion",(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable)),logFile)
-        arcpy.TableToTable_conversion(inReportingUnitFeature,os.path.dirname(outTable),os.path.basename(outTable))
+        log.logArcpy("arcpy.conversion.ExportTable",(inReportingUnitFeature, outTable),logFile)
+        arcpy.conversion.ExportTable(inReportingUnitFeature, outTable)
         # Get a list of unique road class values
         if strmOrderField:
             orderValues = fields.getUniqueValues(mergedInLines,strmOrderField)
@@ -1887,7 +1947,7 @@ def runStreamDensityCalculator(toolPath, inReportingUnitFeature, reportingUnitId
             env.workspace = _tempEnvironment1
             env.outputMFlag = _tempEnvironment4
             env.outputZFlag = _tempEnvironment5
-            env.parallelProcessingFactor = _tempEnvironment6
+            # env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField, inLandCoverGrid, outTable, processingCellSize, 
@@ -1910,6 +1970,10 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                                                                                                   processingCellSize, 
                                                                                                   os.path.dirname(outTable), 
                                                                                                   [metricsToRun,optionalFieldGroups])
+                
+                # Gather a list of all of the ID values for the input reporting unit layer
+                self.allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+                self.inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
                 
                 # Save other input parameters as class attributes
                 self.outTable = outTable
@@ -1976,6 +2040,19 @@ def runLandCoverDiversity(toolPath, inReportingUnitFeature, reportingUnitIdField
                     self.metricConst.idFields = self.metricConst.idFields + [self.reportingUnitIdField]
                     log.logWriteOutputTableInfo(self.newTable, self.logFile, self.metricConst)
                     AddMsg("Summary complete", 0)
+                
+                # add rows for any missing reporting units from the original input to the output table
+                # rows can be dropped from the output if other input data does not intersect with a reporting unit
+                # These added rows will not be used for row counts or field statistics in the optional log file
+                # All fields in any new row will contain a missings data value from globalConstants. 
+                # Be sure the output fields (i.e., field type and size) can accept that value
+                newTableRowCount = int(arcpy.management.GetCount(self.outTable).getOutput(0))
+                RUCount = len(self.allRUIDs)
+                rowsMissingCount = RUCount - newTableRowCount
+                if rowsMissingCount != 0:
+                    AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {self.inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, self.logFile)
+                    table.addMissingRows(self.outTable, self.allRUIDs, self.outIdField, globalConstants.missingDataValue, self.logFile)
+
                     
             # Function to run all the steps in the calculation process
             def run(self):
@@ -2069,15 +2146,15 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         else:
             cleanupList.append((arcpy.AddMessage,("Cleaning up intermediate datasets",)))
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        _tempEnvironment6 = env.parallelProcessingFactor
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # _tempEnvironment6 = env.parallelProcessingFactor
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # Create a copy of the reporting unit feature class that we can add new fields to for calculations.  This 
         # is more appropriate than altering the user's input data. A dissolve will handle the condition of non-unique id
@@ -2085,9 +2162,9 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         desc = arcpy.Describe(inReportingUnitFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempReportingUnitFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
-        log.logArcpy("arcpy.Dissolve_management",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
-        inReportingUnitFeature = arcpy.Dissolve_management(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempReportingUnitFeature)}", 0, logFile)
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART"),logFile)
+        inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(inReportingUnitFeature, basename(tempReportingUnitFeature), reportingUnitIdField,"","MULTI_PART")
 
         # Add and populate the area field (or just recalculate if it already exists
         ruAreaFld = metricConst.areaFieldname
@@ -2173,7 +2250,7 @@ def runPopulationDensityCalculator(toolPath, inReportingUnitFeature, reportingUn
         
         if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
             env.workspace = _tempEnvironment1
-            env.parallelProcessingFactor = _tempEnvironment6
+            # env.parallelProcessingFactor = _tempEnvironment6
         
 
 def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reportingUnitIdField, inCensusDataset, inPopField, inFloodplainDataset, 
@@ -2195,6 +2272,10 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
         
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
+        
         # create a list of input themes to find the intersection extent. 
         # put it here when one of the inputs might be altered (e.g., inReportingUnitFeature, inLandCoverGrid)
         # but you want the original inputs to be used for the extent intersection
@@ -2207,14 +2288,14 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         _tempEnvironment2 = env.cellSize
         _tempEnvironment6 = env.parallelProcessingFactor
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # set the workspace for ATtILA intermediary files
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -2325,8 +2406,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating a working copy of {basename(inCensusDataset)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-            log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings),logFile)
-            inCensusDataset = arcpy.FeatureClassToFeatureClass_conversion(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings)
+            log.logArcpy("arcpy.conversion.ExportFeatures",(inCensusDataset, basename(tempCensusFeature),"","",fieldMappings),logFile)
+            inCensusDataset = arcpy.conversion.ExportFeatures(inCensusDataset,basename(tempCensusFeature),"","",fieldMappings)
             
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
@@ -2378,8 +2459,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
                 tempName = f"{metricConst.shortName}_{descFldpln.baseName}_Work_"
                 tempFldplnFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
                 AddMsg(f"{timer.now()} Creating a working copy of {basename(inFloodplainDataset)}. Intermediate: {basename(tempFldplnFeature)}", 0, logFile)
-                log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inFloodplainDataset,env.workspace,basename(tempFldplnFeature),"",fieldMappings),logFile)
-                inFloodplainDataset = arcpy.FeatureClassToFeatureClass_conversion(inFloodplainDataset,env.workspace, basename(tempFldplnFeature),"", fieldMappings)
+                log.logArcpy("arcpy.conversion.ExportFeatures",(inFloodplainDataset,env.workspace,basename(tempFldplnFeature),"","",fieldMappings),logFile)
+                inFloodplainDataset = arcpy.conversion.ExportFeatures(inFloodplainDataset, basename(tempFldplnFeature),"","", fieldMappings)
                 
             # Add a field and calculate it to a value of 1. This field will use as the classField in Tabulate Intersection operation below
             classField = "tmpClass"
@@ -2414,8 +2495,8 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         fieldMappings.addTable(popTable_RU)
         [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
 
-        log.logArcpy("arcpy.TableToTable_conversion",(popTable_RU,os.path.dirname(outTable), basename(outTable), "", fieldMappings), logFile)
-        arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable), basename(outTable), "", fieldMappings)
+        log.logArcpy("arcpy.conversion.ExportTable",(popTable_RU, outTable, f"field_mapping={fieldMappings}"), logFile)
+        arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=fieldMappings)
         
         # Compile a list of fields that will be transferred from the floodplain population table into the output table
         fromFields = [popCntFields[index]]
@@ -2423,10 +2504,17 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
         # Transfer the values to the output table
         table.transferField(popTable_FP,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
         
+        # set zone population to zero if it is NULL. It will only be null if a reporting unit has a population value, but no population was found in the zone area
+        ## does not work if the outTable is a DBF file. There are no NULL values in DBF fields.
+        calculate.replaceNullValues(outTable, popCntFields[1], globalConstants.missingDataValue, logFile)
+        
         # Set up a calculation expression for population change
-        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}!)"
-        codeBlock = """def getPopPercent(pop1,pop2):
-                            if pop1 == 0:
+        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}!,{globalConstants.missingDataValue})"
+        
+        codeBlock = """def getPopPercent(pop1,pop2,missingDataValue):
+                            if pop2 == missingDataValue:
+                                return missingDataValue
+                            elif pop1 == 0:
                                 if pop2 == 0:
                                     return 0
                                 else:
@@ -2453,6 +2541,17 @@ def runPopulationInFloodplainMetrics(toolPath, inReportingUnitFeature, reporting
             # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
+            
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
             
     except Exception as e:
         if logFile:
@@ -2501,6 +2600,10 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
                           minPatchSize, inCensusRaster, outTable, processingCellSize, snapRaster, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
         
         # Check to see if the inLandCoverGrid has an attribute table. If not, build one
         raster.buildRAT(inLandCoverGrid, logFile)
@@ -2734,6 +2837,17 @@ def runPopulationLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitI
 
             # write the metric class grid values to the log file
             log.logWriteClassValues(logFile, metricsBaseNameList, lccObj, metricConst)
+            
+        # add rows for any missing reporting units from the original input to the output table
+        # rows can be dropped from the output if other input data does not intersect with a reporting unit
+        # These added rows will not be used for row counts or field statistics in the optional log file
+        # All fields in any new row will contain a missing data value.
+        newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+        RUCount = len(allRUIDs)
+        rowsMissingCount = RUCount - newTableRowCount
+        if rowsMissingCount != 0:
+            AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+            table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
                 
     except Exception as e:
         if logFile:
@@ -2785,32 +2899,36 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 if self.duplicateIds:
                     # Get a unique name with full path for the output features - will default to current workspace:            
                     self.namePrefix = self.metricConst.shortName + "_FacDissolve"+self.inBufferDistance.split()[0]+"_"
-                    self.dissolveName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                    self.dissolveName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                     AddMsg(f"{self.timer.now()} Duplicate ID values found in reporting unit feature. Forming multipart features. Intermediate: {basename(self.dissolveName)}", 0, self.logFile)
-                    log.logArcpy("arcpy.Dissolve_management",(self.inReportingUnitFeature,self.dissolveName,self.reportingUnitIdField,"","MULTI_PART"),logFile)
-                    self.inReportingUnitFeature = arcpy.Dissolve_management(self.inReportingUnitFeature, self.dissolveName,self.reportingUnitIdField,"","MULTI_PART")
+                    log.logArcpy("arcpy.analysis.PairwiseDissolve",(self.inReportingUnitFeature,self.dissolveName,self.reportingUnitIdField,"","MULTI_PART"),logFile)
+                    self.inReportingUnitFeature = arcpy.analysis.PairwiseDissolve(self.inReportingUnitFeature, self.dissolveName,self.reportingUnitIdField,"","MULTI_PART")
 
                 # Make a temporary facility point layer so that a field of the same name as reportingUnitIdField could be deleted
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityCopyName+self.viewRadius.split()[0]+"_"
-                self.inPointFacilityName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
-                AddMsg(f"{self.timer.now()} Creating a copy of the Facility feature. Intermediate: {basename(self.inPointFacilityName)}", 0, self.logFile)
-                log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(self.inFacilityFeature,arcpy.env.workspace,basename(self.inPointFacilityName)),logFile)
-                self.inPointFacilityFeature = arcpy.FeatureClassToFeatureClass_conversion(self.inFacilityFeature,arcpy.env.workspace, basename(self.inPointFacilityName))
+                self.inPointFacilityName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                AddMsg(f"{self.timer.now()} Creating working copy of the Facility feature. Intermediate: {basename(self.inPointFacilityName)}", 0, self.logFile)
+                fieldMappings = arcpy.FieldMappings()
+                fieldMappings.addTable(self.inFacilityFeature)
+                [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
 
-                # Delete all fields from the copied facilities feature
-                AddMsg(f"{self.timer.now()} Deleting unnecessary fields from {basename(self.inPointFacilityName)}", 0, self.logFile)
-                self.facilityFields = arcpy.ListFields(self.inPointFacilityFeature)
-                self.deleteFieldList = []
-                for aFld in self.facilityFields:
-                    if aFld.required != True:
-                        self.deleteFieldList.append(aFld.name)
-                utils.fields.deleteFields(self.inPointFacilityFeature, self.deleteFieldList)        
+                log.logArcpy("arcpy.conversion.ExportFeatures",(self.inFacilityFeature, basename(self.inPointFacilityName), f"field_mapping={fieldMappings}"),logFile)
+                self.inPointFacilityFeature = arcpy.conversion.ExportFeatures(self.inFacilityFeature, basename(self.inPointFacilityName), field_mapping=fieldMappings)
+
+                # # Delete all fields from the copied facilities feature
+                # AddMsg(f"{self.timer.now()} Deleting unnecessary fields from {basename(self.inPointFacilityName)}", 0, self.logFile)
+                # self.facilityFields = arcpy.ListFields(self.inPointFacilityFeature)
+                # self.deleteFieldList = []
+                # for aFld in self.facilityFields:
+                #     if aFld.required != True:
+                #         self.deleteFieldList.append(aFld.name)
+                # utils.fields.deleteFields(self.inPointFacilityFeature, self.deleteFieldList)        
         
                 # Intersect the point theme with the reporting unit theme to transfer the reporting unit id to the points
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.facilityWithRUIDName+self.viewRadius.split()[0]+"_"
-                self.intersectResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.intersectResultName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 AddMsg(f"{self.timer.now()} Assigning reporting unit ID to {basename(self.inPointFacilityName)}. Intermediate: {basename(self.intersectResultName)}", 0, self.logFile)
                 log.logArcpy("arcpy.Intersect_analysis",([self.inPointFacilityFeature,self.inReportingUnitFeature],self.intersectResultName,"NO_FID","","POINT"),logFile)
                 self.intersectResult = arcpy.Intersect_analysis([self.inPointFacilityFeature,self.inReportingUnitFeature],self.intersectResultName,"NO_FID","","POINT")
@@ -2818,7 +2936,7 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 # Buffer the facility features with the reporting unit IDs to desired distance
                 # Get a unique name with full path for the output features - will default to current workspace:
                 self.namePrefix = self.metricConst.viewBufferName+self.viewRadius.split()[0]+"_"
-                self.bufferResultName = utils.files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
+                self.bufferResultName = files.nameIntermediateFile([self.namePrefix,"FeatureClass"], flcvCalc.cleanupList)
                 AddMsg(f"{self.timer.now()} Buffering {basename(self.intersectResultName)} to {viewRadius}. Intermediate: {basename(self.bufferResultName)}", 0, self.logFile)
                 log.logArcpy("arcpy.Buffer_analysis",(self.intersectResult,self.bufferResultName,viewRadius,"","","NONE","", "PLANAR"), logFile)
                 self.bufferResult = arcpy.Buffer_analysis(self.intersectResult,self.bufferResultName,viewRadius,"","","NONE","", "PLANAR")
@@ -2836,13 +2954,13 @@ def runFacilityLandCoverViews(toolPath, inReportingUnitFeature, reportingUnitIdF
                 
                 # Get a unique name with full path for the land cover proportions table - will default to current workspace:
                 self.namePrefix = self.metricConst.lcpTableName+self.viewRadius.split()[0]+"_"
-                self.facilityLCPTable = utils.files.nameIntermediateFile([self.namePrefix,"Dataset"], flcvCalc.cleanupList)
+                self.facilityLCPTable = files.nameIntermediateFile([self.namePrefix,"Dataset"], flcvCalc.cleanupList)
                 
                 # add QA fields and class area fields to the land cover proportions table
                 self.facilityOptionsList = ["QAFIELDS"]
                 
                 # tag the facility ID field for the land cover proportions table
-                self.facilityIdField = utils.fields.getFieldByName(self.bufferResult, "ORIG_FID")
+                self.facilityIdField = fields.getFieldByName(self.bufferResult, "ORIG_FID")
                 
                 # Save the output metric field name parameters and replace them with the land cover proportions field name parameters
                 self.oldFieldParameters = self.metricConst.fieldParameters
@@ -2957,7 +3075,7 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
     """ Interface for script executing Generate Proximity Polygons utility """
     
     from arcpy import env
-    from arcpy.sa import Reclassify,RegionGroup,RemapValue,RemapRange
+    from arcpy.sa import Reclassify,RemapValue,RemapRange
 
     try:
         # retrieve the attribute constants associated with this metric
@@ -3081,6 +3199,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                     if overWrite == "false":
                         namePrefix = f"{namePrefix}_"
                     scratchName = files.getRasterName(namePrefix)
+                    if arcpy.Exists(scratchName):
+                        # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                        arcpy.Delete_management(scratchName)
                     AddMsg(f"{timer.now()} Saving intermediate grid: {basename(scratchName)}", 0, logFile)
                     burnInGrid.save(scratchName)
                     AddMsg(f"{timer.now()} Save intermediate grid complete: {basename(scratchName)}")
@@ -3138,6 +3259,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 arcpy.Delete_management(proximityGridName)
             AddMsg(f"{timer.now()} Saving proportions grid: {basename(proximityGridName)}.", 0, logFile)
             try:
+                if arcpy.Exists(proximityGridName):
+                    # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                    arcpy.Delete_management(proximityGridName)
                 proximityGrid.save(proximityGridName)
             except:
                 raise errors.attilaException(errorConstants.rasterOutputFormatError) 
@@ -3155,6 +3279,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                     arcpy.Delete_management(scratchName)
                 AddMsg(f"{timer.now()} Saving intermediate grid: {basename(scratchName)}.", 0, logFile)
                 try:
+                    if arcpy.Exists(scratchName):
+                        # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                        arcpy.Delete_management(scratchName)
                     nbrCntGrid.save(scratchName)
                 except:
                     raise errors.attilaException(errorConstants.rasterOutputFormatError)
@@ -3189,6 +3316,9 @@ def runNeighborhoodProportions(toolPath, inLandCoverGrid, _lccName, lccFilePath,
                 if scratchName in datasetList:
                     arcpy.Delete_management(scratchName)
                 try:
+                    if arcpy.Exists(scratchName):
+                        # despite env.Overwrite possibly being set to true, saving a grid with an existing grid name may still fail
+                        arcpy.Delete_management(scratchName)
                     AddMsg(f"{timer.now()} Saving {zoneBin_str}% breaks zone raster: {basename(scratchName)}", 0, logFile)
                     nbrZoneGrid.save(scratchName)
                 except:
@@ -3321,8 +3451,13 @@ def runIntersectionDensity(toolPath, inLineFeature, mergeLines, mergeField="#", 
                     namePrefix = f"{metricConst.shortName}_{inBaseName}_"
                     copyFeatureName = files.nameIntermediateFile([namePrefix,"FeatureClass"],cleanupList)
                     AddMsg(f"{timer.now()} Copying {inBaseName} to {basename(copyFeatureName)}.", 0, logFile)
-                    log.logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inLineFeature,env.workspace,basename(copyFeatureName)),logFile)
-                    inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inLineFeature,env.workspace,basename(copyFeatureName))
+                    
+                    fieldMappings = arcpy.FieldMappings()
+                    fieldMappings.addTable(inLineFeature)
+                    [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.type != 'OID']
+
+                    log.logArcpy("arcpy.conversion.ExportFeatures",(inLineFeature, basename(copyFeatureName), f"field_mapping={fieldMappings}"),logFile)
+                    inRoadFeature = arcpy.conversion.ExportFeatures(inLineFeature, basename(copyFeatureName), field_mapping=fieldMappings)
 
                 # No merge field was supplied. Add a field to the copied inRoadFeature and populate it with a constant value
                 AddMsg(f"{timer.now()} Adding a dummy field to {arcpy.Describe(inRoadFeature).baseName} and assigning value 1 to all records.", 0, logFile)
@@ -3692,14 +3827,14 @@ def runPedestrianAccessAndAvailability(toolPath, inParkFeature, dissolveParkYN='
         desc = arcpy.Describe(inParkFeature)
         tempName = f"{metricConst.shortName}_{desc.baseName}_"
         tempParkFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        AddMsg(f"{timer.now()} Creating temporary copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
+        AddMsg(f"{timer.now()} Creating working copy of {desc.name}. Intermediate: {basename(tempParkFeature)}", 0, logFile)
         
         if dissolveParkYN == 'true':
-            log.logArcpy('arcpy.Dissolve_management', (inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES"), logFile)
-            inParkFeature = arcpy.Dissolve_management(inParkFeature, os.path.basename(tempParkFeature),"","","SINGLE_PART", "DISSOLVE_LINES")
+            log.logArcpy('arcpy.analysis.PairwiseDissolve', (inParkFeature, basename(tempParkFeature),"","","SINGLE_PART"), logFile)
+            inParkFeature = arcpy.analysis.PairwiseDissolve(inParkFeature, basename(tempParkFeature),"","","SINGLE_PART")
         else:
-            log.logArcpy('arcpy.FeatureClassToFeatureClass_conversion', (inParkFeature, env.workspace, basename(tempParkFeature)), logFile)
-            inParkFeature = arcpy.FeatureClassToFeatureClass_conversion(inParkFeature, env.workspace, basename(tempParkFeature))
+            log.logArcpy('arcpy.conversion.ExportFeatures', (inParkFeature, basename(tempParkFeature)), logFile)
+            inParkFeature = arcpy.conversion.ExportFeatures(inParkFeature, basename(tempParkFeature))
         
         # use the OID for identifying Parks
         idFlds = [aFld for aFld in arcpy.ListFields(inParkFeature) if aFld.type == "OID"]
@@ -3963,13 +4098,13 @@ def runProcessRoadsForEnvioAtlasAnalyses(toolPath, versionName, inStreetsgdb, ch
         # Set the environmental variables to desired condition 
         AddMsg(f"{timer.now()} Setting up initial environment variables", 0, logFile)
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+        #     env.parallelProcessingFactor = 0
         
         env.overwriteOutput = True
         env.workspace = outWorkspace
@@ -4332,6 +4467,10 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                           inZoneDataset, inBufferDistance, groupByZoneYN, zoneIdField, outTable, optionalFieldGroups]
         # create a log file if requested, otherwise logFile = None
         logFile = log.setupLogFile(optionalFieldGroups, metricConst, parametersList, outTable, toolPath)
+        
+        # Gather a list of all of the ID values for the input reporting unit layer
+        allRUIDs = [row[0] for row in arcpy.da.SearchCursor(inReportingUnitFeature, reportingUnitIdField)]
+        inReportingUnitFeatureFileName = basename(inReportingUnitFeature)
             
         ### Initialization
         # Start the timer
@@ -4344,14 +4483,14 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             _tempEnvironment2 = env.cellSize
             _tempEnvironment6 = env.parallelProcessingFactor
         
-        # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-        currentFactor = str(env.parallelProcessingFactor)
-        if currentFactor == 'None' or currentFactor == '0':
-            pass
-        else:
-            # Advise the user that results when using parallel processing may be different from results obtained without its use.
-            AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-            env.parallelProcessingFactor = None
+        # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+        # currentFactor = str(env.parallelProcessingFactor)
+        # if currentFactor == '0':
+        #     pass
+        # else:
+        #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+        #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+        #     env.parallelProcessingFactor = 0
         
         # set the workspace for ATtILA intermediary files
         env.workspace = environment.getWorkspaceForIntermediates(globalConstants.scratchGDBFilename, os.path.dirname(outTable))
@@ -4402,22 +4541,6 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
         
         elif bufferDistanceVal == 0:
             pass # no need to create a copy; not altering the input feature class or its attribute table.
-            
-            # fieldMappings = arcpy.FieldMappings()
-            # fieldMappings.addTable(inZoneDataset)
-            # zoneFields = [fieldMappings.fields[0].name]
-            # if groupByZoneYN == "true":
-            #     zoneFields.append(zoneIdField)
-            #
-            # [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in zoneFields]
-            #
-            # tempName = f"{metricConst.shortName}_{descZone.baseName}_Work_"
-            # tempZoneinFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-            #
-            # AddMsg(f"{timer.now()} Creating a working copy of {descZone.baseName}. Intermediate: {basename(tempZoneinFeature)}", 0, logFile)
-            # log.logArcpy(arcpy.FeatureClassToFeatureClass_conversion, (inZoneDataset, env.workspace, basename(tempZoneinFeature), '', fieldMappings), 'arcpy.FeatureClassToFeatureClass_conversion', logFile)
-            #
-            # inZoneDataset = tempZoneinFeature
         
         else:
             # Change the buffer distance to an integer if appropriate. This reduces the output field name string length by eliminating '_0'.
@@ -4604,8 +4727,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             tempName = f"{metricConst.shortName}_{descCensus.baseName}_Work_"
             tempCensusFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
             AddMsg(f"{timer.now()} Creating a working copy of {descCensus.baseName}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-            log.logArcpy('arcpy.FeatureClassToFeatureClass_conversion',(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings),logFile)
-            inCensusDataset = arcpy.FeatureClassToFeatureClass_conversion(inCensusDataset,env.workspace,basename(tempCensusFeature),"",fieldMappings)
+            log.logArcpy('arcpy.conversion.ExportFeatures',(inCensusDataset,basename(tempCensusFeature),"","",fieldMappings),logFile)
+            inCensusDataset = arcpy.conversion.ExportFeatures(inCensusDataset,basename(tempCensusFeature),"","",fieldMappings)
         
             # Add a dummy field to the copied census feature class and calculate it to a value of 1.
             classField = "tmpClass"
@@ -4759,8 +4882,8 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             keepFields.append(reportingUnitIdField)
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name not in keepFields]
         
-            log.logArcpy('arcpy.TableToTable_conversion', (popTable_RU,os.path.dirname(outTable),basename(outTable),"",fieldMappings), logFile)
-            arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable),basename(outTable),"",fieldMappings)
+            log.logArcpy('arcpy.conversion.ExportTable', (popTable_RU, outTable, f"field_mapping={fieldMappings}"), logFile)
+            arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=fieldMappings)
             
             # Compile a list of fields that will be transferred from the zone population table into the output table
             fromFields = [popCntFields[index]]
@@ -4790,23 +4913,26 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
                 else:
                     newFieldMap.addFieldMap(fieldMappings.getFieldMap(i))
         
-        
-            log.logArcpy('arcpy.TableToTable_conversion', (popTable_RU,os.path.dirname(outTable),basename(outTable), "", newFieldMap), logFile)
-            arcpy.TableToTable_conversion(popTable_RU,os.path.dirname(outTable),basename(outTable), "", newFieldMap)
+            log.logArcpy('arcpy.conversion.ExportTable', (popTable_RU, outTable, f"field_mapping={newFieldMap}"), logFile)
+            arcpy.conversion.ExportTable(popTable_RU, outTable, field_mapping=newFieldMap)
         
         
             ## rename count field to include buffer
             log.logArcpy('arcpy.AlterField_management', (outTable, popCntFields[index], popCntFields[index] + suffix, popCntFields[index] + suffix ), logFile)
             arcpy.AlterField_management(outTable, popCntFields[index], popCntFields[index] + suffix, popCntFields[index] + suffix )
         
-        
-        
+        # set zone population to zero if it is NULL. It will only be null if a reporting unit has a population value, but no population was found in the zone area
+        ## does not work if the outTable is a DBF file. There are no NULL values in DBF fields.
+        calculate.replaceNullValues(outTable, popCntFields[index] + suffix, globalConstants.missingDataValue, logFile)
+                
         # Set up a calculation expression for population change        
-        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}{suffix}!)"
+        calcExpression = f"getPopPercent(!{popCntFields[0]}!,!{popCntFields[1]}{suffix}!,{globalConstants.missingDataValue})"
         
-        codeBlock = """def getPopPercent(pop1,pop2):
-                if pop1 is None or pop2 is None:
-                    return None
+        codeBlock = """def getPopPercent(pop1,pop2,missingDataValue):
+                if pop2 is missingDataValue:
+                    return missingDataValue
+                elif pop1 is None or pop2 is None:
+                    return missingDataValue
                 elif pop1 == 0 and pop2 == 0:
                     return 0
                 elif pop1 == 0 and pop2 != 0:
@@ -4846,6 +4972,18 @@ def runPopulationWithinZoneMetrics(toolPath, inReportingUnitFeature, reportingUn
             # Place eventList here, if the extents of the datasets have been altered and you wish to use the new extents.
             # for snapRaster and processingCellSize, if the parameter is None, no entry will
             # will be recorded in the log for that parameter
+        
+        if groupByZoneYN == 'false':  
+            # add rows for any missing reporting units from the original input to the output table
+            # rows can be dropped from the output if other input data does not intersect with a reporting unit
+            # These added rows will not be used for row counts or field statistics in the optional log file
+            # All fields in any new row will contain a missing data value.
+            newTableRowCount = int(arcpy.management.GetCount(outTable).getOutput(0))
+            RUCount = len(allRUIDs)
+            rowsMissingCount = RUCount - newTableRowCount
+            if rowsMissingCount != 0:
+                AddMsg(f"The number of rows in the output table does not equal the number of reporting units in {inReportingUnitFeatureFileName}. A missing row usually results from a lack of data within a reporting unit.", 1, logFile)
+                table.addMissingRows(outTable, allRUIDs, reportingUnitIdField, globalConstants.missingDataValue, logFile)
     
     except Exception as e:
         if logFile:
@@ -4990,7 +5128,7 @@ def runSelectZonalStatistics(toolPath, inReportingUnitFeature, reportingUnitIdFi
             logFile.close()
             AddMsg('Log file closed')
             
-        # again ask about environemnt stuff     
+        # again ask about environment stuff     
         if arcpy.glob.os.path.basename(arcpy.sys.executable) == globalConstants.arcExecutable:    
             env.snapRaster = _tempEnvironment0
             env.workspace = _tempEnvironment1
@@ -5003,7 +5141,6 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
                       cutoffLength="#", overWrite="", outWorkspace='#',  processingCellSize="#", snapRaster="#", optionalFieldGroups="#"):
     """ Interface for script executing Near Road Land Cover Proportions tool """
     
-    from arcpy import env
 #    from arcpy.sa import Con,Raster,Reclassify,RegionGroup,RemapValue,RemapRange
 
     cleanupList = [] # This is an empty list object that will contain tuples of the form (function, arguments) as needed for cleanup
@@ -5076,11 +5213,11 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         fieldMappings = arcpy.FieldMappings()
         fieldMappings.addTable(inRoadFeature)
         
-        AddMsg("%s Creating a working copy of %s..." % (timer.now(), os.path.basename(inRoadFeature)))
+        AddMsg(f"{timer.now()} Creating a working copy of {basename(inRoadFeature)}...")
         
         if inRoadWidthOption == "Distance":
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.required != True]
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,basename(tempRoadFeature),"","",fieldMappings)
             
             AddMsg("%s Adding field, HalfWidth, and calculating its value... " % (timer.now()))   
             halfRoadWidth = float(widthLinearUnit.split()[0]) / 2
@@ -5091,7 +5228,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             
         elif inRoadWidthOption == "Field: Lane Count":
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneCntFld]
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,basename(tempRoadFeature),"","",fieldMappings)
             
             AddMsg("%s Adding fields, HalfValue and HalfWidth, and calculating their values... " % (timer.now()))
             arcpy.AddField_management(inRoadFeature, 'HalfValue', 'DOUBLE')
@@ -5106,7 +5243,7 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
             
         else:
             [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != laneDistFld]
-            inRoadFeature = arcpy.FeatureClassToFeatureClass_conversion(inRoadFeature,env.workspace,os.path.basename(tempRoadFeature),"",fieldMappings)
+            inRoadFeature = arcpy.conversion.ExportFeatures(inRoadFeature,basename(tempRoadFeature),"","",fieldMappings)
             
             
             # input field should be a linear distance string. Part 0 = distance value. Part 1 = distance units
@@ -5193,8 +5330,8 @@ def runNearRoadLandCoverProportions(toolPath, inRoadFeature, inLandCoverGrid, _l
         
         tempName = "%s_%s" % (metricConst.shortName, '_RoadBuffer')
         finalBuffFeature = files.nameIntermediateFile([tempName,"FeatureClass"],cleanupList)
-        log.logArcpy("arcpy.Dissolve_management",(mergeBuffFeature, finalBuffFeature),logFile)      
-        arcpy.Dissolve_management(mergeBuffFeature, finalBuffFeature)
+        log.logArcpy("arcpy.analysis.PairwiseDissolve",(mergeBuffFeature, finalBuffFeature),logFile)      
+        arcpy.analysis.PairwiseDissolve(mergeBuffFeature, finalBuffFeature)
         
         
 

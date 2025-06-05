@@ -50,16 +50,18 @@ def standardSetup(snapRaster, processingCellSize, fallBackDirectory, itemDescrip
     # Do not copy Z values when making copies of features.
     env.outputZFlag = "Disabled" 
     
-    # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
-    currentFactor = str(env.parallelProcessingFactor)
-    if currentFactor == 'None' or currentFactor == '0':
-        pass
-    else:
-        # Advise the user that results when using parallel processing may be different from results obtained without its use.
-        # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
-        # arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
-        AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
-        env.parallelProcessingFactor = None
+    # # Until the Pairwise geoprocessing tools can be incorporated into ATtILA, disable the Parallel Processing Factor if the environment is set
+    # currentFactor = str(env.parallelProcessingFactor)
+    # #if currentFactor == 'None' or currentFactor == '0':
+    # if currentFactor == '0':
+    #     pass
+    # else:
+    #     # Advise the user that results when using parallel processing may be different from results obtained without its use.
+    #     # arcpy.AddWarning("Parallel processing is enabled. Results may vary from values calculated otherwise.")
+    #     # arcpy.AddWarning("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.")
+    #     AddMsg("ATtILA can produce unreliable data when Parallel Processing is enabled. Parallel Processing has been temporarily disabled.", 1, logFile)
+    #     #env.parallelProcessingFactor = None
+    #     env.parallelProcessingFactor = 0
     
     itemTuples = []
     for itemDescriptionPair in itemDescriptionPairList:

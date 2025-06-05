@@ -204,6 +204,9 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
 
         
     """ 
+    from arcpy import env 
+    env.workspace = outputLoc
+    
     strlist = []
     flist = []
     fdsc = arcpy.Describe(inputLayer)
@@ -242,9 +245,9 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         strlist.append(str(o))
         
     values = ",".join(strlist)
-    arcpy.MakeFeatureLayer_management(inputLayer, "No Polygons Overlap",OID + " NOT IN (" + values + ")")
+    arcpy.MakeFeatureLayer_management(inputLayer, "No Polygons Overlap", f"{OID} NOT IN ({values})")
     if int(str(arcpy.GetCount_management("No Polygons Overlap"))) != 0:
-        arcpy.FeatureClassToFeatureClass_conversion("No Polygons Overlap", outputLoc, outname + "_0" + ext, field_mapping=fieldmappings)
+        arcpy.conversion.ExportFeatures("No Polygons Overlap", f"{outname}_0{ext}", field_mapping=fieldmappings)
         flist.append(outname + "_0" + ext)
 
     # Find the group that has the most polygons
@@ -259,12 +262,12 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
     for h in nonoverlapGroupDict[hiGroup]:
         hlist.append(str(h))
     values = ",".join(hlist)
-    arcpy.MakeFeatureLayer_management(inputLayer,  "NoOverlap"+ str(h), OID + " IN (" + values + ")")
+    arcpy.MakeFeatureLayer_management(inputLayer,  f"NoOverlap{h}", f"{OID} IN ({values})")
     if int(str(arcpy.GetCount_management("No Polygons Overlap"))) == 0:
-        arcpy.FeatureClassToFeatureClass_conversion("NoOverlap"+ str(h), outputLoc, outname + "_0" + ext, field_mapping=fieldmappings)
-        flist.append(outname + "_0" +ext)
+        arcpy.conversion.ExportFeatures(f"NoOverlap{h}", f"{outname}_0{ext}", field_mapping=fieldmappings)
+        flist.append(f"{outname}_0{ext}")
     else:
-        arcpy.Append_management("NoOverlap" + str(h), outputLoc + "//" + outname + "_0" + ext, field_mapping=fieldmappings, schema_type = "NO_TEST")
+        arcpy.Append_management(f"NoOverlap{h}", f"{outputLoc}//{outname}_0{ext}", field_mapping=fieldmappings, schema_type = "NO_TEST")
 
     #remove key with most polygons from nonoverlapGroupDict
     nonoverlapGroupDict.pop(hiGroup, "None")
@@ -276,8 +279,8 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         for o in nonoverlapGroupDict[k]:
             olist.append(str(o))
         values = ",".join(olist)
-        arcpy.MakeFeatureLayer_management(inputLayer, "NoOverlap" + str(k), OID + " IN (" + values + ")")
-        arcpy.FeatureClassToFeatureClass_conversion("NoOverlap" + str(k), outputLoc, outname + "_" + str(num) + ext, field_mapping=fieldmappings)
+        arcpy.MakeFeatureLayer_management(inputLayer, f"NoOverlap{k}", f"{OID} IN ({values})")
+        arcpy.conversion.ExportFeatures(f"NoOverlap{k}", f'{outname}_{num}{ext}', field_mapping=fieldmappings)
         flist.append(outname + "_" +str(num) +ext)
         num = num + 1
     print(flist)
@@ -288,10 +291,10 @@ def createNonOverlapLayers(overlapList, nonoverlapGroupDict, OID, inputLayer, ou
         for f in flist:
             p = arcpy.mp.ArcGISProject("CURRENT")
             m = p.activeMap
-            m.addDataFromPath(outputLoc + "\\"+f)
+            m.addDataFromPath(f"{outputLoc}\\{f}")
 
         arcpy.AddMessage("Adding non overlapping polygon layer(s) to view")
-        arcpy.AddMessage("The overlap files have been saved to " + outputLoc)
+        arcpy.AddMessage(f"The overlap files have been saved to {outputLoc}")
     except:
-        arcpy.AddMessage("The overlap files have been saved to " + outputLoc)
+        arcpy.AddMessage(f"The overlap files have been saved to {outputLoc}")
         

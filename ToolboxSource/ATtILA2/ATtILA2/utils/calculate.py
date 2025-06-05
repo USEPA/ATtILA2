@@ -1,16 +1,15 @@
 """ Utilities specific to area
 
 """
-from ATtILA2.constants import globalConstants
 
 import arcpy
 from ATtILA2.setupAndRestore import _tempEnvironment3
+from ATtILA2.constants import globalConstants, errorConstants
 from ATtILA2 import errors
-from ATtILA2.constants import errorConstants
 from . import messages
 from . import files
 from . import vector
-from . import table
+from .table import transferField
 from .messages import AddMsg
 from .log import logArcpy
 from os.path import basename
@@ -548,7 +547,7 @@ def lineDensityCalculator(inLines,inAreas,areaUID,unitArea,outLines,densityField
     logArcpy("arcpy.JoinField_management",(outLines, areaUID.name, inAreas, areaUID.name, [unitArea]),logFile)
     arcpy.JoinField_management(outLines, areaUID.name, inAreas, areaUID.name, [unitArea])
     # Set up a calculation expression for density.
-    calcExpression = "!" + lineLengthFieldName + "!/!" + unitArea + "!"
+    calcExpression = f"!{lineLengthFieldName}!/!{unitArea}!"
     densityField = vector.addCalculateField(outLines,densityField,"DOUBLE",calcExpression,'#',logFile)
 
     if iaField: # if a field has been specified for calculating total impervious area.
@@ -905,17 +904,18 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
                 # delete the temp table in case the geoprocessing overwrite output option is turned off
                 arcpy.Delete_management("temptable")
             tabareaTable = "temptable"
-            arcpy.sa.TabulateArea(selectedRUName, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
-
-            #Delete the single reporting unit feature layer
-            arcpy.Delete_management("subwatersheds_Layer")
-            arcpy.Delete_management(selectedRUName)
-
-            rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
-            if rowcount == 0:
-                AddMsg(f"No land cover grid data found in {aZone}", 1)
-
-            else:
+            
+            # if a reporting unit does not overlap with the land cover grid, the tabulate area operation will fail. 
+            # use a try...except operation to handle this situation
+            try:
+                arcpy.sa.TabulateArea(selectedRUName, reportingUnitIdField, inLandCoverGrid,"Value", tabareaTable, processingCellSize)
+                rowcount = int(arcpy.GetCount_management(tabareaTable).getOutput(0))
+            except:
+                # AddMsg(f"No land cover grid data found in {aZone}", 1)
+                rowcount = 0
+                #resultsDict[aZone] = (mv,mv,mv,mv,mv,mv,mv,mv,mv,zoneAreaDict[aZone])
+           
+            if rowcount != 0:
                 #Loop through each row in the table and calculate the patch metrics 
                 rows = arcpy.SearchCursor(tabareaTable)
                 row = rows.next()
@@ -955,14 +955,17 @@ def getPatchNumbers(outIdField, newTable, reportingUnitIdField, metricsFieldname
 
                     row = rows.next()
 
-            resultsDict[aZone] = (lrgProportion,numPatch,avePatch,mdnPatch,patchDensity,lrgPatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
+                resultsDict[aZone] = (lrgProportion,numPatch,avePatch,mdnPatch,patchDensity,lrgPatch,patchArea,otherArea,excludedArea,zoneAreaDict[aZone])
 
             if arcpy.Exists(selectedRUName):
                 arcpy.Delete_management(selectedRUName)
 
             if arcpy.Exists(tabareaTable):
                 arcpy.Delete_management(tabareaTable)
-
+                
+            if arcpy.Exists("subwatersheds_Layer"):
+                arcpy.Delete_management("subwatersheds_Layer")
+                
             loopProgress.update()
 
         # Restore the original environment extent
@@ -1097,7 +1100,7 @@ def getWeightedPopDensity(inReportingUnitFeature,reportingUnitIdField,ruAreaFld,
     toField = 'POPCNT' + index
     # Transfer the values to the output table
     AddMsg(f"{timer.now()} Transferring values from {basename(populationTable)} to {basename(outTable)}.", 0, logFile)
-    table.transferField(populationTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
+    transferField(populationTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
     
     AddMsg(f"{timer.now()} Performing density calculation.", 0, logFile)
     # Set up a calculation expression for the final density calculation
@@ -1106,109 +1109,6 @@ def getWeightedPopDensity(inReportingUnitFeature,reportingUnitIdField,ruAreaFld,
     vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,"DOUBLE",calcExpression,"",logFile)    
 
 
-# def getPopDensity(inReportingUnitFeature,reportingUnitIdField,ruArea,inCensusFeature,inPopField,tempWorkspace,
-#                   outTable,metricConst,cleanupList,index,timer,logFile):
-#     """ Performs a transfer of population from input census features to input reporting unit features using simple
-#         areal weighting.  
-#
-#     **Description:**
-#
-#         This function makes a temporary copy of the input census features, and using that temporary copy, adds and 
-#         calculates a field containing the census unit area in square kilometers, and adds and populates a field containing 
-#         the population density per square kilometer.  The temporary features and their attributes are then intersected
-#         with the input reporting units.  The area of the intersected polygons is calculated, and then multiplied by
-#         the population density value from the census data, giving a population count for the intersected polygons.
-#         Finally, the population counts are summarized by reporting unit ID, giving a population count for each reporting
-#         unit, and that population count is transferred to the output table, and an appropriate density value calculated.
-#
-#     **Arguments:**
-#
-#         * *inReportingUnitFeature* - input Reporting Unit feature class with full path.
-#         * *reportingUnitIdField* - the name of the field in the reporting unit feature class containing a unique identifier
-#         * *ruArea* - the name of the field in the reporting unit feature class containing the unit area in square kilometers
-#         * *inCensusFeature* - input population feature class with full path
-#         * *inPopField* - the name of the field in the population feature class containing count values
-#         * *tempWorkspace* - an Esri workspace (folder or file geodatabase) where intermediate values will be stored
-#         * *outTable* -  the output table that will contain calculated population and density values
-#         * *metricConst* - an ATtILA2 object containing constant values to match documentation
-#         * *cleanupList* - object containing commands and parameters to perform at cleanup time.
-#         * *index* - if this function is going to be run multiple times, this index is used to keep track of intermediate
-#                     outputs and fieldnames.
-#
-#     **Returns:**
-#
-#         * None
-#
-#     """
-#     import os
-#     # If the user specified an index, add an underscore as prefix.
-#     if index != "":
-#         index = "_T" + index
-#     # Create a copy of the census feature class that we can add new fields to for calculations.  This 
-#     # is more appropriate than altering the user's input data.
-#     fieldMappings = arcpy.FieldMappings()
-#     fieldMappings.addTable(inCensusFeature)
-#     [fieldMappings.removeFieldMap(fieldMappings.findFieldMapIndex(aFld.name)) for aFld in fieldMappings.fields if aFld.name != inPopField]
-#
-#     desc = arcpy.Describe(inCensusFeature)
-#     tempName = f"{metricConst.shortName}_{desc.baseName}"
-#     tempCensusFeature = files.nameIntermediateFile([f"{tempName}{index}_","FeatureClass"],cleanupList)
-#     AddMsg(f"{timer.now()} Creating a working copy of {basename(inCensusFeature)}. Intermediate: {basename(tempCensusFeature)}", 0, logFile)
-#     logArcpy("arcpy.FeatureClassToFeatureClass_conversion",(inCensusFeature,tempWorkspace,os.path.basename(tempCensusFeature),"",fieldMappings),logFile)
-#     inCensusFeature = arcpy.FeatureClassToFeatureClass_conversion(inCensusFeature,tempWorkspace,os.path.basename(tempCensusFeature),"",fieldMappings)
-#
-#     # Add and populate the area field (or just recalculate if it already exists
-#     popArea = vector.addAreaField(inCensusFeature,'popArea',logFile)
-#
-#     # Set up a calculation expression for the density calculation
-#     calcExpression = "!" + inPopField + "!/!" + popArea + "!"
-#     # Calculate the population density
-#     inPopDensityField = vector.addCalculateField(inCensusFeature,'popDens' + index,"DOUBLE",calcExpression,"",logFile)
-#
-#     # Intersect the reporting units with the population features.
-#     intersectOutput = files.nameIntermediateFile([f"{metricConst.intersectOutputName}{index}_","FeatureClass"],cleanupList)
-#     AddMsg(f"{timer.now()} Intersecting {basename(str(inReportingUnitFeature))} with {basename(tempCensusFeature)}. Intermediate: {basename(intersectOutput)}", 0, logFile)
-#     logArcpy("arcpy.Intersect_analysis",([inReportingUnitFeature,inCensusFeature], intersectOutput),logFile)
-#     arcpy.Intersect_analysis([inReportingUnitFeature,inCensusFeature], intersectOutput)
-#
-#     # Add and populate the area field of the intersected polygons
-#     intArea = vector.addAreaField(intersectOutput,'intArea',logFile)
-#
-#     # Calculate the population of the intersected areas by multiplying population density by intersected area
-#     # Set up a calculation expression for the density calculation
-#     calcExpression = "!" + inPopDensityField + "!*!" + intArea + "!"
-#     # Calculate the population density
-#     intPopField = vector.addCalculateField(intersectOutput,'intPop', "DOUBLE", calcExpression,"",logFile)
-#
-#     # Generate a table of the number of intersected Census feature polygons and the sums of the area-weighted population counts within each reporting unit.
-#     summaryTable = files.nameIntermediateFile([f"{metricConst.summaryTableName}{index}_",'Dataset'],cleanupList)
-#     AddMsg(f"{timer.now()} Generating a table of area-weighted population counts for each reporting unit. Intermediate: {basename(summaryTable)}", 0, logFile)
-#
-#     # Sum population for each reporting unit.
-#     """ If the reportingUnitIdField field is not found, it is assumed that
-#     the original field was an object ID field that was lost in a format conversion, and the code switches to the new
-#     objectID field."""
-#     uIDFields = arcpy.ListFields(intersectOutput,reportingUnitIdField)
-#     if uIDFields == []: # If the list is empty, grab the field of type OID
-#         uIDFields = arcpy.ListFields(intersectOutput,"",'OID')
-#     uIDField = uIDFields[0] # This is an arcpy field object
-#     reportingUnitIdField = uIDField.name
-#
-#     logArcpy("arcpy.Statistics_analysis", (intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField), logFile)
-#     arcpy.Statistics_analysis(intersectOutput, summaryTable, [[intPopField, "SUM"]], reportingUnitIdField)
-#
-#     # Compile a list of fields that will be transferred from the intersected feature class into the output table
-#     fromFields = ["SUM_" + intPopField]
-#     toField = 'POPCNT' + index
-#     # Transfer the values to the output table
-#     AddMsg(f"{timer.now()} Transferring values from {basename(summaryTable)} to {basename(outTable)}.", 0, logFile)
-#     table.transferField(summaryTable,outTable,fromFields,[toField],reportingUnitIdField,None,None,logFile)
-#
-#     AddMsg(f"{timer.now()} Performing final density calculation.", 0, logFile)
-#     # Set up a calculation expression for the final density calculation
-#     calcExpression = "!" + toField + "!/!" + ruArea + "!"
-#     # Calculate the population density
-#     vector.addCalculateField(outTable,metricConst.populationDensityFieldName + index,"DOUBLE",calcExpression,"",logFile)
 
 
 def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopField,classField,
@@ -1252,19 +1152,36 @@ def getPolygonPopCount(inPolygonFeature,inPolygonIdField,inCensusFeature,inPopFi
     logArcpy('arcpy.AlterField_management', (outTable, inPopField, outPopField, outPopField), logFile)
     arcpy.AlterField_management(outTable, inPopField, outPopField, outPopField)
 
+# def replaceNullValues(inTable,inField,newValue,logFile=None):
+#     # Replace NULL values in a field with the supplied value
+#     whereClause = inField+" IS NULL"
+#     logArcpy("arcpy.UpdateCursor",(inTable, whereClause, "", inField),logFile)
+#     updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
+#     for updateRow in updateCursor:
+#         updateRow.setValue(inField, newValue)
+#         # Persist all of the updates for this row.
+#         updateCursor.updateRow(updateRow)
+#         # Clean up our row element for memory management and to remove locks
+#         del updateRow
+#     # Clean up our row element for memory management and to remove locks
+#     del updateCursor
+
 def replaceNullValues(inTable,inField,newValue,logFile=None):
     # Replace NULL values in a field with the supplied value
-    whereClause = inField+" IS NULL"
-    logArcpy("arcpy.UpdateCursor",(inTable, whereClause, "", inField),logFile)
-    updateCursor = arcpy.UpdateCursor(inTable, whereClause, "", inField)
-    for updateRow in updateCursor:
-        updateRow.setValue(inField, newValue)
-        # Persist all of the updates for this row.
-        updateCursor.updateRow(updateRow)
-        # Clean up our row element for memory management and to remove locks
-        del updateRow
-    # Clean up our row element for memory management and to remove locks
-    del updateCursor
+    whereClause = f"{inField} IS NULL"
+    logArcpy("arcpy.da.UpdateCursor",(inTable, inField, whereClause),logFile)
+    with arcpy.da.UpdateCursor(inTable, inField, whereClause) as cursor:
+        for row in cursor:
+            row[0] = newValue
+            cursor.updateRow(row)
+
+def replaceNullsInFields(inTable, fields, newValue, logFile=None):
+    with arcpy.da.UpdateCursor(inTable, fields) as cursor:
+        for row in cursor:
+            for i, fld in enumerate(fields):
+                if row[i] is None:
+                    row[i] = newValue
+                cursor.updateRow(row)
 
 def percentageValue(inTable, numeratorField, denominatorField, percentField, logFile=None):
     # Set up a calculate percentage expression 
@@ -1318,8 +1235,6 @@ def belowValue(inTable, sourceField, threshold, addedField, logFile=None):
 def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, cleanupList, outTable, newTable,
                    reportingUnitIdField, facilityLCPTable, facilityRUIDTable, metricsFieldnameDict, lcpFieldnameDict, timer, logFile):
 
-    import os 
-
     # assign some metric constants to variables
     lowSuffix = metricConst.fieldSuffix
     highSuffix = metricConst.highSuffix
@@ -1338,7 +1253,7 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
 
     # joining the facilityLCPTable to the facilityRUIDTable will maintain a record for all input facilities. NULL values
     # will be assigned to any facility that did not have any land cover data (i.e., at least 1 raster cell center) in its
-    # view radius buffer
+    # view radius buffer. This only true if the reporting unit also has at least one facility in it.
     
     AddMsg(f"{timer.now()} Joining {basename(facilityLCPTable)} to {arcpy.Describe(facilityRUIDTable).baseName} to maintain a record for all facilities.", 0, logFile)
     logArcpy("arcpy.management.JoinField", (facilityRUIDTable, "OBJECTID", facilityLCPTable, "ORIG_FID"), logFile)
@@ -1350,6 +1265,8 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
         stats.append([mBaseName + belowSuffix, "Sum"])
 
         stats.append([mBaseName + aboveSuffix, "Sum"])
+        
+    stats.append([metricConst.overlapName, "MIN"])
 
     # Get a unique name with full path for the output features - will default to current workspace:
     namePrefix = f"{metricConst.statsResultTable}{viewRadius.split()[0]}_"
@@ -1358,76 +1275,138 @@ def landCoverViews(metricsBaseNameList, metricConst, viewRadius, viewThreshold, 
     logArcpy("arcpy.Statistics_analysis",(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField),logFile)
     arcpy.Statistics_analysis(facilityRUIDTable, statsResultTable, stats, reportingUnitIdField)
 
-###  This commented out section can be used if INFO tables are not an option for ATtILA metric tables  ###  
-#    #Rename the fields in the result table
-#     cntFldName = metricConst.facilityCountFieldName
-#     arcpy.AlterField_management(statsResultTable, "FREQUENCY", cntFldName, cntFldName)
-#      
-#     for mBaseName in metricsBaseNameList:
-#         oldFieldName = "SUM_" + mBaseName + metricConst.belowFieldSuffix
-#         newFieldName = metricsFieldnameDict[mBaseName][0]
-#         arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
-#    
-#     arcpy.TableToTable_conversion(statsResultTable,os.path.dirname(outTable),os.path.basename(outTable))
+    # INFO tables have been blocked as a possible output format. The following code can be utilized.
+    #Rename the fields in the result table
+    arcpy.AlterField_management(statsResultTable, "FREQUENCY", cntFldName, cntFldName)
+    
+    statFields = []
+    for mBaseName in metricsBaseNameList:
+        oldFieldName = f"SUM_{mBaseName}{metricConst.belowFieldSuffix}"
+        newFieldName = metricsFieldnameDict[mBaseName][0]
+        statFields.append(newFieldName)
+        arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
+        
+        oldFieldName = f"SUM_{mBaseName}{metricConst.aboveFieldSuffix}"
+        newFieldName = f"{mBaseName}{metricConst.highSuffix}{viewThreshold}"
+        statFields.append(newFieldName)
+        arcpy.AlterField_management(statsResultTable, oldFieldName, newFieldName, newFieldName)
 
-    # Use the try: finally: section of code when INFO tables are possible as outputs.
-    try:
-        setWarning = False
+    arcpy.AlterField_management(statsResultTable, "MIN_FLCV_OVER", "MIN_OVER", "MIN_OVER" )
+    statFields.append("MIN_OVER")
+    
+    # reporting units may contain facilities, but if no land cover occurs in their buffer area, NULL values will be in the stats table
+    AddMsg(f"{timer.now()} Setting any null values in {basename(statsResultTable)} to -99999", 0, logFile)    
+    replaceNullsInFields(statsResultTable, statFields, -99999)
+    
+    # Report to the user if land cover data was not available for all facilities within a reporting unit.
+    # If full land cover data was available, the number of facilities in a reporting unit will equal the low and high counts.
+    
+    AddMsg(f"{timer.now()} Checking for reporting units with only partial land cover and facilities overlap.")
+    statFields.insert(0, cntFldName)
 
-        # Create the search cursor to query the contents of the BELOW THRESHOLD statistics table
-        inTableRows = arcpy.SearchCursor(statsResultTable)
+    # with arcpy.da.SearchCursor(statsResultTable, statFields) as cursor:
+    #     for row in cursor:
+    #         # if (lowValue + highValue != facilityCount)
+    #         if row[1] + row[2] != row[0]:
+    #             arcpy.AddWarning(f"One or more facilities did not have land cover data within its view radius. "\
+    #                              f"Check that the view radius is sufficiently large enough to contain at least one cell center "\
+    #                              f"of the land cover grid or that the land cover raster extends beneath all facility features. "\
+    #                              f"Problematic reporting units have a value in the {cntFldName} field higher than the sum "\
+    #                              f"of the values in the '{lowSuffix}' and '{highSuffix}' fields.")
+    #
+    #             break
+    
+    sumWarning = False
+    overlapWarning = False
+    minIndex = statFields.index('MIN_OVER')
+    with arcpy.da.UpdateCursor(statsResultTable, statFields) as cursor:
+        for row in cursor:
+            # if (lowValue + highValue != facilityCount)
+            if row[1] + row[2] != row[0]:
+                if row[1] != -99999: # -99999 fields have no land cover for any facility view area
+                    for i in range(1,len(statFields)):
+                        row[i] = -88888 # -88888 fields have missing land cover for one or more facilities
+                    sumWarning = True
+            cursor.updateRow(row)
+            # if all facilities have some land cover, warn the user if one or more view areas have land cover on the low end
+            if row[minIndex] >= 0 and row[minIndex] < 90:
+                overlapWarning = True
+                
+    if sumWarning:            
+        arcpy.AddWarning(f"One or more reporting units did not have land cover data within the view radius for all facilities. "\
+                         f"Setting metric values for these reporting units to -88888 due to insufficient data.")
+    
+    if overlapWarning:            
+        arcpy.AddWarning(f"One or more facilities had less than 90% overlap between its view area and the land cover raster. "\
+                         f"The 'MIN_OVER' field in {basename(outTable)} analyzes the amount of overlap between the land cover "\
+                         f"raster and all facilities in a reporting unit and reports out the lowest value found. If 'INTERMEDIATES' "\
+                         f"was selected as an 'Additional Option', the saved flcv_FacilityRUID layer will show the amount "\
+                         f"of overlap for each facility.")
+               
+    # Copy the stats table to a table with the requested name
+    AddMsg(f"{timer.now()} Saving final output table: {basename(outTable)}", 0, logFile)
+    logArcpy('arcpy.conversion.ExportTable', (statsResultTable,outTable), 0, logFile)
+    arcpy.conversion.ExportTable(statsResultTable,outTable)
 
-        # create the insert cursor to add data to the output table
-        outTableRows = arcpy.InsertCursor(newTable)        
 
-        for inRow in inTableRows:
-            # initiate a row to add to the metric output table
-            outTableRow = outTableRows.newRow()
-
-            # set the reporting unit id value in the output row
-            outTableRow.setValue(reportingUnitIdField, inRow.getValue(reportingUnitIdField))
-
-            # set the number of facilities in the reporting unit in the output row 
-            facilityCount = inRow.getValue("FREQUENCY")
-            outTableRow.setValue(cntFldName, facilityCount)
-
-            # set the number of facilities in the reporting unit with below threshold views and above threshold views
-            # in the output row. Do this for each selected metric class 
-            for mBaseName in metricsBaseNameList:
-                metricFieldName = metricsFieldnameDict[mBaseName][0]
-
-                # assemble the name for the high count field    
-                outClassName = metricsFieldnameDict[mBaseName][1]
-                highFieldName = metricConst.highField[0]+outClassName+metricConst.highField[1]
-
-                belowStatsFieldName = "SUM_" + mBaseName + belowSuffix
-                lowValue = inRow.getValue(belowStatsFieldName)
-                outTableRow.setValue(metricFieldName, lowValue )
-
-                aboveStatsFieldName = "SUM_" + mBaseName + aboveSuffix
-                highValue = inRow.getValue(aboveStatsFieldName)
-                outTableRow.setValue(highFieldName, highValue)
-
-            # commit the row to the output table
-            outTableRows.insertRow(outTableRow)
-
-            if (lowValue + highValue != facilityCount):
-                setWarning = True
-
-        if (setWarning):
-            arcpy.AddWarning("One or more facilities did not have land cover data within its view radius. "\
-                             "Check that the view radius is sufficiently large enough to contain at least one cell center "\
-                             "of the land cover grid or that the land cover raster extends beneath all facility features. "\
-                             "Problematic reporting units have a value in the "+ cntFldName +" field higher than the sum "\
-                             "of the values in the '"+ lowSuffix +"' and '"+ highSuffix +"' fields.")
-
-    finally:
-
-        # delete cursor and row objects to remove locks on the data
-        try:
-            del outTableRows
-            del outTableRow
-            del inRow
-            del inTableRows
-        except:
-            pass
+    # # Use the try: finally: section of code when INFO tables are possible as outputs.
+    # try:
+    #     setWarning = False
+    #
+    #     # Create the search cursor to query the contents of the BELOW THRESHOLD statistics table
+    #     inTableRows = arcpy.SearchCursor(statsResultTable)
+    #
+    #     # create the insert cursor to add data to the output table
+    #     outTableRows = arcpy.InsertCursor(newTable)        
+    #
+    #     for inRow in inTableRows:
+    #         # initiate a row to add to the metric output table
+    #         outTableRow = outTableRows.newRow()
+    #
+    #         # set the reporting unit id value in the output row
+    #         outTableRow.setValue(reportingUnitIdField, inRow.getValue(reportingUnitIdField))
+    #
+    #         # set the number of facilities in the reporting unit in the output row 
+    #         facilityCount = inRow.getValue("FREQUENCY")
+    #         outTableRow.setValue(cntFldName, facilityCount)
+    #
+    #         # set the number of facilities in the reporting unit with below threshold views and above threshold views
+    #         # in the output row. Do this for each selected metric class 
+    #         for mBaseName in metricsBaseNameList:
+    #             metricFieldName = metricsFieldnameDict[mBaseName][0]
+    #
+    #             # assemble the name for the high count field    
+    #             outClassName = metricsFieldnameDict[mBaseName][1]
+    #             highFieldName = metricConst.highField[0]+outClassName+metricConst.highField[1]
+    #
+    #             belowStatsFieldName = "SUM_" + mBaseName + belowSuffix
+    #             lowValue = inRow.getValue(belowStatsFieldName)
+    #             outTableRow.setValue(metricFieldName, lowValue )
+    #
+    #             aboveStatsFieldName = "SUM_" + mBaseName + aboveSuffix
+    #             highValue = inRow.getValue(aboveStatsFieldName)
+    #             outTableRow.setValue(highFieldName, highValue)
+    #
+    #         # commit the row to the output table
+    #         outTableRows.insertRow(outTableRow)
+    #
+    #         if (lowValue + highValue != facilityCount):
+    #             setWarning = True
+    #
+    #     if (setWarning):
+    #         arcpy.AddWarning("One or more facilities did not have land cover data within its view radius. "\
+    #                          "Check that the view radius is sufficiently large enough to contain at least one cell center "\
+    #                          "of the land cover grid or that the land cover raster extends beneath all facility features. "\
+    #                          "Problematic reporting units have a value in the "+ cntFldName +" field higher than the sum "\
+    #                          "of the values in the '"+ lowSuffix +"' and '"+ highSuffix +"' fields.")
+    #
+    # finally:
+    #
+    #     # delete cursor and row objects to remove locks on the data
+    #     try:
+    #         del outTableRows
+    #         del outTableRow
+    #         del inRow
+    #         del inTableRows
+    #     except:
+    #         pass
