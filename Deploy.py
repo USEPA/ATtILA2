@@ -74,11 +74,11 @@ def main(_argv):
     
     outputDir = 'ATtILA_Deployment'
     toolbox = 'ATtILA v3.1.atbx'
-    manual = 'User Manual.pdf'
+    manual = 'Analytical Tools Interface for Landscape Assessments (ATtILA) User Guide 3.1.0.pdf'
     readme = 'README.txt'
     tbSource = 'ToolboxSource'
     # pylet = '../pylet'
-    outputZip = 'ATtILA_'+dateStr+'.zip'
+    outputZip = 'ATtILA_v3.1.0_'+dateStr+'.zip'
     ignoreFiles = shutil.ignore_patterns('.git*','.settings','.project','.pydevproject','*.lfn','*.wsp','tests','QA_Scripts',
                                          'AutoSave','apidoc','CutAndPaste','*.bak','*.bat', '*.pyc', '__pycache__')
     
